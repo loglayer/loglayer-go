@@ -1,0 +1,105 @@
+// Package charmlog provides a LogLayer transport backed by github.com/charmbracelet/log.
+package charmlog
+
+import (
+	"io"
+
+	clog "github.com/charmbracelet/log"
+
+	"go.loglayer.dev/loglayer"
+	"go.loglayer.dev/loglayer/transport"
+)
+
+// Config holds configuration options for the charmbracelet/log transport.
+type Config struct {
+	transport.BaseConfig
+
+	// Logger is the underlying *charmbracelet/log.Logger. When nil a default
+	// logger writing to Writer is constructed.
+	//
+	// Note: The charmbracelet Logger.Fatal() shortcut calls os.Exit. This
+	// transport always dispatches via Logger.Log(level, msg, keyvals...) which
+	// does not exit, so loglayer's "Fatal does not exit" contract holds.
+	Logger *clog.Logger
+
+	// Writer is used only when Logger is nil. Defaults to os.Stderr.
+	Writer io.Writer
+
+	// MetadataFieldName is the key under which non-map metadata values are
+	// emitted (structs, scalars, slices, etc.). Map metadata is always merged
+	// at the root. Defaults to "metadata".
+	MetadataFieldName string
+}
+
+// Transport sends log entries to a *charmbracelet/log.Logger.
+type Transport struct {
+	transport.BaseTransport
+	cfg    Config
+	logger *clog.Logger
+}
+
+// New creates a charmlog Transport from the given Config.
+func New(cfg Config) *Transport {
+	if cfg.MetadataFieldName == "" {
+		cfg.MetadataFieldName = "metadata"
+	}
+	logger := cfg.Logger
+	if logger == nil {
+		logger = clog.NewWithOptions(transport.WriterOrStderr(cfg.Writer), clog.Options{Level: clog.DebugLevel})
+	}
+	return &Transport{
+		BaseTransport: transport.NewBaseTransport(cfg.BaseConfig),
+		cfg:           cfg,
+		logger:        logger,
+	}
+}
+
+// GetLoggerInstance returns the underlying *charmbracelet/log.Logger.
+func (t *Transport) GetLoggerInstance() any { return t.logger }
+
+// SendToLogger implements loglayer.Transport. Dispatches via Log so fatal
+// entries do not call os.Exit (charmbracelet's Log method, unlike Fatal,
+// does not exit; the core decides via Config.DisableFatalExit).
+func (t *Transport) SendToLogger(params loglayer.TransportParams) {
+	if !t.ShouldProcess(params.LogLevel) {
+		return
+	}
+	keyvals := make([]any, 0, transport.FieldEstimate(params)*2)
+
+	if params.HasData {
+		for k, v := range params.Data {
+			keyvals = append(keyvals, k, v)
+		}
+	}
+
+	if params.Metadata != nil {
+		if m, ok := params.Metadata.(map[string]any); ok {
+			for k, v := range m {
+				keyvals = append(keyvals, k, v)
+			}
+		} else {
+			keyvals = append(keyvals, t.cfg.MetadataFieldName, params.Metadata)
+		}
+	}
+
+	t.logger.Log(toCharmLevel(params.LogLevel), transport.JoinMessages(params.Messages), keyvals...)
+}
+
+// toCharmLevel maps loglayer levels to charmbracelet/log levels. Trace
+// collapses to Debug because charmbracelet/log has no Trace level.
+func toCharmLevel(l loglayer.LogLevel) clog.Level {
+	switch l {
+	case loglayer.LogLevelTrace, loglayer.LogLevelDebug:
+		return clog.DebugLevel
+	case loglayer.LogLevelInfo:
+		return clog.InfoLevel
+	case loglayer.LogLevelWarn:
+		return clog.WarnLevel
+	case loglayer.LogLevelError:
+		return clog.ErrorLevel
+	case loglayer.LogLevelFatal:
+		return clog.FatalLevel
+	default:
+		return clog.InfoLevel
+	}
+}

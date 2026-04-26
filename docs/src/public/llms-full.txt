@@ -1,0 +1,293 @@
+# LogLayer for Go: Comprehensive LLM Reference
+
+> Transport-agnostic structured logging for Go. A fluent API on top of zerolog, zap, logrus, phuslu/log, charmbracelet/log, or any custom transport.
+
+This is the comprehensive reference. For the concise index see llms.txt.
+
+Module path: `go.loglayer.dev/loglayer`. GitHub: `github.com/loglayer/loglayer-go`.
+
+## Core Concepts
+
+LogLayer separates structured data into three categories with distinct scopes:
+
+| Category | Method        | Scope                      | Purpose                                |
+|----------|---------------|----------------------------|----------------------------------------|
+| Fields   | WithFields    | Persistent across all logs | Request IDs, user info, session data   |
+| Metadata | WithMetadata  | Single log entry only      | Per-event details: durations, counts   |
+| Errors   | WithError     | Single log entry only      | An error value, serialized for output  |
+
+Each category can be muted, renamed, or nested under a configurable field.
+
+## API Surface
+
+### Construction
+
+`loglayer.New(Config) *LogLayer` panics on misconfiguration (no transport set; reports `loglayer.ErrNoTransport`). For explicit error handling use `loglayer.Build(Config) (*LogLayer, error)`.
+
+```go
+log := loglayer.New(loglayer.Config{
+    Transport:        someTransport,        // or Transports: []
+    Prefix:           "[auth]",
+    Enabled:          ptr(true),
+    ErrorSerializer:  func(err error) map[string]any { ... },
+    ErrorFieldName:   "err",
+    CopyMsgOnOnlyError: false,
+    FieldsKey: "",                   // empty = merge at root
+    MuteFields:      false,
+    MuteMetadata:     false,
+    DisableFatalExit: false,                // false = Fatal calls os.Exit(1)
+})
+
+// Or:
+log, err := loglayer.Build(loglayer.Config{...})
+```
+
+### Log Levels
+
+Six levels, integer-typed:
+
+- `loglayer.LogLevelTrace` (10)
+- `loglayer.LogLevelDebug` (20)
+- `loglayer.LogLevelInfo` (30)
+- `loglayer.LogLevelWarn` (40)
+- `loglayer.LogLevelError` (50)
+- `loglayer.LogLevelFatal` (60)
+
+Level methods on `*loglayer.LogLayer`:
+
+```go
+log.Trace(...messages any)
+log.Debug(...messages any)
+log.Info(...messages any)
+log.Warn(...messages any)
+log.Error(...messages any)
+log.Fatal(...messages any)  // dispatches then calls os.Exit(1) unless DisableFatalExit
+```
+
+### Builder Chain
+
+`WithMetadata`, `WithError`, and `WithCtx` return `*LogBuilder`. Chain then terminate with a level method.
+
+```go
+log.WithCtx(ctx).
+    WithMetadata(loglayer.Metadata{"k": "v"}).
+    WithError(err).
+    Error("failed")
+```
+
+A `*LogBuilder` is single-use. Calling `WithMetadata` twice replaces the value (it does not merge).
+
+### Special Methods
+
+```go
+log.MetadataOnly(loglayer.Metadata{...})                          // logs metadata at Info
+log.MetadataOnly(loglayer.Metadata{...}, loglayer.LogLevelWarn)   // override level
+log.ErrorOnly(err)                                                // logs error at Error
+log.ErrorOnly(err, loglayer.ErrorOnlyOpts{LogLevel: ..., CopyMsg: ...})
+log.Raw(loglayer.RawLogEntry{                                     // bypass builder
+    LogLevel: ..., Messages: ..., Metadata: ..., Err: ..., Fields: ..., Ctx: ...,
+})
+log.WithCtx(ctx).Info("...")                                      // attach context.Context
+```
+
+### Fields
+
+```go
+log = log.WithFields(loglayer.Fields{"requestId": "abc"})  // returns new logger; assign
+fields := log.GetFields()                                  // shallow copy
+log = log.ClearFields()                                    // remove all (returns new logger)
+log = log.ClearFields("key1", "key2")                      // remove specific (returns new logger)
+log.MuteFields().UnmuteFields()                            // suppress in output (mutate, atomic)
+```
+
+`loglayer.Fields` is a type alias for `map[string]any`. Fields are keyed because they support merge, clear-by-key, and copy-on-Child semantics that only make sense over keys.
+
+`WithFields` and `ClearFields` return a new logger instead of mutating the receiver — matches zerolog/zap/slog/logrus convention. The compiler does not catch a discarded return value, so always assign.
+
+### Metadata
+
+`loglayer.Metadata` is a type alias for `map[string]any`. The two forms are runtime-identical; the alias is the idiomatic form in user code.
+
+```go
+log.WithMetadata(loglayer.Metadata{"userId": 42}).Info("login")  // map
+log.WithMetadata(MyStruct{...}).Info("event")                    // struct
+```
+
+`WithMetadata` accepts `any`. The transport decides serialization:
+
+- structured, console, pretty: maps merge at root, structs JSON-roundtrip into root fields
+- zerolog, zap, phuslu, logrus: maps merge at root, structs nest under MetadataFieldName (default "metadata")
+- charmlog: maps flatten to keyvals, structs as a single keyval
+
+### Errors
+
+```go
+log.WithError(err).Error("failed")           // attach to a log
+log.ErrorOnly(err)                            // log only the error
+```
+
+Default serialization: `{"message": err.Error()}`. Override via `Config.ErrorSerializer`. Recommended: `github.com/rotisserie/eris` whose `ToJSON(err, withTrace)` returns `map[string]any` directly.
+
+```go
+import "github.com/rotisserie/eris"
+
+loglayer.New(loglayer.Config{
+    Transport: structured.New(structured.Config{}),
+    ErrorSerializer: func(err error) map[string]any {
+        return eris.ToJSON(err, true)
+    },
+})
+```
+
+### Level Control
+
+```go
+log.SetLevel(loglayer.LogLevelWarn)         // enables warn and above
+log.EnableLevel(loglayer.LogLevelDebug)     // toggle one level
+log.DisableLevel(loglayer.LogLevelDebug)
+log.IsLevelEnabled(loglayer.LogLevelInfo)
+log.EnableLogging() / log.DisableLogging()  // master switch
+```
+
+### Child Loggers
+
+```go
+child := log.Child()                  // shallow copy of fields + level state
+prefixed := log.WithPrefix("[auth]")  // child with prefix override
+```
+
+Child mutations do not affect parent. Transports are shared (same instances).
+
+### Transport Management
+
+```go
+log.AddTransport(t)                   // append, replaces if same ID
+log.RemoveTransport("id")             // returns bool
+log.WithFreshTransports(t1, t2)       // replace all
+log.GetLoggerInstance("id")           // underlying logger from a transport
+```
+
+### Mocking for Tests
+
+Three patterns:
+
+1. `loglayer.NewMock()`: drop-in `*LogLayer` backed by a discard transport. Sets `DisableFatalExit: true` automatically.
+2. `transports/testing`: captures every entry into a mutex-safe library with typed `LogLine` fields for assertions.
+3. `log.DisableLogging()`: keeps real wiring but suppresses output.
+
+```go
+log := loglayer.NewMock()  // silent
+
+lib := &lltest.TestLoggingLibrary{}
+log = loglayer.New(loglayer.Config{
+    Transport: lltest.New(lltest.Config{Library: lib}),
+})
+// then assert on lib.Lines() / lib.PopLine()
+```
+
+There is no `loglayer.Logger` interface. Go convention is "consumer defines the interface" so application code accepts the concrete `*loglayer.LogLayer` and `NewMock()` returns the same concrete type.
+
+## Fatal Behavior
+
+`log.Fatal(...)` writes the entry to all transports, then calls `os.Exit(1)`. This matches the Go convention used by `log.Fatal` in stdlib, zerolog, zap, logrus, etc.
+
+To opt out, set `Config.DisableFatalExit: true`. `loglayer.NewMock()` does this automatically.
+
+Caveat: the phuslu transport calls `os.Exit` from its underlying library before the core's check ever runs. For tests or library code that needs guaranteed non-exit, use a different transport for fatal-level paths.
+
+## Transports
+
+### Renderers
+
+Self-contained transports that format the entry and write to an `io.Writer`.
+
+- **console**: plain `fmt.Println`-style output. Stdout for trace/debug/info, stderr for warn/error/fatal. Useful for fixture generation; for human-readable dev output prefer pretty.
+- **pretty**: colorized terminal output. Five themes (Moonlight default, Sunlight, Neon, Nature, Pastel). Three view modes (inline default, message-only, expanded). Pulls in `github.com/fatih/color`.
+- **structured**: one JSON object per log entry. Default fields msg/level/time, all configurable. Stdlib only.
+- **testing**: in-memory capture into `TestLoggingLibrary` with typed `LogLine` exposing Messages/Data/HasData/Metadata/Ctx. Stdlib only.
+- **blank**: delegates `SendToLogger` to a user-supplied `func(loglayer.TransportParams)`. For prototyping a transport inline, one-off integrations (metrics, queues, HTTP forwarders), or tests that want raw TransportParams. Honors level filtering; nil function silently drops.
+
+### Logger Wrappers
+
+Transports that hand the entry to an existing logger.
+
+- **zerolog**: wraps `github.com/rs/zerolog`. Routes fatal entries through `WithLevel(FatalLevel)` to defer the exit decision to core.
+- **zap**: wraps `go.uber.org/zap`. Always wraps the supplied logger with `zap.WithFatalHook(noopFatalHook{})` because zap silently overrides `WriteThenNoop` back to `WriteThenFatal`. A custom hook is required.
+- **slog**: wraps the stdlib `*log/slog.Logger`. Forwards `WithCtx` to `LogAttrs` so handlers downstream can extract trace context. Fatal maps to `slog.LevelError + 4`.
+- **phuslu**: wraps `github.com/phuslu/log`. **Always exits on Fatal** regardless of `DisableFatalExit`. phuslu calls `os.Exit` from every fatal dispatch path.
+- **logrus**: wraps `github.com/sirupsen/logrus`. Builds a fresh `*logrus.Logger` copying the user's settings with `ExitFunc` neutralized so the user's original logger is never mutated.
+- **charmlog**: wraps `github.com/charmbracelet/log` (package named `charmlog` to avoid stdlib `log` collision). Uses `Log(level, ...)` which doesn't exit on Fatal.
+
+### TransportParams Shape
+
+Every transport receives:
+
+```go
+type TransportParams struct {
+    LogLevel LogLevel
+    Messages []any           // already prefix-applied
+    Data     Data            // assembled fields + error map (nil if HasData false)
+    HasData  bool
+    Metadata any             // raw value passed to WithMetadata
+    Err      error
+    Fields   Fields          // logger's persistent key/value bag
+    Ctx      context.Context // per-call Go context attached via WithCtx; nil if not set
+}
+```
+
+`Data` is a convenience map (fields + error). `Metadata` is the raw value the user passed; transports decide serialization. `Ctx` carries deadlines, cancellation, and request-scoped values; transports can extract trace IDs etc.
+
+## Custom Transports
+
+Implement four methods:
+
+```go
+type Transport interface {
+    ID() string
+    IsEnabled() bool
+    SendToLogger(params loglayer.TransportParams)
+    GetLoggerInstance() any
+}
+```
+
+Embed `transport.BaseTransport` to get ID, IsEnabled, and ShouldProcess for free. See the transports/creating-transports doc for a minimal example.
+
+## Integrations
+
+- **integrations/loghttp**: HTTP middleware that derives a per-request logger from a base logger via `WithFields`, attaches `requestId` (from `X-Request-ID` header or generated), `method`, and `path`, stores the derived logger in the request context via `loglayer.NewContext`, and emits a "request completed" log line at the end of the request with status, bytes, and duration in metadata. Status-based level escalation by default (5xx → Error, 4xx → Warn, else → Info). Wraps any net/http-compatible router. Functional options: `WithRequestIDHeader`, `WithRequestIDGenerator`, `WithFieldNames`, `WithStartLog`, `WithStatusLevels`, `WithExtraFields`. `loghttp.FromRequest(r)` retrieves the per-request logger inside a handler.
+
+```go
+http.ListenAndServe(":8080", loghttp.Middleware(log)(mux))
+
+func handler(w http.ResponseWriter, r *http.Request) {
+    log := loghttp.FromRequest(r)
+    log.Info("doing work") // includes requestId, method, path
+}
+```
+
+## Thread Safety
+
+Every method on `*LogLayer` is safe to call from any goroutine, including concurrently with emission. There is no setup-only category.
+
+- **Emission methods** (`Info`, `WithMetadata`, `Raw`, ...): read-only.
+- **Returns-new** (`WithFields`, `ClearFields`, `Child`, `WithPrefix`): build a new logger; receiver untouched.
+- **Level mutators** (`SetLevel`, `EnableLevel`, `DisableLevel`, `EnableLogging`, `DisableLogging`): atomic.Uint32 bitmap. Mirrors `zap.AtomicLevel`. Safe for live runtime toggling (SIGUSR1, admin endpoints).
+- **Transport mutators** (`AddTransport`, `RemoveTransport`, `WithFreshTransports`): atomic.Pointer[transportSet]. Concurrent mutators serialize via internal mutex; dispatch hot path is lock-free.
+- **Mute toggles** (`MuteFields`, `UnmuteFields`, `MuteMetadata`, `UnmuteMetadata`): atomic.Bool.
+
+Verified by `concurrency_test.go` under `-race`.
+
+## What's Out of Scope (v1)
+
+These exist in upstream TS loglayer but are not in the Go port:
+
+- Plugin system
+- Field managers (TS calls these "context managers": Linked / Isolated / Default)
+- Log level managers (LinkedLogLevelManager / etc.)
+- Group routing
+- Lazy / async lazy evaluation
+- Mixins (the `useLogLayerMixin` augmentation pattern)
+
+## Versioning
+
+Currently single-module, single-version. Tag at the repo root (e.g. v1.0.0). All packages move together. Subject to change as the project matures.

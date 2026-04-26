@@ -1,0 +1,87 @@
+# LogLayer for Go
+
+> Transport-agnostic structured logging for Go. A fluent API on top of zerolog, zap, logrus, phuslu/log, charmbracelet/log, or any custom transport.
+
+LogLayer for Go gives you one consistent API for messages, persistent fields, per-call metadata, and errors. The underlying logger is a configuration choice. Module path: `go.loglayer.dev/loglayer`. GitHub: `github.com/loglayer/loglayer-go`.
+
+## Introduction
+
+- [Why Use LogLayer?](https://go.loglayer.dev/introduction): Pitch and design rationale.
+- [Getting Started](https://go.loglayer.dev/getting-started): Install, first example, recommended setup.
+- [Configuration](https://go.loglayer.dev/configuration): Every Config field.
+- [Cheat Sheet](https://go.loglayer.dev/cheatsheet): One-page API reference.
+- [What's New](https://go.loglayer.dev/whats-new): User-visible changes by date.
+
+## Logging API
+
+- [Basic Logging](https://go.loglayer.dev/logging-api/basic-logging): The six level methods, prefix, message assembly. Fatal exits the process by default.
+- [Adjusting Log Levels](https://go.loglayer.dev/logging-api/adjusting-log-levels): SetLevel, EnableLevel, DisableLevel, master on/off.
+- [Fields](https://go.loglayer.dev/logging-api/fields): Persistent keyed data via WithFields, ClearFields, FieldsKey.
+- [Metadata](https://go.loglayer.dev/logging-api/metadata): Per-log payload via WithMetadata. loglayer.Metadata is the canonical map alias.
+- [Error Handling](https://go.loglayer.dev/logging-api/error-handling): WithError, ErrorOnly, custom ErrorSerializer (recommend rotisserie/eris).
+- [Go Context](https://go.loglayer.dev/logging-api/go-context): WithCtx attaches a context.Context per call; surfaced to transports via TransportParams.Ctx.
+- [Child Loggers](https://go.loglayer.dev/logging-api/child-loggers): Child(), WithPrefix(), isolation semantics.
+- [Transport Management](https://go.loglayer.dev/logging-api/transport-management): AddTransport, RemoveTransport, GetLoggerInstance.
+- [Raw Logging](https://go.loglayer.dev/logging-api/raw): Raw(RawLogEntry) bypasses the builder.
+- [Mocking](https://go.loglayer.dev/logging-api/mocking): loglayer.NewMock() for silent mocks; transports/testing for capture.
+
+## Transports
+
+- [Overview](https://go.loglayer.dev/transports/): Renderers vs Logger Wrappers.
+- [Multiple Transports](https://go.loglayer.dev/transports/multiple-transports): Fan-out semantics.
+- [Creating Transports](https://go.loglayer.dev/transports/creating-transports): The Transport interface and BaseTransport helper.
+
+### Renderers
+
+- [Console](https://go.loglayer.dev/transports/console): Plain fmt.Println-style output.
+- [Pretty](https://go.loglayer.dev/transports/pretty): Colorized terminal output. Recommended for local dev.
+- [Structured](https://go.loglayer.dev/transports/structured): One JSON object per entry.
+- [Testing](https://go.loglayer.dev/transports/testing): In-memory capture for tests.
+- [Blank](https://go.loglayer.dev/transports/blank): Delegates SendToLogger to a user-supplied function. For prototyping or one-off integrations.
+
+### Logger Wrappers
+
+- [Zerolog](https://go.loglayer.dev/transports/zerolog): Wraps github.com/rs/zerolog.
+- [Zap](https://go.loglayer.dev/transports/zap): Wraps go.uber.org/zap.
+- [log/slog](https://go.loglayer.dev/transports/slog): Wraps the stdlib *slog.Logger. Forwards WithCtx to LogAttrs.
+- [phuslu/log](https://go.loglayer.dev/transports/phuslu): Wraps github.com/phuslu/log. Always exits on Fatal.
+- [logrus](https://go.loglayer.dev/transports/logrus): Wraps github.com/sirupsen/logrus.
+- [charmbracelet/log](https://go.loglayer.dev/transports/charmlog): Wraps github.com/charmbracelet/log.
+
+## Integrations
+
+- [HTTP middleware (loghttp)](https://go.loglayer.dev/integrations/loghttp): One-line middleware that derives a per-request logger with requestId/method/path, stores it in the request context, emits a "request completed" log with status, bytes, and duration. Wraps any net/http-compatible router (chi, gorilla, gin, echo, stdlib).
+
+## Key Patterns
+
+```go
+import "go.loglayer.dev/loglayer"
+
+// Construct (panics on misconfiguration)
+log := loglayer.New(loglayer.Config{
+    Transport: pretty.New(pretty.Config{}),
+})
+
+// Or with explicit error handling
+log, err := loglayer.Build(loglayer.Config{
+    Transport: pretty.New(pretty.Config{}),
+})
+
+// Persistent fields (returns new logger; assign the result)
+log = log.WithFields(loglayer.Fields{"requestId": "abc"})
+
+// Per-log metadata, idiomatic alias
+log.WithMetadata(loglayer.Metadata{"userId": 42}).Info("user login")
+
+// Per-log struct metadata (transport decides serialization)
+log.WithMetadata(MyEvent{...}).Info("event")
+
+// Errors
+log.WithError(err).Error("operation failed")
+
+// Per-call Go context (trace IDs, deadlines, etc.)
+log.WithCtx(ctx).Info("request received")
+
+// Test mock (silent, fatal does not exit)
+log := loglayer.NewMock()
+```

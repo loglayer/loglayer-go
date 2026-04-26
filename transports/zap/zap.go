@@ -1,0 +1,119 @@
+// Package zap provides a LogLayer transport backed by go.uber.org/zap.
+package zap
+
+import (
+	"io"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
+	"go.loglayer.dev/loglayer"
+	"go.loglayer.dev/loglayer/transport"
+)
+
+// Config holds configuration options for the zap transport.
+type Config struct {
+	transport.BaseConfig
+
+	// Logger is the underlying *zap.Logger. When nil a default logger writing
+	// to Writer with a JSON encoder is constructed. Provide your own logger
+	// to share encoders, hooks, samplers, or fields already configured.
+	//
+	// Whichever logger is used, this transport always wraps it with
+	// zap.WithFatalHook(zapcore.WriteThenNoop) so loglayer's contract that
+	// Fatal does NOT terminate the process is honored.
+	Logger *zap.Logger
+
+	// Writer is used only when Logger is nil. Defaults to os.Stderr.
+	Writer io.Writer
+
+	// MetadataFieldName is the key under which non-map metadata values are
+	// emitted (structs, scalars, slices, etc.). Map metadata is always merged
+	// at the root. Defaults to "metadata".
+	MetadataFieldName string
+}
+
+// Transport sends log entries to a *zap.Logger.
+type Transport struct {
+	transport.BaseTransport
+	cfg    Config
+	logger *zap.Logger
+}
+
+// New creates a zap Transport from the given Config.
+func New(cfg Config) *Transport {
+	if cfg.MetadataFieldName == "" {
+		cfg.MetadataFieldName = "metadata"
+	}
+	var base *zap.Logger
+	if cfg.Logger != nil {
+		base = cfg.Logger
+	} else {
+		enc := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
+		core := zapcore.NewCore(enc, zapcore.AddSync(transport.WriterOrStderr(cfg.Writer)), zapcore.DebugLevel)
+		base = zap.New(core)
+	}
+	// Always neutralize the fatal hook so loglayer's "Fatal does not exit"
+	// contract holds regardless of how the supplied logger was constructed.
+	// zap explicitly overrides zapcore.WriteThenNoop back to WriteThenFatal,
+	// so a custom hook is required.
+	logger := base.WithOptions(zap.WithFatalHook(noopFatalHook{}))
+	return &Transport{
+		BaseTransport: transport.NewBaseTransport(cfg.BaseConfig),
+		cfg:           cfg,
+		logger:        logger,
+	}
+}
+
+// GetLoggerInstance returns the underlying *zap.Logger.
+func (t *Transport) GetLoggerInstance() any { return t.logger }
+
+// SendToLogger implements loglayer.Transport.
+func (t *Transport) SendToLogger(params loglayer.TransportParams) {
+	if !t.ShouldProcess(params.LogLevel) {
+		return
+	}
+	fields := make([]zap.Field, 0, transport.FieldEstimate(params))
+
+	if params.HasData {
+		for k, v := range params.Data {
+			fields = append(fields, zap.Any(k, v))
+		}
+	}
+
+	if params.Metadata != nil {
+		if m, ok := params.Metadata.(map[string]any); ok {
+			for k, v := range m {
+				fields = append(fields, zap.Any(k, v))
+			}
+		} else {
+			fields = append(fields, zap.Any(t.cfg.MetadataFieldName, params.Metadata))
+		}
+	}
+
+	t.logger.Log(toZapLevel(params.LogLevel), transport.JoinMessages(params.Messages), fields...)
+}
+
+// noopFatalHook keeps Fatal-level entries from terminating the process.
+type noopFatalHook struct{}
+
+func (noopFatalHook) OnWrite(*zapcore.CheckedEntry, []zapcore.Field) {}
+
+// toZapLevel maps loglayer levels to zapcore.Level. Trace collapses to Debug
+// because zap has no Trace level.
+func toZapLevel(l loglayer.LogLevel) zapcore.Level {
+	switch l {
+	case loglayer.LogLevelTrace, loglayer.LogLevelDebug:
+		return zapcore.DebugLevel
+	case loglayer.LogLevelInfo:
+		return zapcore.InfoLevel
+	case loglayer.LogLevelWarn:
+		return zapcore.WarnLevel
+	case loglayer.LogLevelError:
+		return zapcore.ErrorLevel
+	case loglayer.LogLevelFatal:
+		return zapcore.FatalLevel
+	default:
+		return zapcore.InfoLevel
+	}
+}
