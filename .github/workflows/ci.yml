@@ -30,16 +30,24 @@ jobs:
           go-version: ${{ matrix.go }}
           cache: true
 
-      - name: Verify modules tidy
+      - name: Verify modules tidy (all modules)
         run: |
-          go mod tidy
-          git diff --exit-code go.mod go.sum
+          set -e
+          for mod in . transports/otellog plugins/oteltrace plugins/datadogtrace/livetest examples/otel-end-to-end; do
+            echo "==> $mod"
+            (cd "$mod" && go mod tidy && git diff --exit-code go.mod go.sum)
+          done
 
       - name: Build
         run: go build ./...
 
-      - name: Vet
-        run: go vet ./...
+      - name: Vet (all modules)
+        run: |
+          set -e
+          for mod in . transports/otellog plugins/oteltrace plugins/datadogtrace/livetest examples/otel-end-to-end; do
+            echo "==> $mod"
+            (cd "$mod" && go vet ./...)
+          done
 
       - name: Test (main module)
         run: go test -race -count=1 ./...
@@ -84,5 +92,10 @@ jobs:
           cache: true
       - name: Install staticcheck
         run: go install honnef.co/go/tools/cmd/staticcheck@latest
-      - name: Run staticcheck
-        run: staticcheck ./...
+      - name: Run staticcheck (all modules)
+        run: |
+          set -e
+          for mod in . transports/otellog plugins/oteltrace plugins/datadogtrace/livetest; do
+            echo "==> $mod"
+            (cd "$mod" && staticcheck ./...)
+          done
