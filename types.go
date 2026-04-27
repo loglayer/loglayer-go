@@ -4,14 +4,8 @@ import "context"
 
 // Fields is persistent key/value data included with every log entry from a
 // logger instance. Set via WithFields; surfaced to transports via
-// TransportParams.Fields.
-//
-// Fields, Metadata, and Data are distinct named types over map[string]any
-// so the compiler catches accidental misuse (e.g. passing Metadata where
-// Fields is expected). Each plays a distinct role in the dispatch pipeline:
-// Fields is logger-persistent state, Metadata is per-call payload, Data is
-// the assembled output handed to transports. Map literals (loglayer.Fields{...})
-// and untyped map[string]any values are still assignable to any of them.
+// TransportParams.Fields. Distinct from Metadata (per-call) and Data
+// (assembled output) at the type level so the compiler catches misuse.
 type Fields map[string]any
 
 // Data is the assembled object sent to transports containing the persistent

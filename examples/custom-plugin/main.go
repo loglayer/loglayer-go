@@ -128,7 +128,7 @@ func main() {
 	}).Info("login")
 
 	// Debug entry: vetoed by dropDebugFromTransport for the pretty transport.
-	log.Debug("this debug line is vetoed and does not appear")
+	log.Debug("vetoed; not emitted")
 
 	// Note the count is 3, not 2: OnBeforeDataOut runs *before* ShouldSend
 	// gates the dispatch, so the vetoed Debug entry still ran through the

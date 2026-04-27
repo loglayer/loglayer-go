@@ -872,8 +872,8 @@ func TestPlugin_RecoveredPanicErrorTypedInspection(t *testing.T) {
 	if rpe.Hook != "OnBeforeDataOut" {
 		t.Errorf("Hook: got %q, want %q", rpe.Hook, "OnBeforeDataOut")
 	}
-	if rpe.RecoveredValue() != error(originalErr) {
-		t.Errorf("RecoveredValue: got %v, want %v", rpe.RecoveredValue(), originalErr)
+	if rpe.Value != error(originalErr) {
+		t.Errorf("Value: got %v, want %v", rpe.Value, originalErr)
 	}
 	if !errors.Is(caught, originalErr) {
 		t.Errorf("errors.Is should reach the wrapped panic value")
@@ -881,7 +881,7 @@ func TestPlugin_RecoveredPanicErrorTypedInspection(t *testing.T) {
 }
 
 // When the panic value is a non-error (string, int, custom struct),
-// RecoveredValue exposes it. Unwrap returns nil because there's no
+// the Value field exposes it. Unwrap returns nil because there's no
 // error chain to follow.
 func TestPlugin_RecoveredPanicErrorWithNonErrorValue(t *testing.T) {
 	log, _ := setup(t)
@@ -897,8 +897,8 @@ func TestPlugin_RecoveredPanicErrorWithNonErrorValue(t *testing.T) {
 	if !errors.As(caught, &rpe) {
 		t.Fatalf("caught error should be *RecoveredPanicError")
 	}
-	if rpe.RecoveredValue() != "string-panic" {
-		t.Errorf("RecoveredValue: got %v, want %q", rpe.RecoveredValue(), "string-panic")
+	if rpe.Value != "string-panic" {
+		t.Errorf("Value: got %v, want %q", rpe.Value, "string-panic")
 	}
 	if errors.Unwrap(caught) != nil {
 		t.Errorf("Unwrap should be nil for non-error panic values")
