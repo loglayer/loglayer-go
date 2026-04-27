@@ -158,12 +158,12 @@ func TestDispatchEdge_ErrorSerializerReturningEmptyMap(t *testing.T) {
 // last plugin returning ok=true wins. Earlier ok=true returns are
 // overridden.
 func TestDispatchEdge_TransformLogLevel_LastTrueWins(t *testing.T) {
-	log, lib := twoTransport_singleLib(t)
+	log, lib := twoTransportSingleLib(t)
 
 	// Three plugins:
-	//  - A always returns Warn (ok=true)
-	//  - B returns Error (ok=true) — should override A
-	//  - C returns nothing (ok=false) — leaves Error in place
+	//  - A always returns Warn (ok=true).
+	//  - B returns Error (ok=true). Should override A.
+	//  - C returns nothing (ok=false). Leaves Error in place.
 	log.AddPlugin(loglayer.Plugin{
 		ID: "first-warn",
 		TransformLogLevel: func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) {
@@ -191,10 +191,10 @@ func TestDispatchEdge_TransformLogLevel_LastTrueWins(t *testing.T) {
 	}
 }
 
-// twoTransport_singleLib returns a logger with one test transport so a
+// twoTransportSingleLib returns a logger with one test transport so a
 // caller asserting on "the level the transport saw" doesn't have to
 // pick which of two libraries to read from.
-func twoTransport_singleLib(t *testing.T) (*loglayer.LogLayer, *lltest.TestLoggingLibrary) {
+func twoTransportSingleLib(t *testing.T) (*loglayer.LogLayer, *lltest.TestLoggingLibrary) {
 	t.Helper()
 	lib := &lltest.TestLoggingLibrary{}
 	tr := lltest.New(lltest.Config{BaseConfig: transport.BaseConfig{ID: "test"}, Library: lib})
