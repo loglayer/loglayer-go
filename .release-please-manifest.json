@@ -1,0 +1,5 @@
+{
+  ".": "0.0.0",
+  "transports/otellog": "0.0.0",
+  "plugins/oteltrace": "0.0.0"
+}

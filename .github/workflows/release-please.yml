@@ -1,0 +1,34 @@
+name: Release Please
+
+# Reads conventional commits on main, maintains a permanent
+# "release-please--branches--main" PR that proposes the next version
+# bump (CHANGELOG entries + manifest update). Merging that PR creates
+# the git tag(s) and the GitHub Release(s).
+#
+# Multi-module-aware via .release-please-config.json: the main module
+# tags as v0.X.Y; sub-modules tag as <component>/v0.X.Y. The split-out
+# transports/otellog and plugins/oteltrace each get their own
+# component, so they can be released independently when their commit
+# scopes (feat(transports/otellog): ...) trigger a bump.
+#
+# This replaces the manual "git tag && git push --tags" flow. The old
+# release.yml that fired on tag-push is no longer needed, since
+# release-please-action also creates the GitHub Release.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: .release-please-config.json
+          manifest-file: .release-please-manifest.json

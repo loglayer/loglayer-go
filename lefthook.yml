@@ -36,5 +36,9 @@ pre-commit:
 
 pre-push:
   commands:
+    # Tests every module (main + sub-modules) so a clean pre-push
+    # mirrors what CI will see. The shared script lives under scripts/
+    # so devs can also run `scripts/foreach-module.sh test` (or any
+    # other op) directly when iterating.
     test-race:
-      run: go test -race -timeout 60s ./...
+      run: scripts/foreach-module.sh test

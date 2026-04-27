@@ -147,17 +147,29 @@ fast (the full pre-push suite finishes in ~15s).
 
 ## Versioning and Changelog
 
-Single Go module: `go.loglayer.dev`. All packages move together under one
-release tag.
+Releases are managed by [Release Please](https://github.com/googleapis/release-please).
+Conventional commits on `main` drive an always-open "release-please" PR
+that proposes the next version + changelog entries; merging that PR
+creates the tag(s) and the GitHub Release(s). Don't `git tag` manually.
 
-- Tags: `v0.x.x` during the pre-1.0 phase, then SemVer for v1+.
-- Tag lives at the repo root (e.g. `git tag v0.2.0`); pkg.go.dev picks up the
-  new version automatically.
-- `CHANGELOG.md` at repo root. Format follows [Keep a Changelog](https://keepachangelog.com).
-  Group entries by component (loglayer / transports/<name>) within each release.
-- User-facing changes also go in `docs/src/whats-new.md` with a date header.
-- Conventional commits with package scope: `feat(pretty): ...`, `fix(zap): ...`,
-  `docs(transports): ...`. Allowed types: feat, fix, docs, chore, refactor, test, perf, ci.
+- **Main module** tags as `v0.X.Y`. Sub-modules tag as
+  `transports/otellog/v0.X.Y`, `plugins/oteltrace/v0.X.Y` (Go module
+  convention). Configured in `.release-please-config.json` and
+  `.release-please-manifest.json`.
+- Pre-1.0 (current state): minor bumps for `feat:`, patch for `fix:`,
+  per the `bump-minor-pre-major` config setting.
+- `CHANGELOG.md` at repo root is **maintained by Release Please** from
+  this point forward. The pre-Release-Please content (the v0.1.0 [Unreleased]
+  section) stays as historical context.
+- User-facing release notes also land in `docs/src/whats-new.md` for
+  the docs site. Currently maintained manually; follow the Keep a
+  Changelog shape.
+- Conventional commits with package scope drive the release:
+  `feat(pretty): ...`, `fix(zap): ...`, `docs(transports): ...`.
+  Allowed types (also enforced by `pr-title.yml`): feat, fix, docs,
+  chore, refactor, test, perf, ci. Scopes that match a sub-module's
+  component name (`transports/otellog`, `plugins/oteltrace`) trigger
+  a release of that sub-module specifically.
 
 ### When to Split a Transport into Its Own Module
 
@@ -186,27 +198,40 @@ preemptively; the overhead (per-package go.mod, replace directives during dev,
 more complex release flow) is real and only worth it once one of the above
 triggers fires.
 
-The release workflow in `.github/workflows/release.yml` already accepts both
-tag forms (`v*.*.*` at root and `transports/*/v*.*.*` / `plugins/*/v*.*.*`
-for prefixed).
+When you split a new sub-module that should be releasable on its own,
+add an entry to `.release-please-config.json` (with the right
+`package-name` and `component`) and `.release-please-manifest.json`
+(initial version, e.g. `0.0.0`). Release Please handles the rest.
 
-CI runs `go test` per sub-module by `cd`ing into each module's directory;
-see `.github/workflows/ci.yml` for the established steps.
+CI runs `go test` and the other checks per-module via
+`scripts/foreach-module.sh`. Add a new module to that script's
+`ALL_MODULES` array and CI / pre-push hooks pick it up automatically.
 
 ## CI / Release Workflows
 
 `.github/workflows/`:
 
-- **ci.yml**: build + vet + test -race + staticcheck on every push/PR.
-- **docs.yml**: build vitepress docs on PR (verify clean), deploy to GitHub Pages on main push.
-- **release.yml**: triggered on `v*.*.*` (or `transports/*/v*.*.*`) tag.
-  Verifies the build and creates a GitHub Release with notes pulled from CHANGELOG.md.
+- **ci.yml**: build, gofmt, vet, test -race, staticcheck, govulncheck.
+  Matrix tests Go 1.25 and 1.26. Calls `scripts/foreach-module.sh`
+  for the per-module operations so the same checks run locally.
+- **docs.yml**: build vitepress docs on PR (verify clean), deploy to
+  GitHub Pages on main push.
+- **release-please.yml**: triggered on push to `main`. Maintains the
+  always-open release PR; merging it creates the tag(s) and GitHub
+  Release(s). Do not `git tag` manually.
+- **pr-title.yml**: validates that PR titles follow the conventional
+  commit prefixes Release Please reads. Allowed types match the
+  scoped-commit convention above.
 
 To cut a release:
 
-1. Update `CHANGELOG.md` with a new section.
-2. Add a corresponding entry to `docs/src/whats-new.md`.
-3. Tag: `git tag v0.2.0 && git push --tags`.
+1. Land the changes you want in `main` using conventional commits.
+2. Wait for the release-please PR to update with the proposed bump
+   and changelog. (It runs on every push to `main`; usually <1 minute.)
+3. Edit `docs/src/whats-new.md` to add the user-facing summary if
+   relevant — Release Please doesn't touch this file.
+4. Merge the release-please PR. Tags + GitHub Releases are created
+   automatically.
 
 ## Thread Safety
 

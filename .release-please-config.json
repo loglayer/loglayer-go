@@ -1,0 +1,37 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "go",
+  "bump-minor-pre-major": true,
+  "bump-patch-for-minor-pre-major": false,
+  "draft": false,
+  "prerelease": false,
+  "include-component-in-tag": true,
+  "separator": "/",
+  "packages": {
+    ".": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev",
+      "include-component-in-tag": false,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "transports/otellog": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/transports/otellog",
+      "component": "transports/otellog",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "plugins/oteltrace": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/plugins/oteltrace",
+      "component": "plugins/oteltrace",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    }
+  },
+  "plugins": [
+    {
+      "type": "sentence-case"
+    }
+  ]
+}
