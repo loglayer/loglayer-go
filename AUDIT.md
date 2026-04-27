@@ -12,75 +12,49 @@ Discuss and tackle gradually. Refer to items by number ("let's tackle #3").
 
 ### 1. `Fields`, `Data`, `Metadata` are all `= map[string]any` type aliases
 
-- Status: `[ ]`
-- Where: `types.go:8,12,17`
-- Problem: documented as conceptually distinct but interchangeable to the
-  type system. A user can pass `loglayer.Data` to `WithFields` and the
-  compiler won't catch it. The doc reviewer flagged this as the most
-  confusing terminology in the docs. Compounds with the `Plugin.OnBeforeDataOut`
-  return type also being `Data`.
-- Fix: drop the `=` to make them distinct named types
-  (`type Fields map[string]any`). Small migration cost, removes a class of
-  bugs, clarifies docs. Need to audit every transport/plugin call site to
-  verify they use the correct type.
+- Status: `[x]` done — see commit `83d8055`. Distinct named types now;
+  `transport.MetadataAsRootMap` helper handles the dual-case detection
+  in transports. No user-visible breakage in the repo's own tests.
 
 ### 2. Constructor pattern is inconsistent across transports
 
-- Status: `[ ]`
-- Where: `transports/{http,datadog,otellog}/` (have `Build`) vs
-  `transports/{zerolog,zap,slog,phuslu,logrus,charmlog}/` (no `Build`)
-- Problem: Only network/SDK-bound transports got `Build`. Older wrapper
-  transports panic on misconfig with no error-returning sibling. Pattern
-  is accidental rather than principled.
-- Fix: pick a rule and apply it uniformly. Either every transport gets a
-  `Build` (even if it can't fail today) or document explicitly that
-  `Build` exists only when there's runtime-loaded config. I lean toward
-  the latter — uniform `Build` for non-failing constructors is just noise.
+- Status: `[x]` done — see commit `83d8055`. Documented the rule in
+  `.claude/rules/go-style.md`: "Build exists when the constructor can
+  fail." Wrapper transports that take a pre-built logger ship only `New`;
+  network/SDK-bound transports ship the pair. Sentinels named
+  `Err<X>Required`.
 
 ### 3. `phuslu` can't honor `DisableFatalExit`
 
-- Status: `[ ]`
+- Status: `[ ]` not yet addressed.
 - Where: `transports/phuslu/phuslu.go`,
   `docs/src/transports/_partials/transport-list.md`
 - Problem: the contract is "core decides exit." phuslu is the only
-  transport that breaks it (upstream phuslu always calls `os.Exit` on
-  Fatal). The warning is buried in the per-transport doc page; the
-  partials list doesn't flag it. Newcomers picking a transport from the
-  catalog won't notice.
+  transport that breaks it. The warning is buried.
 - Fix: visible callout in the partials table (a row or icon for
-  "exits-on-fatal-anyway"), or move phuslu to a "use only if you've read
-  the caveats" subsection. Consider whether the phuslu transport earns
-  its keep at all — it's the only one with this footgun.
+  "exits-on-fatal-anyway"). Surfaced once now in the level-mapping
+  blurb on `transports/index.md` (in commit `fc36146`) but the
+  catalog row itself doesn't flag it.
 
 ### 4. `WithPrefix` directly mutates `child.config.Prefix`
 
-- Status: `[ ]`
-- Where: `loglayer.go:216`
-- Problem: only place in the codebase that breaks the immutable-by-copy
-  pattern (`assignedGroups`, `boundCtx`, atomic snapshots). Safe today
-  because `Child()` returns a fresh logger, but the asymmetry will decay
-  into a bug when a future refactor changes how `Child()` shares state.
-- Fix: either deep-copy the `Config` in `Child()` (explicit, small cost),
-  or wrap `Prefix` in the atomic-snapshot pattern used by transport sets.
+- Status: `[x]` done — see commit `83d8055`. Hoisted `Prefix` to a
+  top-level `LogLayer.prefix` field alongside fields/boundCtx/
+  assignedGroups. Same lifecycle: set on a fresh child before publish,
+  never mutated post-publish.
 
 ### 5. CI tests only Go 1.26
 
-- Status: `[ ]`
-- Where: `.github/workflows/ci.yml:24` (`matrix.go: ['1.26']`)
-- Problem: library is pre-1.0 and integrates with several major loggers.
-  Single-version matrix can't detect Go-version compatibility regressions.
-- Fix: add 1.24 and 1.25 to the matrix.
+- Status: `[x]` done — see commit `83d8055`. CI matrix tests Go 1.25
+  and 1.26 (the actual floor turned out to be 1.25, driven by
+  `golang.org/x/exp` via `charmbracelet/log` and `golang.org/x/sys`,
+  not by OTel as originally suspected).
 
 ### 6. Pre-commit and CI enforcement diverge
 
-- Status: `[ ]`
-- Where: `lefthook.yml` (gofmt + vet) vs `.github/workflows/ci.yml`
-  (also runs `staticcheck`)
-- Problem: local commits pass clean and then CI fails on staticcheck.
-  Same drift for tests: pre-push runs `-race ./...` but a developer who
-  commits without pushing for a while never runs the suite locally.
-- Fix: move `staticcheck` into `lefthook.yml` pre-commit. Decide whether
-  to also run `go test -short ./...` pre-commit.
+- Status: `[x]` done — see commit `83d8055`. `lefthook.yml` now runs
+  `staticcheck` pre-commit (skips with a hint when the binary isn't
+  installed). AGENTS.md updated.
 
 ---
 
@@ -88,53 +62,36 @@ Discuss and tackle gradually. Refer to items by number ("let's tackle #3").
 
 ### 7. `WithFields` and friends silently no-op on missing assignment
 
-- Status: `[ ]`
-- Where: `loglayer.go` / `fields.go` (every "returns new logger" method)
-- Problem: `log.WithFields(...)` (without `log = `) is valid Go that
-  silently discards. Documented but not enforced — the canonical Go
-  footgun for this pattern.
-- Fix: add a "Common Pitfalls" doc page that names this and the
-  metadata-mutation trap. Code-level mitigation isn't realistic.
+- Status: `[x]` done — see commit `fc36146`. New `/common-pitfalls`
+  doc page covers this and several other footguns (mutating maps after
+  binding, plugin panics requiring OnError, fatal-exit divergence,
+  ctx-binding traps, group-routing surprises).
 
 ### 8. No coverage reporting in CI
 
-- Status: `[ ]`
-- Where: `.github/workflows/ci.yml`
-- Problem: `go test` runs but nothing uploads coverage. Reviewers can't
-  see if a PR drops coverage; no threshold enforcement.
-- Fix: add a coverage step (`go test -coverprofile=...`) and upload to
-  codecov or similar. Two-line change.
+- Status: `[ ]` deferred (user did not request).
+- Two-line addition: `go test -coverprofile=...` + codecov upload.
 
 ### 9. `panicError` loses typed-error inspection
 
-- Status: `[ ]`
-- Where: `plugin.go:184-189`
-- Problem: when the recovered value isn't already an `error`, the
-  fallback `fmt.Errorf("...: %v", r)` produces an untyped error, so
-  `OnError` consumers can't `errors.As` to detect specific failure modes.
-- Fix: define an unexported `panicValueError` struct that holds the
-  recovered value and exposes it via `RecoveredValue() any`. Marginal — only
-  matters if `OnError` becomes a real observability surface.
+- Status: `[x]` done — see commit `83d8055`. New `RecoveredPanicError`
+  type with `Hook`, `Value`, and `Unwrap()` so `OnError` consumers can
+  `errors.As` to it and reach the original panic value (whether it
+  was an `error` or any other type).
 
 ### 10. Documentation gaps
 
-- Status: `[ ]`
-- Where: `docs/src/`
-- Problems (each is a candidate for its own doc page):
-  - No "migrating from `log/slog`" / `zerolog` / `zap` migration guide.
-    TypeScript users get a dedicated page; Go users coming from stdlib
-    don't.
-  - No "which transport should I use?" decision tree. The catalog lists
-    them all but doesn't help readers pick.
-  - No side-by-side wire-format comparison. `structured` flattens metadata;
-    `zerolog` nests under a key. The inconsistency isn't called out
-    anywhere. A single page with the same input run through every
-    transport, showing JSON output, would be invaluable.
-  - "Fields vs Metadata vs Data" trio is introduced casually but not
-    consolidated. Compounds with #1.
-  - Groups page is technically complete but the 8-rule routing precedence
-    is intimidating; needs a worked multi-service example or flowchart.
-  - "Common pitfalls" page (see #7).
+- Status: `[x]` mostly done.
+  - `[x]` 10a: Migration guides for slog, zerolog, zap (commit pending).
+  - `[x]` 10b: Transport selection decision tree on `transports/index.md`.
+  - `[x]` 10c: Wire format comparison — re-scoped per user feedback.
+    Replaced "growing master table" approach with brief callout
+    pointing readers to per-transport doc pages.
+  - `[x]` 10d: Fields/Metadata/Data terminology consolidated in
+    `/concepts/data-shapes`. Cross-linked from `fields.md` and
+    `metadata.md`.
+  - `[x]` 10e: Groups worked example — multi-service routing scenario
+    with concrete table of what each call dispatches to.
 
 ---
 
@@ -142,39 +99,83 @@ Discuss and tackle gradually. Refer to items by number ("let's tackle #3").
 
 ### 11. `MetadataFieldName` is inconsistent across transports
 
-- Status: `[ ]`
-- Some transports have it, some don't, semantics differ slightly. Audit
-  for uniformity.
+- Status: `[x]` done — audit verified all 7 wrapper transports
+  (slog/zerolog/zap/phuslu/logrus/charmlog/otellog) are already
+  consistent. No code change needed.
 
 ### 12. No goroutine-leak detection in tests
 
-- Status: `[ ]`
-- Add a `goleak.VerifyNone` (or hand-rolled equivalent) in a `TestMain`
-  to catch transport-side leaks.
+- Status: `[x]` done — `go.uber.org/goleak.VerifyTestMain` added to
+  the root package, `transports/http`, and `transports/datadog`.
+  Catches transport-side goroutine leaks (the HTTP/Datadog workers).
 
-### 13. Trace-level mapping table
+### 13. Trace-level mapping comparison table
 
-- Status: `[ ]`
-- zap/slog/charmlog collapse Trace to Debug; zerolog/phuslu/logrus
-  preserve it. Documented per-transport but no single comparison table
-  on the transports overview.
+- Status: `[x]` done — initial big table reverted per user feedback
+  (would grow with every new transport). Replaced with a brief
+  deviation callout on `transports/index.md` listing only the cases
+  that differ from straight pass-through (Trace→Debug in
+  zap/slog/charmlog; phuslu always exits on Fatal).
 
 ### 14. Examples coverage gaps
 
-- Status: `[ ]`
-- The new transports/plugins (otellog, oteltrace, datadogtrace) have docs
-  but no `examples/` entry. Plugin authoring also has no runnable example.
+- Status: `[x]` done.
+  - `examples/custom-plugin/`: from-scratch plugin demo covering
+    `OnBeforeDataOut`, `OnMetadataCalled`, and `ShouldSend`.
+  - `examples/otel-end-to-end/`: combined `transports/otellog` +
+    `plugins/oteltrace` demo against a real OTel SDK with stdout
+    exporters. Lives in its own go.mod (mirroring the OTel split).
+  - Skipped a separate `datadogtrace` example: the per-page docs and
+    the livetest module already cover the documented pattern; an
+    additional example would just duplicate.
 
 ### 15. Test-setup duplication acknowledged but kept
 
-- Status: `[-]` decided not to address
+- Status: `[-]` decided not to address.
 - `setup(t, plugin)` exists in 4 test files. Lifting it across module
-  boundaries (datadogtrace livetest is a separate go.mod) would create
-  more friction than it saves. Two prior `/simplify` passes converged on
-  the same conclusion.
+  boundaries (datadogtrace livetest is a separate go.mod, otellog and
+  oteltrace are now also separate go.mods) would create more friction
+  than it saves. Two prior `/simplify` passes converged on the same
+  conclusion.
+
+---
+
+## Module-structure work (not in original audit)
+
+- Status: `[x]` done — see commit `ba3bfdc`.
+- Split `transports/otellog` and `plugins/oteltrace` into their own Go
+  modules so the OpenTelemetry SDK's transitive deps don't bind users
+  who don't import OTel. Main module's go.sum dropped from 85 → 60
+  lines. The 1.25 floor itself didn't drop because other deps
+  (`golang.org/x/exp`, `golang.org/x/sys`) still demand it; the user
+  decided not to chase a lower floor through more dep surgery.
+- Documented the splitting policy and per-module Go-version handling
+  in `AGENTS.md`, `.claude/rules/documentation.md`, the README, the
+  partial lists, and per-page docs.
 
 ---
 
 ## Done from this audit
 
-(empty for now; move items here as we tackle them)
+- `[x]` #1 — distinct Fields/Data/Metadata named types
+- `[x]` #2 — Build constructor rule documented in coding style
+- `[x]` #4 — WithPrefix mutation removed
+- `[x]` #5 — CI matrix on 1.25 + 1.26
+- `[x]` #6 — staticcheck in lefthook for CI parity
+- `[x]` #7 — `/common-pitfalls` doc page
+- `[x]` #9 — `RecoveredPanicError` typed inspection
+- `[x]` #10a — three migration guides
+- `[x]` #10b — transport selection guide
+- `[x]` #10c — wire-format pointer
+- `[x]` #10d — Fields/Metadata/Data concept page
+- `[x]` #10e — groups worked example
+- `[x]` #11 — MetadataFieldName audit (was already consistent)
+- `[x]` #12 — goleak in tests
+- `[x]` #13 — level-mapping deviation callout
+- `[x]` #14 — examples for new transports/plugins + plugin authoring
+- `[x]` Module split — OTel pieces in their own modules
+
+## Still open
+
+- `[ ]` #3 — phuslu fatal-exit visibility in the catalog table.
+- `[ ]` #8 — coverage reporting in CI (deferred).

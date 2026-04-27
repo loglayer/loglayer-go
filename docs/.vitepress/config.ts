@@ -105,6 +105,14 @@ export default defineConfig({
         ],
       },
       {
+        text: 'Migrating to LogLayer',
+        items: [
+          { text: 'From log/slog', link: '/migrating/from-slog' },
+          { text: 'From zerolog', link: '/migrating/from-zerolog' },
+          { text: 'From zap', link: '/migrating/from-zap' },
+        ],
+      },
+      {
         text: 'Logging API',
         items: [
           { text: 'Basic Logging', link: '/logging-api/basic-logging' },

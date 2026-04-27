@@ -77,9 +77,11 @@ Runnable demos under [`examples/`](./examples):
 - [`http-server`](./examples/http-server) — `loghttp` middleware in an HTTP handler
 - [`multi-transport`](./examples/multi-transport) — pretty in dev + structured to file with per-transport level filtering
 - [`custom-transport`](./examples/custom-transport) — implementing the Transport interface from scratch
+- [`custom-plugin`](./examples/custom-plugin) — writing a plugin from scratch (`OnBeforeDataOut`, `OnMetadataCalled`, `ShouldSend`)
 - [`datadog-shipping`](./examples/datadog-shipping) — Datadog Logs intake with tuned batching
+- [`otel-end-to-end`](./examples/otel-end-to-end) — `transports/otellog` + `plugins/oteltrace` against a real OTel SDK (own module; `cd examples/otel-end-to-end && go run .`)
 
-Run any with `go run ./examples/<name>`.
+Run any of the main-module ones with `go run ./examples/<name>`.
 
 ## Transports & Integrations
 

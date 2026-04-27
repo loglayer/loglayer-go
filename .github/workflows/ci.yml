@@ -66,6 +66,13 @@ jobs:
         working-directory: plugins/datadogtrace/livetest
         run: go test -race -count=1 ./...
 
+      # Multi-module examples: syntax check only (running them produces
+      # stdout output we don't need in CI). -o /dev/null avoids writing
+      # the example binary into the workspace.
+      - name: Build (examples/otel-end-to-end)
+        working-directory: examples/otel-end-to-end
+        run: go build -o /dev/null ./...
+
   staticcheck:
     name: Staticcheck
     runs-on: ubuntu-latest
