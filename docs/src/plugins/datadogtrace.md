@@ -114,19 +114,22 @@ Extract: func(ctx context.Context) (uint64, uint64, bool) {
 }
 ```
 
-For dd-trace-go v2 (the API is similar, just a different import path):
+For dd-trace-go v2 (different import path, and `TraceID` now returns the full hex string; use `TraceIDLower` for the 64-bit decimal form Datadog log/trace correlation expects):
 
 ```go
 import ddtracer2 "github.com/DataDog/dd-trace-go/v2/ddtrace/tracer"
 
 Extract: func(ctx context.Context) (uint64, uint64, bool) {
-    if span, ok := ddtracer2.SpanFromContext(ctx); ok {
-        sc := span.Context()
-        return sc.TraceID(), sc.SpanID(), true
+    span, ok := ddtracer2.SpanFromContext(ctx)
+    if !ok {
+        return 0, 0, false
     }
-    return 0, 0, false
+    sc := span.Context()
+    return sc.TraceIDLower(), sc.SpanID(), true
 }
 ```
+
+The v2 extractor pattern is verified end-to-end against the real dd-trace-go v2 tracer (via its `mocktracer`) in `plugins/datadogtrace/livetest`, a separate test module that keeps Datadog's heavy dep tree out of the main loglayer module.
 
 For OpenTelemetry tracers bridged to Datadog, parse the trace ID from the span context (it's a hex string in OTel) — see the Datadog OTel docs.
 
@@ -162,6 +165,20 @@ The plugin implements `OnBeforeDataOut`, which runs once per emission after fiel
 The extractor runs on the dispatching goroutine for every log entry that has a context attached. dd-trace-go's `SpanFromContext` is a constant-time map lookup — fast enough for hot paths. No allocations beyond the `loglayer.Data` map the plugin returns.
 
 The plugin is a no-op for log calls without `WithCtx`, so untraced logs pay zero cost.
+
+## Live Integration Tests
+
+The plugin ships with a live integration test against the real dd-trace-go v2 tracer (using its in-process `mocktracer`). It validates that the documented v2 extractor pattern produces IDs in the decimal-string format Datadog ingestion expects, including for nested spans.
+
+The livetest lives in **its own Go module** at `plugins/datadogtrace/livetest/` so that dd-trace-go's heavy transitive closure (datadog-agent internals, OTel collector pieces, sketches-go, msgp, ...) stays out of the main `go.loglayer.dev` module. Plugin users get the lean main module; livetest contributors get the full SDK they need.
+
+Run it from the repo root:
+
+```sh
+cd plugins/datadogtrace/livetest && go test -race ./...
+```
+
+CI runs it automatically on every push.
 
 ## What it Does NOT Do
 

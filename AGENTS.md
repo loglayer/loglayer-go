@@ -78,6 +78,32 @@ For docs:
 cd docs && bun run docs:build
 ```
 
+For livetests (integration tests against real third-party SDKs):
+
+```sh
+# OTel: build-tag-gated, lives in the main module (cheap deps).
+go test -tags=livetest -race ./transports/otellog/ ./plugins/oteltrace/
+
+# Datadog dd-trace-go: lives in its own module so dd-trace-go's heavy
+# transitive closure doesn't pollute the main module's dependency graph.
+cd plugins/datadogtrace/livetest && go test -race ./...
+```
+
+Two patterns are in use, picked by dependency weight:
+
+- **Build-tag gating in the main module** (`//go:build livetest`): used
+  when the SDK adds only a handful of indirect deps. The OTel SDK fits
+  here (~4 added go.sum lines on top of the OTel API we already need).
+- **Separate test module**: used when the SDK pulls in a heavy transitive
+  closure that we don't want exposed to users of the plugin. The Datadog
+  dd-trace-go SDK fits here (would have added 250+ go.sum lines to the
+  main module). The test module imports the parent via a `replace`
+  directive and is opt-in by `cd`-ing into it.
+
+Add new livetests for any package that talks to a third-party SDK whose
+contract you need to verify in-process. Use the build-tag pattern when
+the dep cost is small; use a separate module when it isn't.
+
 ## Git Hooks (lefthook)
 
 Pre-commit and pre-push hooks are managed by [lefthook](https://github.com/evilmartians/lefthook).

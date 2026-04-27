@@ -31,3 +31,4 @@ Transports that hand the entry off to an existing third-party logger you already
 | [phuslu/log](/transports/phuslu)    | High-performance zero-alloc JSON logger. Always exits on fatal. |
 | [logrus](/transports/logrus)        | The classic structured logger                              |
 | [charmbracelet/log](/transports/charmlog) | Pretty terminal-friendly logger from Charm           |
+| [OpenTelemetry Logs](/transports/otellog) | Emits to an OTel `log.Logger`. Forwards `WithCtx` so SDK processors can correlate with the active span. |

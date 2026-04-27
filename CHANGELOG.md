@@ -173,6 +173,16 @@ Logger wrappers:
   copy with no-op `ExitFunc` so the user's logger is never mutated.
 - `transports/charmlog`: wraps `github.com/charmbracelet/log`. Uses
   `Log(level, ...)` to defer the exit decision to the core.
+- `transports/otellog`: emits each entry as an OpenTelemetry
+  `log.Record` on a `log.Logger` (`go.opentelemetry.io/otel/log`).
+  Defaults to `global.GetLoggerProvider`; accepts an explicit
+  `LoggerProvider` (with `Name`, `Version`, `SchemaURL`) or a pre-built
+  `Logger` for tests/advanced wiring. Forwards `WithCtx` to `Logger.Emit`
+  so SDK processors can correlate the record with the active span. Map
+  metadata flattens to typed `KeyValue` attributes (with recursive
+  `MapValue`/`SliceValue` for nested structures); struct metadata
+  JSON-roundtrips into a nested `MapValue` under `MetadataFieldName`
+  (default `"metadata"`).
 
 ### Integrations
 
@@ -230,6 +240,12 @@ Logger wrappers:
   for Datadog's log/trace correlation. Tracer-agnostic: works with
   dd-trace-go v1, v2, or any custom extractor; LogLayer itself takes
   no Datadog dependency.
+- `plugins/oteltrace`: OpenTelemetry trace injector plugin. Reads the
+  active span from each entry's `WithCtx` context via
+  `trace.SpanContextFromContext` and emits `trace_id` / `span_id`
+  (configurable keys) plus optional `trace_flags`. Use with non-OTel
+  transports for log/trace correlation; the OTel pipeline does this
+  itself when shipping via `transports/otellog`.
 
 ### Utilities
 

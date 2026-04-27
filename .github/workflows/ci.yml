@@ -44,6 +44,13 @@ jobs:
       - name: Test
         run: go test -race -count=1 ./...
 
+      - name: Livetests (OTel SDK integration)
+        run: go test -tags=livetest -race -count=1 ./transports/otellog/ ./plugins/oteltrace/
+
+      - name: Livetests (Datadog dd-trace-go integration)
+        working-directory: plugins/datadogtrace/livetest
+        run: go test -race -count=1 ./...
+
   staticcheck:
     name: Staticcheck
     runs-on: ubuntu-latest

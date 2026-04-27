@@ -120,6 +120,7 @@ log.WithMetadata(MyStruct{...}).Info("event")                    // struct
 - structured, console, pretty: maps merge at root, structs JSON-roundtrip into root fields
 - zerolog, zap, phuslu, logrus: maps merge at root, structs nest under MetadataFieldName (default "metadata")
 - charmlog: maps flatten to keyvals, structs as a single keyval
+- otellog: maps flatten to typed KeyValue attributes (StringValue, Int64Value, etc., with recursive MapValue/SliceValue), structs JSON-roundtrip into a nested MapValue under MetadataFieldName (default "metadata")
 
 ### Errors
 
@@ -219,6 +220,7 @@ Transports that hand the entry to an existing logger.
 - **phuslu**: wraps `github.com/phuslu/log`. **Always exits on Fatal** regardless of `DisableFatalExit`. phuslu calls `os.Exit` from every fatal dispatch path.
 - **logrus**: wraps `github.com/sirupsen/logrus`. Builds a fresh `*logrus.Logger` copying the user's settings with `ExitFunc` neutralized so the user's original logger is never mutated.
 - **charmlog**: wraps `github.com/charmbracelet/log` (package named `charmlog` to avoid stdlib `log` collision). Uses `Log(level, ...)` which doesn't exit on Fatal.
+- **otellog**: emits each entry as an OpenTelemetry `log.Record` on a `log.Logger` (`go.opentelemetry.io/otel/log`; package named `otellog` to avoid colliding with the OTel root package). `Config.Name` is required when `Logger` is nil (instrumentation scope name). `Config.LoggerProvider` defaults to `global.GetLoggerProvider`. `Config.Logger` is an escape hatch for tests/advanced wiring. Severity maps `Trace/Debug/Info/Warn/Error/Fatal` to OTel `SeverityTrace/Debug/Info/Warn/Error/Fatal` (numeric 1/5/9/13/17/21); `SeverityText` carries the original LogLayer level name. `WithCtx` is forwarded to `Logger.Emit` so SDK processors can correlate the record with the active span. Fatal exit is the LogLayer core's decision via `Config.DisableFatalExit`.
 
 ### TransportParams Shape
 
@@ -322,6 +324,7 @@ Built-in plugins:
 
 - `plugins/redact`. Match by `Keys` (exact key names; honors `json` tags when matching struct fields) or `Patterns` (regex against string values). Walks nested maps, structs, slices, arrays, and pointers at any depth via reflection; preserves the caller's runtime type (struct in → struct out). Caller's input is never mutated. Dependency-free.
 - `plugins/datadogtrace`. Reads the active span from each entry's `WithCtx` context via a user-supplied `Extract` function and emits `dd.trace_id`, `dd.span_id`, plus optional `dd.service` / `dd.env` / `dd.version` for Datadog's log/trace correlation. Tracer-agnostic: works with `dd-trace-go` v1, v2, or any custom extractor; LogLayer itself takes no Datadog dependency.
+- `plugins/oteltrace`. Reads the active OTel span from each entry's `WithCtx` context via `trace.SpanContextFromContext` (`go.opentelemetry.io/otel/trace`) and emits `trace_id` / `span_id` in OTel's lowercase-hex canonical form, plus optional `trace_flags`. Configurable keys (defaults match OTel JSON serialization; switch to `trace.id`/`span.id` for ECS, etc.). Companion to `transports/otellog`: use the plugin when shipping logs to non-OTel destinations (structured stdout, Datadog HTTP, Loki); use the transport when shipping through the OTel pipeline (the SDK handles correlation automatically).
 
 ## Shared Utilities
 

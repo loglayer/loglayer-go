@@ -85,6 +85,7 @@ Logger wrappers:
 - `transports/phuslu`: wraps `github.com/phuslu/log`. **Always exits on Fatal** regardless of `DisableFatalExit`; phuslu calls `os.Exit` from any fatal dispatch path.
 - `transports/logrus`: wraps `github.com/sirupsen/logrus`. Builds an internal copy with no-op `ExitFunc` so the user's logger is never mutated.
 - `transports/charmlog`: wraps `github.com/charmbracelet/log`. Uses `Log(level, ...)` so the core controls the exit decision.
+- `transports/otellog`: emits each entry as an OpenTelemetry `log.Record` on a `log.Logger` (`go.opentelemetry.io/otel/log`). Defaults to the global `LoggerProvider`; accepts an explicit `LoggerProvider` + `Name`/`Version`/`SchemaURL` or a pre-built `Logger`. Forwards `WithCtx` to `Logger.Emit` so SDK processors can correlate with the active span. Map metadata flattens to typed `KeyValue` attributes (recursing into `MapValue`/`SliceValue` for nested structures); struct metadata JSON-roundtrips into a nested `MapValue` under `MetadataFieldName` (default `"metadata"`).
 
 ### Integrations
 
@@ -99,6 +100,7 @@ Logger wrappers:
 - `loglayer.MetadataPlugin`, `loglayer.FieldsPlugin`, `loglayer.LevelPlugin` convenience constructors for the common single-hook cases. Sugar over `loglayer.Plugin{ID: id, OnX: fn}`.
 - `plugins/redact`: built-in redaction plugin. Match by `Keys` (exact key names; honors `json` tags when matching struct fields) or `Patterns` (regular expressions against string values). Walks nested maps, structs, slices, arrays, and pointers at any depth via reflection. Preserves the caller's runtime type: a struct in comes back as the same struct with sensitive fields replaced. Caller's input is never mutated. Dependency-free; works on both metadata and persistent fields.
 - `plugins/datadogtrace`: Datadog APM trace injector plugin. Reads the active span from each entry's `WithCtx` context via a user-supplied `Extract` function and emits `dd.trace_id`, `dd.span_id`, plus optional `dd.service` / `dd.env` / `dd.version` for Datadog's log/trace correlation. Tracer-agnostic: works with `dd-trace-go` v1, v2, or any custom extractor; LogLayer itself takes no Datadog dependency.
+- `plugins/oteltrace`: OpenTelemetry trace injector plugin. Reads the active span from each entry's `WithCtx` context via `trace.SpanContextFromContext` (`go.opentelemetry.io/otel/trace`) and emits `trace_id` / `span_id` in OTel's lowercase-hex form, plus an optional `trace_flags` byte. Configurable keys (defaults match OTel's JSON serialization; switch to `trace.id`/`span.id` for ECS-style backends). Use with non-OTel transports for log/trace correlation; `transports/otellog` does this automatically when shipping through the OTel pipeline.
 
 ### Utilities
 

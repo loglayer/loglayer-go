@@ -145,6 +145,7 @@ export default defineConfig({
               { text: 'phuslu/log', link: '/transports/phuslu' },
               { text: 'logrus', link: '/transports/logrus' },
               { text: 'charmbracelet/log', link: '/transports/charmlog' },
+              { text: 'OpenTelemetry Logs', link: '/transports/otellog' },
             ],
           },
         ],
@@ -156,6 +157,7 @@ export default defineConfig({
           { text: 'Creating Plugins', link: '/plugins/creating-plugins' },
           { text: 'Redact', link: '/plugins/redact' },
           { text: 'Datadog APM Trace Injector', link: '/plugins/datadogtrace' },
+          { text: 'OpenTelemetry Trace Injector', link: '/plugins/oteltrace' },
         ],
       },
       {
