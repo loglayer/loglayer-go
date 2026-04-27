@@ -77,6 +77,11 @@ type Config struct {
 	// enforce a scheme so internal endpoints (fluentd over the loopback,
 	// Loki on a private network) keep working, but the contract is
 	// caller-owned.
+	//
+	// Header injection (CRLF in a header value) is rejected by Go's
+	// net/http at request-send time with an "invalid header field
+	// value" error, which surfaces via OnError. The transport doesn't
+	// pre-validate at Build time; the stdlib failure is enough.
 	Headers map[string]string
 
 	// Encoder serializes one or more entries into the request body. Defaults

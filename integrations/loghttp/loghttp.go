@@ -195,11 +195,17 @@ func Middleware(log *loglayer.LogLayer, cfg Config) func(http.Handler) http.Hand
 						if status == 0 {
 							status = http.StatusInternalServerError
 						}
+						// Sanitize the formatted panic value: a custom
+						// error type passed to panic() could carry
+						// ANSI / CRLF / bidi controls in its String()
+						// output, which would smuggle straight into the
+						// log otherwise. Bound length so a huge panic
+						// payload doesn't bloat the record.
 						reqLog.WithMetadata(loglayer.Metadata{
 							c.FieldNames.Status:     status,
 							c.FieldNames.DurationMs: time.Since(start).Milliseconds(),
 							c.FieldNames.Bytes:      sw.bytes,
-							"panic":                 fmt.Sprintf("%v", rcv),
+							"panic":                 sanitizeForLog(fmt.Sprintf("%v", rcv)),
 						}).Error("request panicked")
 						panic(rcv)
 					}

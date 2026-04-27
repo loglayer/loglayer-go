@@ -361,6 +361,41 @@ func TestMiddleware_PanicEmitsLogAndRePanics(t *testing.T) {
 	runOne(t, handler, httptest.NewRequest(http.MethodGet, "/", nil))
 }
 
+// A handler that panics with a value carrying ANSI/CRLF must not
+// smuggle those control sequences into the "request panicked" log.
+// The middleware sanitizes the formatted panic value before storing
+// it in the metadata.
+func TestMiddleware_PanicValueIsSanitized(t *testing.T) {
+	log, lib := setupLogger(t)
+	handler := loghttp.Middleware(log, loghttp.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		panic("evil\r\n[FORGED] line\x1b[31m red")
+	}))
+
+	defer func() {
+		if rcv := recover(); rcv == nil {
+			t.Fatal("middleware should re-panic")
+		}
+		lines := lib.Lines()
+		if len(lines) != 1 {
+			t.Fatalf("expected 1 log line, got %d", len(lines))
+		}
+		m, ok := lines[0].Metadata.(loglayer.Metadata)
+		if !ok {
+			t.Fatalf("metadata: %T", lines[0].Metadata)
+		}
+		gotPanic, _ := m["panic"].(string)
+		if strings.ContainsAny(gotPanic, "\r\n\x1b") {
+			t.Errorf("panic value still contains control chars: %q", gotPanic)
+		}
+		// Visible content survives the sanitize.
+		if !strings.Contains(gotPanic, "evil") || !strings.Contains(gotPanic, "[FORGED] line") {
+			t.Errorf("printable content lost during sanitize: %q", gotPanic)
+		}
+	}()
+
+	runOne(t, handler, httptest.NewRequest(http.MethodGet, "/", nil))
+}
+
 // Untrusted HTTP headers and paths that contain CR/LF/ESC could
 // otherwise forge log lines or smuggle ANSI escape sequences. The
 // middleware strips ASCII control characters before storing them as
