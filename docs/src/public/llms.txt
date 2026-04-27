@@ -27,7 +27,7 @@ LogLayer for Go gives you one consistent API for messages, persistent fields, pe
 
 ## Transports
 
-- [Overview](https://go.loglayer.dev/transports/): Renderers vs Logger Wrappers.
+- [Overview](https://go.loglayer.dev/transports/): Renderers vs Supported Loggers.
 - [Multiple Transports](https://go.loglayer.dev/transports/multiple-transports): Fan-out semantics.
 - [Creating Transports](https://go.loglayer.dev/transports/creating-transports): The Transport interface and BaseTransport helper.
 
@@ -44,7 +44,7 @@ LogLayer for Go gives you one consistent API for messages, persistent fields, pe
 - [HTTP](https://go.loglayer.dev/transports/http): Generic batched HTTP POST. Pluggable Encoder, configurable batching, async worker with Close() to flush.
 - [Datadog](https://go.loglayer.dev/transports/datadog): Datadog Logs HTTP intake. Site-aware URL, DD-API-KEY header, level→status mapping. Built on the HTTP transport.
 
-### Logger Wrappers
+### Supported Loggers
 
 - [Zerolog](https://go.loglayer.dev/transports/zerolog): Wraps github.com/rs/zerolog.
 - [Zap](https://go.loglayer.dev/transports/zap): Wraps go.uber.org/zap.

@@ -71,7 +71,7 @@ See [Transport Management](/logging-api/transport-management).
 
 ## Single-Transport Optimization
 
-If you're only using one transport, set `Transport` (singular). The core takes a fast path that avoids the loop overhead. This matters in tight loops, about 10% on the simple-message benchmark.
+If you're only using one transport, set `Transport` (singular). The core takes a fast path that avoids the loop overhead. This matters in tight loops.
 
 ```go
 loglayer.New(loglayer.Config{Transport: t}) // fast path

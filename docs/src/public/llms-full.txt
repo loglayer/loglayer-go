@@ -207,7 +207,7 @@ Self-contained transports that format the entry and write to an `io.Writer`.
 - **testing**: in-memory capture into `TestLoggingLibrary` with typed `LogLine` exposing Messages/Data/HasData/Metadata/Ctx. Stdlib only.
 - **blank**: delegates `SendToLogger` to a user-supplied `func(loglayer.TransportParams)`. For prototyping a transport inline, one-off integrations (metrics, queues, HTTP forwarders), or tests that want raw TransportParams. Honors level filtering; nil function silently drops.
 
-### Logger Wrappers
+### Supported Loggers
 
 Transports that hand the entry to an existing logger.
 

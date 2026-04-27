@@ -9,6 +9,10 @@ Go has plenty of good logging libraries: `zerolog`, `zap`, `slog`, `logrus`. The
 
 LogLayer for Go is a thin layer that sits on top of those libraries. You write your application code against one fluent API; the underlying library is a configuration choice.
 
+::: tip Coming from TypeScript?
+This is the Go port of [`loglayer`](https://loglayer.dev) for TypeScript. The mental model and API shape map directly. See [For TypeScript Developers](/for-typescript-developers) for the full convention map and the deliberate Go-specific differences (`Fields` instead of `context`, threading guarantees, error handling, module layout).
+:::
+
 ```go
 log.
     WithMetadata(loglayer.Metadata{"userId": "1234"}).

@@ -19,7 +19,7 @@ Transports that ship log entries to a remote endpoint over the network. Async + 
 | [HTTP](/transports/http)               | Generic batched HTTP POST to any endpoint. Pluggable Encoder.            | stdlib only  |
 | [Datadog](/transports/datadog)         | Datadog Logs HTTP intake. Site-aware URL, DD-API-KEY header, status mapping. | stdlib only |
 
-### Logger Wrappers
+### Supported Loggers
 
 Transports that hand the entry off to an existing third-party logger you already configure. Pick one of these when you have an established logging stack and want LogLayer's API on top.
 

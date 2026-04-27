@@ -80,22 +80,20 @@ export default defineConfig({
     search: { provider: 'local' },
     outline: { level: [2, 3] },
     nav: [
+      { text: '<img alt="Go Reference" src="https://pkg.go.dev/badge/go.loglayer.dev.svg" />', link: 'https://pkg.go.dev/go.loglayer.dev' },
       { text: "What's New", link: '/whats-new' },
       { text: 'Get Started', link: '/getting-started' },
-      { text: 'Logging API', link: '/logging-api/basic-logging' },
-      { text: 'Transports', link: '/transports/' },
-      { text: 'Integrations', link: '/integrations/loghttp' },
+      { text: 'TypeScript Version', link: 'https://loglayer.dev' },
     ],
     sidebar: [
       {
         text: 'Introduction',
         items: [
-          { text: "What's New", link: '/whats-new' },
           { text: 'Why Use LogLayer?', link: '/introduction' },
           { text: 'Getting Started', link: '/getting-started' },
           { text: 'Configuration', link: '/configuration' },
           { text: 'Cheat Sheet', link: '/cheatsheet' },
-          { text: 'Benchmarks', link: '/benchmarks' },
+          { text: 'For TypeScript Developers', link: '/for-typescript-developers' },
           { text: 'Use with AI / LLMs', link: '/llms' },
         ],
       },
@@ -105,8 +103,8 @@ export default defineConfig({
           { text: 'Basic Logging', link: '/logging-api/basic-logging' },
           { text: 'Adjusting Log Levels', link: '/logging-api/adjusting-log-levels' },
           { text: 'Fields', link: '/logging-api/fields' },
-          { text: 'Go Context', link: '/logging-api/go-context' },
           { text: 'Metadata', link: '/logging-api/metadata' },
+          { text: 'Go Context', link: '/logging-api/go-context' },
           { text: 'Error Handling', link: '/logging-api/error-handling' },
           { text: 'Child Loggers', link: '/logging-api/child-loggers' },
           { text: 'Transport Management', link: '/logging-api/transport-management' },
@@ -144,7 +142,7 @@ export default defineConfig({
             ],
           },
           {
-            text: 'Logger Wrappers',
+            text: 'Supported Loggers',
             items: [
               { text: 'Zerolog', link: '/transports/zerolog' },
               { text: 'Zap', link: '/transports/zap' },
