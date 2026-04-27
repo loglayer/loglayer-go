@@ -15,15 +15,13 @@ import "context"
 type Fields map[string]any
 
 // Data is the assembled object sent to transports containing the persistent
-// fields and the serialized error. Distinct from Fields/Metadata at the type
-// level (see Fields' doc).
+// fields and the serialized error.
 type Data map[string]any
 
 // Metadata is the most common shape passed to WithMetadata: a string-keyed
 // map of arbitrary values. WithMetadata accepts any value (struct, scalar,
-// slice, anything), but when the data is an ad-hoc bag this alias keeps
-// call sites short. Distinct from Fields/Data at the type level (see Fields'
-// doc).
+// slice, anything), but when the data is an ad-hoc bag this named type
+// keeps call sites short.
 type Metadata map[string]any
 
 // ErrorSerializer converts an error into a structured map for the log output.
@@ -94,7 +92,7 @@ type Config struct {
 	// ActiveGroups, when non-empty, restricts routing to only these groups.
 	// Logs tagged with groups not in this list are dropped (or fall back to
 	// UngroupedRouting if none of the entry's groups are active).
-	// Nil/empty means "no filter — all defined groups are active".
+	// Nil/empty means "no filter: all defined groups are active".
 	ActiveGroups []string
 
 	// UngroupedRouting controls what happens to entries with no group tag
@@ -113,7 +111,7 @@ type LogGroup struct {
 	// Level is the minimum log level for this group. Entries below this
 	// level are dropped for this group's transports. Zero value
 	// (LogLevelTrace=0 indirectly via the levelIndex check) means "no
-	// per-group filter — all levels pass".
+	// per-group filter: all levels pass".
 	Level LogLevel
 
 	// Disabled suppresses this group's routing when true. Entries tagged

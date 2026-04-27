@@ -60,17 +60,18 @@ func hostInfoPlugin(hostKey, pidKey string, counter *atomic.Uint64) loglayer.Plu
 // scrubPasswordPlugin strips any "password" key from metadata maps
 // before they reach a transport. This runs at WithMetadata time, so by
 // the time the transport sees the entry the field is already gone.
+//
+// In production, prefer the built-in plugins/redact plugin: it handles
+// nested maps, structs, regex patterns, and preserves runtime types.
+// This implementation exists only to demonstrate the OnMetadataCalled
+// hook on a flat top-level map.
 func scrubPasswordPlugin() loglayer.Plugin {
 	return loglayer.Plugin{
 		ID: "scrub-password",
 		OnMetadataCalled: func(metadata any) any {
-			m, ok := metadata.(loglayer.Metadata)
+			m, ok := transport.MetadataAsRootMap(metadata)
 			if !ok {
-				if raw, rawOk := metadata.(map[string]any); rawOk {
-					m = raw
-				} else {
-					return metadata
-				}
+				return metadata
 			}
 			cleaned := make(loglayer.Metadata, len(m))
 			for k, v := range m {
@@ -87,7 +88,7 @@ func scrubPasswordPlugin() loglayer.Plugin {
 
 // dropDebugFromTransport returns a plugin that vetoes Debug-level
 // entries on the named transport ID. The same entry still reaches
-// other transports — ShouldSend is a per-(entry, transport) gate, not
+// other transports. ShouldSend is a per-(entry, transport) gate, not
 // a global filter. Useful when you want one transport to be quieter
 // than the rest.
 func dropDebugFromTransport(transportID string) loglayer.Plugin {
@@ -126,7 +127,7 @@ func main() {
 		"password": "shouldnotappear",
 	}).Info("login")
 
-	// Debug entry — vetoed by dropDebugFromTransport for the pretty transport.
+	// Debug entry: vetoed by dropDebugFromTransport for the pretty transport.
 	log.Debug("this debug line is vetoed and does not appear")
 
 	// Note the count is 3, not 2: OnBeforeDataOut runs *before* ShouldSend

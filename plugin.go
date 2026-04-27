@@ -186,7 +186,7 @@ func newPluginSet(plugins []Plugin) *pluginSet {
 // When the recovered value implements error, the panic chain is
 // reachable via errors.Unwrap (and therefore errors.Is / errors.As).
 // When it doesn't, the original value is still accessible via
-// RecoveredValue — useful for panics that pass strings, numeric codes,
+// RecoveredValue. Useful for panics that pass strings, numeric codes,
 // or domain-specific types.
 type RecoveredPanicError struct {
 	// Hook is the name of the hook that panicked (e.g. "OnBeforeDataOut").

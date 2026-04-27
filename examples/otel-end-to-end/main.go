@@ -23,7 +23,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
 
 	"go.loglayer.dev"
 	"go.loglayer.dev/plugins/oteltrace"
@@ -97,9 +96,12 @@ func main() {
 	requestLog.Info("request served")
 	outer.End()
 
-	// Give the batchers a moment to flush before shutdown.
-	time.Sleep(100 * time.Millisecond)
-	fmt.Println("\n(end of example — shutdown will flush remaining batches)")
+	// Drain both batchers so the deferred Shutdown calls don't lose
+	// in-flight records. ForceFlush is the deterministic version of
+	// "wait until everything is exported."
+	_ = logProvider.ForceFlush(ctx)
+	_ = traceProvider.ForceFlush(ctx)
+	fmt.Println("\n(end of example: shutdown flushes remaining batches)")
 }
 
 func fail(msg string, args ...any) {

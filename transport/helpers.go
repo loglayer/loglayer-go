@@ -127,12 +127,9 @@ func MergeIntoMap(dst map[string]any, data map[string]any, metadata any) map[str
 // "flatten at root" shape (loglayer.Metadata or raw map[string]any),
 // false otherwise. Use this in transports that need to decide whether
 // metadata flattens to individual attributes/fields (true) or nests
-// under MetadataFieldName (false).
-//
-// Both Metadata and map[string]any have the same underlying type but
-// are distinct after the named-type reshape in types.go. This helper
-// hides the dual-case detection so transports don't need to type-switch
-// on both.
+// under MetadataFieldName (false). Metadata and map[string]any share an
+// underlying type but are distinct named types, so a single type
+// assertion handles only one of them; this helper covers both.
 func MetadataAsRootMap(v any) (map[string]any, bool) {
 	switch m := v.(type) {
 	case loglayer.Metadata:

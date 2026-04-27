@@ -837,7 +837,7 @@ func TestPlugin_HookPanicSilentWhenNoOnError(t *testing.T) {
 }
 
 // ShouldSend fails open: a panicking gate doesn't drop the entry. This is
-// the safer default for a logging library — silent dropping would mask
+// the safer default for a logging library: silent dropping would mask
 // plugin bugs as data loss.
 func TestPlugin_ShouldSendPanicFailsOpen(t *testing.T) {
 	log, lib := setup(t)
