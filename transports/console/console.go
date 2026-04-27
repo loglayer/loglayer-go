@@ -100,6 +100,16 @@ func buildMessages(params loglayer.TransportParams, cfg Config) []any {
 		messages = []any{cfg.MessageFn(params)}
 	}
 
+	// Sanitize user-controlled message strings so a CRLF or ANSI ESC
+	// can't forge log lines or smuggle terminal escapes through the
+	// renderer. Non-string elements pass through; their %v rendering
+	// doesn't introduce control characters.
+	for i, m := range messages {
+		if s, ok := m.(string); ok {
+			messages[i] = transport.SanitizeMessage(s)
+		}
+	}
+
 	combined := transport.MergeFieldsAndMetadata(params)
 	hasCombined := len(combined) > 0
 

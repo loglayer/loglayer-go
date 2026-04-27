@@ -3,6 +3,7 @@ package datadog_test
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"go.loglayer.dev"
+	"go.loglayer.dev/transport"
 	"go.loglayer.dev/transports/datadog"
 	httptr "go.loglayer.dev/transports/http"
 )
@@ -204,6 +206,63 @@ func TestDatadog_SiteIntakeURL(t *testing.T) {
 		if got := c.site.IntakeURL(); got != c.want {
 			t.Errorf("Site %q: got %q, want %q", c.site, got, c.want)
 		}
+	}
+}
+
+// Config.String redacts the APIKey so an accidental log.Info(cfg) or
+// fmt.Sprintf("%v", cfg) can't ship the secret.
+func TestDatadog_ConfigStringRedactsAPIKey(t *testing.T) {
+	cfg := datadog.Config{
+		APIKey:   "deadbeef-secret-keep-me-out-of-logs",
+		Site:     datadog.SiteUS1,
+		Source:   "go",
+		Hostname: "myhost",
+	}
+
+	s := cfg.String()
+	if strings.Contains(s, "deadbeef-secret-keep-me-out-of-logs") {
+		t.Errorf("APIKey leaked through String(): %s", s)
+	}
+	if !strings.Contains(s, "redacted") {
+		t.Errorf("String() should mark APIKey as redacted: %s", s)
+	}
+
+	// fmt.Sprintf("%v", cfg) should pick up String() automatically since
+	// the receiver is a value type.
+	v := fmt.Sprintf("%v", cfg)
+	if strings.Contains(v, "deadbeef-secret-keep-me-out-of-logs") {
+		t.Errorf("APIKey leaked through %%v: %s", v)
+	}
+}
+
+// Config.URL overrides the Site-derived URL for on-prem deployments
+// or testing against a mock endpoint. If the override didn't take, the
+// request would go to https://http-intake.logs.datadoghq.eu/... (per
+// Site: SiteEU) and our test server would never receive it.
+func TestDatadog_URLOverride(t *testing.T) {
+	cap := &capture{}
+	srv := httptest.NewServer(http.HandlerFunc(cap.handler))
+	defer srv.Close()
+
+	tr := datadog.New(datadog.Config{
+		BaseConfig: transport.BaseConfig{ID: "datadog"},
+		APIKey:     "k",
+		Site:       datadog.SiteEU, // would point at datadoghq.eu
+		URL:        srv.URL,        // override wins
+		HTTP: httptr.Config{
+			BatchSize:     1,
+			BatchInterval: 10 * time.Millisecond,
+		},
+	})
+	log := loglayer.New(loglayer.Config{Transport: tr, DisableFatalExit: true})
+	log.Info("on-prem")
+	if err := tr.Close(); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+	cap.mu.Lock()
+	defer cap.mu.Unlock()
+	if len(cap.bodies) == 0 {
+		t.Fatal("no request received at the override URL")
 	}
 }
 

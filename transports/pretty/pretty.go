@@ -112,7 +112,13 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 	timestamp := t.formatTimestamp()
 	chevron := t.formatChevron(params.LogLevel)
 	logID := t.formatLogID()
-	message := transport.JoinMessages(params.Messages)
+	// Sanitize the message before it reaches the terminal: a CRLF or
+	// ANSI ESC in a user-controlled string could forge log lines or
+	// smuggle terminal-coloring sequences. Field/metadata values are
+	// rendered separately through the theme's Style functions; see
+	// pretty's doc for the threat-model boundary (this transport is
+	// for human terminals, not for log pipelines).
+	message := transport.SanitizeMessage(transport.JoinMessages(params.Messages))
 	if message == "" {
 		message = "(no message)"
 	}

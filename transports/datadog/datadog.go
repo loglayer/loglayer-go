@@ -12,6 +12,7 @@ package datadog
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"go.loglayer.dev"
 	"go.loglayer.dev/transport"
@@ -53,8 +54,16 @@ type Config struct {
 	// APIKey is the Datadog API key. Required.
 	APIKey string
 
-	// Site selects the Datadog region. Defaults to SiteUS1.
+	// Site selects the Datadog region. Defaults to SiteUS1. Ignored
+	// when URL is set.
 	Site Site
+
+	// URL overrides the Site-derived intake URL. Use it for on-prem
+	// Datadog deployments or for testing against a mock endpoint.
+	// When set, Site is ignored. Must be a full HTTPS URL ending at
+	// the logs intake path (Datadog SaaS shape:
+	// https://http-intake.logs.<site>/api/v2/logs).
+	URL string
 
 	// Source maps to the ddsource field. Conventionally a short string
 	// identifying the producing technology, e.g. "go". Optional.
@@ -76,6 +85,24 @@ type Config struct {
 	// transports/http settings. The URL, Encoder, and DD-API-KEY header are
 	// set by this package and cannot be overridden via this field.
 	HTTP httptr.Config
+}
+
+// String returns a redacted form of the config so that an accidental
+// log.Info(cfg) (or fmt.Sprintf("%v", cfg)) can't ship the API key.
+// The key is replaced with a fixed mask regardless of length.
+func (c Config) String() string {
+	masked := c
+	if masked.APIKey != "" {
+		masked.APIKey = "***redacted***"
+	}
+	// Spell out the fields explicitly rather than %+v on `masked` so a
+	// future field addition doesn't silently expose new sensitive
+	// content. Keep the order matching the struct for readability.
+	return fmt.Sprintf(
+		"datadog.Config{APIKey:%q Site:%q URL:%q Source:%q Service:%q Hostname:%q Tags:%q}",
+		masked.APIKey, masked.Site, masked.URL, masked.Source,
+		masked.Service, masked.Hostname, masked.Tags,
+	)
 }
 
 // Transport wraps a transports/http.Transport with Datadog-specific encoding
@@ -105,7 +132,11 @@ func Build(cfg Config) (*Transport, error) {
 
 	httpCfg := cfg.HTTP
 	httpCfg.BaseConfig = cfg.BaseConfig
-	httpCfg.URL = cfg.Site.IntakeURL()
+	if cfg.URL != "" {
+		httpCfg.URL = cfg.URL
+	} else {
+		httpCfg.URL = cfg.Site.IntakeURL()
+	}
 	httpCfg.Encoder = newEncoder(cfg)
 
 	// Clone Headers so we don't mutate the caller's map by adding DD-API-KEY.

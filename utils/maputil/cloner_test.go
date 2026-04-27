@@ -262,3 +262,77 @@ func TestCloner_StructWithSliceIsIndependent(t *testing.T) {
 		t.Errorf("inner slice of cloned struct should be independent: in.Items=%v", in.Items)
 	}
 }
+
+// A self-referencing pointer must not stack-overflow Clone. The cycle
+// breaks at the second visit and the caller gets a finite output.
+func TestCloner_CyclicPointer_DoesNotStackOverflow(t *testing.T) {
+	type node struct {
+		Name string `json:"name"`
+		Next *node  `json:"next,omitempty"`
+	}
+	a := &node{Name: "a"}
+	a.Next = a // self-loop
+
+	c := &maputil.Cloner{}
+	out := c.Clone(a)
+	if out == nil {
+		t.Fatal("cyclic input should not produce nil output")
+	}
+	cloned, ok := out.(*node)
+	if !ok || cloned == nil {
+		t.Fatalf("expected *node, got %T", out)
+	}
+	if cloned.Name != "a" {
+		t.Errorf("first level Name: got %q", cloned.Name)
+	}
+	// The cycle must terminate: walking Next should hit nil within a
+	// bounded number of hops, not loop forever.
+	cur := cloned
+	for i := 0; i < 10 && cur != nil; i++ {
+		cur = cur.Next
+	}
+	if cur != nil {
+		t.Error("cyclic chain should terminate within a bounded depth, but Next is still non-nil after 10 hops")
+	}
+}
+
+// Cycle via a map value. Same idea but exercises the cloneMap path.
+func TestCloner_CyclicViaMapValue_DoesNotStackOverflow(t *testing.T) {
+	type box struct {
+		Name string `json:"name"`
+		M    map[string]*box
+	}
+	root := &box{Name: "root", M: map[string]*box{}}
+	root.M["self"] = root
+
+	c := &maputil.Cloner{}
+	out := c.Clone(root)
+	if out == nil {
+		t.Fatal("cyclic map should not produce nil output")
+	}
+	cloned, ok := out.(*box)
+	if !ok || cloned == nil {
+		t.Fatalf("expected *box, got %T", out)
+	}
+	if cloned.Name != "root" {
+		t.Errorf("Name: got %q", cloned.Name)
+	}
+}
+
+// Depth cap protects against pathologically deep but acyclic input.
+// Clone must terminate without panicking on a 1000-level chain.
+func TestCloner_DeeplyNested_HitsDepthCap(t *testing.T) {
+	type chain struct {
+		Inner *chain
+	}
+	root := &chain{}
+	cur := root
+	for i := 0; i < 1000; i++ {
+		cur.Inner = &chain{}
+		cur = cur.Inner
+	}
+
+	c := &maputil.Cloner{}
+	// Must not panic; the depth cap kicks in.
+	_ = c.Clone(root)
+}

@@ -28,6 +28,26 @@ func WriterOrStdout(w io.Writer) io.Writer {
 	return os.Stdout
 }
 
+// SanitizeMessage strips ASCII control characters from a string so
+// that user-controlled input can't forge log lines (via CR / LF) or
+// smuggle ANSI escape sequences (via ESC) into terminal renderers.
+// Tabs are preserved since they're commonly used for column alignment.
+//
+// Used by console and pretty (the terminal renderers) before writing
+// to their writer. Structured/JSON renderers don't need this because
+// encoding/json escapes control characters automatically.
+//
+// Third-party text-renderer transports should call this on user message
+// strings; structured-output transports don't need to.
+func SanitizeMessage(s string) string {
+	return strings.Map(func(r rune) rune {
+		if r == '\t' || (r >= 0x20 && r != 0x7f) {
+			return r
+		}
+		return -1
+	}, s)
+}
+
 // JoinMessages concatenates a slice of values into a single space-separated
 // string. Strings are passed through; other types use fmt.Sprintf("%v", ...).
 //
@@ -57,7 +77,14 @@ func JoinMessages(messages []any) string {
 // MetadataAsMap extracts a map[string]any from any metadata value. Maps
 // (loglayer.Metadata or raw map[string]any) pass through directly; other
 // types are converted via a JSON roundtrip so their exported fields land
-// at the root of the log object. Returns nil on failure.
+// at the root of the log object.
+//
+// Returns nil when the JSON roundtrip fails (cyclic structs, channels,
+// functions, custom MarshalJSON returning a non-object). Callers that
+// need to know about the failure should compare against nil; the helper
+// itself doesn't surface an error to keep the dispatch path simple.
+// Transports that want richer error reporting should call json.Marshal
+// themselves and surface failures via OnError.
 func MetadataAsMap(v any) map[string]any {
 	if m, ok := MetadataAsRootMap(v); ok {
 		return m

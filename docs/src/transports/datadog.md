@@ -48,6 +48,18 @@ The transport is async and batched (inherited from the HTTP transport, default 1
 | `SiteEU`        | `https://http-intake.logs.datadoghq.eu/api/v2/logs`            |
 | `SiteAP1`       | `https://http-intake.logs.ap1.datadoghq.com/api/v2/logs`       |
 
+### On-prem / custom URL
+
+For Datadog on-prem deployments or when testing against a mock endpoint, set `Config.URL` directly. The override wins over `Site`:
+
+```go
+datadog.New(datadog.Config{
+    APIKey: "...",
+    URL:    "https://datadog.internal.acme.com/api/v2/logs",
+    // Site is ignored when URL is set.
+})
+```
+
 ## Config
 
 ```go
@@ -55,7 +67,8 @@ type Config struct {
     transport.BaseConfig
 
     APIKey   string  // required
-    Site     Site    // default SiteUS1
+    Site     Site    // default SiteUS1; ignored when URL is set
+    URL      string  // overrides the Site-derived intake URL (on-prem / mock)
 
     Source   string  // ddsource (e.g. "go")
     Service  string  // service name

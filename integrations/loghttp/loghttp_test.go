@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"go.loglayer.dev"
@@ -358,4 +359,36 @@ func TestMiddleware_PanicEmitsLogAndRePanics(t *testing.T) {
 	}()
 
 	runOne(t, handler, httptest.NewRequest(http.MethodGet, "/", nil))
+}
+
+// Untrusted HTTP headers and paths that contain CR/LF/ESC could
+// otherwise forge log lines or smuggle ANSI escape sequences. The
+// middleware strips ASCII control characters before storing them as
+// fields.
+func TestMiddleware_SanitizesUntrustedInput(t *testing.T) {
+	log, lib := setupLogger(t)
+	handler := loghttp.Middleware(log, loghttp.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	// X-Request-ID with a CRLF + faked log line.
+	r.Header.Set("X-Request-ID", "real-id\r\n[ERROR] forged")
+	// Path with an ESC + ANSI red.
+	r.URL.Path = "/api\x1b[31m/users"
+
+	runOne(t, handler, r)
+
+	line := lib.PopLine()
+	gotID, _ := line.Data["requestId"].(string)
+	if strings.ContainsAny(gotID, "\r\n\x1b") {
+		t.Errorf("requestId still contains control chars: %q", gotID)
+	}
+	if gotID != "real-id[ERROR] forged" {
+		// The sanitizer drops control chars but leaves printable
+		// content; ensure that's what we see.
+		t.Errorf("requestId after sanitize: got %q, want %q", gotID, "real-id[ERROR] forged")
+	}
+	gotPath, _ := line.Data["path"].(string)
+	if strings.ContainsAny(gotPath, "\r\n\x1b") {
+		t.Errorf("path still contains control chars: %q", gotPath)
+	}
 }

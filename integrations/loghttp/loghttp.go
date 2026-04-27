@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"go.loglayer.dev"
+	"go.loglayer.dev/transport"
 )
 
 // FieldNames customizes the keys emitted by the middleware. Empty values fall
@@ -155,9 +156,15 @@ func Middleware(log *loglayer.LogLayer, cfg Config) func(http.Handler) http.Hand
 				extras = c.ExtraFields(r)
 			}
 			fields := make(loglayer.Fields, 3+len(extras))
-			fields[c.FieldNames.RequestID] = reqID
-			fields[c.FieldNames.Method] = r.Method
-			fields[c.FieldNames.Path] = r.URL.Path
+			// Sanitize attacker-controllable strings: an X-Request-ID
+			// header (or method / path on a malformed request) carrying
+			// CR/LF/ESC could otherwise forge new log lines or smuggle
+			// ANSI escape sequences. extras are caller-controlled, so
+			// the application owns sanitization there if it pulls from
+			// untrusted sources.
+			fields[c.FieldNames.RequestID] = sanitizeForLog(reqID)
+			fields[c.FieldNames.Method] = sanitizeForLog(r.Method)
+			fields[c.FieldNames.Path] = sanitizeForLog(r.URL.Path)
 			for k, v := range extras {
 				fields[k] = v
 			}
@@ -251,6 +258,23 @@ func shouldEmitStart(c Config, r *http.Request) bool {
 		return c.ShouldStartLog(r)
 	}
 	return c.StartLog
+}
+
+// maxLoggedHeaderLen bounds sanitized header/path/method values that
+// land in log fields. Real-world request IDs are ~36 bytes (UUID) and
+// paths are typically under 1k; 4096 is generous enough that no legit
+// caller hits it but small enough to stop a 1MB-long X-Request-ID from
+// bloating a log record.
+const maxLoggedHeaderLen = 4096
+
+// sanitizeForLog bounds the value's length and strips ASCII control
+// characters via transport.SanitizeMessage, so an attacker-controlled
+// HTTP header can't forge log lines or smuggle ANSI escapes.
+func sanitizeForLog(s string) string {
+	if len(s) > maxLoggedHeaderLen {
+		s = s[:maxLoggedHeaderLen]
+	}
+	return transport.SanitizeMessage(s)
 }
 
 func (w *responseWriter) WriteHeader(status int) {

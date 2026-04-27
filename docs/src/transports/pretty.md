@@ -216,6 +216,14 @@ log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
 
 <!--@include: ./_partials/fatal-passthrough.md-->
 
+## Threat Model: Use for Terminals, Not for Pipelines
+
+Pretty is a terminal renderer. It writes ANSI color codes for level chevrons, keys, and timestamps directly to the writer (defaults to stdout). The message string is sanitized for control characters before output, but **field/metadata values** in pretty's rendered output pass through to the terminal in their typed form, including any ANSI escape sequences they happen to contain.
+
+Concretely: an attacker who can place a value in a logged field could include `\x1b[31m...` in that value, which a viewer's terminal would interpret as red text. They could also use `\r` to overwrite previous output or `\x1b[2J` to clear the screen.
+
+If your service ships log lines to a viewer who can be tricked by terminal control sequences, **use [`structured`](/transports/structured) instead**. Structured emits JSON; encoding/json escapes all control characters by default, so the threat model is closed. Pretty's contract is "for the developer's terminal during local dev"; that's also where it's useful.
+
 ## Combining with Other Transports
 
 Use it locally alongside a structured transport that ships to disk or a service:

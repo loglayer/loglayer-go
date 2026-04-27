@@ -70,6 +70,13 @@ type Config struct {
 
 	// Headers are added to every request. Content-Type is set automatically
 	// from the Encoder unless overridden here.
+	//
+	// Headers are transmitted in plaintext when URL is http://. If you
+	// put credentials here (Authorization, X-API-Key, etc.), use an
+	// https:// URL or a TLS-terminating proxy. The transport doesn't
+	// enforce a scheme so internal endpoints (fluentd over the loopback,
+	// Loki on a private network) keep working, but the contract is
+	// caller-owned.
 	Headers map[string]string
 
 	// Encoder serializes one or more entries into the request body. Defaults

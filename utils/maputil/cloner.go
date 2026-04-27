@@ -30,49 +30,88 @@ type Cloner struct {
 	Censor     any
 }
 
+// maxCloneDepth caps Clone's recursion. Bounds memory and stack usage
+// when a caller passes a cyclic or pathologically deep value. Real
+// payloads almost never nest more than a handful of levels; 64 leaves
+// generous headroom while still guaranteeing termination.
+const maxCloneDepth = 64
+
+// cloneState carries per-call recursion state through cloneValue and
+// its helpers. visited is a path-local set of pointer addresses for
+// cycle breaking: a pointer that's revisited mid-walk yields the
+// element type's zero value instead of recursing further. depth is a
+// fallback bound for non-pointer recursion paths (very deep nested
+// maps or slices) and as defense-in-depth if visited misses something.
+type cloneState struct {
+	depth   int
+	visited map[uintptr]struct{}
+}
+
 // Clone returns a deep clone of v with sensitive content replaced by
 // Censor. Returns v unchanged when nothing in v is reachable for matching
 // (basic scalars without a value match, nil, channels, functions).
+//
+// Safe against cyclic inputs: a self-referencing pointer chain breaks
+// at the cycle (the second visit returns the element's zero value).
+// Pathologically deep non-pointer nesting bottoms out at maxCloneDepth.
 func (c *Cloner) Clone(v any) any {
 	if v == nil {
 		return nil
 	}
-	out := c.cloneValue(reflect.ValueOf(v))
+	st := &cloneState{visited: make(map[uintptr]struct{})}
+	out := c.cloneValue(reflect.ValueOf(v), st)
 	if !out.IsValid() {
 		return nil
 	}
 	return out.Interface()
 }
 
-func (c *Cloner) cloneValue(v reflect.Value) reflect.Value {
+func (c *Cloner) cloneValue(v reflect.Value, st *cloneState) reflect.Value {
 	if !v.IsValid() {
 		return v
 	}
+	if st.depth >= maxCloneDepth {
+		return reflect.Zero(v.Type())
+	}
+	st.depth++
+	defer func() { st.depth-- }()
 	switch v.Kind() {
 	case reflect.Pointer:
 		if v.IsNil() {
 			return v
 		}
-		cloned := c.cloneValue(v.Elem())
+		// Cycle detection: if we've already entered this pointer
+		// during the current walk, treat it as "seen" and stop.
+		// Returning a zero pointer breaks the cycle without bloating
+		// the output with N copies of the same subgraph.
+		addr := v.Pointer()
+		if _, seen := st.visited[addr]; seen {
+			return reflect.Zero(v.Type())
+		}
+		st.visited[addr] = struct{}{}
+		defer delete(st.visited, addr)
+		cloned := c.cloneValue(v.Elem(), st)
 		ptr := reflect.New(v.Type().Elem())
-		ptr.Elem().Set(cloned)
+		if cloned.IsValid() {
+			ptr.Elem().Set(cloned)
+		}
 		return ptr
 	case reflect.Interface:
 		if v.IsNil() {
 			return v
 		}
-		return c.cloneValue(v.Elem())
+		return c.cloneValue(v.Elem(), st)
 	case reflect.Struct:
-		return c.cloneStruct(v)
+		return c.cloneStruct(v, st)
 	case reflect.Map:
-		return c.cloneMap(v)
+		return c.cloneMap(v, st)
 	case reflect.Slice:
 		if v.IsNil() {
 			return v
 		}
-		return c.cloneSlice(v)
+		return c.cloneSlice(v, st)
 	case reflect.Array:
-		return c.cloneArray(v)
+		return c.cloneArray(v, st)
 	case reflect.String:
 		if c.MatchValue != nil && c.MatchValue(v.String()) {
 			return c.censorAs(v.Type())
@@ -83,7 +122,7 @@ func (c *Cloner) cloneValue(v reflect.Value) reflect.Value {
 	}
 }
 
-func (c *Cloner) cloneStruct(v reflect.Value) reflect.Value {
+func (c *Cloner) cloneStruct(v reflect.Value, st *cloneState) reflect.Value {
 	t := v.Type()
 	out := reflect.New(t).Elem()
 	for i := 0; i < t.NumField(); i++ {
@@ -96,12 +135,12 @@ func (c *Cloner) cloneStruct(v reflect.Value) reflect.Value {
 			out.Field(i).Set(c.censorAs(sf.Type))
 			continue
 		}
-		out.Field(i).Set(c.cloneValue(field))
+		out.Field(i).Set(c.cloneValue(field, st))
 	}
 	return out
 }
 
-func (c *Cloner) cloneMap(v reflect.Value) reflect.Value {
+func (c *Cloner) cloneMap(v reflect.Value, st *cloneState) reflect.Value {
 	if v.IsNil() {
 		return v
 	}
@@ -116,7 +155,7 @@ func (c *Cloner) cloneMap(v reflect.Value) reflect.Value {
 			out.SetMapIndex(k, c.censorAs(valueType))
 			continue
 		}
-		cloned := c.cloneValue(val)
+		cloned := c.cloneValue(val, st)
 		if !cloned.IsValid() {
 			out.SetMapIndex(k, reflect.Zero(valueType))
 			continue
@@ -134,12 +173,12 @@ func (c *Cloner) cloneMap(v reflect.Value) reflect.Value {
 	return out
 }
 
-func (c *Cloner) cloneSlice(v reflect.Value) reflect.Value {
+func (c *Cloner) cloneSlice(v reflect.Value, st *cloneState) reflect.Value {
 	t := v.Type()
 	out := reflect.MakeSlice(t, v.Len(), v.Len())
 	elemType := t.Elem()
 	for i := 0; i < v.Len(); i++ {
-		cloned := c.cloneValue(v.Index(i))
+		cloned := c.cloneValue(v.Index(i), st)
 		if elemType.Kind() == reflect.Interface && cloned.IsValid() && cloned.Kind() != reflect.Interface {
 			wrapped := reflect.New(elemType).Elem()
 			wrapped.Set(cloned)
@@ -152,10 +191,10 @@ func (c *Cloner) cloneSlice(v reflect.Value) reflect.Value {
 	return out
 }
 
-func (c *Cloner) cloneArray(v reflect.Value) reflect.Value {
+func (c *Cloner) cloneArray(v reflect.Value, st *cloneState) reflect.Value {
 	out := reflect.New(v.Type()).Elem()
 	for i := 0; i < v.Len(); i++ {
-		cloned := c.cloneValue(v.Index(i))
+		cloned := c.cloneValue(v.Index(i), st)
 		if cloned.IsValid() {
 			out.Index(i).Set(cloned)
 		}
