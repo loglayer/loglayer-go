@@ -194,6 +194,54 @@ When multiple transports are configured, they share the same `TransportParams`. 
 
 Transports that drop entries silently are valid: a logging library should never block, panic, or crash on its own write failure. But always make the failure observable somehow, even if it's just an `OnError` callback the user can hook into.
 
+## Convention: package shape
+
+If you publish a transport as a Go package, follow this shape:
+
+```
+yourpkg/
+├── go.mod (if separate module)
+├── yourpkg.go         // package yourpkg; exposes Config + Transport + New(Config) *Transport
+├── errors.go          // (only if New can fail; sentinel errors)
+├── yourpkg_test.go
+└── README.md
+```
+
+The package name matches the directory name (`package yourpkg`). The main file owns:
+
+- `Config` struct embedding `transport.BaseConfig`. Per-transport knobs live here.
+- `Transport` struct embedding `transport.BaseTransport`.
+- `func New(cfg Config) *Transport` as the typical entry point.
+
+If `New` can fail with a runtime-loaded value (URL from env, API key from secrets manager, etc.), also expose `func Build(cfg Config) (*Transport, error)` and put your sentinel errors in `errors.go`. Name them `ErrXRequired` (`ErrURLRequired`, `ErrAPIKeyRequired`, ...) for consistency with `transports/http` and `transports/datadog`. Wrapper transports that take a pre-built `*zerolog.Logger` / `*zap.Logger` / etc. and have nothing to validate ship only `New`.
+
+```go
+// yourpkg.go
+package yourpkg
+
+import (
+    "go.loglayer.dev"
+    "go.loglayer.dev/transport"
+)
+
+type Config struct {
+    transport.BaseConfig
+    // ... your knobs
+}
+
+type Transport struct {
+    transport.BaseTransport
+    cfg Config
+}
+
+func New(cfg Config) *Transport { /* ... */ }
+
+func (t *Transport) GetLoggerInstance() any { /* ... */ }
+func (t *Transport) SendToLogger(p loglayer.TransportParams) { /* ... */ }
+```
+
+Match the pattern the built-ins use ([`transports/structured`](https://github.com/loglayer/loglayer-go/blob/main/transports/structured) for a renderer; [`transports/http`](https://github.com/loglayer/loglayer-go/blob/main/transports/http) for a network transport with `Build`).
+
 ## Testing your transport
 
 Drive entries through your transport via a real `*loglayer.LogLayer` and assert on whatever your transport actually produced (a buffer, a captured request, a wrapped logger's calls). The pattern mirrors the built-in transport tests:
