@@ -90,6 +90,19 @@ go install github.com/evilmartians/lefthook@latest
 lefthook install
 ```
 
+`go install` puts binaries in `$(go env GOPATH)/bin` (default `~/go/bin`).
+Make sure that directory is on your `PATH` so git hooks can find `lefthook`
+when they fire. If you only have `~/.local/bin` or similar on `PATH`, a
+symlink works too:
+
+```sh
+ln -sf ~/go/bin/lefthook ~/.local/bin/lefthook
+```
+
+Without this, the hook script will print `Can't find lefthook in PATH` and
+exit 0, silently skipping the checks (lefthook intentionally fails open so a
+missing install doesn't break commits).
+
 What runs:
 
 - **pre-commit** (parallel): `gofmt -l` on staged Go files (fails if anything
