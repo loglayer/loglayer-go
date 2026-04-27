@@ -10,8 +10,8 @@ Groups support is also deferred (complexity/value tradeoff for v1).
 
 ## Directory Structure
 
-Single Go module (`go.loglayer.dev/loglayer`) with sub-packages per component.
-GitHub repo: `go.loglayer.dev/loglayer`
+Single Go module (`go.loglayer.dev`) with sub-packages per component.
+GitHub repo: `go.loglayer.dev`
 Vanity redirect at `go.loglayer.dev` points Go toolchain to the GitHub repo.
 This mirrors the TypeScript monorepo's logical layout and gives each future feature its
 own package with a clean import path, without the overhead of separate `go.mod` files
@@ -19,7 +19,7 @@ at this stage.
 
 ```
 loglayer-golang/
-├── go.mod                          # module go.loglayer.dev/loglayer
+├── go.mod                          # module go.loglayer.dev
 ├── go.sum
 ├── docs/                           # Documentation (markdown, examples)
 │
@@ -48,41 +48,22 @@ loglayer-golang/
 │       ├── testing.go
 │       └── testing_test.go
 │
-│   ── Plugin system (future) ───────────────────────────────────────────
-│
-├── plugin/                         # IPlugin interface + PluginManager
-│   └── .gitkeep
-├── plugins/                        # Official plugin implementations
-│   └── .gitkeep                    #   e.g. plugins/redact, plugins/filter
-│
-│   ── Field managers (future) ──────────────────────────────────────────
-│
-├── fieldmanager/                   # IFieldManager interface
-│   └── .gitkeep
-├── fieldmanagers/                  # Alternative field manager implementations
-│   └── .gitkeep                    #   e.g. fieldmanagers/linked, /isolated
-│
-│   ── Log level managers (future) ──────────────────────────────────────
-│
-├── loglevelmanager/                # ILogLevelManager interface
-│   └── .gitkeep
-├── loglevelmanagers/               # Alternative log level manager implementations
-│   └── .gitkeep                    #   e.g. loglevelmanagers/global, /linked
-│
-│   ── Framework integrations (future) ──────────────────────────────────
-│
 └── integrations/                   # Middleware / framework adapters
-    └── .gitkeep                    #   e.g. integrations/echo, /gin, /fiber
+    └── loghttp/                    # HTTP middleware (per-request logger)
 ```
+
+Future feature directories (plugins, field managers, log level managers) are
+not pre-created. They will be added when the corresponding feature lands.
+See "Out of Scope" at the bottom of this file for the deferred list.
 
 ### Import paths (examples)
 
 ```go
-import "go.loglayer.dev/loglayer"                          // core
-import "go.loglayer.dev/loglayer/transport"                // transport interface
-import "go.loglayer.dev/loglayer/transports/console"       // console transport
-import "go.loglayer.dev/loglayer/transports/structured"    // structured transport
-import "go.loglayer.dev/loglayer/transports/testing"       // test helpers
+import "go.loglayer.dev"                          // core
+import "go.loglayer.dev/transport"                // transport interface
+import "go.loglayer.dev/transports/console"       // console transport
+import "go.loglayer.dev/transports/structured"    // structured transport
+import "go.loglayer.dev/transports/testing"       // test helpers
 ```
 
 ### Why single module vs workspace?

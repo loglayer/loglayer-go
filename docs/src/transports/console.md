@@ -14,15 +14,15 @@ The console transport is intentionally minimal. For day-to-day local development
 For production logging, use the [structured](/transports/structured) transport or one of the [logger wrappers](/transports/zerolog).
 
 ```sh
-go get go.loglayer.dev/loglayer/transports/console
+go get go.loglayer.dev/transports/console
 ```
 
 ## Basic Usage
 
 ```go
 import (
-    "go.loglayer.dev/loglayer"
-    "go.loglayer.dev/loglayer/transports/console"
+    "go.loglayer.dev"
+    "go.loglayer.dev/transports/console"
 )
 
 log := loglayer.New(loglayer.Config{

@@ -5,11 +5,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"go.loglayer.dev/loglayer"
-	"go.loglayer.dev/loglayer/internal/transporttest"
-	"go.loglayer.dev/loglayer/integrations/loghttp"
-	"go.loglayer.dev/loglayer/transport"
-	lltest "go.loglayer.dev/loglayer/transports/testing"
+	"go.loglayer.dev"
+	"go.loglayer.dev/integrations/loghttp"
+	"go.loglayer.dev/internal/transporttest"
+	"go.loglayer.dev/transport"
+	lltest "go.loglayer.dev/transports/testing"
 )
 
 func setupLogger(t *testing.T) (*loglayer.LogLayer, *lltest.TestLoggingLibrary) {
@@ -250,4 +250,3 @@ func TestMiddleware_MustFromRequestPanicsWithoutMiddleware(t *testing.T) {
 	}()
 	loghttp.MustFromRequest(httptest.NewRequest(http.MethodGet, "/", nil))
 }
-

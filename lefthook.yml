@@ -1,0 +1,28 @@
+# Git hooks managed by lefthook (https://github.com/evilmartians/lefthook).
+# Install once with: lefthook install
+#
+# Hooks run automatically on `git commit` (pre-commit) and `git push`
+# (pre-push). Skip a hook for a single command with --no-verify.
+
+pre-commit:
+  parallel: true
+  commands:
+    fmt:
+      glob: "*.go"
+      run: |
+        unformatted="$(gofmt -l {staged_files})"
+        if [ -n "$unformatted" ]; then
+          echo "These files are not gofmt-clean:"
+          echo "$unformatted"
+          echo
+          echo "Run: gofmt -w <file>  (or 'goimports -w' if you have it)"
+          exit 1
+        fi
+    vet:
+      glob: "*.go"
+      run: go vet ./...
+
+pre-push:
+  commands:
+    test-race:
+      run: go test -race -timeout 60s ./...

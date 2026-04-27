@@ -2,7 +2,7 @@
 
 > Transport-agnostic structured logging for Go. A fluent API on top of zerolog, zap, logrus, phuslu/log, charmbracelet/log, or any custom transport.
 
-LogLayer for Go gives you one consistent API for messages, persistent fields, per-call metadata, and errors. The underlying logger is a configuration choice. Module path: `go.loglayer.dev/loglayer`. GitHub: `github.com/loglayer/loglayer-go`.
+LogLayer for Go gives you one consistent API for messages, persistent fields, per-call metadata, and errors. The underlying logger is a configuration choice. Module path: `go.loglayer.dev`. GitHub: `github.com/loglayer/loglayer-go`.
 
 ## Introduction
 
@@ -39,6 +39,11 @@ LogLayer for Go gives you one consistent API for messages, persistent fields, pe
 - [Testing](https://go.loglayer.dev/transports/testing): In-memory capture for tests.
 - [Blank](https://go.loglayer.dev/transports/blank): Delegates SendToLogger to a user-supplied function. For prototyping or one-off integrations.
 
+### Network
+
+- [HTTP](https://go.loglayer.dev/transports/http): Generic batched HTTP POST. Pluggable Encoder, configurable batching, async worker with Close() to flush.
+- [Datadog](https://go.loglayer.dev/transports/datadog): Datadog Logs HTTP intake. Site-aware URL, DD-API-KEY header, level→status mapping. Built on the HTTP transport.
+
 ### Logger Wrappers
 
 - [Zerolog](https://go.loglayer.dev/transports/zerolog): Wraps github.com/rs/zerolog.
@@ -55,7 +60,7 @@ LogLayer for Go gives you one consistent API for messages, persistent fields, pe
 ## Key Patterns
 
 ```go
-import "go.loglayer.dev/loglayer"
+import "go.loglayer.dev"
 
 // Construct (panics on misconfiguration)
 log := loglayer.New(loglayer.Config{

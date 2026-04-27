@@ -16,6 +16,18 @@ export default defineConfig({
     const head: HeadConfig[] = [
       ['link', { rel: 'icon', href: '/images/icons/favicon.ico' }],
       ['link', { rel: 'manifest', href: '/images/icons/site.webmanifest' }],
+      // Vanity import path for `go get go.loglayer.dev`. Go's
+      // toolchain fetches go.loglayer.dev?go-get=1, parses these
+      // meta tags, then pulls source from the GitHub repo. pkg.go.dev uses
+      // `go-source` to render the "View Source" links.
+      ['meta', {
+        name: 'go-import',
+        content: 'go.loglayer.dev git https://github.com/loglayer/loglayer-go',
+      }],
+      ['meta', {
+        name: 'go-source',
+        content: 'go.loglayer.dev https://github.com/loglayer/loglayer-go https://github.com/loglayer/loglayer-go/tree/main{/dir} https://github.com/loglayer/loglayer-go/blob/main{/dir}/{file}#L{line}',
+      }],
       ['meta', {
         name: 'keywords',
         content: 'loglayer, golang, go, logging, logger, structured, zerolog, zap',
@@ -84,6 +96,7 @@ export default defineConfig({
           { text: 'Configuration', link: '/configuration' },
           { text: 'Cheat Sheet', link: '/cheatsheet' },
           { text: 'Benchmarks', link: '/benchmarks' },
+          { text: 'Use with AI / LLMs', link: '/llms' },
         ],
       },
       {
@@ -121,6 +134,13 @@ export default defineConfig({
               { text: 'Pretty', link: '/transports/pretty' },
               { text: 'Structured', link: '/transports/structured' },
               { text: 'Testing', link: '/transports/testing' },
+            ],
+          },
+          {
+            text: 'Network',
+            items: [
+              { text: 'HTTP', link: '/transports/http' },
+              { text: 'Datadog', link: '/transports/datadog' },
             ],
           },
           {

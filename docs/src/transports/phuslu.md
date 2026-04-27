@@ -8,7 +8,7 @@ description: Wrap a github.com/phuslu/log logger with LogLayer.
 Wraps an existing `*phuslu/log.Logger`. Map metadata flattens to fields via `Entry.Any(k, v)`; struct metadata lands under a configurable key.
 
 ```sh
-go get go.loglayer.dev/loglayer/transports/phuslu
+go get go.loglayer.dev/transports/phuslu
 ```
 
 ## Basic Usage
@@ -19,8 +19,8 @@ import (
 
     plog "github.com/phuslu/log"
 
-    "go.loglayer.dev/loglayer"
-    llphuslu "go.loglayer.dev/loglayer/transports/phuslu"
+    "go.loglayer.dev"
+    llphuslu "go.loglayer.dev/transports/phuslu"
 )
 
 p := &plog.Logger{

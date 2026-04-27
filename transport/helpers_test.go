@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
-	"go.loglayer.dev/loglayer"
-	"go.loglayer.dev/loglayer/transport"
+	"go.loglayer.dev"
+	"go.loglayer.dev/transport"
 )
 
 func TestWriterOrStderr(t *testing.T) {
@@ -29,7 +29,6 @@ func TestWriterOrStdout(t *testing.T) {
 		t.Errorf("non-nil case: got %v, want &buf", got)
 	}
 }
-
 
 func TestJoinMessages(t *testing.T) {
 	cases := []struct {
@@ -53,7 +52,6 @@ func TestJoinMessages(t *testing.T) {
 		})
 	}
 }
-
 
 type metaUser struct {
 	ID   int    `json:"id"`
@@ -114,7 +112,6 @@ func TestMetadataAsMap(t *testing.T) {
 		}
 	})
 }
-
 
 func TestFieldEstimate(t *testing.T) {
 	cases := []struct {
@@ -254,6 +251,55 @@ func TestMergeFieldsAndMetadata(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			got := transport.MergeFieldsAndMetadata(c.p)
+			if !reflect.DeepEqual(got, c.want) {
+				t.Errorf("got %v, want %v", got, c.want)
+			}
+		})
+	}
+}
+
+func TestMergeIntoMap(t *testing.T) {
+	cases := []struct {
+		name     string
+		dst      map[string]any
+		data     map[string]any
+		metadata any
+		want     map[string]any
+	}{
+		{
+			name: "all empty preserves dst",
+			dst:  map[string]any{"x": 1},
+			want: map[string]any{"x": 1},
+		},
+		{
+			name: "data merges into dst",
+			dst:  map[string]any{"x": 1},
+			data: map[string]any{"y": 2},
+			want: map[string]any{"x": 1, "y": 2},
+		},
+		{
+			name:     "map metadata merges at root",
+			dst:      map[string]any{"x": 1},
+			metadata: map[string]any{"y": 2},
+			want:     map[string]any{"x": 1, "y": 2},
+		},
+		{
+			name:     "non-map metadata nests under metadata key",
+			dst:      map[string]any{"x": 1},
+			metadata: []int{1, 2, 3},
+			want:     map[string]any{"x": 1, "metadata": []int{1, 2, 3}},
+		},
+		{
+			name:     "metadata overrides data on key conflict",
+			dst:      map[string]any{},
+			data:     map[string]any{"k": "from-data"},
+			metadata: map[string]any{"k": "from-metadata"},
+			want:     map[string]any{"k": "from-metadata"},
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := transport.MergeIntoMap(c.dst, c.data, c.metadata)
 			if !reflect.DeepEqual(got, c.want) {
 				t.Errorf("got %v, want %v", got, c.want)
 			}

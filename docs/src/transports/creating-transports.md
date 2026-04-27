@@ -27,8 +27,8 @@ import (
     "fmt"
     "io"
 
-    "go.loglayer.dev/loglayer"
-    "go.loglayer.dev/loglayer/transport"
+    "go.loglayer.dev"
+    "go.loglayer.dev/transport"
 )
 
 type Config struct {

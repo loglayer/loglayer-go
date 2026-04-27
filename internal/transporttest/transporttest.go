@@ -1,5 +1,5 @@
 // Package transporttest provides helpers for transport tests in this module.
-// Internal: not part of the public API. Use only from go.loglayer.dev/loglayer
+// Internal: not part of the public API. Use only from go.loglayer.dev
 // and its sub-packages.
 package transporttest
 

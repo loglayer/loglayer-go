@@ -47,6 +47,11 @@ Renderers (self-contained):
 - `transports/testing`: in-memory capture into a typed `LogLine` for test assertions.
 - `transports/blank`: delegates `SendToLogger` to a user-supplied function. For prototyping or one-off integrations.
 
+Network:
+
+- `transports/http`: generic batched HTTP POST transport with a pluggable Encoder. Async worker drains a buffered channel into batches; configurable BatchSize, BatchInterval, BufferSize, Headers, Client, OnError. Foundation for service-specific wrappers like Datadog. Exposes `Close() error` to flush pending entries on shutdown.
+- `transports/datadog`: Datadog Logs HTTP intake transport. Site-aware URL (us1/us3/us5/eu1/ap1), DD-API-KEY header, level → Datadog status mapping (debug/info/warning/error/critical), encoder producing the expected `{ddsource, service, hostname, ddtags, status, message, date, ...}` shape.
+
 Logger wrappers:
 
 - `transports/zerolog`: wraps `github.com/rs/zerolog`. Routes fatal entries through `WithLevel` so the core decides whether to exit.

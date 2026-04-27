@@ -8,15 +8,15 @@ description: One JSON object per log entry. The default for production logging.
 The `structured` transport always writes one JSON object per log entry. By default each entry has `level`, `time`, and `msg` fields, with fields and metadata merged at the root.
 
 ```sh
-go get go.loglayer.dev/loglayer/transports/structured
+go get go.loglayer.dev/transports/structured
 ```
 
 ## Basic Usage
 
 ```go
 import (
-    "go.loglayer.dev/loglayer"
-    "go.loglayer.dev/loglayer/transports/structured"
+    "go.loglayer.dev"
+    "go.loglayer.dev/transports/structured"
 )
 
 log := loglayer.New(loglayer.Config{

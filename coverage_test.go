@@ -9,7 +9,7 @@ import (
 	"errors"
 	"testing"
 
-	"go.loglayer.dev/loglayer"
+	"go.loglayer.dev"
 )
 
 func TestBuild_NoTransport(t *testing.T) {
@@ -107,7 +107,6 @@ func TestWithoutCtx_NilOnTransport(t *testing.T) {
 	}
 }
 
-
 func TestLogBuilder_AllTerminals(t *testing.T) {
 	cases := []struct {
 		name  string
@@ -150,7 +149,6 @@ func TestLogBuilder_LevelFiltered_NoEntry(t *testing.T) {
 	}
 }
 
-
 func TestLogLevel_String(t *testing.T) {
 	cases := map[loglayer.LogLevel]string{
 		loglayer.LogLevelTrace: "trace",
@@ -170,9 +168,9 @@ func TestLogLevel_String(t *testing.T) {
 
 func TestParseLogLevel(t *testing.T) {
 	cases := []struct {
-		in    string
-		want  loglayer.LogLevel
-		ok    bool
+		in   string
+		want loglayer.LogLevel
+		ok   bool
 	}{
 		{"trace", loglayer.LogLevelTrace, true},
 		{"debug", loglayer.LogLevelDebug, true},
@@ -191,7 +189,6 @@ func TestParseLogLevel(t *testing.T) {
 		}
 	}
 }
-
 
 func TestLevelState_UnknownLevelIsNoop(t *testing.T) {
 	log, lib := setup(t)
@@ -232,7 +229,6 @@ func TestUnmuteMetadata(t *testing.T) {
 		t.Errorf("unmuted metadata should be present, got %+v", second)
 	}
 }
-
 
 func TestPrefix_NonStringFirstArg(t *testing.T) {
 	log, lib := setupWithConfig(t, loglayer.Config{Prefix: "[app]"})

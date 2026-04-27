@@ -7,10 +7,10 @@ import (
 
 	logrusbase "github.com/sirupsen/logrus"
 
-	"go.loglayer.dev/loglayer"
-	"go.loglayer.dev/loglayer/internal/transporttest"
-	"go.loglayer.dev/loglayer/transport"
-	lllogrus "go.loglayer.dev/loglayer/transports/logrus"
+	"go.loglayer.dev"
+	"go.loglayer.dev/internal/transporttest"
+	"go.loglayer.dev/transport"
+	lllogrus "go.loglayer.dev/transports/logrus"
 )
 
 func newLogger(cfg lllogrus.Config) (*loglayer.LogLayer, *bytes.Buffer) {
@@ -26,7 +26,6 @@ func newLogger(cfg lllogrus.Config) (*loglayer.LogLayer, *bytes.Buffer) {
 	t := lllogrus.New(cfg)
 	return loglayer.New(loglayer.Config{DisableFatalExit: true, Transport: t}), buf
 }
-
 
 func TestLogrusSimpleMessage(t *testing.T) {
 	log, buf := newLogger(lllogrus.Config{})

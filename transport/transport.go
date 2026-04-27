@@ -2,7 +2,7 @@
 // used by all LogLayer transport implementations.
 package transport
 
-import "go.loglayer.dev/loglayer"
+import "go.loglayer.dev"
 
 // BaseTransport provides common fields and level-filtering logic for transports.
 // Concrete transports should embed *BaseTransport and implement ShipToLogger.

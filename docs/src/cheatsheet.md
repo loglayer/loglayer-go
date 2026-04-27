@@ -9,8 +9,8 @@ description: One-page quick reference of the LogLayer for Go API.
 
 ```go
 import (
-    "go.loglayer.dev/loglayer"
-    "go.loglayer.dev/loglayer/transports/structured"
+    "go.loglayer.dev"
+    "go.loglayer.dev/transports/structured"
 )
 
 // Panics on missing transport (typical setup).

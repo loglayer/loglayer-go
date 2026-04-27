@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"go.loglayer.dev/loglayer"
-	"go.loglayer.dev/loglayer/transport"
+	"go.loglayer.dev"
+	"go.loglayer.dev/transport"
 )
 
 // ViewMode controls how each log entry is rendered.

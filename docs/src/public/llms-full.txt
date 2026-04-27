@@ -4,7 +4,7 @@
 
 This is the comprehensive reference. For the concise index see llms.txt.
 
-Module path: `go.loglayer.dev/loglayer`. GitHub: `github.com/loglayer/loglayer-go`.
+Module path: `go.loglayer.dev`. GitHub: `github.com/loglayer/loglayer-go`.
 
 ## Core Concepts
 

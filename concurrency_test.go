@@ -13,9 +13,9 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"go.loglayer.dev/loglayer"
-	"go.loglayer.dev/loglayer/transport"
-	lltest "go.loglayer.dev/loglayer/transports/testing"
+	"go.loglayer.dev"
+	"go.loglayer.dev/transport"
+	lltest "go.loglayer.dev/transports/testing"
 )
 
 func TestConcurrentEmission_SimpleMessage(t *testing.T) {

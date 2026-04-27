@@ -7,10 +7,10 @@ import (
 
 	zlog "github.com/rs/zerolog"
 
-	"go.loglayer.dev/loglayer"
-	"go.loglayer.dev/loglayer/internal/transporttest"
-	"go.loglayer.dev/loglayer/transport"
-	llzero "go.loglayer.dev/loglayer/transports/zerolog"
+	"go.loglayer.dev"
+	"go.loglayer.dev/internal/transporttest"
+	"go.loglayer.dev/transport"
+	llzero "go.loglayer.dev/transports/zerolog"
 )
 
 func newLogger(cfg llzero.Config) (*loglayer.LogLayer, *bytes.Buffer) {
@@ -23,7 +23,6 @@ func newLogger(cfg llzero.Config) (*loglayer.LogLayer, *bytes.Buffer) {
 	t := llzero.New(cfg)
 	return loglayer.New(loglayer.Config{DisableFatalExit: true, Transport: t}), buf
 }
-
 
 func TestZerologSimpleMessage(t *testing.T) {
 	log, buf := newLogger(llzero.Config{})

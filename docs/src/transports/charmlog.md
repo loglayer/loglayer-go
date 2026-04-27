@@ -8,7 +8,7 @@ description: Wrap a github.com/charmbracelet/log logger with LogLayer.
 Wraps an existing `*charmbracelet/log.Logger`. Map metadata flattens to alternating key/value pairs; struct metadata lands under a configurable key.
 
 ```sh
-go get go.loglayer.dev/loglayer/transports/charmlog
+go get go.loglayer.dev/transports/charmlog
 ```
 
 The package name is `charmlog` (since both the import path's last element and the package itself are `log`, which would collide with the stdlib).
@@ -21,8 +21,8 @@ import (
 
     clog "github.com/charmbracelet/log"
 
-    "go.loglayer.dev/loglayer"
-    llcharm "go.loglayer.dev/loglayer/transports/charmlog"
+    "go.loglayer.dev"
+    llcharm "go.loglayer.dev/transports/charmlog"
 )
 
 cl := clog.NewWithOptions(os.Stderr, clog.Options{

@@ -45,8 +45,8 @@ package main
 import (
     "errors"
 
-    "go.loglayer.dev/loglayer"
-    "go.loglayer.dev/loglayer/transports/structured"
+    "go.loglayer.dev"
+    "go.loglayer.dev/transports/structured"
 )
 
 func main() {

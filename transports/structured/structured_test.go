@@ -5,10 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	"go.loglayer.dev/loglayer"
-	"go.loglayer.dev/loglayer/internal/transporttest"
-	"go.loglayer.dev/loglayer/transport"
-	"go.loglayer.dev/loglayer/transports/structured"
+	"go.loglayer.dev"
+	"go.loglayer.dev/internal/transporttest"
+	"go.loglayer.dev/transport"
+	"go.loglayer.dev/transports/structured"
 )
 
 func newLogger(cfg structured.Config) (*loglayer.LogLayer, *bytes.Buffer) {
@@ -21,7 +21,6 @@ func newLogger(cfg structured.Config) (*loglayer.LogLayer, *bytes.Buffer) {
 	log := loglayer.New(loglayer.Config{DisableFatalExit: true, Transport: t})
 	return log, buf
 }
-
 
 func TestStructuredAlwaysJSON(t *testing.T) {
 	log, buf := newLogger(structured.Config{})

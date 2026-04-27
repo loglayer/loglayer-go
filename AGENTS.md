@@ -8,7 +8,7 @@
 LogLayer for Go is a Go port of the TypeScript loglayer library: a transport-agnostic
 structured logging library with a fluent API for messages, fields, metadata, and errors.
 
-**Module path:** `go.loglayer.dev/loglayer`
+**Module path:** `go.loglayer.dev`
 **GitHub:** `github.com/loglayer/loglayer-go`
 **Docs:** VitePress site under `docs/`
 
@@ -55,7 +55,7 @@ loglayer-golang/
 - **No `Logger` interface in core**: Go convention is "consumer defines the interface."
   Application code accepts the concrete `*loglayer.LogLayer`; `loglayer.NewMock()` returns
   the same type for test injection.
-- **Single Go module**: all transports are sub-packages of `go.loglayer.dev/loglayer`.
+- **Single Go module**: all transports are sub-packages of `go.loglayer.dev`.
 
 ## Verification
 
@@ -78,9 +78,31 @@ For docs:
 cd docs && bun run docs:build
 ```
 
+## Git Hooks (lefthook)
+
+Pre-commit and pre-push hooks are managed by [lefthook](https://github.com/evilmartians/lefthook).
+Config lives in `lefthook.yml` at the repo root.
+
+Install once after cloning:
+
+```sh
+go install github.com/evilmartians/lefthook@latest
+lefthook install
+```
+
+What runs:
+
+- **pre-commit** (parallel): `gofmt -l` on staged Go files (fails if anything
+  needs formatting; run `gofmt -w <file>` to fix), then `go vet ./...`.
+- **pre-push**: `go test -race -timeout 60s ./...`.
+
+Skip a hook for one command with `git commit --no-verify` or
+`git push --no-verify`. Don't make this a habit; the hooks are deliberately
+fast (the full pre-push suite finishes in ~15s).
+
 ## Versioning and Changelog
 
-Single Go module: `go.loglayer.dev/loglayer`. All packages move together under one
+Single Go module: `go.loglayer.dev`. All packages move together under one
 release tag.
 
 - Tags: `v0.x.x` during the pre-1.0 phase, then SemVer for v1+.

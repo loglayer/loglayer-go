@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"go.loglayer.dev/loglayer"
+	"go.loglayer.dev"
 )
 
 func TestNewMockReturnsUsableLogger(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"go.loglayer.dev/loglayer"
+	"go.loglayer.dev"
 )
 
 // WriterOrStderr returns w if non-nil, otherwise os.Stderr. Used by wrapper
@@ -77,9 +77,13 @@ func MetadataAsMap(v any) map[string]any {
 
 // MergeFieldsAndMetadata combines params.Data (the assembled fields + error
 // map) with the metadata value into a single map for transports that render
-// to a flat structure. Map metadata merges at the root; struct metadata is
-// JSON-roundtripped via MetadataAsMap. Returns nil when both inputs are empty
-// so callers can short-circuit.
+// to a flat structure. Returns nil when both inputs are empty so callers can
+// short-circuit.
+//
+// Metadata policy: map metadata merges at the root; non-map metadata is
+// JSON-roundtripped via MetadataAsMap and spread at the root (or dropped if
+// the roundtrip fails). For "nest non-map metadata under a `metadata` key"
+// semantics use MergeIntoMap instead.
 //
 // Pretty has its own local variant that uses a richer metadata extractor
 // (preserves a _metadata fallback for slices/scalars). Other transports
@@ -103,6 +107,34 @@ func MergeFieldsAndMetadata(p loglayer.TransportParams) map[string]any {
 		return nil
 	}
 	return out
+}
+
+// MergeIntoMap copies data and metadata into dst (the same map; mutated in
+// place) and returns dst for chaining convenience. Use it from encoders that
+// have already seeded dst with their own protocol fields (level/time/msg,
+// ddsource/...) and want to layer user data on top.
+//
+// Metadata policy: map metadata merges at the root; non-map metadata (struct,
+// scalar, slice, ...) lands under the `metadata` key without a JSON roundtrip,
+// so encoders downstream get the raw value. For "spread non-map metadata at
+// root via JSON roundtrip" semantics use MergeFieldsAndMetadata instead.
+//
+// Pretty has its own variant with an `_metadata` fallback for non-roundtrippable
+// values (see transports/pretty/render.go); it doesn't use this helper.
+func MergeIntoMap(dst map[string]any, data map[string]any, metadata any) map[string]any {
+	for k, v := range data {
+		dst[k] = v
+	}
+	switch m := metadata.(type) {
+	case nil:
+	case map[string]any:
+		for k, v := range m {
+			dst[k] = v
+		}
+	default:
+		dst["metadata"] = m
+	}
+	return dst
 }
 
 // FieldEstimate returns the expected number of fields a transport will emit

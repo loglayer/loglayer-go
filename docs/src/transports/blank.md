@@ -14,16 +14,16 @@ The `blank` transport delegates `SendToLogger` to a function you supply inline. 
 If you find yourself repeating the same `blank.Config` across the codebase, promote it to its own transport package using the [Creating Transports](/transports/creating-transports) template.
 
 ```sh
-go get go.loglayer.dev/loglayer/transports/blank
+go get go.loglayer.dev/transports/blank
 ```
 
 ## Basic Usage
 
 ```go
 import (
-    "go.loglayer.dev/loglayer"
-    "go.loglayer.dev/loglayer/transport"
-    "go.loglayer.dev/loglayer/transports/blank"
+    "go.loglayer.dev"
+    "go.loglayer.dev/transport"
+    "go.loglayer.dev/transports/blank"
 )
 
 log := loglayer.New(loglayer.Config{

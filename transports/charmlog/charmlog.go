@@ -6,8 +6,8 @@ import (
 
 	clog "github.com/charmbracelet/log"
 
-	"go.loglayer.dev/loglayer"
-	"go.loglayer.dev/loglayer/transport"
+	"go.loglayer.dev"
+	"go.loglayer.dev/transport"
 )
 
 // Config holds configuration options for the charmbracelet/log transport.

@@ -8,10 +8,10 @@ import (
 
 	clog "github.com/charmbracelet/log"
 
-	"go.loglayer.dev/loglayer"
-	"go.loglayer.dev/loglayer/internal/transporttest"
-	"go.loglayer.dev/loglayer/transport"
-	llcharm "go.loglayer.dev/loglayer/transports/charmlog"
+	"go.loglayer.dev"
+	"go.loglayer.dev/internal/transporttest"
+	"go.loglayer.dev/transport"
+	llcharm "go.loglayer.dev/transports/charmlog"
 )
 
 func newLogger(cfg llcharm.Config) (*loglayer.LogLayer, *bytes.Buffer) {
@@ -28,7 +28,6 @@ func newLogger(cfg llcharm.Config) (*loglayer.LogLayer, *bytes.Buffer) {
 	t := llcharm.New(cfg)
 	return loglayer.New(loglayer.Config{DisableFatalExit: true, Transport: t}), buf
 }
-
 
 func TestCharmSimpleMessage(t *testing.T) {
 	log, buf := newLogger(llcharm.Config{})

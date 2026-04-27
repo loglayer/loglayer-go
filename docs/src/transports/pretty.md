@@ -10,7 +10,7 @@ The `pretty` transport renders log entries with ANSI color, theme support, and t
 **This is the recommended transport for local development and any human-readable terminal output.** For production logging, switch to [structured](/transports/structured), [zerolog](/transports/zerolog), or [zap](/transports/zap).
 
 ```sh
-go get go.loglayer.dev/loglayer/transports/pretty
+go get go.loglayer.dev/transports/pretty
 ```
 
 This transport pulls in `github.com/fatih/color` for ANSI handling.
@@ -19,8 +19,8 @@ This transport pulls in `github.com/fatih/color` for ANSI handling.
 
 ```go
 import (
-    "go.loglayer.dev/loglayer"
-    "go.loglayer.dev/loglayer/transports/pretty"
+    "go.loglayer.dev"
+    "go.loglayer.dev/transports/pretty"
 )
 
 log := loglayer.New(loglayer.Config{

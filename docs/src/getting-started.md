@@ -5,25 +5,25 @@ description: Install LogLayer, pick a transport, and write your first structured
 
 # Getting Started
 
-LogLayer for Go targets Go 1.22+ and is distributed as a single Go module: `go.loglayer.dev/loglayer`. Each transport is a sub-package of that module, so you only pull in dependencies for the transports you actually use.
+LogLayer for Go targets Go 1.22+ and is distributed as a single Go module: `go.loglayer.dev`. Each transport is a sub-package of that module, so you only pull in dependencies for the transports you actually use.
 
 ## Installation
 
 ```sh
-go get go.loglayer.dev/loglayer
+go get go.loglayer.dev
 ```
 
 To use a specific transport, also pull in its package:
 
 ```sh
 # Renderers (no third-party deps)
-go get go.loglayer.dev/loglayer/transports/console
-go get go.loglayer.dev/loglayer/transports/structured
-go get go.loglayer.dev/loglayer/transports/testing
+go get go.loglayer.dev/transports/console
+go get go.loglayer.dev/transports/structured
+go get go.loglayer.dev/transports/testing
 
 # Logger wrappers (each pulls in its underlying library)
-go get go.loglayer.dev/loglayer/transports/zerolog
-go get go.loglayer.dev/loglayer/transports/zap
+go get go.loglayer.dev/transports/zerolog
+go get go.loglayer.dev/transports/zap
 ```
 
 ## Basic Usage with the Structured Transport
@@ -36,8 +36,8 @@ package main
 import (
     "errors"
 
-    "go.loglayer.dev/loglayer"
-    "go.loglayer.dev/loglayer/transports/structured"
+    "go.loglayer.dev"
+    "go.loglayer.dev/transports/structured"
 )
 
 func main() {
@@ -79,8 +79,8 @@ import (
     zlog "github.com/rs/zerolog"
     "os"
 
-    "go.loglayer.dev/loglayer"
-    llzero "go.loglayer.dev/loglayer/transports/zerolog"
+    "go.loglayer.dev"
+    llzero "go.loglayer.dev/transports/zerolog"
 )
 
 z := zlog.New(os.Stderr).With().Timestamp().Logger()
@@ -95,8 +95,8 @@ log.WithMetadata(loglayer.Metadata{"k": "v"}).Info("hi")
 import (
     "go.uber.org/zap"
 
-    "go.loglayer.dev/loglayer"
-    llzap "go.loglayer.dev/loglayer/transports/zap"
+    "go.loglayer.dev"
+    llzap "go.loglayer.dev/transports/zap"
 )
 
 z, _ := zap.NewProduction()
@@ -120,8 +120,8 @@ go get github.com/rotisserie/eris
 ```go
 import (
     "github.com/rotisserie/eris"
-    "go.loglayer.dev/loglayer"
-    "go.loglayer.dev/loglayer/transports/structured"
+    "go.loglayer.dev"
+    "go.loglayer.dev/transports/structured"
 )
 
 log := loglayer.New(loglayer.Config{

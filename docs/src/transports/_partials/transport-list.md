@@ -10,6 +10,15 @@ Self-contained transports that format the entry and write it to an `io.Writer`. 
 | [Testing](/transports/testing)        | Captures entries in memory for tests.                                      | stdlib only             |
 | [Blank](/transports/blank)            | Delegates dispatch to a user-supplied function. For prototyping or one-off integrations. | stdlib only |
 
+### Network
+
+Transports that ship log entries to a remote endpoint over the network. Async + batched by default.
+
+| Name                                   | Description                                                              | Dependencies |
+|----------------------------------------|--------------------------------------------------------------------------|--------------|
+| [HTTP](/transports/http)               | Generic batched HTTP POST to any endpoint. Pluggable Encoder.            | stdlib only  |
+| [Datadog](/transports/datadog)         | Datadog Logs HTTP intake. Site-aware URL, DD-API-KEY header, status mapping. | stdlib only |
+
 ### Logger Wrappers
 
 Transports that hand the entry off to an existing third-party logger you already configure. Pick one of these when you have an established logging stack and want LogLayer's API on top.

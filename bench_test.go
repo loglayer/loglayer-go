@@ -33,19 +33,18 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"go.loglayer.dev/loglayer"
-	"go.loglayer.dev/loglayer/transport"
-	"go.loglayer.dev/loglayer/transports/charmlog"
-	"go.loglayer.dev/loglayer/transports/console"
-	llogrus "go.loglayer.dev/loglayer/transports/logrus"
-	"go.loglayer.dev/loglayer/transports/phuslu"
-	"go.loglayer.dev/loglayer/transports/pretty"
-	"go.loglayer.dev/loglayer/transports/structured"
-	lltest "go.loglayer.dev/loglayer/transports/testing"
-	llzap "go.loglayer.dev/loglayer/transports/zap"
-	llzero "go.loglayer.dev/loglayer/transports/zerolog"
+	"go.loglayer.dev"
+	"go.loglayer.dev/transport"
+	"go.loglayer.dev/transports/charmlog"
+	"go.loglayer.dev/transports/console"
+	llogrus "go.loglayer.dev/transports/logrus"
+	"go.loglayer.dev/transports/phuslu"
+	"go.loglayer.dev/transports/pretty"
+	"go.loglayer.dev/transports/structured"
+	lltest "go.loglayer.dev/transports/testing"
+	llzap "go.loglayer.dev/transports/zap"
+	llzero "go.loglayer.dev/transports/zerolog"
 )
-
 
 type benchUser struct {
 	ID    int    `json:"id"`
@@ -74,14 +73,12 @@ func benchMetadata() loglayer.Metadata {
 	}
 }
 
-
 type noopTransport struct{}
 
 func (n *noopTransport) ID() string                              { return "noop" }
 func (n *noopTransport) IsEnabled() bool                         { return true }
 func (n *noopTransport) SendToLogger(_ loglayer.TransportParams) {}
 func (n *noopTransport) GetLoggerInstance() any                  { return nil }
-
 
 func BenchmarkDirect_Zerolog_SimpleMessage(b *testing.B) {
 	log := zerolog.New(discard)
@@ -189,7 +186,6 @@ func BenchmarkDirect_Charmlog_MapFields(b *testing.B) {
 	}
 }
 
-
 func BenchmarkWrapped_Zerolog_SimpleMessage(b *testing.B) {
 	log := newWrappedZerolog()
 	runSimple(b, log)
@@ -264,7 +260,6 @@ func BenchmarkWrapped_Charmlog_StructMetadata(b *testing.B) {
 	log := newWrappedCharmlog()
 	runStruct(b, log)
 }
-
 
 func BenchmarkRender_Structured_SimpleMessage(b *testing.B) {
 	log := loglayer.New(loglayer.Config{
@@ -354,7 +349,6 @@ func BenchmarkRender_Testing_MapMetadata(b *testing.B) {
 	runMap(b, log)
 }
 
-
 func BenchmarkLoglayer_SimpleMessage(b *testing.B) {
 	log := loglayer.New(loglayer.Config{DisableFatalExit: true, Transport: &noopTransport{}})
 	runSimple(b, log)
@@ -390,7 +384,6 @@ func BenchmarkLoglayer_WithError(b *testing.B) {
 	}
 }
 
-
 func runSimple(b *testing.B, log *loglayer.LogLayer) {
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -414,7 +407,6 @@ func runStruct(b *testing.B, log *loglayer.LogLayer) {
 		log.WithMetadata(benchTestUser).Info(benchMsg)
 	}
 }
-
 
 func newDirectZap() *zap.Logger {
 	enc := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
@@ -443,7 +435,6 @@ func newDirectCharmlog() *clog.Logger {
 		Formatter: clog.JSONFormatter,
 	})
 }
-
 
 func newWrappedZerolog() *loglayer.LogLayer {
 	z := zerolog.New(discard)
@@ -495,7 +486,6 @@ func newWrappedCharmlog() *loglayer.LogLayer {
 		}),
 	})
 }
-
 
 type benchErr string
 

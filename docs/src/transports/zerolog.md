@@ -8,7 +8,7 @@ description: Wrap a github.com/rs/zerolog logger with LogLayer.
 Wraps an existing `*zerolog.Logger`. Map metadata merges as fields; struct metadata lands under a configurable key. Fatal-level entries are written via `WithLevel` so the process is **not** terminated, regardless of zerolog's defaults.
 
 ```sh
-go get go.loglayer.dev/loglayer/transports/zerolog
+go get go.loglayer.dev/transports/zerolog
 ```
 
 ## Basic Usage
@@ -18,8 +18,8 @@ import (
     zlog "github.com/rs/zerolog"
     "os"
 
-    "go.loglayer.dev/loglayer"
-    llzero "go.loglayer.dev/loglayer/transports/zerolog"
+    "go.loglayer.dev"
+    llzero "go.loglayer.dev/transports/zerolog"
 )
 
 z := zlog.New(os.Stderr).With().Timestamp().Logger()

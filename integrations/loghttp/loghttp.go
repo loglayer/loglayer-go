@@ -23,7 +23,7 @@ import (
 	"net/http"
 	"time"
 
-	"go.loglayer.dev/loglayer"
+	"go.loglayer.dev"
 )
 
 // FieldNames customizes the keys emitted by the middleware. Empty values fall

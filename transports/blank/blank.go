@@ -10,8 +10,8 @@
 package blank
 
 import (
-	"go.loglayer.dev/loglayer"
-	"go.loglayer.dev/loglayer/transport"
+	"go.loglayer.dev"
+	"go.loglayer.dev/transport"
 )
 
 // Config holds configuration for the blank transport.

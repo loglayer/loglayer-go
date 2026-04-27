@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"go.loglayer.dev/loglayer"
+	"go.loglayer.dev"
 )
 
 // combineData merges Data (fields + error) and Metadata into a single map for

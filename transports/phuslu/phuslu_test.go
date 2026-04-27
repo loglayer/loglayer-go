@@ -7,10 +7,10 @@ import (
 
 	plog "github.com/phuslu/log"
 
-	"go.loglayer.dev/loglayer"
-	"go.loglayer.dev/loglayer/internal/transporttest"
-	"go.loglayer.dev/loglayer/transport"
-	llphuslu "go.loglayer.dev/loglayer/transports/phuslu"
+	"go.loglayer.dev"
+	"go.loglayer.dev/internal/transporttest"
+	"go.loglayer.dev/transport"
+	llphuslu "go.loglayer.dev/transports/phuslu"
 )
 
 func newLogger(cfg llphuslu.Config) (*loglayer.LogLayer, *bytes.Buffer) {
@@ -26,7 +26,6 @@ func newLogger(cfg llphuslu.Config) (*loglayer.LogLayer, *bytes.Buffer) {
 	t := llphuslu.New(cfg)
 	return loglayer.New(loglayer.Config{DisableFatalExit: true, Transport: t}), buf
 }
-
 
 func TestPhusluSimpleMessage(t *testing.T) {
 	log, buf := newLogger(llphuslu.Config{})

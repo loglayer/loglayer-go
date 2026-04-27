@@ -7,10 +7,10 @@ import (
 	stdlibslog "log/slog"
 	"testing"
 
-	"go.loglayer.dev/loglayer"
-	"go.loglayer.dev/loglayer/internal/transporttest"
-	"go.loglayer.dev/loglayer/transport"
-	llslog "go.loglayer.dev/loglayer/transports/slog"
+	"go.loglayer.dev"
+	"go.loglayer.dev/internal/transporttest"
+	"go.loglayer.dev/transport"
+	llslog "go.loglayer.dev/transports/slog"
 )
 
 func newLogger(cfg llslog.Config) (*loglayer.LogLayer, *bytes.Buffer) {
@@ -27,7 +27,6 @@ func newLogger(cfg llslog.Config) (*loglayer.LogLayer, *bytes.Buffer) {
 		DisableFatalExit: true,
 	}), buf
 }
-
 
 func TestSlogSimpleMessage(t *testing.T) {
 	log, buf := newLogger(llslog.Config{})

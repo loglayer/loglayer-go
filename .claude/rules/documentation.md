@@ -68,7 +68,7 @@ This applies to every doc page, README, code comment, commit message, PR descrip
 The repo root `README.md` should be minimal:
 
 1. Project name and one-line description.
-2. Install command (`go get go.loglayer.dev/loglayer`).
+2. Install command (`go get go.loglayer.dev`).
 3. Minimal usage example (one transport, three to five lines of Go).
 4. Link to the docs site for everything else.
 

@@ -5,7 +5,7 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-The repo is currently a single Go module: `go.loglayer.dev/loglayer`. All packages
+The repo is currently a single Go module: `go.loglayer.dev`. All packages
 move together under one tag. If a transport later needs an independent release
 cadence we may split it into its own module; see `AGENTS.md` for the policy.
 
@@ -64,6 +64,18 @@ Renderers (self-contained):
 - `transports/testing`: in-memory capture for test assertions.
 - `transports/blank`: delegates `SendToLogger` to a user-supplied function.
   For prototyping or one-off integrations.
+
+Network:
+
+- `transports/http`: generic batched HTTP POST transport. Async worker drains
+  a buffered channel into batches; configurable BatchSize, BatchInterval,
+  BufferSize, Headers, Client, Encoder, OnError. Default JSONArrayEncoder
+  produces `[{level, time, msg, ...fields, metadata?}, ...]`. Exposes
+  `Close() error` to flush on shutdown.
+- `transports/datadog`: Datadog Logs HTTP intake wrapper around
+  `transports/http`. Site-aware URL (us1/us3/us5/eu1/ap1), DD-API-KEY header,
+  encoder producing Datadog's expected shape (ddsource, service, hostname,
+  ddtags, status, message, date) with level → status mapping.
 
 Logger wrappers:
 

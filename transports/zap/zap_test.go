@@ -8,10 +8,10 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"go.loglayer.dev/loglayer"
-	"go.loglayer.dev/loglayer/internal/transporttest"
-	"go.loglayer.dev/loglayer/transport"
-	llzap "go.loglayer.dev/loglayer/transports/zap"
+	"go.loglayer.dev"
+	"go.loglayer.dev/internal/transporttest"
+	"go.loglayer.dev/transport"
+	llzap "go.loglayer.dev/transports/zap"
 )
 
 func newLogger(cfg llzap.Config) (*loglayer.LogLayer, *bytes.Buffer) {
@@ -25,7 +25,6 @@ func newLogger(cfg llzap.Config) (*loglayer.LogLayer, *bytes.Buffer) {
 	t := llzap.New(cfg)
 	return loglayer.New(loglayer.Config{DisableFatalExit: true, Transport: t}), buf
 }
-
 
 func TestZapSimpleMessage(t *testing.T) {
 	log, buf := newLogger(llzap.Config{})
