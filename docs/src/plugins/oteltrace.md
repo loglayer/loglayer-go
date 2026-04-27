@@ -68,11 +68,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 ```go
 type Config struct {
-    ID            string                 // default "otel-trace-injector"
-    TraceIDKey    string                 // default "trace_id"
-    SpanIDKey     string                 // default "span_id"
-    TraceFlagsKey string                 // default "" (omit)
-    OnError       func(err error)        // optional, called on plugin panic
+    ID               string              // default "otel-trace-injector"
+    TraceIDKey       string              // default "trace_id"
+    SpanIDKey        string              // default "span_id"
+    TraceFlagsKey    string              // default "" (omit)
+    TraceStateKey    string              // default "" (omit)
+    BaggageKeyPrefix string              // default "" (omit)
+    OnError          func(err error)     // optional, called on plugin panic
 }
 ```
 
@@ -99,6 +101,35 @@ oteltrace.New(oteltrace.Config{TraceFlagsKey: "trace_flags"})
 ```
 
 When empty (the default), the trace flags are not emitted.
+
+### `TraceStateKey`
+
+When non-empty, the plugin emits the W3C [trace state](https://www.w3.org/TR/trace-context/#tracestate-header) as a single string under that key. Trace state carries vendor-specific routing/sampling info that propagates with the trace context (`vendor1=val1,vendor2=val2`).
+
+```go
+oteltrace.New(oteltrace.Config{TraceStateKey: "trace_state"})
+// trace_state: "vendor1=val1,vendor2=val2"
+```
+
+The plugin emits in canonical W3C form via `trace.TraceState.String()`. When the trace state is empty, no attribute is added even if the key is configured.
+
+### `BaggageKeyPrefix`
+
+When non-empty, the plugin emits each W3C [baggage](https://www.w3.org/TR/baggage/) member from the context as a separate attribute, keyed `<prefix><member-key>`.
+
+```go
+oteltrace.New(oteltrace.Config{BaggageKeyPrefix: "baggage."})
+
+// In a handler whose ctx carries baggage:
+//   user_id=alice, tenant_id=acme
+// Output:
+//   baggage.user_id: "alice"
+//   baggage.tenant_id: "acme"
+```
+
+Baggage rides independently of the trace span: a context with baggage but no active span still surfaces baggage attributes (without `trace_id` / `span_id`).
+
+Baggage values are application-controlled. If your application puts unbounded data in baggage (full request bodies, etc.), surfacing all of it on every log line will inflate output and may leak data to log destinations. Use a prefix like `baggage.` so consumers can filter, and consider trimming high-cardinality keys upstream.
 
 ### `OnError`
 
@@ -131,5 +162,4 @@ CI runs them automatically. See `plugins/oteltrace/livetest_test.go`.
 ## What it Does NOT Do
 
 - **Doesn't start a tracer.** You set up the OTel SDK or any conformant tracer (Jaeger, Zipkin, vendor SDKs that implement the OTel API) yourself.
-- **Doesn't propagate context across HTTP/RPC.** Use `go.opentelemetry.io/contrib/instrumentation/...` for that.
-- **Doesn't include `trace_state` or baggage.** If you need W3C trace state on every log, write a small custom plugin (or extend this one — PRs welcome).
+- **Doesn't wire trace context across service boundaries.** This plugin only reads from the local `context.Context`. Getting trace IDs *onto* outgoing HTTP/gRPC requests (and *off* incoming ones) is the job of OTel's instrumentation libraries: [`otelhttp`](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp) for stdlib `net/http`, [`otelgrpc`](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc) for gRPC, etc. Without one of those installed, downstream services start with no span on their context and this plugin will emit nothing for their logs.

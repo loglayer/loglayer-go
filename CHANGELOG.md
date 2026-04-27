@@ -243,7 +243,11 @@ Logger wrappers:
 - `plugins/oteltrace`: OpenTelemetry trace injector plugin. Reads the
   active span from each entry's `WithCtx` context via
   `trace.SpanContextFromContext` and emits `trace_id` / `span_id`
-  (configurable keys) plus optional `trace_flags`. Use with non-OTel
+  (configurable keys) plus optional `trace_flags`, `trace_state` (W3C
+  vendor-specific routing/sampling info), and W3C baggage members
+  under a configurable key prefix (`baggage.user_id` etc.). Baggage
+  rides independently of the trace span, so contexts with baggage but
+  no active span still surface baggage attributes. Use with non-OTel
   transports for log/trace correlation; the OTel pipeline does this
   itself when shipping via `transports/otellog`.
 

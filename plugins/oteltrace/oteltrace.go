@@ -36,6 +36,7 @@ package oteltrace
 
 import (
 	"go.loglayer.dev"
+	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -57,6 +58,23 @@ type Config struct {
 	// (an int 0-255; bit 0 is the sampled flag) under that key. Empty
 	// means "don't emit" (the default).
 	TraceFlagsKey string
+
+	// TraceStateKey, when non-empty, emits the W3C trace state (vendor-
+	// specific routing/sampling information that rides with the trace
+	// context) as a single string under that key. Canonical form:
+	// "vendor1=val1,vendor2=val2". Empty means "don't emit" (the default).
+	// Skipped when the trace state is empty even if the key is set.
+	TraceStateKey string
+
+	// BaggageKeyPrefix, when non-empty, emits each W3C baggage member
+	// from p.Ctx as a separate attribute keyed "<prefix><member-key>".
+	// Common choice: "baggage." → baggage.user_id, baggage.tenant_id.
+	// Empty means "don't emit" (the default).
+	//
+	// Baggage is read independently of the trace span: a context can
+	// carry baggage with no active span, in which case those values are
+	// emitted on the entry without trace_id / span_id.
+	BaggageKeyPrefix string
 
 	// OnError is forwarded to the resulting Plugin's OnError. The
 	// LogLayer framework recovers extractor panics centrally; if you
@@ -84,16 +102,30 @@ func New(cfg Config) loglayer.Plugin {
 			if p.Ctx == nil {
 				return nil
 			}
-			sc := trace.SpanContextFromContext(p.Ctx)
-			if !sc.IsValid() {
-				return nil
+			var data loglayer.Data
+			if sc := trace.SpanContextFromContext(p.Ctx); sc.IsValid() {
+				data = loglayer.Data{
+					cfg.TraceIDKey: sc.TraceID().String(),
+					cfg.SpanIDKey:  sc.SpanID().String(),
+				}
+				if cfg.TraceFlagsKey != "" {
+					data[cfg.TraceFlagsKey] = int(sc.TraceFlags())
+				}
+				if cfg.TraceStateKey != "" {
+					if ts := sc.TraceState(); ts.Len() > 0 {
+						data[cfg.TraceStateKey] = ts.String()
+					}
+				}
 			}
-			data := loglayer.Data{
-				cfg.TraceIDKey: sc.TraceID().String(),
-				cfg.SpanIDKey:  sc.SpanID().String(),
-			}
-			if cfg.TraceFlagsKey != "" {
-				data[cfg.TraceFlagsKey] = int(sc.TraceFlags())
+			if cfg.BaggageKeyPrefix != "" {
+				if bag := baggage.FromContext(p.Ctx); bag.Len() > 0 {
+					if data == nil {
+						data = make(loglayer.Data, bag.Len())
+					}
+					for _, m := range bag.Members() {
+						data[cfg.BaggageKeyPrefix+m.Key()] = m.Value()
+					}
+				}
 			}
 			return data
 		},

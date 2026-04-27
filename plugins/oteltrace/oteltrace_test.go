@@ -8,6 +8,7 @@ import (
 	"go.loglayer.dev/plugins/oteltrace"
 	"go.loglayer.dev/transport"
 	lltest "go.loglayer.dev/transports/testing"
+	"go.opentelemetry.io/otel/baggage"
 	otrace "go.opentelemetry.io/otel/trace"
 )
 
@@ -173,5 +174,141 @@ func TestCustomID(t *testing.T) {
 	p := oteltrace.New(oteltrace.Config{ID: "my-injector"})
 	if p.ID != "my-injector" {
 		t.Errorf("custom ID: got %q", p.ID)
+	}
+}
+
+// ctxWithSpanAndState attaches a span context with a parsed W3C
+// TraceState. Construction goes through ParseTraceState so the value
+// stays in canonical form on String().
+func ctxWithSpanAndState(t *testing.T, ts string) context.Context {
+	t.Helper()
+	parsed, err := otrace.ParseTraceState(ts)
+	if err != nil {
+		t.Fatalf("ParseTraceState(%q): %v", ts, err)
+	}
+	sc := otrace.NewSpanContext(otrace.SpanContextConfig{
+		TraceID:    fixedTraceID,
+		SpanID:     fixedSpanID,
+		TraceFlags: otrace.FlagsSampled,
+		TraceState: parsed,
+	})
+	return otrace.ContextWithSpanContext(context.Background(), sc)
+}
+
+func TestTraceStateEmittedWhenConfigured(t *testing.T) {
+	log, lib := setup(t, oteltrace.New(oteltrace.Config{
+		TraceStateKey: "trace_state",
+	}))
+
+	log.WithCtx(ctxWithSpanAndState(t, "vendor1=val1,vendor2=val2")).Info("hi")
+
+	line := lib.PopLine()
+	if line.Data["trace_state"] != "vendor1=val1,vendor2=val2" {
+		t.Errorf("trace_state: got %v, want %q", line.Data["trace_state"], "vendor1=val1,vendor2=val2")
+	}
+}
+
+func TestTraceStateOmittedByDefault(t *testing.T) {
+	log, lib := setup(t, oteltrace.New(oteltrace.Config{}))
+
+	log.WithCtx(ctxWithSpanAndState(t, "vendor1=val1")).Info("hi")
+
+	line := lib.PopLine()
+	if _, has := line.Data["trace_state"]; has {
+		t.Errorf("trace_state should be absent when TraceStateKey is empty: %v", line.Data["trace_state"])
+	}
+}
+
+func TestTraceStateOmittedWhenEmpty(t *testing.T) {
+	// Key is configured but the trace state itself is empty: emit nothing.
+	log, lib := setup(t, oteltrace.New(oteltrace.Config{
+		TraceStateKey: "trace_state",
+	}))
+
+	log.WithCtx(ctxWithSpan(fixedTraceID, fixedSpanID, true)).Info("hi") // no trace state
+
+	line := lib.PopLine()
+	if _, has := line.Data["trace_state"]; has {
+		t.Errorf("trace_state should be absent when state is empty: %v", line.Data["trace_state"])
+	}
+}
+
+func TestBaggageEmittedWithPrefix(t *testing.T) {
+	log, lib := setup(t, oteltrace.New(oteltrace.Config{
+		BaggageKeyPrefix: "baggage.",
+	}))
+
+	user, _ := baggage.NewMember("user_id", "alice")
+	tenant, _ := baggage.NewMember("tenant_id", "acme")
+	bag, _ := baggage.New(user, tenant)
+	ctx := baggage.ContextWithBaggage(ctxWithSpan(fixedTraceID, fixedSpanID, true), bag)
+
+	log.WithCtx(ctx).Info("hi")
+
+	line := lib.PopLine()
+	if line.Data["baggage.user_id"] != "alice" {
+		t.Errorf("baggage.user_id: got %v, want %q", line.Data["baggage.user_id"], "alice")
+	}
+	if line.Data["baggage.tenant_id"] != "acme" {
+		t.Errorf("baggage.tenant_id: got %v, want %q", line.Data["baggage.tenant_id"], "acme")
+	}
+}
+
+func TestBaggageOmittedByDefault(t *testing.T) {
+	log, lib := setup(t, oteltrace.New(oteltrace.Config{}))
+
+	user, _ := baggage.NewMember("user_id", "alice")
+	bag, _ := baggage.New(user)
+	ctx := baggage.ContextWithBaggage(ctxWithSpan(fixedTraceID, fixedSpanID, true), bag)
+
+	log.WithCtx(ctx).Info("hi")
+
+	line := lib.PopLine()
+	for k := range line.Data {
+		if len(k) > 8 && k[:8] == "baggage." {
+			t.Errorf("baggage.* keys should not appear: %v", line.Data)
+		}
+	}
+}
+
+func TestBaggageEmittedWithoutSpan(t *testing.T) {
+	// Baggage rides independently of the trace span: a context with
+	// baggage but no span should still surface baggage attributes.
+	log, lib := setup(t, oteltrace.New(oteltrace.Config{
+		BaggageKeyPrefix: "baggage.",
+	}))
+
+	feature, _ := baggage.NewMember("feature_flag", "checkout-v2")
+	bag, _ := baggage.New(feature)
+	ctx := baggage.ContextWithBaggage(context.Background(), bag)
+
+	log.WithCtx(ctx).Info("no span")
+
+	line := lib.PopLine()
+	if line.Data["baggage.feature_flag"] != "checkout-v2" {
+		t.Errorf("baggage.feature_flag: got %v", line.Data["baggage.feature_flag"])
+	}
+	// Trace IDs absent because the span context is invalid.
+	if _, has := line.Data["trace_id"]; has {
+		t.Errorf("trace_id should be absent without a span: %v", line.Data)
+	}
+}
+
+func TestNoSpanNoBaggageNoInjection(t *testing.T) {
+	log, lib := setup(t, oteltrace.New(oteltrace.Config{
+		BaggageKeyPrefix: "baggage.",
+	}))
+
+	// Background ctx: no span, no baggage. Nothing to emit.
+	log.WithCtx(context.Background()).Info("plain")
+
+	line := lib.PopLine()
+	if _, has := line.Data["trace_id"]; has {
+		t.Errorf("trace_id should be absent: %v", line.Data)
+	}
+	for k := range line.Data {
+		if len(k) > 8 && k[:8] == "baggage." {
+			t.Errorf("baggage.* should be absent: %v", line.Data)
+		}
 	}
 }
