@@ -148,8 +148,6 @@ log.Fatal("logged, but process keeps running")
 
 `loglayer.NewMock()` enables this automatically. See [Mocking](/logging-api/mocking) and [Fatal Exits the Process](/logging-api/basic-logging#fatal-exits-the-process).
 
-A few logger-wrapper transports (notably [phuslu](/transports/phuslu)) call `os.Exit` from their underlying library before this option takes effect. Each wrapper's docs flag this.
-
 ## MuteFields / MuteMetadata
 
 Boolean flags that suppress fields or metadata from output. The data is still tracked on the logger, only the emit step skips it. Useful in development to cut log noise without removing the calls.

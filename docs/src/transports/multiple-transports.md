@@ -69,10 +69,11 @@ log.WithFreshTransports(t1, t2) // replace all
 
 See [Transport Management](/logging-api/transport-management).
 
-## Single-Transport Optimization
+## Single vs Multiple
 
-If you're only using one transport, set `Transport` (singular). The core takes a fast path that avoids the loop overhead. This matters in tight loops.
+For one transport, set `Transport` (singular). For more than one, use `Transports` (a slice). Both produce a working logger; pick the one that matches your call site.
 
 ```go
-loglayer.New(loglayer.Config{Transport: t}) // fast path
+loglayer.New(loglayer.Config{Transport: t})                                // single
+loglayer.New(loglayer.Config{Transports: []loglayer.Transport{t1, t2}})   // multiple
 ```

@@ -5,7 +5,7 @@ description: Enable, disable, and threshold log levels at runtime.
 
 # Adjusting Log Levels
 
-LogLayer maintains per-level enable/disable state plus a master on/off switch. Both are checked before a log entry reaches any transport. All level mutators are safe to call from any goroutine (backed by an `atomic.Uint32` bitmap), so live runtime toggling (SIGUSR1, admin endpoint flipping debug on, etc.) works without coordination.
+LogLayer maintains per-level enable/disable state plus a master on/off switch. Both are checked before a log entry reaches any transport. All level mutators are safe to call from any goroutine, so live runtime toggling (SIGUSR1, an admin endpoint flipping debug on, etc.) works without coordination.
 
 ## Setting a Threshold
 

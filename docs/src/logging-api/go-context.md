@@ -32,7 +32,7 @@ Passing nil to `WithCtx` is a no-op.
 
 ## Reading context in a transport
 
-Transports see the context as `params.Ctx`. The [slog transport](/transports/slog) passes it through to the underlying `*slog.Logger.LogAttrs` call so any handler downstream (OpenTelemetry, structured shippers) can extract trace context. Custom transports can do the same:
+Transports see the context as `params.Ctx`. They can extract trace IDs, deadlines, or any other context value:
 
 ```go
 func (t *Transport) SendToLogger(params loglayer.TransportParams) {

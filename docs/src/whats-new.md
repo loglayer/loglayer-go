@@ -35,7 +35,7 @@ Initial release of LogLayer for Go: a transport-agnostic structured logging faca
 
 ### Thread safety
 
-Every method on `*LogLayer` is safe to call from any goroutine, including concurrently with emission. `WithFields`, `ClearFields`, `Child`, and `WithPrefix` return new loggers. Level mutators are backed by an atomic bitmap, transport mutators by an atomic pointer with an internal mutex on the slow path, mute toggles by atomic bools. Designed to support runtime patterns like SIGUSR1-driven debug toggling and hot-reloading transport lists without coordination.
+Every method on `*LogLayer` is safe to call from any goroutine, including concurrently with emission. `WithFields`, `ClearFields`, `Child`, and `WithPrefix` return new loggers. Level toggling, transport changes, and mute toggles can all run live (SIGUSR1-driven debug toggling, hot-reloading transport lists) without any coordination on your side.
 
 ### Transports
 

@@ -5,7 +5,7 @@ description: Add, remove, and replace transports at runtime; reach the underlyin
 
 # Transport Management
 
-A `*loglayer.LogLayer` holds a list of transports. You configure them at construction time via `Config.Transport` or `Config.Transports`, and you can mutate the list at runtime. Mutators are safe to call from any goroutine, including concurrently with emission (the transport set is published via an `atomic.Pointer`, so the dispatch hot path always sees a consistent snapshot).
+A `*loglayer.LogLayer` holds a list of transports. You configure them at construction time via `Config.Transport` or `Config.Transports`, and you can mutate the list at runtime. Mutators are safe to call from any goroutine, including concurrently with emission.
 
 ## Add
 

@@ -99,7 +99,7 @@ log.WithMetadata(User{ID: 7, Email: "alice@example.com"}).Info("user")
 log.WithMetadata(loglayer.Metadata{"latency_ms": 23}).Info("served")
 ```
 
-The structured and console transports merge maps at the root and JSON-roundtrip structs into root fields. The zerolog and zap transports merge maps at the root and place struct payloads under a configurable field. See each transport page for details.
+Each transport renders the value its own way; see the transport pages for the exact shape.
 
 ## Multi-Transport Fan-out
 
@@ -120,7 +120,7 @@ See [multi-transport support](/transports/multiple-transports).
 
 ## Easy Mocking
 
-For tests that don't care about log output, `loglayer.NewMock()` returns a drop-in `*LogLayer` backed by a discard transport:
+For tests that don't care about log output, `loglayer.NewMock()` returns a drop-in no-op `*LogLayer`:
 
 ```go
 log := loglayer.NewMock()

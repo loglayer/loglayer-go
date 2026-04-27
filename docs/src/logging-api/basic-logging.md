@@ -57,10 +57,6 @@ log.Fatal("logged but no exit") // entry written, process continues
 
 `loglayer.NewMock()` enables this automatically. See [Mocking](/logging-api/mocking).
 
-::: warning Some wrappers exit early
-A few logger-wrapper transports (notably [phuslu](/transports/phuslu)) cannot be prevented from calling `os.Exit`. They exit before the core's `DisableFatalExit` check ever runs. Each wrapper's docs flag this where it applies.
-:::
-
 ## Prefixes
 
 Set a prefix on the logger so every message starts with it:

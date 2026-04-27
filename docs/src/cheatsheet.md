@@ -90,7 +90,7 @@ import "context"
 log.WithCtx(ctx).Info("request received")
 ```
 
-Per-call only; surfaced to transports via `TransportParams.Ctx`. The [slog transport](/transports/slog) forwards it to `slog.Logger.LogAttrs`. See [Go Context](/logging-api/go-context).
+Per-call only; surfaced to transports via `TransportParams.Ctx`. See [Go Context](/logging-api/go-context).
 
 ## Logger in a Go Context (zerolog-style)
 

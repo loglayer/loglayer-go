@@ -34,13 +34,7 @@ type User struct {
 log.WithMetadata(User{ID: 7, Email: "alice@example.com"}).Info("user")
 ```
 
-Per-transport handling:
-
-- The [structured](/transports/structured) and [console](/transports/console) transports merge maps at the root and JSON-roundtrip structs into root fields.
-- The [zerolog](/transports/zerolog) and [zap](/transports/zap) transports merge maps at the root and place struct payloads under a configurable field (default `"metadata"`).
-- The [pretty](/transports/pretty) transport renders maps inline as `key=value` and JSON-roundtrips structs into the same shape.
-
-The core logger does **zero conversion**: your value is handed to the transport as-is, so transports that can serialize structs natively (zerolog, zap) avoid an unnecessary roundtrip.
+The core logger does **zero conversion**: your value is handed to the transport as-is. The transport decides how to render it. See each transport's page for exact shape.
 
 ## Map Metadata
 
@@ -81,7 +75,7 @@ log.WithMetadata(RequestInfo{
 }).Info("request handled")
 ```
 
-For the structured transport this becomes:
+A typical JSON output:
 
 ```json
 {
@@ -92,13 +86,7 @@ For the structured transport this becomes:
 }
 ```
 
-For the zerolog transport (with default config), the struct lands under a `metadata` key:
-
-```json
-{ "message": "request handled", "metadata": { "method": "POST", ... } }
-```
-
-See each transport page for exact behavior.
+The exact shape (whether the struct flattens at the root or nests under a key) depends on the transport. See each transport's page for its rendering rules.
 
 ## Replacing, Not Merging
 

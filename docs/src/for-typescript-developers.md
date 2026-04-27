@@ -23,7 +23,7 @@ Methods are PascalCase in Go (per language convention) and camelCase in TypeScri
 | `log.child()`                         | `log.Child()`                                     | Same shape                           |
 | `log.info('msg')`                     | `log.Info("msg")`                                 | Variadic `...any` like TS varargs    |
 | `log.errorOnly(err)` / `metadataOnly` | `log.ErrorOnly(err)` / `MetadataOnly`             | Same shape                           |
-| `log.disableLogging()`                | `log.DisableLogging()`                            | Atomic in Go (see Threading below)   |
+| `log.disableLogging()`                | `log.DisableLogging()`                            | Safe to call from any goroutine      |
 | `MockLogLayer`                        | `loglayer.NewMock()`                              | Returns the concrete `*LogLayer`     |
 
 ## Why `Context` → `Fields`
@@ -100,7 +100,7 @@ LogLayer for Go's contract:
 
 - Every method on `*LogLayer` is safe to call from any goroutine, including concurrently with emission.
 - `WithFields`, `ClearFields`, `Child`, `WithPrefix` return a **new** logger; the receiver is unchanged. (This matches the convention used by zerolog, zap, slog, and logrus.) **Always assign the result**: `log = log.WithFields(...)`.
-- Level mutators (`SetLevel`, etc.) are backed by `atomic.Uint32`; transport mutators by `atomic.Pointer`; mute toggles by `atomic.Bool`. All safe to call live (e.g. operator-driven debug toggling via SIGUSR1, hot-reload of transport lists).
+- Level mutators, transport mutators, and mute toggles are all safe to call live (e.g. operator-driven debug toggling via SIGUSR1, hot-reload of transport lists), with no special coordination on your side.
 
 See the full [thread-safety contract](https://github.com/loglayer/loglayer-go/blob/main/AGENTS.md#thread-safety).
 

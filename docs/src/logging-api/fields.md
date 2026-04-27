@@ -174,16 +174,6 @@ See [Child Loggers](/logging-api/child-loggers).
 
 ## Thread Safety
 
-Every method on `*loglayer.LogLayer` is safe to call from any goroutine, including concurrently with emission.
+Every method on `*loglayer.LogLayer` is safe to call from any goroutine, including concurrently with emission. `WithFields`, `ClearFields`, `Child`, and `WithPrefix` return a new logger; the receiver is unchanged. Level toggling, transport changes, and mute toggles can all run live without any coordination on your side.
 
-| Method group | How |
-|--------------|-----|
-| Emission (`Info`, `WithMetadata`, `Raw`, ...) | Read-only on logger state |
-| `WithFields`, `ClearFields`, `Child`, `WithPrefix` | Return a new logger; receiver untouched |
-| Level mutators (`SetLevel`, `EnableLevel`, `DisableLevel`, `EnableLogging`, `DisableLogging`) | Atomic bitmap |
-| Transport mutators (`AddTransport`, `RemoveTransport`, `WithFreshTransports`) | Atomic pointer; concurrent mutators serialize via internal mutex |
-| Mute toggles (`MuteFields`, `UnmuteFields`, `MuteMetadata`, `UnmuteMetadata`) | Atomic bool |
-
-There is no setup-only category. Operator patterns like SIGUSR1-driven runtime debug toggles, hot-reloading transport lists, or live-muting noisy metadata all work without coordination.
-
-See the full [thread-safety contract](https://github.com/loglayer/loglayer-go/blob/main/AGENTS.md#thread-safety).
+See the full [thread-safety contract](https://github.com/loglayer/loglayer-go/blob/main/AGENTS.md#thread-safety) for the per-method breakdown.

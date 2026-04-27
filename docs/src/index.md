@@ -32,7 +32,7 @@ features:
   - title: Type-flexible Metadata
     details: Pass a map, struct, or any value to WithMetadata, each transport decides how to serialize it.
   - title: First-class Testing
-    details: A TestTransport with a mutex-safe TestLoggingLibrary captures every entry as a typed LogLine for clean assertions.
+    details: A TestTransport captures every entry as a typed LogLine for clean assertions, safe for concurrent use.
   - title: No Surprise os.Exit
     details: Fatal logs the entry but never terminates the process, termination is the caller's decision.
 ---
