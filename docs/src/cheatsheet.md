@@ -105,15 +105,21 @@ log = log.WithoutFields()
 log.MuteFields().UnmuteFields()
 ```
 
-## Go Context (per-call)
+## Go Context
 
 ```go
 import "context"
 
-log.WithCtx(ctx).Info("request received")
+// Bind once, every emission carries it (per-request handlers).
+log = log.WithCtx(ctx)
+log.Info("served")
+log.Warn("retrying")
+
+// Or per-call only (override):
+log.WithCtx(otherCtx).Info("override for this entry")
 ```
 
-Per-call only; surfaced to transports via `TransportParams.Ctx`. See [Go Context](/logging-api/go-context).
+Surfaced to transports via `TransportParams.Ctx` and to plugin dispatch hooks via `params.Ctx`. The `loghttp` middleware binds `r.Context()` automatically. See [Go Context](/logging-api/go-context).
 
 ## Logger in a Go Context (zerolog-style)
 
@@ -130,8 +136,8 @@ log := loglayer.MustFromContext(ctx)     // panics if not attached
 
 The "At a Glance" example shows the typical chain. Two things to know:
 
-- `WithFields` returns a **new logger** (`*LogLayer`) — assign it: `log = log.WithFields(...)`. See [Method Conventions](#method-conventions).
-- `WithMetadata`, `WithError`, `WithCtx`, `WithGroup` return a **`*LogBuilder`** — single-use, terminated by a level method (`Info`, `Warn`, ...). Don't assign the builder.
+- `WithFields`, `WithCtx`, `WithGroup` (when called on `*LogLayer`) and `WithPrefix`, `Child`, `WithoutFields` all return a **new logger** — assign them: `log = log.WithCtx(ctx)`.
+- `WithMetadata`, `WithError`, and the same `WithCtx` / `WithGroup` when called on a `*LogBuilder` return a **`*LogBuilder`** — single-use, terminated by a level method (`Info`, `Warn`, ...). Don't assign the builder.
 
 ## Child Loggers
 

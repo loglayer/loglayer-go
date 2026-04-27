@@ -159,6 +159,112 @@ func TestWithoutCtx_NilOnTransport(t *testing.T) {
 	}
 }
 
+// (*LogLayer).WithCtx binds a context to all subsequent emissions from
+// the returned logger. Tests the persistent-ctx semantics added to
+// distinguish from per-call (*LogBuilder).WithCtx.
+func TestWithCtx_BindsToLogger(t *testing.T) {
+	log, lib := setup(t)
+	type ctxKey struct{}
+	ctx := context.WithValue(context.Background(), ctxKey{}, "trace-xyz")
+
+	bound := log.WithCtx(ctx)
+	bound.Info("first")
+	bound.Warn("second")
+	bound.WithMetadata(loglayer.Metadata{"k": "v"}).Info("third")
+
+	for i, want := range []string{"first", "second", "third"} {
+		line := lib.PopLine()
+		if line == nil {
+			t.Fatalf("line %d (%q): missing", i, want)
+		}
+		if line.Ctx == nil {
+			t.Fatalf("line %d (%q): bound ctx not propagated", i, want)
+		}
+		if got := line.Ctx.Value(ctxKey{}); got != "trace-xyz" {
+			t.Errorf("line %d (%q): ctx value: got %v", i, want, got)
+		}
+	}
+}
+
+// Per-call (*LogBuilder).WithCtx still overrides the bound ctx for that
+// emission only. The bound ctx applies again for subsequent emissions.
+func TestWithCtx_PerCallOverridesBound(t *testing.T) {
+	log, lib := setup(t)
+	type ctxKey struct{}
+	bound := context.WithValue(context.Background(), ctxKey{}, "BOUND")
+	override := context.WithValue(context.Background(), ctxKey{}, "OVERRIDE")
+
+	logger := log.WithCtx(bound)
+
+	logger.Info("uses bound")
+	logger.WithCtx(override).Info("uses override")
+	logger.Info("back to bound")
+
+	want := []string{"BOUND", "OVERRIDE", "BOUND"}
+	for i, expect := range want {
+		line := lib.PopLine()
+		got, _ := line.Ctx.Value(ctxKey{}).(string)
+		if got != expect {
+			t.Errorf("line %d: got ctx value %q, want %q", i, got, expect)
+		}
+	}
+}
+
+// WithCtx returns a derived logger; the receiver's behavior is unchanged.
+func TestWithCtx_ReceiverUnchanged(t *testing.T) {
+	log, lib := setup(t)
+	ctx := context.Background()
+	_ = log.WithCtx(ctx)
+
+	log.Info("from base logger") // should not have any ctx attached
+	line := lib.PopLine()
+	if line.Ctx != nil {
+		t.Errorf("base logger should not have ctx after WithCtx call: got %v", line.Ctx)
+	}
+}
+
+// Child() inherits the parent's bound ctx; later mutations on either
+// side don't bleed.
+func TestWithCtx_ChildInheritsAndIsolates(t *testing.T) {
+	log, lib := setup(t)
+	type ctxKey struct{}
+	ctx := context.WithValue(context.Background(), ctxKey{}, "parent")
+
+	parent := log.WithCtx(ctx)
+	child := parent.Child()
+
+	child.Info("inherits parent's bound ctx")
+	if got := lib.PopLine().Ctx.Value(ctxKey{}); got != "parent" {
+		t.Errorf("child should inherit parent's bound ctx: got %v", got)
+	}
+
+	other := context.WithValue(context.Background(), ctxKey{}, "rebound")
+	rebound := child.WithCtx(other)
+	rebound.Info("child rebinds")
+	if got := lib.PopLine().Ctx.Value(ctxKey{}); got != "rebound" {
+		t.Errorf("child rebind: got %v", got)
+	}
+
+	parent.Info("parent unaffected by child rebind")
+	if got := lib.PopLine().Ctx.Value(ctxKey{}); got != "parent" {
+		t.Errorf("parent's bound ctx should be unchanged: got %v", got)
+	}
+}
+
+// Passing nil to WithCtx clears any bound ctx (returns a logger with
+// no ctx bound).
+func TestWithCtx_NilClears(t *testing.T) {
+	log, lib := setup(t)
+	bound := log.WithCtx(context.Background())
+	cleared := bound.WithCtx(nil)
+
+	cleared.Info("no ctx")
+	line := lib.PopLine()
+	if line.Ctx != nil {
+		t.Errorf("WithCtx(nil) should clear bound ctx: got %v", line.Ctx)
+	}
+}
+
 func TestLogBuilder_AllTerminals(t *testing.T) {
 	cases := []struct {
 		name  string

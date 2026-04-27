@@ -73,6 +73,12 @@ type LogLayer struct {
 	// logger; never mutated post-publish, so the dispatch path can read
 	// it without synchronization.
 	assignedGroups []string
+	// boundCtx is the persistent context.Context applied by WithCtx on
+	// this logger. Per-call WithCtx on a builder overrides it for that
+	// emission. Set only between Child() and the WithCtx call that
+	// produced this logger; never mutated post-publish, so the dispatch
+	// path can read it without synchronization.
+	boundCtx context.Context
 	// txMu serializes transport mutators (AddTransport / RemoveTransport /
 	// SetTransports) so two concurrent admin operations on the same
 	// logger don't lose updates. The dispatch path doesn't take this lock;
@@ -189,6 +195,7 @@ func (l *LogLayer) Child() *LogLayer {
 		fields:         copyFields(l.fields),
 		levels:         l.levels.clone(),
 		assignedGroups: l.assignedGroups,
+		boundCtx:       l.boundCtx,
 	}
 	child.muteFields.Store(l.muteFields.Load())
 	child.muteMetadata.Store(l.muteMetadata.Load())

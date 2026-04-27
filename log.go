@@ -14,11 +14,19 @@ func (l *LogLayer) WithError(err error) *LogBuilder {
 	return newLogBuilder(l).WithError(err)
 }
 
-// WithCtx returns a LogBuilder with the given context.Context attached.
-// Transports receive it via TransportParams.Ctx. The context is per-call;
-// it does not persist on the logger.
-func (l *LogLayer) WithCtx(ctx context.Context) *LogBuilder {
-	return newLogBuilder(l).WithCtx(ctx)
+// WithCtx returns a derived logger that automatically attaches the given
+// context.Context to every emission. Transports receive it via
+// TransportParams.Ctx; plugins receive it on dispatch-time hook params.
+//
+// Per-call (*LogBuilder).WithCtx still overrides for one emission.
+//
+// The receiver is unchanged (returns a new logger; assign the result).
+// Passing nil returns a clone with no bound context, which clears any
+// context the receiver had previously bound.
+func (l *LogLayer) WithCtx(ctx context.Context) *LogLayer {
+	child := l.Child()
+	child.boundCtx = ctx
+	return child
 }
 
 // Info logs at the info level.
@@ -131,5 +139,9 @@ func (l *LogLayer) Raw(entry RawLogEntry) {
 	if groups == nil {
 		groups = l.assignedGroups
 	}
-	l.processLog(entry.LogLevel, entry.Messages, fields, entry.Ctx, entry.Metadata, entry.Err, groups)
+	ctx := entry.Ctx
+	if ctx == nil {
+		ctx = l.boundCtx
+	}
+	l.processLog(entry.LogLevel, entry.Messages, fields, ctx, entry.Metadata, entry.Err, groups)
 }

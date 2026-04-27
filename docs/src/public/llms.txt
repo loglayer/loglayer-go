@@ -19,7 +19,7 @@ LogLayer for Go gives you one consistent API for messages, persistent fields, pe
 - [Fields](https://go.loglayer.dev/logging-api/fields): Persistent keyed data via WithFields, WithoutFields, FieldsKey.
 - [Metadata](https://go.loglayer.dev/logging-api/metadata): Per-log payload via WithMetadata. loglayer.Metadata is the canonical map alias.
 - [Error Handling](https://go.loglayer.dev/logging-api/error-handling): WithError, ErrorOnly, custom ErrorSerializer (recommend rotisserie/eris).
-- [Go Context](https://go.loglayer.dev/logging-api/go-context): WithCtx attaches a context.Context per call; surfaced to transports via TransportParams.Ctx.
+- [Go Context](https://go.loglayer.dev/logging-api/go-context): WithCtx on *LogLayer binds a context.Context to every emission from the returned logger; on *LogBuilder it's a per-call override. Surfaced to transports via TransportParams.Ctx and to plugin dispatch hooks via params.Ctx. loghttp middleware auto-binds r.Context().
 - [Child Loggers](https://go.loglayer.dev/logging-api/child-loggers): Child(), WithPrefix(), isolation semantics.
 - [Transport Management](https://go.loglayer.dev/logging-api/transport-management): AddTransport, RemoveTransport, SetTransports, GetLoggerInstance.
 - [Groups](https://go.loglayer.dev/logging-api/groups): Named routing rules. Config.Groups + WithGroup(...string) on logger or builder. ActiveGroups filter, UngroupedRouting modes (UngroupedToAll/None/Transports), runtime mutators, ActiveGroupsFromEnv helper.
@@ -60,9 +60,10 @@ LogLayer for Go gives you one consistent API for messages, persistent fields, pe
 
 ## Plugins
 
-- [Plugins overview](https://go.loglayer.dev/plugins/): Six lifecycle hooks (OnFieldsCalled, OnMetadataCalled, OnBeforeDataOut, OnBeforeMessageOut, TransformLogLevel, ShouldSend). Function-field struct API; AddPlugin/RemovePlugin/GetPlugin/PluginCount. Dispatch-time hooks receive context.Context via Params.Ctx. Convenience constructors: MetadataPlugin/FieldsPlugin/LevelPlugin.
+- [Plugins overview](https://go.loglayer.dev/plugins/): Six lifecycle hooks (OnFieldsCalled, OnMetadataCalled, OnBeforeDataOut, OnBeforeMessageOut, TransformLogLevel, ShouldSend). Function-field struct API; AddPlugin/RemovePlugin/GetPlugin/PluginCount. Dispatch-time hooks receive context.Context via Params.Ctx. Convenience constructors: MetadataPlugin/FieldsPlugin/LevelPlugin. Hook panics are recovered centrally by the framework (each hook returns its no-op value on panic; ShouldSend fails open). Set Plugin.OnError to observe recovered panics.
 - [Creating Plugins](https://go.loglayer.dev/plugins/creating-plugins): Per-hook reference and design patterns.
 - [Redact](https://go.loglayer.dev/plugins/redact): Built-in redaction plugin. Match by Keys (exact, json-tag aware) or Patterns (regex against string values). Walks nested maps, structs, slices, and pointers at any depth via reflection; preserves the caller's runtime type. Dependency-free.
+- [Datadog APM Trace Injector](https://go.loglayer.dev/plugins/datadogtrace): Inject the active dd-trace-go trace and span IDs (dd.trace_id, dd.span_id, plus optional dd.service/env/version) into every log entry that carries a context. Tracer-agnostic: bring your own dd-trace-go (v1 or v2) via a small Extract function.
 
 ## Utilities
 

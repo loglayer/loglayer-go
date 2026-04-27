@@ -6,9 +6,14 @@ import (
 )
 
 // formatLog applies the prefix to messages then hands the entry to processLog
-// using the logger's persistent fields.
+// using the logger's persistent fields. Per-call goCtx overrides the
+// logger's bound ctx (when one is provided), otherwise the bound ctx is
+// passed through.
 func (l *LogLayer) formatLog(level LogLevel, messages []any, goCtx context.Context, metadata any, err error) {
 	applyPrefix(l.config.Prefix, messages)
+	if goCtx == nil {
+		goCtx = l.boundCtx
+	}
 	l.processLog(level, messages, l.fields, goCtx, metadata, err, l.assignedGroups)
 }
 

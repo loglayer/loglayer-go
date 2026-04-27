@@ -193,10 +193,27 @@ Logger wrappers:
   membership is pre-indexed at registration time; dispatch path pays only
   for hooks that are populated. Safe to add/remove from any goroutine.
   Child loggers inherit plugins.
+- Plugin hook panics are recovered centrally by the framework so a
+  buggy plugin can't tear down the caller's goroutine. Each hook
+  returns its no-op value on panic (nil / level unchanged / fail-open
+  for `ShouldSend`). Set `Plugin.OnError` to observe recovered panics;
+  the framework wraps the recovered value in a hook-named error
+  (`loglayer: plugin <hook> panicked: ...`) using `%w` so callers can
+  still `errors.Is`/`errors.As` against the original.
 - All four dispatch-time hooks
   (`OnBeforeDataOut`, `OnBeforeMessageOut`, `TransformLogLevel`,
   `ShouldSend`) receive `Ctx context.Context` on their params, populated
   from `WithCtx`. Lets plugins read trace IDs, check cancellation, etc.
+- `(*LogLayer).WithCtx(ctx)` now returns `*LogLayer` (was `*LogBuilder`)
+  and binds the context to every subsequent emission. Mirrors the
+  `WithGroup` pattern: same name, persistent on the logger,
+  per-call-overridable on a builder. The dominant per-request handler
+  pattern collapses from "call WithCtx on every emission" to "bind once."
+  Builder chains like `log.WithCtx(ctx).WithMetadata(...).Info(...)`
+  still work transparently.
+- `loghttp.Middleware` automatically binds `r.Context()` to the
+  per-request logger. Handlers reading via `loghttp.FromRequest(r)` get
+  trace-aware logging without any per-emission boilerplate.
 - Convenience constructors `loglayer.MetadataPlugin`,
   `loglayer.FieldsPlugin`, `loglayer.LevelPlugin` for the common
   single-hook cases.
@@ -206,6 +223,13 @@ Logger wrappers:
   structs, slices, and pointers at any depth via reflection;
   preserves the caller's runtime type (struct in → struct out).
   Caller's input is never mutated. Dependency-free.
+- `plugins/datadogtrace`: Datadog APM trace injector plugin. Reads
+  the active span from each entry's `WithCtx` context via a
+  user-supplied `Extract` function and emits `dd.trace_id`,
+  `dd.span_id`, plus optional `dd.service` / `dd.env` / `dd.version`
+  for Datadog's log/trace correlation. Tracer-agnostic: works with
+  dd-trace-go v1, v2, or any custom extractor; LogLayer itself takes
+  no Datadog dependency.
 
 ### Utilities
 

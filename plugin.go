@@ -1,6 +1,9 @@
 package loglayer
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
 // Plugin is a unit of logic that runs at lifecycle points during emission.
 // Populate the function fields that match the hooks you want to participate
@@ -59,6 +62,17 @@ type Plugin struct {
 	//
 	// Multiple plugins chain: each receives the previous plugin's output.
 	OnFieldsCalled func(fields Fields) Fields
+
+	// OnError is invoked when one of this plugin's hook functions panics
+	// during emission. The framework always recovers hook panics so a
+	// buggy plugin can't tear down the caller's goroutine; OnError lets
+	// the plugin observe the recovered panic (log it, increment a
+	// counter, etc.). nil means "swallow silently" (the default).
+	//
+	// The error passed to OnError is either the recovered value as-is
+	// (when it implements error) or a fmt-wrapped form of it. The hook
+	// that panicked is identified in the error message.
+	OnError func(err error)
 }
 
 // BeforeDataOutParams is the input to OnBeforeDataOut.
@@ -164,13 +178,65 @@ func newPluginSet(plugins []Plugin) *pluginSet {
 	return s
 }
 
+// panicError wraps a recovered panic value in an error tagged with the
+// hook name. Used by recoverHook to give plugin authors context when
+// their OnError fires.
+func panicError(r any, hook string) error {
+	if e, ok := r.(error); ok {
+		return fmt.Errorf("loglayer: plugin %s panicked: %w", hook, e)
+	}
+	return fmt.Errorf("loglayer: plugin %s panicked: %v", hook, r)
+}
+
+// recoverHook is the canonical deferred recovery for plugin hook calls.
+// Defer it directly: `defer recoverHook(plugin.OnError, "HookName")`.
+func recoverHook(onErr func(error), hook string) {
+	if r := recover(); r != nil && onErr != nil {
+		onErr(panicError(r, hook))
+	}
+}
+
+func (s *pluginSet) callBeforeDataOut(i int, p BeforeDataOutParams) (out Data) {
+	defer recoverHook(s.all[i].OnError, "OnBeforeDataOut")
+	return s.all[i].OnBeforeDataOut(p)
+}
+
+func (s *pluginSet) callBeforeMessageOut(i int, p BeforeMessageOutParams) (out []any) {
+	defer recoverHook(s.all[i].OnError, "OnBeforeMessageOut")
+	return s.all[i].OnBeforeMessageOut(p)
+}
+
+func (s *pluginSet) callTransformLogLevel(i int, p TransformLogLevelParams) (level LogLevel, ok bool) {
+	defer recoverHook(s.all[i].OnError, "TransformLogLevel")
+	return s.all[i].TransformLogLevel(p)
+}
+
+// callShouldSend fails open: a panicking ShouldSend returns true so the
+// entry still dispatches. Silent dropping would mask plugin bugs as data
+// loss; OnError surfaces the panic for operators to fix.
+func (s *pluginSet) callShouldSend(i int, p ShouldSendParams) (ok bool) {
+	ok = true
+	defer recoverHook(s.all[i].OnError, "ShouldSend")
+	return s.all[i].ShouldSend(p)
+}
+
+func (s *pluginSet) callOnMetadataCalled(i int, metadata any) (out any) {
+	defer recoverHook(s.all[i].OnError, "OnMetadataCalled")
+	return s.all[i].OnMetadataCalled(metadata)
+}
+
+func (s *pluginSet) callOnFieldsCalled(i int, fields Fields) (out Fields) {
+	defer recoverHook(s.all[i].OnError, "OnFieldsCalled")
+	return s.all[i].OnFieldsCalled(fields)
+}
+
 func (s *pluginSet) runOnBeforeDataOut(p BeforeDataOutParams) Data {
 	if len(s.beforeDataOut) == 0 {
 		return p.Data
 	}
 	out := p.Data
 	for _, i := range s.beforeDataOut {
-		patch := s.all[i].OnBeforeDataOut(BeforeDataOutParams{
+		patch := s.callBeforeDataOut(i, BeforeDataOutParams{
 			LogLevel: p.LogLevel,
 			Data:     out,
 			Fields:   p.Fields,
@@ -197,7 +263,7 @@ func (s *pluginSet) runOnBeforeMessageOut(p BeforeMessageOutParams) []any {
 	}
 	msgs := p.Messages
 	for _, i := range s.beforeMessageOut {
-		next := s.all[i].OnBeforeMessageOut(BeforeMessageOutParams{
+		next := s.callBeforeMessageOut(i, BeforeMessageOutParams{
 			LogLevel: p.LogLevel,
 			Messages: msgs,
 			Ctx:      p.Ctx,
@@ -215,7 +281,7 @@ func (s *pluginSet) runTransformLogLevel(p TransformLogLevelParams) LogLevel {
 	}
 	level := p.LogLevel
 	for _, i := range s.transformLogLevel {
-		if next, ok := s.all[i].TransformLogLevel(p); ok {
+		if next, ok := s.callTransformLogLevel(i, p); ok {
 			level = next
 		}
 	}
@@ -224,7 +290,7 @@ func (s *pluginSet) runTransformLogLevel(p TransformLogLevelParams) LogLevel {
 
 func (s *pluginSet) runShouldSend(p ShouldSendParams) bool {
 	for _, i := range s.shouldSend {
-		if !s.all[i].ShouldSend(p) {
+		if !s.callShouldSend(i, p) {
 			return false
 		}
 	}
@@ -237,7 +303,7 @@ func (s *pluginSet) runOnMetadataCalled(metadata any) any {
 	}
 	out := metadata
 	for _, i := range s.onMetadataCalled {
-		out = s.all[i].OnMetadataCalled(out)
+		out = s.callOnMetadataCalled(i, out)
 		if out == nil {
 			return nil
 		}
@@ -251,7 +317,7 @@ func (s *pluginSet) runOnFieldsCalled(fields Fields) Fields {
 	}
 	out := fields
 	for _, i := range s.onFieldsCalled {
-		out = s.all[i].OnFieldsCalled(out)
+		out = s.callOnFieldsCalled(i, out)
 		if out == nil {
 			return nil
 		}

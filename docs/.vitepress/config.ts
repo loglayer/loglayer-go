@@ -114,20 +114,6 @@ export default defineConfig({
         ],
       },
       {
-        text: 'Integrations',
-        items: [
-          { text: 'HTTP Middleware (loghttp)', link: '/integrations/loghttp' },
-        ],
-      },
-      {
-        text: 'Plugins',
-        items: [
-          { text: 'Overview', link: '/plugins/' },
-          { text: 'Creating Plugins', link: '/plugins/creating-plugins' },
-          { text: 'Redact', link: '/plugins/redact' },
-        ],
-      },
-      {
         text: 'Transports',
         items: [
           { text: 'Overview', link: '/transports/' },
@@ -161,6 +147,21 @@ export default defineConfig({
               { text: 'charmbracelet/log', link: '/transports/charmlog' },
             ],
           },
+        ],
+      },
+      {
+        text: 'Plugins',
+        items: [
+          { text: 'Overview', link: '/plugins/' },
+          { text: 'Creating Plugins', link: '/plugins/creating-plugins' },
+          { text: 'Redact', link: '/plugins/redact' },
+          { text: 'Datadog APM Trace Injector', link: '/plugins/datadogtrace' },
+        ],
+      },
+      {
+        text: 'Integrations',
+        items: [
+          { text: 'HTTP Middleware (loghttp)', link: '/integrations/loghttp' },
         ],
       },
     ],

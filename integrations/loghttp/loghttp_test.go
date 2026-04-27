@@ -1,6 +1,7 @@
 package loghttp_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -249,4 +250,36 @@ func TestMiddleware_MustFromRequestPanicsWithoutMiddleware(t *testing.T) {
 		}
 	}()
 	loghttp.MustFromRequest(httptest.NewRequest(http.MethodGet, "/", nil))
+}
+
+// The middleware binds r.Context() to the per-request logger so handlers
+// don't need to chain WithCtx on every emission. Plugins that read
+// TransportParams.Ctx (trace injectors, cancellation gates) see the
+// request context for free.
+func TestMiddleware_BindsRequestContextToLogger(t *testing.T) {
+	type ctxKey struct{}
+	log, lib := setupLogger(t)
+
+	handler := loghttp.Middleware(log, loghttp.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Plain Info call — no WithCtx chain.
+		loghttp.FromRequest(r).Info("inside handler")
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req = req.WithContext(context.WithValue(req.Context(), ctxKey{}, "request-marker"))
+	runOne(t, handler, req)
+
+	lines := lib.Lines()
+	if len(lines) < 1 {
+		t.Fatalf("expected at least one captured line, got %d", len(lines))
+	}
+	for i, line := range lines {
+		if line.Ctx == nil {
+			t.Errorf("line %d: ctx not bound by middleware", i)
+			continue
+		}
+		if got := line.Ctx.Value(ctxKey{}); got != "request-marker" {
+			t.Errorf("line %d: ctx value got %v, want request-marker", i, got)
+		}
+	}
 }

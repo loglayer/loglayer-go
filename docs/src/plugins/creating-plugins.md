@@ -333,6 +333,34 @@ OnMetadataCalled: func(metadata any) any {
 
 The trade-off: the metadata reaches downstream plugins and transports as a `map[string]any`, not the user's struct. Anything that type-switches on `params.Metadata` will see a map. For most rendering paths this is invisible (they marshal to JSON anyway), but tests that compare to the original struct break.
 
+## Panic recovery
+
+Every hook call is wrapped in a deferred recover. If your hook panics, the framework swallows the panic, logging continues, and the entry treats the hook's contribution as if it returned the "no transformation" / "drop input" / "fail open" value for that hook:
+
+| Hook | Behavior on panic |
+|---|---|
+| `OnFieldsCalled` | Drops the input (nil return) |
+| `OnMetadataCalled` | Drops the input (nil return) |
+| `OnBeforeDataOut` | No data merged (nil return) |
+| `OnBeforeMessageOut` | Messages unchanged (nil return) |
+| `TransformLogLevel` | Level unchanged (`ok=false`) |
+| `ShouldSend` | Entry sent to the transport (fails open) |
+
+Set `Plugin.OnError` to observe recovered panics — log them to stderr, increment a counter, send to your error tracker:
+
+```go
+loglayer.Plugin{
+    ID: "my-plugin",
+    OnBeforeDataOut: ...,
+    OnError: func(err error) {
+        // err.Error() includes the hook name and the recovered value
+        fmt.Fprintln(os.Stderr, "plugin error:", err)
+    },
+}
+```
+
+When `OnError` is nil, panics are silently swallowed. Logging never breaks because of a buggy plugin, but operators won't see the issue without observability. Wiring `OnError` is recommended for any plugin that does non-trivial work.
+
 ## Concurrency and performance
 
 Hooks run on the dispatching goroutine. They may be called from any goroutine concurrently — the same plugin instance can fire on many emissions in parallel. Make any state your hook touches safe for concurrent reads/writes (use a mutex, atomics, or build the plugin from immutable config).

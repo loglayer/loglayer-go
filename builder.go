@@ -42,12 +42,16 @@ func (b *LogBuilder) WithError(err error) *LogBuilder {
 	return b
 }
 
-// WithCtx attaches a context.Context to the log entry. Transports receive it
-// via TransportParams.Ctx and can extract trace IDs, span context, or anything
-// else carried in the context.
+// WithCtx attaches a context.Context to this single log entry, overriding
+// any context bound to the parent logger via (*LogLayer).WithCtx for this
+// emission only.
 //
-// Unlike WithFields (which returns a derived logger that carries persistent
-// fields), WithCtx is per-call only. Passing nil is a no-op.
+// For the persistent variant (bind once, every subsequent emission carries
+// the ctx), use (*LogLayer).WithCtx instead.
+//
+// Passing nil clears any per-call ctx previously set on this builder.
+// On a fresh builder it has no observable effect (the layer's bound ctx,
+// if any, still applies on dispatch).
 func (b *LogBuilder) WithCtx(ctx context.Context) *LogBuilder {
 	b.ctx = ctx
 	return b
@@ -132,5 +136,10 @@ func (b *LogBuilder) dispatch(level LogLevel, messages []any) {
 	if len(b.groups) > 0 {
 		groups = mergeGroups(groups, b.groups)
 	}
-	b.layer.processLog(level, messages, b.layer.fields, b.ctx, b.metadata, b.err, groups)
+	// Per-call WithCtx on the builder overrides the layer's bound ctx.
+	ctx := b.ctx
+	if ctx == nil {
+		ctx = b.layer.boundCtx
+	}
+	b.layer.processLog(level, messages, b.layer.fields, ctx, b.metadata, b.err, groups)
 }

@@ -171,7 +171,8 @@ How each class achieves safety:
   `WithMetadata`, `WithError`, `WithCtx`, `Raw`, `MetadataOnly`, `ErrorOnly`):
   read-only on logger state.
 - **Returns-new** (`WithFields`, `WithoutFields`, `Child`, `WithPrefix`,
-  `WithGroup` on `*LogLayer`): build a new logger; receiver untouched.
+  `WithGroup` on `*LogLayer`, `WithCtx` on `*LogLayer`): build a new
+  logger; receiver untouched.
 - **Read-only** (`GetFields`, `GetLoggerInstance`, `IsLevelEnabled`): no state
   change.
 - **Level mutators** (`SetLevel`, `EnableLevel`, `DisableLevel`,

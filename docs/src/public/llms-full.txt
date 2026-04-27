@@ -66,7 +66,7 @@ log.Fatal(...messages any)  // dispatches then calls os.Exit(1) unless DisableFa
 
 ### Builder Chain
 
-`WithMetadata`, `WithError`, and `WithCtx` return `*LogBuilder`. Chain then terminate with a level method.
+`WithMetadata` and `WithError` return `*LogBuilder`. Chain then terminate with a level method. `WithCtx` on `*LogLayer` returns `*LogLayer` (binds ctx to subsequent emissions); on `*LogBuilder` it's a per-call override that returns `*LogBuilder`.
 
 ```go
 log.WithCtx(ctx).
@@ -87,7 +87,9 @@ log.ErrorOnly(err, loglayer.ErrorOnlyOpts{LogLevel: ..., CopyMsg: ...})
 log.Raw(loglayer.RawLogEntry{                                     // bypass builder
     LogLevel: ..., Messages: ..., Metadata: ..., Err: ..., Fields: ..., Ctx: ...,
 })
-log.WithCtx(ctx).Info("...")                                      // attach context.Context
+log = log.WithCtx(ctx)                                            // bind ctx to logger (returns *LogLayer)
+log.Info("...")                                                   // bound ctx propagates
+log.WithCtx(otherCtx).Info("...")                                 // per-call override (builder)
 ```
 
 ### Fields
@@ -294,6 +296,8 @@ Six hooks:
 
 All four dispatch-time hook param structs (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`) include a `Ctx context.Context` field populated from `WithCtx`. Use it to read trace IDs, check cancellation, etc. `OnFieldsCalled` and `OnMetadataCalled` do not receive a context (they fire from the builder phase, before the level method).
 
+Hook panics are recovered centrally by the framework. A buggy plugin can't tear down the calling goroutine: each hook returns its no-op value on panic (nil for the `On*` shapes, level unchanged for `TransformLogLevel`, fail-open for `ShouldSend` so the entry still dispatches). Set `Plugin.OnError func(error)` to observe recovered panics; the framework wraps the recovered value in a hook-named error (`loglayer: plugin OnBeforeDataOut panicked: ...`) using `%w`, so callers can still `errors.Is`/`errors.As` against the original.
+
 Convenience constructors for the common single-hook cases:
 
 - `loglayer.MetadataPlugin(id, func(any) any) Plugin`
@@ -314,7 +318,10 @@ log.AddPlugin(loglayer.Plugin{
 })
 ```
 
-Built-in plugin: `plugins/redact`. Match by `Keys` (exact key names; honors `json` tags when matching struct fields) or `Patterns` (regex against string values). Walks nested maps, structs, slices, arrays, and pointers at any depth via reflection; preserves the caller's runtime type (struct in → struct out). Caller's input is never mutated. Dependency-free.
+Built-in plugins:
+
+- `plugins/redact`. Match by `Keys` (exact key names; honors `json` tags when matching struct fields) or `Patterns` (regex against string values). Walks nested maps, structs, slices, arrays, and pointers at any depth via reflection; preserves the caller's runtime type (struct in → struct out). Caller's input is never mutated. Dependency-free.
+- `plugins/datadogtrace`. Reads the active span from each entry's `WithCtx` context via a user-supplied `Extract` function and emits `dd.trace_id`, `dd.span_id`, plus optional `dd.service` / `dd.env` / `dd.version` for Datadog's log/trace correlation. Tracer-agnostic: works with `dd-trace-go` v1, v2, or any custom extractor; LogLayer itself takes no Datadog dependency.
 
 ## Shared Utilities
 

@@ -3,6 +3,7 @@ package loglayer_test
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -730,5 +731,122 @@ func TestPlugin_Raw_RunsPipeline(t *testing.T) {
 	}
 	if len(line.Messages) != 1 || line.Messages[0] != "rewritten" {
 		t.Errorf("OnBeforeMessageOut should run on Raw entries: %v", line.Messages)
+	}
+}
+
+// The framework recovers panics in plugin hooks so a buggy plugin can't
+// tear down the caller's goroutine. Plugin.OnError surfaces the
+// recovered panic for the plugin to observe.
+func TestPlugin_HookPanicRecovered(t *testing.T) {
+	log, lib := setup(t)
+
+	hooks := []struct {
+		name   string
+		plugin loglayer.Plugin
+		emit   func()
+	}{
+		{
+			name: "OnBeforeDataOut",
+			plugin: loglayer.Plugin{
+				ID:              "p-bdo",
+				OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data { panic("bdo") },
+			},
+			emit: func() { log.Info("ok") },
+		},
+		{
+			name: "OnBeforeMessageOut",
+			plugin: loglayer.Plugin{
+				ID:                 "p-bmo",
+				OnBeforeMessageOut: func(p loglayer.BeforeMessageOutParams) []any { panic("bmo") },
+			},
+			emit: func() { log.Info("ok") },
+		},
+		{
+			name: "TransformLogLevel",
+			plugin: loglayer.Plugin{
+				ID:                "p-tll",
+				TransformLogLevel: func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) { panic("tll") },
+			},
+			emit: func() { log.Info("ok") },
+		},
+		{
+			name: "ShouldSend",
+			plugin: loglayer.Plugin{
+				ID:         "p-ss",
+				ShouldSend: func(p loglayer.ShouldSendParams) bool { panic("ss") },
+			},
+			emit: func() { log.Info("ok") },
+		},
+		{
+			name: "OnMetadataCalled",
+			plugin: loglayer.Plugin{
+				ID:               "p-omc",
+				OnMetadataCalled: func(metadata any) any { panic("omc") },
+			},
+			emit: func() { log.WithMetadata(loglayer.Metadata{"k": "v"}).Info("ok") },
+		},
+		{
+			name: "OnFieldsCalled",
+			plugin: loglayer.Plugin{
+				ID:             "p-ofc",
+				OnFieldsCalled: func(f loglayer.Fields) loglayer.Fields { panic("ofc") },
+			},
+			// WithFields is what triggers OnFieldsCalled. The result
+			// logger is then used for the emission so we have something
+			// to observe.
+			emit: func() { log.WithFields(loglayer.Fields{"a": 1}).Info("ok") },
+		},
+	}
+
+	for _, h := range hooks {
+		t.Run(h.name, func(t *testing.T) {
+			var caught error
+			plugin := h.plugin
+			plugin.OnError = func(err error) { caught = err }
+			log.AddPlugin(plugin)
+			defer log.RemovePlugin(plugin.ID)
+
+			lib.ClearLines()
+			h.emit() // must not panic
+
+			if caught == nil {
+				t.Fatalf("%s: OnError should have been called", h.name)
+			}
+			if !strings.Contains(caught.Error(), h.name) {
+				t.Errorf("%s: error message should name the hook: got %q", h.name, caught.Error())
+			}
+		})
+	}
+}
+
+// When OnError is nil, hook panics are silently recovered (logging
+// continues). The framework MUST NOT propagate the panic to the caller.
+func TestPlugin_HookPanicSilentWhenNoOnError(t *testing.T) {
+	log, lib := setup(t)
+	log.AddPlugin(loglayer.Plugin{
+		ID:              "panicker",
+		OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data { panic("boom") },
+		// OnError nil
+	})
+
+	// Must not panic.
+	log.Info("entry")
+	if lib.Len() != 1 {
+		t.Errorf("entry should still emit even when hook panics silently: got %d lines", lib.Len())
+	}
+}
+
+// ShouldSend fails open: a panicking gate doesn't drop the entry. This is
+// the safer default for a logging library — silent dropping would mask
+// plugin bugs as data loss.
+func TestPlugin_ShouldSendPanicFailsOpen(t *testing.T) {
+	log, lib := setup(t)
+	log.AddPlugin(loglayer.Plugin{
+		ID:         "panicker",
+		ShouldSend: func(p loglayer.ShouldSendParams) bool { panic("gate-broken") },
+	})
+	log.Info("survived")
+	if lib.Len() != 1 {
+		t.Errorf("ShouldSend panic should not drop the entry; got %d lines", lib.Len())
 	}
 }

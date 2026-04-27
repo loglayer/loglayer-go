@@ -1,64 +1,97 @@
 ---
 title: Go Context (context.Context)
-description: Attach a context.Context to log entries so transports can extract trace IDs, span context, deadlines, and other request-scoped values.
+description: Bind a context.Context to a logger so transports and plugins can extract trace IDs, span context, deadlines, and other request-scoped values.
 ---
 
 # Go Context
 
-LogLayer can attach a per-call `context.Context` to a log entry. Transports receive it via `TransportParams.Ctx` and can extract anything carried by the context: trace IDs, span context, deadlines, request-scoped values.
+LogLayer can attach a `context.Context` to log entries. Transports receive it via `TransportParams.Ctx`; plugins see it on dispatch-time hook params (`OnBeforeDataOut`, `OnBeforeMessageOut`, `TransformLogLevel`, `ShouldSend`). They can extract anything carried by the context: trace IDs, span context, deadlines, request-scoped values.
 
-This is distinct from [`WithFields`](/logging-api/fields), which manages a persistent key/value bag on the logger. `WithCtx` is per-call only and never persists.
+`WithCtx` works two ways depending on the receiver, mirroring the [`WithGroup`](/logging-api/groups) pattern:
 
-## Attaching context
+- **`(*LogLayer).WithCtx(ctx)`** returns a derived logger with the context **bound** to every subsequent emission. This is the recommended pattern for per-request handlers.
+- **`(*LogBuilder).WithCtx(ctx)`** attaches the context to a **single emission only**. Useful as an override on a logger that already has a different context bound.
+
+## Binding to a logger (recommended)
 
 ```go
 import "context"
 
-func handle(ctx context.Context, log *loglayer.LogLayer) {
-    log.WithCtx(ctx).Info("request received")
+func handle(ctx context.Context, base *loglayer.LogLayer) {
+    log := base.WithCtx(ctx) // bind once
+    log.Info("entry received")
+    log.WithMetadata(loglayer.Metadata{"step": 1}).Info("step done")
+    log.Error("something failed")
+    // every emission carries ctx
 }
 ```
 
-`WithCtx` returns a `*LogBuilder` so it chains with the existing builder API:
+Inside an HTTP handler, the [`loghttp` middleware](/integrations/loghttp) does this automatically: the per-request logger from `loghttp.FromRequest(r)` already has `r.Context()` bound, so handlers just write `loghttp.FromRequest(r).Info(...)` and any plugin reading `params.Ctx` gets the request context.
 
 ```go
-log.WithCtx(ctx).
-    WithMetadata(loglayer.Metadata{"path": r.URL.Path}).
-    WithError(err).
-    Error("handler failed")
+func handler(w http.ResponseWriter, r *http.Request) {
+    log := loghttp.FromRequest(r)
+    log.Info("processing")        // already bound to r.Context()
+    log.Info("calling downstream") // same
+}
 ```
 
-Passing nil to `WithCtx` is a no-op.
+The pattern works for any code path with a context:
 
-## Reading context in a transport
+- gRPC interceptors: bind `stream.Context()` (or unary's first arg) to the per-RPC logger.
+- Background workers: bind the worker's cancellation context so log-trace correlation reflects the actual unit of work.
+- Database / cache calls: extract the parent span from the call's context if your plugin reads it.
 
-Transports see the context as `params.Ctx`. They can extract trace IDs, deadlines, or any other context value:
+## Per-call override
+
+The builder still has `WithCtx` for the rare cases where you want to override the bound context for a single emission:
 
 ```go
-func (t *Transport) SendToLogger(params loglayer.TransportParams) {
-    if !t.ShouldProcess(params.LogLevel) {
-        return
-    }
-    if params.Ctx != nil {
-        if span := trace.SpanFromContext(params.Ctx); span.SpanContext().IsValid() {
-            // attach trace_id / span_id to the entry
+log := base.WithCtx(rootCtx)        // bound
+
+log.Info("uses rootCtx")
+log.WithCtx(otherCtx).Info("uses otherCtx, just this call")
+log.Info("back to rootCtx")
+```
+
+Useful when you create a child span mid-handler and want the next log to reference it:
+
+```go
+childCtx, span := tracer.StartSpanFromContext(rootCtx, "subop")
+log.WithCtx(childCtx).Info("doing subop") // child span's IDs land in this entry
+span.Finish()
+log.Info("back to root span")
+```
+
+## Reading the context in a transport or plugin
+
+Transports see it as `params.Ctx`. Plugins see it on each dispatch-time hook's params struct:
+
+```go
+loglayer.Plugin{
+    ID: "trace-injector",
+    OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data {
+        if p.Ctx == nil {
+            return nil
         }
-    }
-    // ...
+        if span := trace.SpanFromContext(p.Ctx); span.SpanContext().IsValid() {
+            return loglayer.Data{
+                "trace_id": span.SpanContext().TraceID().String(),
+                "span_id":  span.SpanContext().SpanID().String(),
+            }
+        }
+        return nil
+    },
 }
 ```
 
-`params.Ctx` is nil when the entry was emitted without `WithCtx`. Always check before using.
+`p.Ctx` (and `params.Ctx` in transports) is nil when no context is bound and `WithCtx` wasn't called per-call. Always check before using.
 
-## Why per-call only?
-
-`context.Context` carries deadlines, cancellation signals, and request-scoped values. None of those make sense to persist across multiple log calls (a deadline that fired three logs ago, a cancelled request you're still emitting for).
-
-`WithFields` (the other one) is for persistent application data that should appear on every log: request ID, service name, user ID. Different problem, different API.
+The built-in [`plugins/datadogtrace`](/plugins/datadogtrace) is a working example of a plugin that uses `params.Ctx` to inject Datadog trace IDs.
 
 ## Use the Raw entry for context
 
-If you're constructing log entries via [`Raw`](/logging-api/raw), set `Ctx` on the `RawLogEntry`:
+If you're constructing entries via [`Raw`](/logging-api/raw), set `Ctx` on the `RawLogEntry`. It overrides the logger's bound context for that entry:
 
 ```go
 log.Raw(loglayer.RawLogEntry{
@@ -68,63 +101,29 @@ log.Raw(loglayer.RawLogEntry{
 })
 ```
 
+## Lifetime concerns
+
+Binding a context to a long-lived logger can outlive the context's intended scope. Two things to be aware of:
+
+- **Cancelled contexts.** If you bind a request context and the request finishes (deadline, cancellation), plugins reading `ctx.Err()` will see `context.Canceled`. Most plugins should be fine with this; some (e.g. plugins that gate dispatch on `ctx.Err() == nil`) explicitly use it as a signal.
+- **Garbage retention.** A bound context might transitively reference request-scoped data. Don't bind a request context to a long-lived (e.g. package-global) logger or you'll keep that data alive. The `loghttp` middleware sidesteps this by scoping the bound logger to the request.
+
+For background workers: bind the worker's own cancellation context, not the parent's.
+
 ## Embedding the logger in a context
 
-LogLayer also supports the inverse pattern: store the logger *inside* a `context.Context` so downstream code can extract it without threading it through every function signature. This is useful for HTTP/gRPC middleware that wants every request to log with request-scoped context (request ID, user ID, etc.) without changing every handler's signature.
-
-### Middleware: attach a per-request logger
+LogLayer also supports the inverse pattern: store the logger *inside* a `context.Context` so downstream code can extract it. This is useful for HTTP/gRPC middleware (the [`loghttp` middleware](/integrations/loghttp) does this for you).
 
 ```go
-func loggingMiddleware(base *loglayer.LogLayer) func(http.Handler) http.Handler {
-    return func(next http.Handler) http.Handler {
-        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-            reqLog := base.Child()
-            reqLog.WithFields(loglayer.Fields{
-                "requestId": r.Header.Get("X-Request-ID"),
-                "method":    r.Method,
-                "path":      r.URL.Path,
-            })
+ctx = loglayer.NewContext(ctx, reqLog) // middleware
 
-            ctx := loglayer.NewContext(r.Context(), reqLog)
-            next.ServeHTTP(w, r.WithFields(ctx))
-        })
-    }
-}
+log := loglayer.FromContext(ctx)        // handler — returns nil if absent
+log := loglayer.MustFromContext(ctx)    // panics if absent
 ```
 
-### Handler: extract the logger from context
+These two APIs use "context" for different things:
 
-```go
-func handle(w http.ResponseWriter, r *http.Request) {
-    log := loglayer.FromContext(r.Context())
-    if log == nil {
-        log = defaultLogger // fall back to a package-level logger
-    }
-    log.Info("handling request")
-}
-```
-
-If your middleware is guaranteed to attach a logger, use `MustFromContext`:
-
-```go
-func handle(w http.ResponseWriter, r *http.Request) {
-    log := loglayer.MustFromContext(r.Context())  // panics if missing
-    log.Info("handling request")
-}
-```
-
-This trades safety for ergonomics: the panic surfaces a misconfiguration immediately rather than letting logs silently disappear.
-
-### Distinct from WithCtx
-
-These two APIs use the word "context" for different things:
-
-- `WithCtx(ctx)` attaches a `context.Context` to a single log entry so transports can read its values (trace IDs, deadlines).
+- `WithCtx(ctx)` binds a `context.Context` to a logger so transports/plugins read its values (trace IDs, deadlines).
 - `NewContext(ctx, log)` / `FromContext(ctx)` stores the logger *inside* a `context.Context` for downstream retrieval.
 
-You can combine them:
-
-```go
-log := loglayer.FromContext(r.Context())
-log.WithCtx(r.Context()).Info("served")  // emits with both: logger from ctx, ctx values forwarded to transports
-```
+The `loghttp` middleware does both: it derives a per-request logger, binds `r.Context()` to it, and also stores the logger in `r.Context()` for handlers to retrieve.
