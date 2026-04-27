@@ -122,6 +122,31 @@ func TestWithCtx_Raw(t *testing.T) {
 	}
 }
 
+// Raw with no messages still emits a line with the configured level and
+// metadata. Edge case: empty Messages slice should not panic and should
+// not be silently dropped.
+func TestRaw_EmptyMessages(t *testing.T) {
+	log, lib := setup(t)
+	log.Raw(loglayer.RawLogEntry{
+		LogLevel: loglayer.LogLevelWarn,
+		Messages: []any{},
+		Metadata: map[string]any{"k": "v"},
+	})
+	line := lib.PopLine()
+	if line == nil {
+		t.Fatal("Raw with empty messages should still emit")
+	}
+	if line.Level != loglayer.LogLevelWarn {
+		t.Errorf("level: got %s, want warn", line.Level)
+	}
+	if len(line.Messages) != 0 {
+		t.Errorf("expected empty messages, got %v", line.Messages)
+	}
+	if m, _ := line.Metadata.(map[string]any); m["k"] != "v" {
+		t.Errorf("metadata should still flow: %v", line.Metadata)
+	}
+}
+
 func TestWithoutCtx_NilOnTransport(t *testing.T) {
 	log, lib := setup(t)
 	log.Info("no ctx attached")

@@ -528,3 +528,207 @@ func TestPlugin_ConcurrentAddAndEmit(t *testing.T) {
 	wg.Wait()
 	stop.Store(true)
 }
+
+// OnBeforeDataOut returning nil leaves the assembled data unchanged. The
+// plugin's no-op path is documented but untested.
+func TestPlugin_OnBeforeDataOut_NilPreservesData(t *testing.T) {
+	log, lib := setup(t)
+	log.AddPlugin(loglayer.Plugin{
+		ID: "no-op",
+		OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data {
+			return nil
+		},
+	})
+	log = log.WithFields(loglayer.Fields{"req": "abc"})
+	log.Info("emit")
+	line := lib.PopLine()
+	if line.Data["req"] != "abc" {
+		t.Errorf("OnBeforeDataOut returning nil should preserve assembled data: %v", line.Data)
+	}
+}
+
+// OnFieldsCalled returning nil drops the WithFields call entirely
+// (parallel to TestPlugin_OnMetadataCalled_NilDropsMetadata).
+func TestPlugin_OnFieldsCalled_NilDropsFields(t *testing.T) {
+	log, lib := setup(t)
+	log.AddPlugin(loglayer.Plugin{
+		ID: "drop-fields",
+		OnFieldsCalled: func(fields loglayer.Fields) loglayer.Fields {
+			return nil
+		},
+	})
+	log = log.WithFields(loglayer.Fields{"k": "v"})
+	log.Info("emit")
+	line := lib.PopLine()
+	if line.Data["k"] != nil {
+		t.Errorf("OnFieldsCalled returning nil should drop the WithFields call: %v", line.Data)
+	}
+}
+
+// Multiple OnFieldsCalled plugins chain, each seeing the previous output.
+func TestPlugin_OnFieldsCalled_Chain(t *testing.T) {
+	log, lib := setup(t)
+	log.AddPlugin(loglayer.Plugin{
+		ID: "first",
+		OnFieldsCalled: func(fields loglayer.Fields) loglayer.Fields {
+			out := make(loglayer.Fields, len(fields))
+			for k, v := range fields {
+				out["A_"+k] = v
+			}
+			return out
+		},
+	})
+	log.AddPlugin(loglayer.Plugin{
+		ID: "second",
+		OnFieldsCalled: func(fields loglayer.Fields) loglayer.Fields {
+			out := make(loglayer.Fields, len(fields))
+			for k, v := range fields {
+				out["B_"+k] = v
+			}
+			return out
+		},
+	})
+	log = log.WithFields(loglayer.Fields{"k": "v"})
+	log.Info("emit")
+	line := lib.PopLine()
+	if line.Data["B_A_k"] != "v" {
+		t.Errorf("plugins should chain OnFieldsCalled: got %v", line.Data)
+	}
+}
+
+// When OnMetadataCalled returns nil, the chain short-circuits: subsequent
+// plugins do not fire.
+func TestPlugin_OnMetadataCalled_NilShortCircuits(t *testing.T) {
+	log, _ := setup(t)
+	secondCalled := false
+	log.AddPlugin(loglayer.Plugin{
+		ID: "drop",
+		OnMetadataCalled: func(metadata any) any {
+			return nil
+		},
+	})
+	log.AddPlugin(loglayer.Plugin{
+		ID: "after-drop",
+		OnMetadataCalled: func(metadata any) any {
+			secondCalled = true
+			return metadata
+		},
+	})
+	log.WithMetadata(map[string]any{"k": "v"}).Info("hi")
+	if secondCalled {
+		t.Error("plugin chain should short-circuit when an earlier hook returns nil")
+	}
+}
+
+// Same short-circuit behavior for OnFieldsCalled.
+func TestPlugin_OnFieldsCalled_NilShortCircuits(t *testing.T) {
+	log, _ := setup(t)
+	secondCalled := false
+	log.AddPlugin(loglayer.Plugin{
+		ID: "drop",
+		OnFieldsCalled: func(fields loglayer.Fields) loglayer.Fields {
+			return nil
+		},
+	})
+	log.AddPlugin(loglayer.Plugin{
+		ID: "after-drop",
+		OnFieldsCalled: func(fields loglayer.Fields) loglayer.Fields {
+			secondCalled = true
+			return fields
+		},
+	})
+	log = log.WithFields(loglayer.Fields{"k": "v"})
+	_ = log
+	if secondCalled {
+		t.Error("OnFieldsCalled chain should short-circuit on nil")
+	}
+}
+
+// Pin the dispatch-time hook ordering: OnBeforeDataOut runs first, then
+// OnBeforeMessageOut, then TransformLogLevel, and ShouldSend last (per
+// transport).
+func TestPlugin_DispatchHookOrdering(t *testing.T) {
+	log, _ := setup(t)
+	var calls []string
+
+	log.AddPlugin(loglayer.Plugin{
+		ID: "ordering",
+		OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data {
+			calls = append(calls, "data")
+			return nil
+		},
+		OnBeforeMessageOut: func(p loglayer.BeforeMessageOutParams) []any {
+			calls = append(calls, "messages")
+			return nil
+		},
+		TransformLogLevel: func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) {
+			calls = append(calls, "level")
+			return 0, false
+		},
+		ShouldSend: func(p loglayer.ShouldSendParams) bool {
+			calls = append(calls, "send")
+			return true
+		},
+	})
+	log.Info("ordered")
+
+	want := []string{"data", "messages", "level", "send"}
+	if len(calls) != len(want) {
+		t.Fatalf("got %d hook calls, want %d: %v", len(calls), len(want), calls)
+	}
+	for i, w := range want {
+		if calls[i] != w {
+			t.Errorf("hook %d: got %q, want %q (full sequence: %v)", i, calls[i], w, calls)
+		}
+	}
+}
+
+// TransformLogLevel must receive Metadata and Err on its params (not just
+// LogLevel and Data).
+func TestPlugin_TransformLogLevel_SeesMetadataAndErr(t *testing.T) {
+	log, _ := setup(t)
+	var sawMeta any
+	var sawErr error
+	log.AddPlugin(loglayer.Plugin{
+		ID: "inspect",
+		TransformLogLevel: func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) {
+			sawMeta = p.Metadata
+			sawErr = p.Err
+			return 0, false
+		},
+	})
+	log.WithMetadata(map[string]any{"k": "v"}).WithError(errors.New("boom")).Error("explode")
+
+	m, ok := sawMeta.(map[string]any)
+	if !ok || m["k"] != "v" {
+		t.Errorf("TransformLogLevel should see Metadata: got %T %v", sawMeta, sawMeta)
+	}
+	if sawErr == nil || sawErr.Error() != "boom" {
+		t.Errorf("TransformLogLevel should see Err: got %v", sawErr)
+	}
+}
+
+// Raw entries flow through the plugin pipeline.
+func TestPlugin_Raw_RunsPipeline(t *testing.T) {
+	log, lib := setup(t)
+	log.AddPlugin(loglayer.Plugin{
+		ID: "raw-mutator",
+		OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data {
+			return loglayer.Data{"plugin_added": true}
+		},
+		OnBeforeMessageOut: func(p loglayer.BeforeMessageOutParams) []any {
+			return []any{"rewritten"}
+		},
+	})
+	log.Raw(loglayer.RawLogEntry{
+		LogLevel: loglayer.LogLevelInfo,
+		Messages: []any{"original"},
+	})
+	line := lib.PopLine()
+	if line.Data["plugin_added"] != true {
+		t.Errorf("OnBeforeDataOut should run on Raw entries: %v", line.Data)
+	}
+	if len(line.Messages) != 1 || line.Messages[0] != "rewritten" {
+		t.Errorf("OnBeforeMessageOut should run on Raw entries: %v", line.Messages)
+	}
+}

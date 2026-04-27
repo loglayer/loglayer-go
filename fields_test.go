@@ -99,3 +99,36 @@ func TestFieldsKey(t *testing.T) {
 		t.Errorf("nested id: got %v", nested["id"])
 	}
 }
+
+// Muting fields and metadata are independent: muting one should not
+// suppress the other in the same emission.
+func TestMute_FieldsMutedMetadataFlows(t *testing.T) {
+	log, lib := setup(t)
+	log = log.WithFields(loglayer.Fields{"hidden": "field"})
+	log.MuteFields()
+
+	log.WithMetadata(map[string]any{"visible": "meta"}).Info("emit")
+	line := lib.PopLine()
+	if line.Data["hidden"] != nil {
+		t.Errorf("muted fields should not appear: %v", line.Data)
+	}
+	m, _ := line.Metadata.(map[string]any)
+	if m["visible"] != "meta" {
+		t.Errorf("metadata should still flow when only fields are muted: %v", line.Metadata)
+	}
+}
+
+func TestMute_MetadataMutedFieldsFlow(t *testing.T) {
+	log, lib := setup(t)
+	log = log.WithFields(loglayer.Fields{"visible": "field"})
+	log.MuteMetadata()
+
+	log.WithMetadata(map[string]any{"hidden": "meta"}).Info("emit")
+	line := lib.PopLine()
+	if line.Data["visible"] != "field" {
+		t.Errorf("fields should still flow when only metadata is muted: %v", line.Data)
+	}
+	if line.Metadata != nil {
+		t.Errorf("muted metadata should be nil: %v", line.Metadata)
+	}
+}
