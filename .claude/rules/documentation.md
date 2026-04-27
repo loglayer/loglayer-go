@@ -63,6 +63,23 @@ When linking to a sub-heading, use just the heading title:
 
 This applies to every doc page, README, code comment, commit message, PR description, and chat response.
 
+### Density: prefer sub-sections to dense bullets
+
+If a section is a bulleted list where each bullet is its own multi-sentence concept, break it into named `###` sub-sections. The reader should be able to scan headings to find the strategy that matches their situation. Heuristic: 2+ bullets that each combine a name, a technique, caveats, and a link → split.
+
+Single-sentence bullets are fine and don't need this treatment.
+
+### Casual users vs implementers
+
+Pages aimed at *callers* (logging-api/, transports/index, plugins/index, configuration, getting-started, introduction) should not bleed implementation details that only a transport or plugin author needs. That includes:
+
+- The `TransportParams` struct shape and its fields.
+- Plugin hook signatures and lifecycle phase names beyond what a *user installing* a plugin needs to understand timing.
+- Internal helpers (`MetadataAsRootMap`, `MergeFieldsAndMetadata`, `BaseTransport`, etc.).
+- Typed errors used only by hooks (e.g. recovered-panic types).
+
+Implementer-only material lives in `creating-transports.md`, `creating-plugins.md`, and the relevant per-implementation page. Casual-user pages can mention that those creator pages exist (one-liner pointer is fine), but should not paraphrase their content.
+
 ## README Requirements
 
 The repo root `README.md` should be minimal:
@@ -85,10 +102,31 @@ docs/src/
 ├── getting-started.md          Install + minimal example
 ├── configuration.md            Every Config field
 ├── cheatsheet.md               One-page API reference
+├── concepts/                   Cross-cutting concept pages (data-shapes, etc.)
 ├── logging-api/                Per-method guides
-└── transports/                 Per-transport guides
-    └── _partials/              Shared markdown fragments
+├── plugins/
+│   ├── index.md                Overview + catalog only
+│   ├── configuration.md        Construction-time wiring (Config.Plugins, IDs)
+│   ├── management.md           Runtime mutation (AddPlugin / RemovePlugin / etc.)
+│   ├── creating-plugins.md     Authoring guide
+│   └── _partials/
+└── transports/
+    ├── index.md                Overview + catalog only
+    ├── configuration.md        Construction-time wiring (Config.Transport(s), BaseConfig)
+    ├── management.md           Runtime mutation (AddTransport / etc.)
+    ├── multiple-transports.md  Fan-out semantics
+    ├── creating-transports.md  Authoring guide
+    └── _partials/
 ```
+
+**The four-page pattern for transports and plugins.** Overview / Configuration / Management / Creating. The split mirrors the TS loglayer site and keeps each page narrow:
+
+- **Overview** (`index.md`): "what is this" + the catalog partial. Don't put management or configuration prose here.
+- **Configuration**: construction-time wiring. `Config` fields the user sets, ID semantics, defaults.
+- **Management**: runtime mutation. `AddX`, `RemoveX`, `GetX`, replace-by-ID semantics, concurrency.
+- **Creating**: authoring guide for users implementing the interface. All implementation-side details live here (helpers, hooks, lifecycle).
+
+Each pair (Configuration / Management) cross-references the other in its first paragraph.
 
 Required elements per page:
 
@@ -165,7 +203,7 @@ log.WithMetadata(loglayer.Metadata{"k": "v"}).Info("hello")
 log.Info("hello", loglayer.Metadata{"k": "v"})
 ```
 
-The `BaseConfig.ID` field on a transport is optional in most examples. Include it only when the example needs it (multi-transport, `RemoveTransport`, `GetLoggerInstance`).
+The `BaseConfig.ID` field on a transport (and `Plugin.ID`) is optional and auto-generated when omitted. Include it in an example **only** when the example specifically demonstrates management (`RemoveTransport`, `GetLoggerInstance`, `RemovePlugin`, `GetPlugin`, replace-by-ID). Bare construction examples should leave it off.
 
 ## Configuration Tables
 
@@ -177,6 +215,35 @@ When documenting a config struct, prefer a table for quick scanning:
 ```
 
 Use code blocks for the full struct shape only when the type/default columns would push line length too far.
+
+## Pitfalls / traps: inline, not centralized
+
+Don't create a "Common Pitfalls" or similar page that aggregates every footgun in one place. Embed warnings inline on the page that owns the API the trap relates to, using a `::: warning` callout near the relevant API description. Keep the callout short: name the trap, show the ❌ and ✅ in side-by-side code if it helps, link to a deeper page only if there's already a good target.
+
+Why: a centralized pitfalls page bit-rots, gets read once and forgotten, and means readers have to round-trip when they hit a snag. Inline warnings show up exactly when the reader is making the call that could trigger the trap.
+
+Confirmed pitfalls already inlined:
+
+- `WithFields` / `WithCtx` returns a new logger → `fields.md`, `go-context.md`.
+- Maps passed to `WithFields` / `WithMetadata` aren't deep-copied → `fields.md`, `metadata.md`.
+- Mute toggles can interleave under concurrency → `fields.md`, `metadata.md` (in their Muting sections).
+- `MetadataFieldName` only applies to non-map metadata → `metadata.md`.
+- Phuslu can't suppress fatal exit → `transports/phuslu.md` (`:::danger` block).
+- OTel transport silent-drops without a provider → `transports/otellog.md`.
+- oteltrace plugin needs propagator across service boundaries → `plugins/oteltrace.md`.
+
+When you ship a new trap, add a `::: warning` (or `:::danger` for breakage) on the owning page. Don't create a sibling reference.
+
+## Examples for strategy / policy choices
+
+When a doc section explains *which* strategy to pick (e.g. "Picking a metadata placement policy"), back each strategy with a runnable example under `examples/<name>/`. Keep the doc text tight (intro + helper + caveats); let the example carry the full implementation. Link to the example on GitHub from the doc with a `[`examples/foo`](https://github.com/loglayer/loglayer-go/blob/main/examples/foo/main.go)` line.
+
+Current pattern:
+
+- `examples/custom-transport`: renderer / "flatten" policy via `MergeFieldsAndMetadata`.
+- `examples/custom-transport-attribute`: wrapper / "attribute-forwarding" policy via `MetadataAsRootMap`.
+
+Add to this set when a new policy emerges; don't try to teach the policy entirely in prose.
 
 ## Custom Containers (VitePress)
 
@@ -214,7 +281,7 @@ Every transport doc page must have a `## Fatal Behavior` section. The shape:
 
 ## Words to Avoid
 
-- "first-party" / "First-party" — every transport, plugin, and integration in the loglayer-golang module is part of the same module; calling them "first-party" implies a tier that doesn't exist. Just say "built-in" if a qualifier is needed at all, or drop the qualifier entirely (e.g. "the redact plugin", not "the first-party redact plugin").
+- "first-party" / "First-party": every transport, plugin, and integration in the loglayer-golang module is part of the same module; calling them "first-party" implies a tier that doesn't exist. Just say "built-in" if a qualifier is needed at all, or drop the qualifier entirely (e.g. "the redact plugin", not "the first-party redact plugin").
 - Em dashes anywhere.
 
 ## When You Add a New Feature or Make an API Change

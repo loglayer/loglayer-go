@@ -335,6 +335,32 @@ OnMetadataCalled: func(metadata any) any {
 
 The trade-off: the metadata reaches downstream plugins and transports as a `map[string]any`, not the user's struct. Anything that type-switches on `params.Metadata` will see a map. For most rendering paths this is invisible (they marshal to JSON anyway), but tests that compare to the original struct break.
 
+### Performance: only clone if you mutate
+
+The "don't mutate caller's input" rule means **mutating** plugins must clone. Read-only plugins (audit, metrics, sampling) should not. Both `Cloner` and `ToMap` always allocate a fresh value, even when nothing matches; if your plugin is going to return the input unchanged, return it unchanged and skip the clone.
+
+```go
+// ❌ unnecessary clone on every emission
+OnMetadataCalled: func(metadata any) any {
+    return cloner.Clone(metadata) // always allocates, even if nothing redacts
+}
+
+// ✅ inspect first, clone only when there's work to do
+OnMetadataCalled: func(metadata any) any {
+    if !containsSensitiveKeys(metadata) {
+        return metadata
+    }
+    return cloner.Clone(metadata)
+}
+```
+
+For pipelines with multiple mutating plugins, costs add up: each plugin gets the previous one's output and cloning it again means N deep walks per emission. Two mitigations:
+
+- **Order matters.** Place cheap or filtering plugins (`ShouldSend`, level transforms) before expensive walking plugins so dropped entries never pay the clone cost.
+- **Combine where possible.** If two plugins both redact, a single plugin with both rule sets does one walk instead of two. (The built-in `redact` plugin accepts multiple keys and patterns for exactly this reason.)
+
+In practice most pipelines have zero or one mutating metadata plugin (typically `redact`), so the typical cost is one clone per emission. The hot path for read-only plugins is alloc-free.
+
 ## Panic recovery
 
 Every hook call is wrapped in a deferred recover. If your hook panics, the framework swallows the panic, logging continues, and the entry treats the hook's contribution as if it returned the "no transformation" / "drop input" / "fail open" value for that hook:
