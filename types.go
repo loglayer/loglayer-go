@@ -20,6 +20,9 @@ type Metadata map[string]any
 
 // ErrorSerializer converts an error into a structured map for the log output.
 // If not set, the default serializer uses {"message": err.Error()}.
+//
+// Returning nil drops the error field entirely (the entry is emitted with
+// no err key). Returning an empty map adds an empty err object.
 type ErrorSerializer func(err error) map[string]any
 
 // Config is the initialization configuration for a LogLayer instance.

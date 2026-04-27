@@ -269,7 +269,9 @@ Use it to:
   }
   ```
 
-`OnMetadataCalled` and `OnFieldsCalled` do **not** receive a context — they fire from the builder phase, before the `WithCtx` call has been chained. If you need context-aware metadata mutation, do it from `OnBeforeDataOut` instead.
+`OnMetadataCalled` and `OnFieldsCalled` do **not** receive a context. This is intentional, not an oversight: these hooks fire at builder time, when chain order is non-deterministic. A user can write `log.WithMetadata(m).WithCtx(ctx).Info(...)` (metadata first, ctx second) just as easily as `log.WithCtx(ctx).WithMetadata(m).Info(...)`. Threading ctx into the hook would mean it's `nil` half the time depending on call order, which is worse than not having it at all.
+
+If you need context-aware behavior, use one of the dispatch-time hooks (`OnBeforeDataOut`, `OnBeforeMessageOut`, `TransformLogLevel`, `ShouldSend`). They fire after every `With*` chain method has run, so the ctx they receive is the same one the transport will see.
 
 ## Walking arbitrary inputs
 
@@ -386,6 +388,44 @@ yourpkg/
 ```
 
 The constructor signature `func New(Config) loglayer.Plugin` matches the [`plugins/redact`](/plugins/redact) reference plugin and the constructor pattern transports use.
+
+## Testing your plugin
+
+Use [`transports/testing`](/transports/testing) as the capture target. It records every emitted entry into a `TestLoggingLibrary` you can assert against:
+
+```go
+import (
+    "testing"
+
+    "go.loglayer.dev"
+    "go.loglayer.dev/transport"
+    lltest "go.loglayer.dev/transports/testing"
+)
+
+func TestMyPlugin_AddsField(t *testing.T) {
+    lib := &lltest.TestLoggingLibrary{}
+    tr := lltest.New(lltest.Config{
+        BaseConfig: transport.BaseConfig{ID: "test"},
+        Library:    lib,
+    })
+    log := loglayer.New(loglayer.Config{
+        Transport:        tr,
+        DisableFatalExit: true,
+        Plugins:          []loglayer.Plugin{myplugin.New(...)},
+    })
+
+    log.Info("served")
+
+    line := lib.PopLine()
+    if line.Data["my-field"] != "expected" {
+        t.Errorf("my-field: got %v", line.Data["my-field"])
+    }
+}
+```
+
+`PopLine` returns the most recent entry and removes it; `Lines()` returns all captured. Both are `LogLine` structs with `LogLevel`, `Messages`, `Data`, `Metadata`, and `Err` fields. See [`transports/testing`](/transports/testing) for the full helper API.
+
+For panic-recovery tests, set `Plugin.OnError` to a closure that captures the error and assert on `*loglayer.RecoveredPanicError` via `errors.As`. See `plugin_test.go:TestPlugin_RecoveredPanic*` in the loglayer-go source for examples.
 
 ## See also
 

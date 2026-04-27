@@ -57,8 +57,17 @@ type Config struct {
 
 	// StartLog emits a "request started" line at the beginning of every
 	// request, in addition to the "request completed" line at the end.
-	// Defaults to false to keep log volume low.
+	// Defaults to false to keep log volume low. Ignored when
+	// ShouldStartLog is non-nil.
 	StartLog bool
+
+	// ShouldStartLog, when non-nil, is consulted per request to decide
+	// whether to emit the "request started" line. Use it for sampling
+	// (e.g. log 1% of requests) or conditional logging (e.g. only when
+	// a debug header is set). Returning true emits the start line;
+	// false skips it. The "request completed" line still emits
+	// regardless. When ShouldStartLog is set, StartLog is ignored.
+	ShouldStartLog func(r *http.Request) bool
 
 	// StatusLevels picks a log level for the "request completed" line
 	// based on the response status code. Defaults to:
@@ -162,7 +171,7 @@ func Middleware(log *loglayer.LogLayer, cfg Config) func(http.Handler) http.Hand
 			sw := wrapWriter(w)
 			start := time.Now()
 
-			if c.StartLog {
+			if shouldEmitStart(c, r) {
 				reqLog.Info("request started")
 			}
 
@@ -209,6 +218,16 @@ type responseWriter struct {
 
 func wrapWriter(w http.ResponseWriter) *responseWriter {
 	return &responseWriter{ResponseWriter: w}
+}
+
+// shouldEmitStart consults ShouldStartLog when present, else falls back
+// to the StartLog bool. Centralizes the precedence so both code paths
+// stay consistent if more knobs land here.
+func shouldEmitStart(c Config, r *http.Request) bool {
+	if c.ShouldStartLog != nil {
+		return c.ShouldStartLog(r)
+	}
+	return c.StartLog
 }
 
 func (w *responseWriter) WriteHeader(status int) {

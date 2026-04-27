@@ -78,6 +78,8 @@ log.MetadataOnly(loglayer.Metadata{"status": "healthy"})
 log.MetadataOnly(loglayer.Metadata{"status": "warn"}, loglayer.MetadataOnlyOpts{LogLevel: loglayer.LogLevelWarn})
 ```
 
+`MetadataOnly` is a **terminal call**, not a builder. It dispatches the entry immediately. You cannot chain `WithError` or `WithCtx` onto it; for that, use `log.WithMetadata(...).Info(...)` etc.
+
 ## Errors
 
 ```go
@@ -85,6 +87,8 @@ log.WithError(err).Error("failed")
 log.ErrorOnly(err)
 log.ErrorOnly(err, loglayer.ErrorOnlyOpts{LogLevel: loglayer.LogLevelFatal})
 ```
+
+`ErrorOnly` is also a **terminal call** like `MetadataOnly`. Use `log.WithError(err).Error("...")` if you want to attach an error and a message together.
 
 ## Fields (persistent)
 
@@ -202,7 +206,7 @@ log.GetGroups()                     // shallow copy of current config
 loglayer.ActiveGroupsFromEnv("LOGLAYER_GROUPS") // returns []string for Config.ActiveGroups
 ```
 
-See [Groups](/logging-api/groups) for routing precedence and `UngroupedRouting` modes.
+See [Groups](/logging-api/groups) for the eight-rule routing precedence (defined-but-disabled vs undefined groups, per-group level filtering, ungrouped fallback) and a worked multi-service example.
 
 ## Plugins
 
@@ -234,7 +238,7 @@ log.GetPlugin("id")                     // (Plugin, bool)
 log.PluginCount()                       // int
 ```
 
-Six lifecycle hooks (any subset, nil fields skipped): `OnFieldsCalled`, `OnMetadataCalled`, `OnBeforeDataOut`, `OnBeforeMessageOut`, `TransformLogLevel`, `ShouldSend`. See [Plugins](/plugins/) for details.
+Six lifecycle hooks (any subset, nil fields skipped): `OnFieldsCalled`, `OnMetadataCalled`, `OnBeforeDataOut`, `OnBeforeMessageOut`, `TransformLogLevel`, `ShouldSend`. See [Plugins overview](/plugins/) for hook semantics, [Creating Plugins](/plugins/creating-plugins) for the authoring tutorial (covers panic recovery, testing, and the `RecoveredPanicError` type), or the [`examples/custom-plugin`](https://github.com/loglayer/loglayer-go/tree/main/examples/custom-plugin) directory for a runnable from-scratch demo.
 
 ## Raw
 

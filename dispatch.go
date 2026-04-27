@@ -59,13 +59,17 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 	}
 
 	if err != nil {
-		var serialized any
 		if cfg.ErrorSerializer != nil {
-			serialized = cfg.ErrorSerializer(err)
+			// A custom serializer returning nil drops the err key
+			// entirely (matches plugin-hook nil-drop semantics).
+			// Returning an empty map still adds the key with an
+			// empty object.
+			if m := cfg.ErrorSerializer(err); m != nil {
+				d[cfg.ErrorFieldName] = m
+			}
 		} else {
-			serialized = map[string]any{"message": err.Error()}
+			d[cfg.ErrorFieldName] = map[string]any{"message": err.Error()}
 		}
-		d[cfg.ErrorFieldName] = serialized
 	}
 
 	var rawMetadata any

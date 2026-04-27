@@ -10,6 +10,13 @@ import (
 // Designed for redaction-style plugins that walk arbitrary user values
 // (maps, structs, slices, pointers) without forcing the type to change.
 //
+// Canonical use case: the plugins/redact plugin. Cloner exists in this
+// public package so third-party plugin authors can build their own
+// redactors with the same type-preservation semantics. If you only need
+// flat-map mutation, prefer ToMap and modify the resulting map directly;
+// Cloner's reflection walk is only worth its cost when the caller's
+// runtime type matters.
+//
 // MatchKey is invoked with the JSON name (or struct field name when no
 // json tag is present) for struct fields and with the literal key for
 // string-keyed maps. MatchValue is invoked with every string value

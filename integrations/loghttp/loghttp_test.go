@@ -170,6 +170,33 @@ func TestMiddleware_StartLogToggle(t *testing.T) {
 	}
 }
 
+// ShouldStartLog overrides the StartLog bool. Allows sampling or
+// per-request decisions (e.g. only log starts for a debug header).
+func TestMiddleware_ShouldStartLog(t *testing.T) {
+	log, lib := setupLogger(t)
+	handler := loghttp.Middleware(log, loghttp.Config{
+		StartLog: false, // would normally suppress starts
+		ShouldStartLog: func(r *http.Request) bool {
+			return r.Header.Get("X-Debug") == "1"
+		},
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+
+	// Request without the header: only the completed line.
+	runOne(t, handler, httptest.NewRequest(http.MethodGet, "/", nil))
+	if lib.Len() != 1 {
+		t.Errorf("no-debug-header request should emit 1 line, got %d", lib.Len())
+	}
+	lib.ClearLines()
+
+	// Request with the header: start + completed.
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("X-Debug", "1")
+	runOne(t, handler, r)
+	if lib.Len() != 2 {
+		t.Errorf("debug-header request should emit 2 lines, got %d", lib.Len())
+	}
+}
+
 func TestMiddleware_CustomFieldNames(t *testing.T) {
 	log, lib := setupLogger(t)
 	handler := loghttp.Middleware(log, loghttp.Config{

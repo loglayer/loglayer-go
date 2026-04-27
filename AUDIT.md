@@ -179,3 +179,53 @@ Discuss and tackle gradually. Refer to items by number ("let's tackle #3").
 
 - `[ ]` #3 — phuslu fatal-exit visibility in the catalog table.
 - `[ ]` #8 — coverage reporting in CI (deferred).
+
+---
+
+## Round 2 audit (2026-04-27)
+
+### Tier 1 — contract tightening
+
+- `[x]` #A1 — Transport error-handling contract documented in
+  `creating-transports.md` (sync renderers print to stderr; async
+  transports expose `OnError`; wrappers forward through the underlying
+  library).
+- `[x]` #A2 — Documented why `OnFieldsCalled`/`OnMetadataCalled` don't
+  receive ctx (chain order is non-deterministic, ctx-aware behavior
+  belongs in dispatch-time hooks).
+- `[x]` #A3 — Added "Testing your plugin" / "Testing your transport"
+  sections to creating-plugins.md / creating-transports.md pointing at
+  `transports/testing` as the canonical capture path. Decided NOT to
+  promote `internal/transporttest` (only 20 lines of JSON-specific
+  helpers; `transports/testing` covers the broader case).
+
+### Tier 2 — correctness + coverage
+
+- `[x]` #A4 — `dispatch_edge_test.go` covers all-ShouldSend-false drops
+  everywhere, disabled-group does not fall through (vs undefined
+  group does), ErrorSerializer returning nil drops the err key
+  entirely (was a real fix: was previously storing nil under err),
+  multiple TransformLogLevel plugins (last ok=true wins).
+- `[x]` #A5 — `TestConcurrentPluginMutation` in concurrency_test.go
+  exercises `AddPlugin`/`RemovePlugin` against concurrent emission
+  with all hook types firing.
+- `[x]` #A6 — `loghttp.Config.ShouldStartLog` lets services sample
+  start-line emission per-request (e.g. only when X-Debug header
+  present, or for 1% of traffic).
+- `[x]` #A7 — added `BenchmarkLoglayer_WithError_CustomSerializer` and
+  `BenchmarkLoglayer_PluginPipeline` to bench_test.go.
+
+### Tier 3 — polish
+
+- `[x]` #A8 — Cheatsheet calls out `MetadataOnly`/`ErrorOnly` are
+  terminal, not builders.
+- `[x]` #A9 — `maputil.Cloner` doc names the canonical use case (redact
+  plugin) so future readers don't think it's load-bearing infra.
+- `[x]` #A10 — Cheatsheet links to creating-plugins.md, examples/,
+  and the eight-rule routing precedence on the groups page.
+
+### Surprise finding (fixed, not in original audit)
+
+- ErrorSerializer returning nil used to store `data["err"] = nil`
+  rather than dropping the key. Now drops the key entirely, matching
+  plugin-hook nil-drop semantics. Documented on the type.

@@ -199,3 +199,59 @@ func TestConcurrentTransportSwap(t *testing.T) {
 	wg.Wait()
 	stop.Store(true)
 }
+
+// TestConcurrentPluginMutation runs AddPlugin/RemovePlugin concurrently
+// with emission. The plugin set is published as an immutable snapshot
+// via atomic.Pointer, so the dispatch path always sees a consistent
+// snapshot, but only -race + a stress test like this proves it.
+func TestConcurrentPluginMutation(t *testing.T) {
+	libBase := &lltest.TestLoggingLibrary{}
+	base := lltest.New(lltest.Config{BaseConfig: transport.BaseConfig{ID: "base"}, Library: libBase})
+	log := loglayer.New(loglayer.Config{Transport: base, DisableFatalExit: true})
+
+	tagger := loglayer.Plugin{
+		ID: "tag",
+		OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data {
+			return loglayer.Data{"tagged": true}
+		},
+	}
+
+	const emitters = 16
+	const mutators = 4
+	const iters = 200
+
+	var wg sync.WaitGroup
+	var stop atomic.Bool
+
+	wg.Add(emitters)
+	for g := 0; g < emitters; g++ {
+		go func() {
+			defer wg.Done()
+			for i := 0; i < iters; i++ {
+				// Mix WithFields/WithMetadata so the dispatch path
+				// exercises OnFieldsCalled, OnMetadataCalled, and
+				// OnBeforeDataOut while plugins are added/removed.
+				log.WithFields(loglayer.Fields{"k": "v"}).
+					WithMetadata(loglayer.Metadata{"m": 1}).
+					Info("traffic")
+				if stop.Load() {
+					return
+				}
+			}
+		}()
+	}
+
+	wg.Add(mutators)
+	for g := 0; g < mutators; g++ {
+		go func() {
+			defer wg.Done()
+			for i := 0; i < iters/4; i++ {
+				log.AddPlugin(tagger)
+				log.RemovePlugin("tag")
+			}
+		}()
+	}
+
+	wg.Wait()
+	stop.Store(true)
+}

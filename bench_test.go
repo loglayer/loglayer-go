@@ -384,6 +384,60 @@ func BenchmarkLoglayer_WithError(b *testing.B) {
 	}
 }
 
+// Custom ErrorSerializer path. The default serializer builds a single
+// {"message": err.Error()} map. A custom one runs user code on every
+// error-bearing entry; this benchmark measures the indirection cost.
+func BenchmarkLoglayer_WithError_CustomSerializer(b *testing.B) {
+	log := loglayer.New(loglayer.Config{
+		DisableFatalExit: true,
+		Transport:        &noopTransport{},
+		ErrorSerializer: func(err error) map[string]any {
+			return map[string]any{"message": err.Error(), "kind": "bench"}
+		},
+	})
+	err := benchErr("something went wrong")
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		log.WithError(err).Error("operation failed")
+	}
+}
+
+// Plugin pipeline: every dispatch-time hook fires once per emission.
+// Measures the per-hook overhead so a regression in the dispatch
+// loop's plugin walk shows up here. The plugins themselves are
+// trivial; the cost is the framework's per-hook iteration and
+// recover() defer.
+func BenchmarkLoglayer_PluginPipeline(b *testing.B) {
+	log := loglayer.New(loglayer.Config{
+		DisableFatalExit: true,
+		Transport:        &noopTransport{},
+		Plugins: []loglayer.Plugin{
+			{
+				ID: "tag",
+				OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data {
+					return loglayer.Data{"tagged": true}
+				},
+			},
+			{
+				ID: "level-passthrough",
+				TransformLogLevel: func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) {
+					return 0, false
+				},
+			},
+			{
+				ID:         "send-all",
+				ShouldSend: func(p loglayer.ShouldSendParams) bool { return true },
+			},
+		},
+	})
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		log.Info("traffic")
+	}
+}
+
 func runSimple(b *testing.B, log *loglayer.LogLayer) {
 	b.ReportAllocs()
 	b.ResetTimer()

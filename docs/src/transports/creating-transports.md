@@ -129,3 +129,50 @@ For transports with no underlying library (anything you write from scratch), ret
 ## Don't Mutate TransportParams
 
 When multiple transports are configured, they share the same `TransportParams`. Don't modify `params.Data`, `params.Messages`, or `params.Metadata` in place, copy first if you need to transform.
+
+## Handling Errors
+
+`SendToLogger` doesn't return an error. The dispatch path can't propagate transport failures back to the caller, so error handling is the transport's responsibility:
+
+- **Synchronous renderer transports** (writing to `io.Writer`, terminal, file): if the write fails, there's nowhere to escalate. Print to `os.Stderr` and continue. Don't panic, don't `os.Exit`. A logging library that takes down the host process on a transient I/O hiccup is a bug.
+- **Async / network transports** (HTTP, Datadog, anything with a worker goroutine and batching): expose an `OnError func(err error, ...)` field on your `Config` so the application can decide. Built-in transports follow this pattern, see [transports/http](/transports/http) and [transports/datadog](/transports/datadog) for the canonical shape.
+- **Wrapper transports** (zerolog, zap, slog, etc.): the underlying library has its own error path (zap's `Sync` errors, zerolog's writer errors). Forward them or let the user reach the underlying logger via `GetLoggerInstance` and inspect there.
+
+Transports that drop entries silently are valid: a logging library should never block, panic, or crash on its own write failure. But always make the failure observable somehow, even if it's just an `OnError` callback the user can hook into.
+
+## Testing your transport
+
+Drive entries through your transport via a real `*loglayer.LogLayer` and assert on whatever your transport actually produced (a buffer, a captured request, a wrapped logger's calls). The pattern mirrors the built-in transport tests:
+
+```go
+import (
+    "bytes"
+    "testing"
+
+    "go.loglayer.dev"
+    "go.loglayer.dev/transport"
+)
+
+func TestMyTransport_Basic(t *testing.T) {
+    buf := &bytes.Buffer{}
+    tr := mytransport.New(mytransport.Config{
+        BaseConfig: transport.BaseConfig{ID: "test"},
+        Writer:     buf,
+    })
+    log := loglayer.New(loglayer.Config{
+        Transport:        tr,
+        DisableFatalExit: true,
+    })
+
+    log.WithFields(loglayer.Fields{"k": "v"}).Info("served")
+
+    // Assert on whatever shape your transport produced.
+    if !strings.Contains(buf.String(), `"k":"v"`) {
+        t.Errorf("k=v missing from output: %q", buf.String())
+    }
+}
+```
+
+For wrapper transports (those that hand entries off to a third-party logger), assert on the wrapped logger's output rather than the transport's. The slog/zerolog/zap test files in `transports/` show this pattern.
+
+Cover the level-filtering case, the `MetadataFieldName` non-map path, and `WithCtx` propagation when applicable. The existing wrapper-transport test files are good templates: same structure, same assertion shape.
