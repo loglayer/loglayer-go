@@ -100,10 +100,10 @@ The `transport` package exposes helpers that encode each policy. Reach for them 
 
 ### Picking a policy
 
-The right choice depends on what the backend can render natively:
+The right choice depends on what the backend can render natively. Two complete, runnable examples live in the repo:
 
-- **Backends with no native struct support** (raw JSON, terminal lines): roundtrip via `MetadataAsMap` so struct fields surface as named root attributes. Slices and scalars don't roundtrip into a map, so decide explicitly: drop them (`structured`, `console`), fall back to a single key like `_metadata` (`pretty`), or nest them under a fixed key (`http`, `datadog`).
-- **Backends with native attribute serializers** (zap, zerolog, slog, logrus, charmlog, phuslu, OpenTelemetry): use `MetadataAsRootMap` to flatten the map case, then hand non-map metadata directly to the backend's `Any` / `Interface` / `KeyValue` constructor under `MetadataFieldName`. Skip the roundtrip, the backend will serialize the value natively.
+- **Backends with no native struct support** (raw JSON, terminal lines): roundtrip via `MetadataAsMap` so struct fields surface as named root attributes. Slices and scalars don't roundtrip into a map, so decide explicitly: drop them (`structured`, `console`), fall back to a single key like `_metadata` (`pretty`), or nest them under a fixed key (`http`, `datadog`). See [`examples/custom-transport`](https://github.com/loglayer/loglayer-go/blob/main/examples/custom-transport/main.go) for a worked implementation using `MergeFieldsAndMetadata`.
+- **Backends with native attribute serializers** (zap, zerolog, slog, logrus, charmlog, phuslu, OpenTelemetry): use `MetadataAsRootMap` to flatten the map case, then hand non-map metadata directly to the backend's `Any` / `Interface` / `KeyValue` constructor under `MetadataFieldName`. Skip the roundtrip, the backend will serialize the value natively. See [`examples/custom-transport-attribute`](https://github.com/loglayer/loglayer-go/blob/main/examples/custom-transport-attribute/main.go) for a worked implementation against a stand-in attribute backend.
 
 The built-in transports follow these two patterns so callers see consistent behavior across them. The contract those transports advertise on the [Metadata page](/logging-api/metadata) (map metadata flattens, struct metadata renders idiomatically per transport) is exactly what these helpers implement.
 

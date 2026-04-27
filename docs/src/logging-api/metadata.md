@@ -79,6 +79,12 @@ log.WithMetadata(loglayer.Metadata{
 }
 ```
 
+::: warning The map is not deep-copied
+LogLayer doesn't clone the `Metadata` map you pass in. Mutating it after the call (e.g. reusing the same map for the next emission with a tweak) can bleed into the previous log when a transport retains the value. Build a fresh map per call, or treat the value as read-only once handed off.
+:::
+
+`MetadataFieldName` (set on a wrapper transport's config) only affects **non-map** metadata. Map metadata always flattens to root attributes; that's the whole point of using `loglayer.Metadata` for ad-hoc bags. For keyed data that should always nest under a fixed name, use the `Fields` API.
+
 ## Struct Metadata
 
 Pass a struct directly. The transport handles serialization:
@@ -147,7 +153,7 @@ The default level is `Info`. Passing `nil` is a no-op.
 
 ## Muting Metadata
 
-Suppress metadata in output without removing the call sites:
+Suppress metadata in output without removing the call sites. The toggle is `atomic.Bool` so concurrent reads are safe, but flipping mid-emission can interleave (some entries see pre-toggle, others post). Treat it as a setup-time admin toggle.
 
 ```go
 log.MuteMetadata()    // skip metadata in emit

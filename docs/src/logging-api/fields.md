@@ -9,7 +9,18 @@ Fields are data that should appear on every log entry from a logger: request IDs
 
 ## Adding Fields
 
-`WithFields` returns a **new logger** with the given key/value pairs merged in. The receiver is unchanged. This matches the convention used by zerolog, zap, slog, logrus, and other Go logging libraries.
+`WithFields` returns a **new logger** with the given key/value pairs merged in. The receiver is unchanged, matching zerolog, zap, slog, and logrus.
+
+::: warning Assign the result
+The compiler doesn't catch a discarded result. Always assign:
+
+```go
+log.WithFields(loglayer.Fields{"k": "v"})  // ❌ result discarded, log unchanged
+log = log.WithFields(loglayer.Fields{"k": "v"})  // ✅
+```
+
+The same trap applies when handing the result to a function: `go runHandler(log)` drops the wrapper; pass `log.WithFields(...)` instead.
+:::
 
 ```go
 log = log.WithFields(loglayer.Fields{
@@ -33,20 +44,8 @@ Both subsequent calls include `requestId` and `userId`. By default the keys are 
 
 `loglayer.Fields` is a type alias for `map[string]any`.
 
-::: warning Assign the result
-`WithFields` returns a new logger; the original is untouched. If you discard the return value, the new logger is dropped on the floor and the original keeps emitting without your fields:
-
-```go
-log.WithFields(loglayer.Fields{"k": "v"})  // ❌ result discarded, log unchanged
-log.Info("oops")                            // emits without "k"
-```
-
-The compiler doesn't catch this (no error return). Always assign:
-
-```go
-log = log.WithFields(loglayer.Fields{"k": "v"})  // ✅
-log.Info("ok")                                    // emits with "k"
-```
+::: warning The map is not deep-copied
+LogLayer doesn't clone the `Fields` map you pass in. If you mutate it after `WithFields` returns, transports that retain the map (the testing transport, some async transports) will see the mutation. Treat the map as read-only after handing it off, or build a fresh one per call.
 :::
 
 ## Per-Request Loggers
@@ -129,7 +128,7 @@ log.Info("only b and c remain")
 
 ## Muting Fields
 
-`MuteFields` and `UnmuteFields` mutate the logger in place (they're treated as setup-time admin toggles, not per-request operations):
+`MuteFields` and `UnmuteFields` mutate the logger in place. The state is `atomic.Bool` so concurrent reads from the dispatch path are safe, but flipping the toggle mid-emission can interleave: some entries see the pre-toggle state, others the post. Treat them as setup-time admin toggles. For a clean cutover, route through a feature flag or level toggle.
 
 ```go
 log.MuteFields()    // skip fields in emit
@@ -145,35 +144,9 @@ log := loglayer.New(loglayer.Config{
 })
 ```
 
-## Fields vs Metadata
-
-<!--@include: ./_partials/fields-vs-metadata.md-->
-
-See [Metadata](/logging-api/metadata) for the per-call side.
-
 ## Combining with Metadata and Errors
 
 <!--@include: ./_partials/combining-example.md-->
-
-## Child Loggers and Fields
-
-`Child()` is the no-additions form of `WithFields`: it returns an independent clone with the parent's fields shallow-copied. Use `Child()` when you want isolation without adding fields, `WithFields(...)` when you also want to add some.
-
-```go
-log = log.WithFields(loglayer.Fields{"shared": "value"})
-child := log.WithFields(loglayer.Fields{"child_only": "x"})
-
-log.Info("parent")  // includes "shared" only
-child.Info("child") // includes "shared" and "child_only"
-```
-
-See [Child Loggers](/logging-api/child-loggers).
-
-## Thread Safety
-
-Every method on `*loglayer.LogLayer` is safe to call from any goroutine, including concurrently with emission. `WithFields`, `WithoutFields`, `Child`, and `WithPrefix` return a new logger; the receiver is unchanged. Level toggling, transport changes, and mute toggles can all run live without any coordination on your side.
-
-See the full [thread-safety contract](https://github.com/loglayer/loglayer-go/blob/main/AGENTS.md#thread-safety) for the per-method breakdown.
 
 ## Mutating fields with a plugin
 

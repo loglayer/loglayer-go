@@ -26,6 +26,17 @@ func handle(ctx context.Context, base *loglayer.LogLayer) {
 }
 ```
 
+::: warning Assign the result
+`(*LogLayer).WithCtx` returns a new logger; without assignment nothing is bound and transports/plugins see no context.
+
+```go
+log.WithCtx(r.Context())          // ❌ no assignment, ctx not bound
+log = log.WithCtx(r.Context())    // ✅ persistent on logger
+```
+
+The builder-level `(*LogBuilder).WithCtx(ctx).Info(...)` form doesn't have this trap because the builder is single-use, but it only attaches for one emission.
+:::
+
 Inside an HTTP handler, the [`loghttp` middleware](/integrations/loghttp) does this automatically: the per-request logger from `loghttp.FromRequest(r)` already has `r.Context()` bound, so handlers just write `loghttp.FromRequest(r).Info(...)` and any plugin reading `params.Ctx` gets the request context.
 
 ```go
@@ -62,16 +73,6 @@ log.WithCtx(childCtx).Info("doing subop") // child span's IDs land in this entry
 span.Finish()
 log.Info("back to root span")
 ```
-
-## What reads the context
-
-Pre-built consumers of the bound context:
-
-- The [`plugins/datadogtrace`](/plugins/datadogtrace) and [`plugins/oteltrace`](/plugins/oteltrace) plugins read it to inject trace and span IDs into every entry.
-- The [OpenTelemetry transport](/transports/otellog) forwards it to the OTel logs SDK, so the active span correlates with the emitted record.
-- The [log/slog transport](/transports/slog) forwards it to context-aware `slog.Handler` implementations.
-
-If you're building your own transport or plugin, see [Creating Transports](/transports/creating-transports#reading-params-ctx) and [Creating Plugins](/plugins/creating-plugins#per-call-context-context) for how to read it on the receive side.
 
 ## Use the Raw entry for context
 

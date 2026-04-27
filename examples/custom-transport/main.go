@@ -1,6 +1,13 @@
-// Implementing a custom Transport. The four methods are: ID, IsEnabled,
-// SendToLogger, GetLoggerInstance. Embedding transport.BaseTransport gives
-// you ID/IsEnabled/ShouldProcess for free.
+// Implementing a custom Transport (renderer / "flatten" policy).
+//
+// This example demonstrates the policy used by the structured / pretty /
+// console transports: every shape of metadata (map, struct, scalar) is
+// flattened to root-level fields via transport.MergeFieldsAndMetadata.
+//
+// Reach for this pattern when your backend writes flat key=value lines or
+// a flat JSON object. For an attribute-style backend (zerolog, zap, OTel)
+// see examples/custom-transport-attribute. For an encoder over a protocol
+// (HTTP, Datadog) see transports/datadog/datadog.go.
 //
 // Run:
 //
@@ -17,9 +24,7 @@ import (
 	"go.loglayer.dev/transport"
 )
 
-// pipeTransport renders entries as `LEVEL | msg | k=v k=v ...` and writes
-// to its configured writer. Built solely to demonstrate the Transport
-// interface; for serious use prefer the structured or pretty transport.
+// pipeTransport renders entries as `LEVEL | msg | k=v k=v ...`.
 type pipeTransport struct {
 	transport.BaseTransport
 	w *os.File
@@ -44,6 +49,9 @@ func (p *pipeTransport) SendToLogger(params loglayer.TransportParams) {
 		return
 	}
 
+	// MergeFieldsAndMetadata returns a single flat map: persistent fields,
+	// the serialized error, and metadata all merged at the root. Non-map
+	// metadata (struct, slice, scalar) is JSON-roundtripped into a map.
 	pairs := transport.MergeFieldsAndMetadata(params)
 	parts := make([]string, 0, len(pairs))
 	for k, v := range pairs {
@@ -70,4 +78,10 @@ func main() {
 
 	log.Info("hello world")
 	log.WithMetadata(loglayer.Metadata{"action": "ship"}).Warn("processing")
+
+	type usage struct {
+		BytesIn  int `json:"bytes_in"`
+		BytesOut int `json:"bytes_out"`
+	}
+	log.WithMetadata(usage{BytesIn: 1024, BytesOut: 4096}).Info("rpc done")
 }

@@ -37,4 +37,4 @@ For Go users coming from the TypeScript [`loglayer`](https://loglayer.dev) libra
 
 ### Known gotchas
 
-The [Common Pitfalls](/common-pitfalls) page collects the failure modes that bite first-time users — chiefly the "returns a new logger" pattern (assign the result of `WithFields` etc.), plugin nil-drop semantics, and the per-transport divergence in fatal-exit behavior (phuslu cannot be suppressed; everyone else honors `Config.DisableFatalExit`).
+Each per-API page calls out its own traps inline: assign the result of `WithFields` / `WithCtx`; treat `Fields` and `Metadata` maps as read-only after handing them off; mute toggles are setup-time only; phuslu can't suppress its `os.Exit` on Fatal (every other wrapper honors `Config.DisableFatalExit`).

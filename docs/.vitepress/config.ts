@@ -93,7 +93,6 @@ export default defineConfig({
           { text: 'Getting Started', link: '/getting-started' },
           { text: 'Configuration', link: '/configuration' },
           { text: 'Cheat Sheet', link: '/cheatsheet' },
-          { text: 'Common Pitfalls', link: '/common-pitfalls' },
           { text: 'For TypeScript Developers', link: '/for-typescript-developers' },
           { text: 'Use with AI / LLMs', link: '/llms' },
           { text: "What's New", link: '/whats-new' },

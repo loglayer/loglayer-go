@@ -57,18 +57,20 @@ log := loglayer.New(loglayer.Config{
 
 ## Routing Precedence
 
-For each (entry, transport) pair, in order:
+For each (entry, transport) pair the framework walks these checks top-to-bottom; the first one that fails drops the entry from that transport.
 
-1. **No `Groups` configured at all** — transport receives everything (skip rules below).
-2. **Per-transport `IsEnabled()`** — false → drop.
-3. **Group enabled** — is `LogGroup.Disabled == false`?
-4. **`ActiveGroups` filter** — is the group in the filter (when non-empty)?
-5. **Group level** — does the entry's level meet the group's `Level`?
-6. **Transport membership** — is the transport's ID listed in the group's `Transports`?
-7. **Ungrouped fall-back** — entries whose tags are all undefined fall through to `UngroupedRouting`. Entries tagged with a defined-but-disabled (or filtered, or level-blocked) group do **not** fall back; they drop.
-8. **Plugin `ShouldSend`** — any plugin returning false vetoes that transport.
+| # | Check | Drops the entry when |
+|---|---|---|
+| 1 | **`Groups` configured?** | If no `Groups` at all, the transport receives everything: rules below are skipped. |
+| 2 | **Transport `IsEnabled()`** | Transport is disabled. |
+| 3 | **Group `Disabled` flag** | The tagged group is disabled. |
+| 4 | **`ActiveGroups` filter** | A non-empty filter is set and the group isn't in it. |
+| 5 | **Group `Level`** | Entry's level is below the group's minimum. |
+| 6 | **Transport membership** | The transport's ID isn't in the group's `Transports`. |
+| 7 | **Ungrouped fall-back** | Tags reference only undefined groups, route via `UngroupedRouting`. Tags referencing a defined-but-blocked group do *not* fall back: they drop. |
+| 8 | **Plugin `ShouldSend`** | Any plugin returns false for this (entry, transport) pair. |
 
-Each subsequent section in this page configures one of the rules above. Read this list first; then the rest is detail.
+Each subsequent section in this page configures one of the rules above. Read this table first; then the rest is detail.
 
 ## Per-Log Tagging
 
