@@ -5,9 +5,14 @@ description: Install LogLayer, pick a transport, and write your first structured
 
 # Getting Started
 
-LogLayer for Go targets **Go 1.25+** and is distributed as a single Go module: `go.loglayer.dev`. Each transport is a sub-package of that module, so you only pull in dependencies for the transports you actually use.
+LogLayer for Go targets **Go 1.25+** for the main module: `go.loglayer.dev`. Most transports are sub-packages of that module, so you only pull in dependencies for the transports you actually use.
 
-The 1.25 floor is driven by the OpenTelemetry SDK that `transports/otellog` binds against. The rest of the library (core, renderer transports, wrapper transports for zerolog/zap/slog/logrus/charmlog/phuslu) only requires Go 1.22, but because everything ships in one module, your effective minimum matches the highest. Individual transports and plugins call out any stricter requirement on their per-page docs.
+Two OpenTelemetry-flavored packages live in their own Go modules so the OTel SDK's dep graph doesn't bind users who don't need it:
+
+- `go.loglayer.dev/transports/otellog` — the OTel logs transport.
+- `go.loglayer.dev/plugins/oteltrace` — the OTel trace-injector plugin.
+
+Both currently require Go 1.25+ as well, but because they're separate modules, future OTel updates that demand newer Go don't drag the rest of the library along. Individual transports and plugins call out any stricter requirement on their per-page docs.
 
 ## Installation
 

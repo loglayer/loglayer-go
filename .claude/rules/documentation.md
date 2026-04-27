@@ -121,19 +121,19 @@ When adding a new transport, update the transport-list partial. Both the homepag
 
 ## Go Version Floors
 
-LogLayer is a single Go module, so the **highest** Go floor in any imported sub-package becomes the floor for everyone using `go.loglayer.dev`. Today that's 1.25, driven by the OpenTelemetry SDK that `transports/otellog` binds against.
+The main `go.loglayer.dev` module's Go floor is whatever the highest dep in its tree demands. Today that's **1.25** (driven by `golang.org/x/exp` via `charmbracelet/log` and `golang.org/x/sys`). Sub-modules — `transports/otellog`, `plugins/oteltrace`, `plugins/datadogtrace/livetest` — have their own go.mod files and their own floors.
 
 When adding a transport, plugin, or integration:
 
-1. **If your dep raises the module-wide floor**, update `go.mod`, the matrix in `.github/workflows/ci.yml`, and the version statements in `README.md`, `docs/src/getting-started.md`, the `transport-list` and `plugin-list` partials, and `AGENTS.md`. Mention the bump in `CHANGELOG.md` and `docs/src/whats-new.md`.
+1. **If your dep would raise the main module's floor**, first ask whether splitting your code into its own go.mod would isolate the bump. Heavy SDK bindings (OpenTelemetry, vendor APIs) are good candidates for splitting; small libraries that nudge the floor by one minor version usually aren't.
 
-2. **If your transport/plugin needs a stricter floor than the module's** (rare today, but plausible for future bindings), call it out with a `::: warning Go version` block at the top of the per-transport/plugin doc page. The reader needs to see the requirement before they `go get` and hit a confusing build error.
+2. **If you split**, mirror the structure used by `transports/otellog/`: own `go.mod` with `module go.loglayer.dev/<path>`, `replace go.loglayer.dev => ../...` for development, a placeholder `require go.loglayer.dev v0.0.0-...` line that the replace directive overrides. Add a CI step in `.github/workflows/ci.yml` that `cd`s into the new module and runs tests. Update the `Mostly single Go module` bullet in AGENTS.md "Key Design Decisions" with the new module path.
 
-3. **If your dep would drag in a much higher floor than what most users want** (the dd-trace-go v2 case), put your code in a separate Go module under the package directory (e.g. `plugins/datadogtrace/livetest/go.mod`) so its dep graph stays isolated from the main module. Document the separate module's floor on its parent page.
+3. **If you don't split and the floor moves**, update `go.mod`, the matrix in `.github/workflows/ci.yml`, and the version statements in `README.md`, `docs/src/getting-started.md`, the `transport-list` and `plugin-list` partials, and `AGENTS.md`. Mention the bump in `CHANGELOG.md` and `docs/src/whats-new.md`.
 
-4. **Per-transport/plugin pages** should default to "inherits the module's Go floor" without restating the number. Only call it out when the floor differs from the main module — otherwise stating it everywhere creates drift the moment the module floor moves.
+4. **Per-transport/plugin pages** for split modules need an `::: info Separate module` block at the top stating the import path and floor. Pages for sub-packages of the main module default to "inherits the module's floor" without restating the number — only call it out when the floor differs from the main module.
 
-The partial-list headers (`transports/_partials/transport-list.md`, `plugins/_partials/plugin-list.md`) carry the canonical statement of the module-wide floor in an `::: info Go version` block. Update those whenever the floor moves so readers see it on the catalog pages.
+The partial-list headers (`transports/_partials/transport-list.md`, `plugins/_partials/plugin-list.md`) carry the canonical statement of the main-module floor in an `::: info Go version` block, and they enumerate the split sub-modules so readers see the structure on the catalog pages. Update both whenever a floor moves or a new sub-module is created.
 
 ## When Adding a New API or Config Field
 

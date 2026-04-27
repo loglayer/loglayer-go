@@ -5,13 +5,24 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-The repo is currently a single Go module: `go.loglayer.dev`. All packages
-move together under one tag. If a transport later needs an independent release
-cadence we may split it into its own module; see `AGENTS.md` for the policy.
+The repo is mostly a single Go module: `go.loglayer.dev`. Three sub-modules
+carve out heavy or floor-bumping dependencies and ship under their own tags:
+`go.loglayer.dev/transports/otellog`, `go.loglayer.dev/plugins/oteltrace`,
+and (test-only) `go.loglayer.dev/plugins/datadogtrace/livetest`. See
+`AGENTS.md` for the splitting policy and release flow.
 
 ## [Unreleased] (target: v0.1.0)
 
 Initial release. Pre-1.0; the API may still shift before v1.
+
+### Module structure
+
+- `transports/otellog` and `plugins/oteltrace` ship as their own Go
+  modules (`go.loglayer.dev/transports/otellog`,
+  `go.loglayer.dev/plugins/oteltrace`). Both bind against the
+  OpenTelemetry SDK/API which currently requires Go 1.25+; isolating
+  them keeps the OTel dep graph and Go-version requirement off users
+  who don't import them. Install with the explicit module paths.
 
 ### Core
 

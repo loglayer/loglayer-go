@@ -11,6 +11,10 @@ description: "Inject OpenTelemetry trace_id and span_id into log entries for log
 go get go.loglayer.dev/plugins/oteltrace
 ```
 
+::: info Separate module
+`plugins/oteltrace` ships as its own Go module (`go.loglayer.dev/plugins/oteltrace`) so the OpenTelemetry API's Go-version requirement doesn't bind the main `go.loglayer.dev` module. Requires **Go 1.25+** because that's the floor of `go.opentelemetry.io/otel/trace` and `go.opentelemetry.io/otel/baggage` at current versions.
+:::
+
 ::: info When to use this vs `transports/otellog`
 - **Shipping logs through the OTel pipeline?** Use [`transports/otellog`](/transports/otellog). The OTel SDK reads the active span from each emission's context and embeds the trace IDs on the exported `log.Record` automatically — you don't need this plugin.
 - **Shipping to a non-OTel destination?** Use this plugin. It surfaces `trace_id` / `span_id` as flat fields so any backend can index them.

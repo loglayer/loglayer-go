@@ -55,7 +55,7 @@ loglayer-golang/
 - **No `Logger` interface in core**: Go convention is "consumer defines the interface."
   Application code accepts the concrete `*loglayer.LogLayer`; `loglayer.NewMock()` returns
   the same type for test injection.
-- **Single Go module**: all transports are sub-packages of `go.loglayer.dev`.
+- **Mostly single Go module**: core, renderers, network transports, and most wrapper transports are sub-packages of `go.loglayer.dev`. Three sub-modules carve out heavy or floor-bumping deps: `go.loglayer.dev/transports/otellog` and `go.loglayer.dev/plugins/oteltrace` (OpenTelemetry SDK), and `go.loglayer.dev/plugins/datadogtrace/livetest` (test-only, dd-trace-go v2). Each has its own `go.mod` with a `replace go.loglayer.dev => ../...` directive for development.
 
 ## Verification
 
@@ -161,21 +161,37 @@ release tag.
 
 ### When to Split a Transport into Its Own Module
 
-Default is single module. Migrate a transport to its own go.mod when:
+Default is single module. Migrate a transport (or plugin) to its own go.mod when:
 
 1. The transport accumulates breaking changes faster than core (its consumers
    want stability while it churns).
 2. It needs to follow the underlying library's release cadence (e.g. zap goes
    v2 and our wrapper has to follow).
 3. Users complain about transitive dependency bloat from transports they don't use.
+4. **The transport's deps require a higher Go version than the rest of the library**,
+   so keeping it in the main module would force every user onto that floor.
 
-Migration path: add `go.mod` under `transports/<name>/`, update tags to use
-the prefix form (`transports/<name>/v1.0.0`). Do not split preemptively; the
-overhead (per-package go.mod, replace directives during dev, more complex
-release flow) is real and only worth it once one of the above triggers fires.
+The OpenTelemetry pair (`transports/otellog`, `plugins/oteltrace`) is split for
+reason 4 — both bind against `go.opentelemetry.io/otel/*` modules that require
+Go 1.25+. Putting them in their own modules means OTel users opt into the
+floor explicitly while the rest of the library stays at whatever the remaining
+deps demand.
+
+Migration path: add `go.mod` under the package directory, with a `replace
+go.loglayer.dev => ../...` directive (depth depends on nesting) and a
+placeholder `require go.loglayer.dev v0.0.0-...` that the replace directive
+overrides during development. Update tags to use the prefix form
+(`transports/<name>/v1.0.0` or `plugins/<name>/v1.0.0`). Do not split
+preemptively; the overhead (per-package go.mod, replace directives during dev,
+more complex release flow) is real and only worth it once one of the above
+triggers fires.
 
 The release workflow in `.github/workflows/release.yml` already accepts both
-tag forms (`v*.*.*` at root and `transports/*/v*.*.*` for prefixed).
+tag forms (`v*.*.*` at root and `transports/*/v*.*.*` / `plugins/*/v*.*.*`
+for prefixed).
+
+CI runs `go test` per sub-module by `cd`ing into each module's directory;
+see `.github/workflows/ci.yml` for the established steps.
 
 ## CI / Release Workflows
 

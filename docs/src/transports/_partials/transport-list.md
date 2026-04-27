@@ -1,5 +1,5 @@
 ::: info Go version
-The main module currently requires **Go 1.25+**, driven by the OpenTelemetry SDK's floor (it gets pulled in transitively because the OTel transport lives in this module). Most transports themselves work fine on older Go releases, but using *any* of them via `go get go.loglayer.dev` requires 1.25+. If a transport's underlying library requires something stricter, the per-transport page calls it out explicitly.
+The main module currently requires **Go 1.25+** (driven by upstream `golang.org/x/exp` via `charmbracelet/log` and `golang.org/x/sys`). Some transports that bring heavier SDK dependencies live in their own Go modules so their floors don't drag the main module up: `transports/otellog` is published as `go.loglayer.dev/transports/otellog` and pinned to its own (currently identical) Go floor. Per-transport pages call out the install path and any stricter floor.
 :::
 
 ### Renderers

@@ -68,7 +68,7 @@ log.WithPrefix("[my-app]").
 go get go.loglayer.dev
 ```
 
-Requires **Go 1.25+** (driven by `transports/otellog`'s OpenTelemetry SDK floor; the rest of the library would happily run on older versions). Individual transports/plugins note any stricter requirement on their doc page.
+Requires **Go 1.25+** for the main module. The OpenTelemetry transport (`go.loglayer.dev/transports/otellog`) and trace-injector plugin (`go.loglayer.dev/plugins/oteltrace`) ship as their own Go modules so the OTel SDK's transitive deps don't bind users who don't need them. Individual transports/plugins note any stricter requirement on their doc page.
 
 ## Examples
 

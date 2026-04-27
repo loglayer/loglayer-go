@@ -11,6 +11,10 @@ Changes are recorded here once they ship. Until v0.1.0 lands, this page describe
 
 Initial release of LogLayer for Go: a transport-agnostic structured logging facade with a fluent API for messages, fields, metadata, and errors.
 
+### Module structure
+
+- `transports/otellog` and `plugins/oteltrace` ship as their own Go modules (`go.loglayer.dev/transports/otellog`, `go.loglayer.dev/plugins/oteltrace`). Both bind against the OpenTelemetry SDK/API which currently requires Go 1.25+; isolating them keeps the OTel dep graph and Go-version requirement off users who don't import them. Install with the explicit module paths.
+
 ### Core
 
 - Six log levels: Trace, Debug, Info, Warn, Error, Fatal.

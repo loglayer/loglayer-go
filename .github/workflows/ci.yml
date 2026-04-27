@@ -41,13 +41,28 @@ jobs:
       - name: Vet
         run: go vet ./...
 
-      - name: Test
+      - name: Test (main module)
         run: go test -race -count=1 ./...
 
-      - name: Livetests (OTel SDK integration)
-        run: go test -tags=livetest -race -count=1 ./transports/otellog/ ./plugins/oteltrace/
+      # OTel transport and plugin live in their own modules so the OTel
+      # SDK's Go floor doesn't bind the main module. Test each separately.
+      - name: Test (transports/otellog)
+        working-directory: transports/otellog
+        run: go test -race -count=1 ./...
 
-      - name: Livetests (Datadog dd-trace-go integration)
+      - name: Livetest (transports/otellog, real OTel SDK)
+        working-directory: transports/otellog
+        run: go test -tags=livetest -race -count=1 ./...
+
+      - name: Test (plugins/oteltrace)
+        working-directory: plugins/oteltrace
+        run: go test -race -count=1 ./...
+
+      - name: Livetest (plugins/oteltrace, real OTel TracerProvider)
+        working-directory: plugins/oteltrace
+        run: go test -tags=livetest -race -count=1 ./...
+
+      - name: Livetest (Datadog dd-trace-go integration)
         working-directory: plugins/datadogtrace/livetest
         run: go test -race -count=1 ./...
 

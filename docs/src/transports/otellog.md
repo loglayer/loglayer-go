@@ -13,8 +13,10 @@ The package name is `otellog` to avoid colliding with `go.opentelemetry.io/otel`
 go get go.loglayer.dev/transports/otellog
 ```
 
-::: warning Go version
-Requires **Go 1.25+** because that's the floor of the upstream `go.opentelemetry.io/otel/sdk/log` packages this transport binds against. This in turn drives the entire `go.loglayer.dev` module's floor, since transports are sub-packages of the same module.
+::: info Separate module
+`transports/otellog` ships as its own Go module (`go.loglayer.dev/transports/otellog`) so the OpenTelemetry SDK's transitive Go-version requirement doesn't bind the main `go.loglayer.dev` module. Users who don't import the OTel transport never see its dependency graph.
+
+Requires **Go 1.25+** because that's the floor of the upstream `go.opentelemetry.io/otel/sdk/log` packages this transport binds against.
 :::
 
 ## Basic Usage (Global Provider)
