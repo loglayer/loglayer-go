@@ -208,9 +208,9 @@ tr := httptr.New(httptr.Config{
 
 ## Fatal Behavior
 
-This transport writes fatal entries normally. The core decides whether to call `os.Exit(1)` based on `Config.DisableFatalExit`. See [Fatal Exits the Process](/logging-api/basic-logging#fatal-exits-the-process).
+<!--@include: ./_partials/fatal-passthrough.md-->
 
-Note: a Fatal log followed by `os.Exit(1)` may not finish flushing if the worker hasn't picked up the entry yet. If you need guaranteed shipping for fatal entries, set `Config.DisableFatalExit: true` on the LogLayer config and call `tr.Close()` followed by `os.Exit(1)` yourself.
+Async caveat: a Fatal log followed by `os.Exit(1)` may not finish flushing if the worker hasn't picked up the entry yet. For guaranteed shipping of fatal entries, set `Config.DisableFatalExit: true` on the LogLayer config and call `tr.Close()` followed by `os.Exit(1)` yourself.
 
 ## Level Mapping
 

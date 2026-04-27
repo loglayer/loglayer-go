@@ -214,7 +214,7 @@ log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
 
 ## Fatal Behavior
 
-This transport writes fatal entries normally. The core decides whether to call `os.Exit(1)` based on `Config.DisableFatalExit`. See [Fatal Exits the Process](/logging-api/basic-logging#fatal-exits-the-process).
+<!--@include: ./_partials/fatal-passthrough.md-->
 
 ## Combining with Other Transports
 

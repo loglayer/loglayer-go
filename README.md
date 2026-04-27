@@ -12,7 +12,7 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
 </p>
 
-`loglayer-go` is a unified logger that routes logs to various logging libraries, cloud providers, files, and HTTP endpoints while providing a fluent API for specifying log messages, fields, metadata, and errors.
+`loglayer-go` is a structured logging library for Go. Use it standalone with the built-in JSON, pretty terminal, HTTP, or cloud-service transports (Datadog, etc.) — or wrap an existing logger like zerolog, zap, slog, or logrus when you've already invested in one. Either way, application code uses one fluent API for messages, fields, metadata, and errors.
 
 For full documentation, read the [docs](https://go.loglayer.dev).
 
@@ -81,7 +81,7 @@ Run any with `go run ./examples/<name>`.
 
 ## Transports & Integrations
 
-LogLayer ships first-party adapters for the major Go loggers, self-contained renderers, network transports, and HTTP middleware. The full catalog with per-adapter docs lives at **[go.loglayer.dev/transports](https://go.loglayer.dev/transports/)** and **[go.loglayer.dev/integrations/loghttp](https://go.loglayer.dev/integrations/loghttp)**.
+LogLayer ships adapters for the major Go loggers, self-contained renderers, network transports, and HTTP middleware. The full catalog with per-adapter docs lives at **[go.loglayer.dev/transports](https://go.loglayer.dev/transports/)** and **[go.loglayer.dev/integrations/loghttp](https://go.loglayer.dev/integrations/loghttp)**.
 
 Writing your own transport is [a single interface](https://go.loglayer.dev/transports/creating-transports) with four methods.
 

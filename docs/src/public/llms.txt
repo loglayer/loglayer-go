@@ -16,7 +16,7 @@ LogLayer for Go gives you one consistent API for messages, persistent fields, pe
 
 - [Basic Logging](https://go.loglayer.dev/logging-api/basic-logging): The six level methods, prefix, message assembly. Fatal exits the process by default.
 - [Adjusting Log Levels](https://go.loglayer.dev/logging-api/adjusting-log-levels): SetLevel, EnableLevel, DisableLevel, master on/off.
-- [Fields](https://go.loglayer.dev/logging-api/fields): Persistent keyed data via WithFields, ClearFields, FieldsKey.
+- [Fields](https://go.loglayer.dev/logging-api/fields): Persistent keyed data via WithFields, WithoutFields, FieldsKey.
 - [Metadata](https://go.loglayer.dev/logging-api/metadata): Per-log payload via WithMetadata. loglayer.Metadata is the canonical map alias.
 - [Error Handling](https://go.loglayer.dev/logging-api/error-handling): WithError, ErrorOnly, custom ErrorSerializer (recommend rotisserie/eris).
 - [Go Context](https://go.loglayer.dev/logging-api/go-context): WithCtx attaches a context.Context per call; surfaced to transports via TransportParams.Ctx.
@@ -62,7 +62,7 @@ LogLayer for Go gives you one consistent API for messages, persistent fields, pe
 
 - [Plugins overview](https://go.loglayer.dev/plugins/): Six lifecycle hooks (OnFieldsCalled, OnMetadataCalled, OnBeforeDataOut, OnBeforeMessageOut, TransformLogLevel, ShouldSend). Function-field struct API; AddPlugin/RemovePlugin/GetPlugin/PluginCount. Dispatch-time hooks receive context.Context via Params.Ctx. Convenience constructors: MetadataPlugin/FieldsPlugin/LevelPlugin.
 - [Creating Plugins](https://go.loglayer.dev/plugins/creating-plugins): Per-hook reference and design patterns.
-- [Redact](https://go.loglayer.dev/plugins/redact): First-party redaction plugin. Match by Keys (exact, json-tag aware) or Patterns (regex against string values). Walks nested maps, structs, slices, and pointers at any depth via reflection; preserves the caller's runtime type. Dependency-free.
+- [Redact](https://go.loglayer.dev/plugins/redact): Built-in redaction plugin. Match by Keys (exact, json-tag aware) or Patterns (regex against string values). Walks nested maps, structs, slices, and pointers at any depth via reflection; preserves the caller's runtime type. Dependency-free.
 
 ## Utilities
 

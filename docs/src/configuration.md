@@ -5,18 +5,9 @@ description: Every field on loglayer.Config explained.
 
 # Configuration
 
-`loglayer.New` takes a `loglayer.Config`. Every field has a sensible default; only `Transport` (or `Transports`) is required. If neither is set, `New` panics with `loglayer.ErrNoTransport`.
+`loglayer.New` takes a `loglayer.Config`. Every field has a sensible default; only `Transport` (or `Transports`) is required.
 
-For callers that prefer explicit error handling on misconfiguration, use `loglayer.Build(Config) (*loglayer.LogLayer, error)` instead. It returns `ErrNoTransport` rather than panicking.
-
-```go
-log, err := loglayer.Build(loglayer.Config{
-    Transport: structured.New(structured.Config{}),
-})
-if err != nil {
-    return err
-}
-```
+<!--@include: ./_partials/constructors.md-->
 
 Most application setup should stick with `New`: misconfiguration of the logger is a programmer error, and panicking at construction time fails loudly rather than letting a misconfigured logger drift into production.
 

@@ -1,13 +1,13 @@
 ---
-title: "LogLayer for Go: a transport-agnostic structured logger"
-description: "A layer on top of Go logging libraries that gives you a consistent fluent API for messages, metadata, and errors."
+title: "LogLayer for Go: structured logging with a fluent API"
+description: A structured logging library with a fluent API for specifying log messages, fields, metadata, and errors.
 
 layout: home
 
 hero:
   name: "LogLayer"
   text: "Unifies Go Logging"
-  tagline: "A layer on top of Go logging libraries that gives you a consistent fluent API for messages, fields, metadata, and errors."
+  tagline: "A consistent logging experience for Go, on top of any logging library."
   image:
     src: /images/loglayer.png
     alt: LogLayer logo by Akshaya Madhavan
@@ -24,17 +24,17 @@ hero:
 
 features:
   - title: Structured Logging
-    details: Fluent API for attaching metadata, errors, and persistent fields, separated cleanly so per-call data never bleeds across logs.
+    details: Write logs with a fluent API that makes adding fields, metadata, and errors simple.
   - title: Bring Your Own Logger
-    details: Wrap zerolog, zap, or write your own transport. Switch logging libraries without touching your application code.
+    details: Start with the built-in pretty or structured transport, then switch to zerolog, zap, slog, or your own logger later without changing application code.
+  - title: Extensible Plugin System
+    details: Transform, enrich, redact, and filter logs at six lifecycle points to customize the pipeline end to end.
   - title: Multi-Transport Fan-out
-    details: Send the same log entry to several backends at once, for example, zerolog locally and a structured JSON writer for shipping.
-  - title: Type-flexible Metadata
-    details: Pass a map, struct, or any value to WithMetadata, each transport decides how to serialize it.
+    details: Send the same entry to several transports at once, and use named groups to route specific entries to specific transports.
+  - title: HTTP and Cloud Shipping
+    details: Built-in batched HTTP transport plus a Datadog Logs intake transport. Drop-in support for any service with a JSON-over-HTTP intake.
   - title: First-class Testing
-    details: A TestTransport captures every entry as a typed LogLine for clean assertions, safe for concurrent use.
-  - title: No Surprise os.Exit
-    details: Fatal logs the entry but never terminates the process, termination is the caller's decision.
+    details: Capture entries with the testing transport for assertions, or use loglayer.NewMock() for a silent logger in code under test.
 ---
 
 ## Quick Example
@@ -76,5 +76,11 @@ func main() {
 ## Transports
 
 <!--@include: ./transports/_partials/transport-list.md-->
+
+## Plugins
+
+Hook into the LogLayer pipeline to transform metadata, fields, data, messages, log level, or per-transport dispatch.
+
+<!--@include: ./plugins/_partials/plugin-list.md-->
 
 LogLayer for Go is made with ❤️ by [Theo Gravity](https://suteki.nu) / [Disaresta](https://disaresta.com). Logo by [Akshaya Madhavan](https://www.linkedin.com/in/akshaya-madhavan).

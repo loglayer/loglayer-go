@@ -1,0 +1,1 @@
+This transport writes fatal entries normally; whether the process actually exits is the core's decision via `Config.DisableFatalExit` (default: exit). See [Fatal Exits the Process](/logging-api/basic-logging#fatal-exits-the-process).

@@ -55,6 +55,21 @@ log := loglayer.New(loglayer.Config{
 | `ActiveGroups` | `[]string` | nil | When non-empty, only the named groups are active. Nil/empty means "no filter — all defined groups active." |
 | `UngroupedRouting` | `UngroupedRouting` | `{Mode: UngroupedToAll}` | Routes for entries with no group tag. |
 
+## Routing Precedence
+
+For each (entry, transport) pair, in order:
+
+1. **No `Groups` configured at all** — transport receives everything (skip rules below).
+2. **Per-transport `IsEnabled()`** — false → drop.
+3. **Group enabled** — is `LogGroup.Disabled == false`?
+4. **`ActiveGroups` filter** — is the group in the filter (when non-empty)?
+5. **Group level** — does the entry's level meet the group's `Level`?
+6. **Transport membership** — is the transport's ID listed in the group's `Transports`?
+7. **Ungrouped fall-back** — entries whose tags are all undefined fall through to `UngroupedRouting`. Entries tagged with a defined-but-disabled (or filtered, or level-blocked) group do **not** fall back; they drop.
+8. **Plugin `ShouldSend`** — any plugin returning false vetoes that transport.
+
+Each subsequent section in this page configures one of the rules above. Read this list first; then the rest is detail.
+
 ## Per-Log Tagging
 
 Tag a single entry with `WithGroup` on the builder chain:
@@ -194,19 +209,6 @@ groups := log.GetGroups()                 // shallow copy
 ```
 
 All runtime mutators are safe to call from any goroutine (atomic publish, mutex-serialized), matching the existing transport- and plugin-mutator contract.
-
-## Routing Precedence
-
-For each (entry, transport) pair, in order:
-
-1. **No `Groups` configured at all** — transport receives everything (skip rules below).
-2. **Per-transport `IsEnabled()`** — false → drop.
-3. **Group enabled** — is `LogGroup.Disabled == false`?
-4. **`ActiveGroups` filter** — is the group in the filter (when non-empty)?
-5. **Group level** — does the entry's level meet the group's `Level`?
-6. **Transport membership** — is the transport's ID listed in the group's `Transports`?
-7. **Ungrouped fall-back** — entries whose tags are all undefined fall through to `UngroupedRouting`. Entries tagged with a defined-but-disabled (or filtered, or level-blocked) group do **not** fall back; they drop.
-8. **Plugin `ShouldSend`** — any plugin returning false vetoes that transport.
 
 ## `Disabled` vs Undefined
 

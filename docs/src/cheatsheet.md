@@ -5,6 +5,26 @@ description: One-page quick reference of the LogLayer for Go API.
 
 # Cheat Sheet
 
+## At a Glance
+
+```go
+import (
+    "go.loglayer.dev"
+    "go.loglayer.dev/transports/structured"
+)
+
+log := loglayer.New(loglayer.Config{Transport: structured.New(structured.Config{})})
+
+// The fluent chain: persistent fields → per-call metadata + error → terminal level method.
+log.
+    WithFields(loglayer.Fields{"requestId": "abc"}). // returns a new logger; assign on a real call site
+    WithMetadata(loglayer.Metadata{"durationMs": 23}).
+    WithError(err).
+    Error("request failed")
+```
+
+That's the 80% case. The rest of this page is a one-line lookup for everything else.
+
 ## Method Conventions
 
 LogLayer uses two distinct method patterns. Knowing which is which avoids one of the few footguns in the API.
@@ -25,22 +45,7 @@ log.MuteFields()                                    // ✅ in-place mutation; no
 
 ## Construction
 
-```go
-import (
-    "go.loglayer.dev"
-    "go.loglayer.dev/transports/structured"
-)
-
-// Panics on missing transport (typical setup).
-log := loglayer.New(loglayer.Config{
-    Transport: structured.New(structured.Config{}),
-})
-
-// Or explicit error handling (returns loglayer.ErrNoTransport on failure).
-log, err := loglayer.Build(loglayer.Config{
-    Transport: structured.New(structured.Config{}),
-})
-```
+<!--@include: ./_partials/constructors.md-->
 
 ## Log Levels
 
@@ -121,18 +126,12 @@ log := loglayer.FromContext(ctx)         // nil if not attached
 log := loglayer.MustFromContext(ctx)     // panics if not attached
 ```
 
-## Combining
+## Builder vs Logger chain
 
-```go
-log.
-    WithCtx(ctx).
-    WithFields(loglayer.Fields{"requestId": "abc"}).
-    WithMetadata(loglayer.Metadata{"duration_ms": 23}).
-    WithError(err).
-    Error("request failed")
-```
+The "At a Glance" example shows the typical chain. Two things to know:
 
-`WithCtx`, `WithMetadata`, and `WithError` return a `*LogBuilder`; chain freely before terminating with `Info()` / `Warn()` / etc. Each builder is single-use.
+- `WithFields` returns a **new logger** (`*LogLayer`) — assign it: `log = log.WithFields(...)`. See [Method Conventions](#method-conventions).
+- `WithMetadata`, `WithError`, `WithCtx`, `WithGroup` return a **`*LogBuilder`** — single-use, terminated by a level method (`Info`, `Warn`, ...). Don't assign the builder.
 
 ## Child Loggers
 
@@ -217,7 +216,7 @@ log.AddPlugin(loglayer.MetadataPlugin("upper", func(m any) any { ... }))
 log.AddPlugin(loglayer.FieldsPlugin("rename", func(f loglayer.Fields) loglayer.Fields { ... }))
 log.AddPlugin(loglayer.LevelPlugin("promote", func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) { ... }))
 
-// First-party redact plugin (key + regex matching, walks structs/maps/slices)
+// Redact plugin (key + regex matching, walks structs/maps/slices)
 log.AddPlugin(redact.New(redact.Config{
     Keys:     []string{"password", "apiKey"},
     Patterns: []*regexp.Regexp{regexp.MustCompile(`^\d{16}$`)}, // credit-card-shaped

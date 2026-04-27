@@ -23,7 +23,7 @@ loglayer-golang/
 │       ├── transports/         Per-transport guides + _partials/
 │       └── ...                 Top-level pages (index, intro, configuration, etc.)
 ├── transport/                  BaseTransport / BaseConfig
-├── transports/                 First-party transports
+├── transports/                 Built-in transports
 │   ├── console/                Plain fmt.Println-style
 │   ├── pretty/                 Colorized terminal output (uses fatih/color)
 │   ├── structured/             JSON-per-line

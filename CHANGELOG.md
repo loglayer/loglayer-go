@@ -200,7 +200,7 @@ Logger wrappers:
 - Convenience constructors `loglayer.MetadataPlugin`,
   `loglayer.FieldsPlugin`, `loglayer.LevelPlugin` for the common
   single-hook cases.
-- `plugins/redact`: first-party redaction plugin. Matches by `Keys`
+- `plugins/redact`: built-in redaction plugin. Matches by `Keys`
   (exact key names, json-tag aware for struct fields) or `Patterns`
   (regular expressions against string values). Walks nested maps,
   structs, slices, and pointers at any depth via reflection;

@@ -147,12 +147,9 @@ log := loglayer.New(loglayer.Config{
 
 ## Fields vs Metadata
 
-Both attach structured data to logs. The difference is scope:
+<!--@include: ./_partials/fields-vs-metadata.md-->
 
-- `WithFields`: returns a logger that carries the given fields on every subsequent emission.
-- `WithMetadata`: attached to a single log entry only.
-
-Fields are keyed (`map[string]any`) because they support keyed operations: merge, clear-by-key, copy on `Child()`. Metadata is `any` because each log entry is a one-shot payload. See [Metadata](/logging-api/metadata).
+See [Metadata](/logging-api/metadata) for the per-call side.
 
 ## Combining with Metadata and Errors
 
@@ -180,4 +177,4 @@ See the full [thread-safety contract](https://github.com/loglayer/loglayer-go/bl
 
 ## Mutating fields with a plugin
 
-If you want to redact, rename, or otherwise rewrite fields globally before they're stored, register a plugin with an `OnFieldsCalled` hook. See [Plugins](/plugins/) and the first-party [redact plugin](/plugins/redact).
+If you want to redact, rename, or otherwise rewrite fields globally before they're stored, register a plugin with an `OnFieldsCalled` hook. See [Plugins](/plugins/) and the built-in [redact plugin](/plugins/redact).

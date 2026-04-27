@@ -1,17 +1,13 @@
 ---
 title: About LogLayer for Go
-description: Why LogLayer for Go exists and what it gives you over reaching for zerolog or zap directly.
+description: Learn more about LogLayer for Go and how it unifies your logging experience.
 ---
 
 # Introduction
 
-Go has plenty of good logging libraries: `zerolog`, `zap`, `slog`, `logrus`. They all do the basics (`Info`, `Warn`, `Error`) but each one wires structured fields and errors differently. Once your app is committed to a library, switching means rewriting every log site.
+Go has plenty of capable logging libraries: `zerolog`, `zap`, `slog`, `logrus`. They all offer the usual methods like `Info`, `Warn`, and `Error`, but vary significantly in how they handle structured fields, metadata, and `error` values. This inconsistency leads to ad-hoc patterns and code that's tightly coupled to a specific logger.
 
-LogLayer for Go is a thin layer that sits on top of those libraries. You write your application code against one fluent API; the underlying library is a configuration choice.
-
-::: tip Coming from TypeScript?
-This is the Go port of [`loglayer`](https://loglayer.dev) for TypeScript. The mental model and API shape map directly. See [For TypeScript Developers](/for-typescript-developers) for the full convention map and the deliberate Go-specific differences (`Fields` instead of `context`, threading guarantees, error handling, module layout).
-:::
+LogLayer solves this with a fluent, expressive API that routes logs to any logging library, plain JSON, the terminal, HTTP endpoints, or cloud services through its transport system.
 
 ```go
 log.
@@ -28,21 +24,21 @@ log.
 }
 ```
 
+::: tip Coming from TypeScript?
+This is the Go port of [`loglayer`](https://loglayer.dev) for TypeScript. The mental model and API shape map directly. See [For TypeScript Developers](/for-typescript-developers) for the full convention map and the deliberate Go-specific differences (`Fields` instead of `context`, threading guarantees, error handling, module layout).
+:::
+
 ## Bring Your Own Logger
 
-LogLayer is designed to wrap an existing logger. The library ships transports for [zerolog](/transports/zerolog) and [zap](/transports/zap), plus first-party [structured JSON](/transports/structured), [console](/transports/console), and [test](/transports/testing) transports. Writing your own transport is [a single interface](/transports/creating-transports) with four methods.
+LogLayer is designed to sit on top of your logging library of choice — `zerolog`, `zap`, `slog`, `logrus`, `charmbracelet/log`, `phuslu/log` — or to run standalone with one of the built-in transports (pretty terminal, structured JSON, HTTP, console).
 
-```go
-log := loglayer.New(loglayer.Config{
-    Transport: zerolog.New(zerolog.Config{Logger: &myZerolog}),
-})
-```
+Start with the built-in pretty transport during development, then switch to the zerolog or zap transport later when you have a real production setup, without changing a single log call.
 
-Want to switch to zap? Replace the transport. Application code is untouched.
+Learn more about logging [transports](/transports/).
 
 ## Consistent API
 
-You don't need to remember whether the library expects fields-then-message or message-then-fields, or which method takes a struct vs a map.
+No need to remember different parameter orders or method names between logging libraries:
 
 ```go
 // With LogLayer, same call shape regardless of backend
@@ -54,21 +50,26 @@ zapLogger.Info("my message", zap.Any("some", "data"))
 slog.Info("my message", "some", "data")
 ```
 
-## Separation of Fields, Metadata, and Errors
+Start with [basic logging](/logging-api/basic-logging).
+
+## Separation of Errors, Fields, and Metadata
 
 LogLayer distinguishes three kinds of structured data, each with a clear scope:
 
-| Type        | Method            | Scope                          | Purpose                                     |
-|-------------|-------------------|--------------------------------|---------------------------------------------|
-| **Fields**  | `WithFields()`    | Persistent across all logs     | Request IDs, user info, session data        |
-| **Metadata**| `WithMetadata()`  | Single log entry only          | Event-specific details, durations, counts  |
-| **Errors**  | `WithError()`     | Single log entry only          | An `error` value, serialized for output     |
+<!--@include: ./logging-api/_partials/fields-vs-metadata.md-->
+
+This separation provides several benefits:
+
+- **Clarity**: each piece of data has a clear purpose and appropriate scope.
+- **No pollution**: per-log metadata can never accidentally persist to future logs.
+- **Flexible output**: configure where each type appears in the final log (root level or dedicated fields) via [configuration](/configuration).
+- **Better debugging**: errors are serialized consistently via a configurable `ErrorSerializer`.
 
 ```go
 log.
     WithFields(loglayer.Fields{"requestId": "abc-123"}). // persists
-    WithMetadata(loglayer.Metadata{"duration": 150}).         // this log only
-    WithError(errors.New("timeout")).                       // this log only
+    WithMetadata(loglayer.Metadata{"duration": 150}).    // this log only
+    WithError(errors.New("timeout")).                    // this log only
     Error("Request failed")
 ```
 
@@ -81,66 +82,101 @@ log.
 }
 ```
 
-The benefit isn't just naming. Per-log metadata can never accidentally leak into future logs, errors are serialized consistently, and each type can be nested under a dedicated field via [configuration](/configuration).
+See the dedicated pages for [fields](/logging-api/fields), [metadata](/logging-api/metadata), and [error handling](/logging-api/error-handling).
 
-See [fields](/logging-api/fields), [metadata](/logging-api/metadata), and [error handling](/logging-api/error-handling).
+## Powerful Plugin System
 
-## Type-flexible Metadata
-
-`WithMetadata` accepts `any`. Pass a map for ad-hoc fields, a struct for typed payloads, or a scalar; the transport decides how to render it.
+Extend functionality with plugins that hook into the emission pipeline:
 
 ```go
-type User struct {
-    ID    int    `json:"id"`
-    Email string `json:"email"`
-}
-
-log.WithMetadata(User{ID: 7, Email: "alice@example.com"}).Info("user")
-log.WithMetadata(loglayer.Metadata{"latency_ms": 23}).Info("served")
+log.AddPlugin(loglayer.Plugin{
+    ID: "redact-passwords",
+    OnMetadataCalled: func(metadata any) any {
+        if m, ok := metadata.(map[string]any); ok {
+            if _, has := m["password"]; has {
+                m["password"] = "[REDACTED]"
+            }
+        }
+        return metadata
+    },
+})
 ```
 
-Each transport renders the value its own way; see the transport pages for the exact shape.
+The built-in [`plugins/redact`](/plugins/redact) plugin walks structs, maps, and slices via reflection, redacting matched keys at any nesting depth. See more about using and creating [plugins](/plugins/).
 
-## Multi-Transport Fan-out
+## Multi-Transport Support
 
-A single `LogLayer` instance can dispatch each log entry to multiple transports.
+Send your logs to multiple destinations simultaneously:
 
 ```go
 log := loglayer.New(loglayer.Config{
     Transports: []loglayer.Transport{
-        console.New(console.Config{}),
-        structured.New(structured.Config{Writer: jsonFile}),
+        pretty.New(pretty.Config{}),                           // dev console
+        structured.New(structured.Config{Writer: jsonFile}),   // shipping
     },
 })
 
 log.Info("user signed in") // both transports receive it
 ```
 
-See [multi-transport support](/transports/multiple-transports).
+See more about [multi-transport support](/transports/multiple-transports).
 
-## Easy Mocking
+## Targeted Log Routing with Groups
 
-For tests that don't care about log output, `loglayer.NewMock()` returns a drop-in no-op `*LogLayer`:
+In a large system with many subsystems, you often want certain logs to go to certain destinations. Groups let you tag logs by category and route them to specific transports with per-group log levels:
 
 ```go
-log := loglayer.NewMock()
-DoWork(log, "input") // silent
+log := loglayer.New(loglayer.Config{
+    Transports: []loglayer.Transport{...},
+    Groups: map[string]loglayer.LogGroup{
+        "database": {Transports: []string{"datadog"}, Level: loglayer.LogLevelError},
+        "auth":     {Transports: []string{"datadog", "console"}, Level: loglayer.LogLevelWarn},
+    },
+})
+
+// Tag individual logs
+log.WithGroup("database").Error("connection lost")
+
+// Or create a dedicated logger for a subsystem
+dbLogger := log.WithGroup("database")
+dbLogger.Error("pool exhausted") // routed to datadog only
 ```
 
-For tests that want to *assert on* what was logged, the [`testing` transport](/transports/testing) captures every entry into a mutex-safe library with typed `LogLine` fields:
+Narrow focus to a specific subsystem at runtime via an environment variable, no code changes:
 
 ```go
+loglayer.New(loglayer.Config{
+    ActiveGroups: loglayer.ActiveGroupsFromEnv("LOGLAYER_GROUPS"),
+})
+```
+
+```sh
+LOGLAYER_GROUPS=database,auth go run .
+```
+
+See more about [groups](/logging-api/groups).
+
+## HTTP and Cloud Shipping
+
+Send logs directly to any HTTP endpoint without a third-party logging library, with built-in batching, retries, and a pluggable encoder. The [HTTP transport](/transports/http) is the foundation; the [Datadog transport](/transports/datadog) is built on top of it for the Datadog Logs intake API.
+
+## Easy Testing
+
+Built-in mocks make testing painless:
+
+```go
+// Silent mock for tests that don't care about output
+log := loglayer.NewMock()
+
+// Capturing transport for tests that assert on what was logged
 lib := &lltest.TestLoggingLibrary{}
 log := loglayer.New(loglayer.Config{
     Transport: lltest.New(lltest.Config{Library: lib}),
 })
-
 log.WithMetadata(loglayer.Metadata{"k": "v"}).Info("msg")
 
 line := lib.PopLine()
 require.Equal(t, "msg", line.Messages[0])
-require.Equal(t, "v", line.Metadata.(loglayer.Metadata)["k"])
 ```
 
-See [Mocking](/logging-api/mocking) for the full pattern guide.
-
+See more about [testing](/logging-api/mocking).

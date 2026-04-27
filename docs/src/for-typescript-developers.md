@@ -58,20 +58,9 @@ const log = new LogLayer({
 });
 ```
 
-Go has two constructors. `New` panics on misconfiguration (typical idiom for setup-time errors); `Build` returns an `error` instead:
+Go has two constructors. The `New`/`Build` pair is the same pattern Go uses elsewhere when a misconfiguration is a programmer error you want to fail loudly on but still need a recoverable variant for env-driven setup:
 
-```go
-log := loglayer.New(loglayer.Config{
-    Transport: pretty.New(pretty.Config{}),
-})
-
-// Or, with explicit error handling:
-log, err := loglayer.Build(loglayer.Config{
-    Transport: pretty.New(pretty.Config{}),
-})
-```
-
-Both report `loglayer.ErrNoTransport` if no transport is set.
+<!--@include: ./_partials/constructors.md-->
 
 ## Errors
 
@@ -164,7 +153,7 @@ log.AddPlugin(loglayer.FieldsPlugin("rename", fn))
 log.AddPlugin(loglayer.LevelPlugin("promote", fn))
 ```
 
-The first-party `plugins/redact` mirrors `@loglayer/plugin-redaction`. It supports key matching, regex value patterns, and json-tag-aware struct walking, all type-preserving:
+`plugins/redact` mirrors `@loglayer/plugin-redaction`. It supports key matching, regex value patterns, and json-tag-aware struct walking, all type-preserving:
 
 ```go
 import "go.loglayer.dev/plugins/redact"

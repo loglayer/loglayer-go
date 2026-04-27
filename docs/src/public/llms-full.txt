@@ -95,14 +95,14 @@ log.WithCtx(ctx).Info("...")                                      // attach cont
 ```go
 log = log.WithFields(loglayer.Fields{"requestId": "abc"})  // returns new logger; assign
 fields := log.GetFields()                                  // shallow copy
-log = log.ClearFields()                                    // remove all (returns new logger)
-log = log.ClearFields("key1", "key2")                      // remove specific (returns new logger)
+log = log.WithoutFields()                                  // remove all (returns new logger)
+log = log.WithoutFields("key1", "key2")                    // remove specific (returns new logger)
 log.MuteFields().UnmuteFields()                            // suppress in output (mutate, atomic)
 ```
 
 `loglayer.Fields` is a type alias for `map[string]any`. Fields are keyed because they support merge, clear-by-key, and copy-on-Child semantics that only make sense over keys.
 
-`WithFields` and `ClearFields` return a new logger instead of mutating the receiver — matches zerolog/zap/slog/logrus convention. The compiler does not catch a discarded return value, so always assign.
+`WithFields` and `WithoutFields` return a new logger instead of mutating the receiver — matches zerolog/zap/slog/logrus convention. The compiler does not catch a discarded return value, so always assign.
 
 ### Metadata
 
@@ -163,7 +163,7 @@ Child mutations do not affect parent. Transports are shared (same instances).
 ```go
 log.AddTransport(t)                   // append, replaces if same ID
 log.RemoveTransport("id")             // returns bool
-log.WithFreshTransports(t1, t2)       // replace all
+log.SetTransports(t1, t2)             // replace all
 log.GetLoggerInstance("id")           // underlying logger from a transport
 ```
 
@@ -270,9 +270,11 @@ func handler(w http.ResponseWriter, r *http.Request) {
 Every method on `*LogLayer` is safe to call from any goroutine, including concurrently with emission. There is no setup-only category.
 
 - **Emission methods** (`Info`, `WithMetadata`, `Raw`, ...): read-only.
-- **Returns-new** (`WithFields`, `ClearFields`, `Child`, `WithPrefix`): build a new logger; receiver untouched.
+- **Returns-new** (`WithFields`, `WithoutFields`, `Child`, `WithPrefix`, `(*LogLayer).WithGroup`): build a new logger; receiver untouched.
 - **Level mutators** (`SetLevel`, `EnableLevel`, `DisableLevel`, `EnableLogging`, `DisableLogging`): atomic.Uint32 bitmap. Mirrors `zap.AtomicLevel`. Safe for live runtime toggling (SIGUSR1, admin endpoints).
-- **Transport mutators** (`AddTransport`, `RemoveTransport`, `WithFreshTransports`): atomic.Pointer[transportSet]. Concurrent mutators serialize via internal mutex; dispatch hot path is lock-free.
+- **Transport mutators** (`AddTransport`, `RemoveTransport`, `SetTransports`): atomic.Pointer[transportSet]. Concurrent mutators serialize via internal mutex; dispatch hot path is lock-free.
+- **Plugin mutators** (`AddPlugin`, `RemovePlugin`): atomic.Pointer[pluginSet], same pattern.
+- **Group mutators** (`AddGroup`, `RemoveGroup`, `EnableGroup`, `DisableGroup`, `SetGroupLevel`, `SetActiveGroups`, `ClearActiveGroups`): atomic.Pointer[groupSet], same pattern.
 - **Mute toggles** (`MuteFields`, `UnmuteFields`, `MuteMetadata`, `UnmuteMetadata`): atomic.Bool.
 
 Verified by `concurrency_test.go` under `-race`.
@@ -312,7 +314,7 @@ log.AddPlugin(loglayer.Plugin{
 })
 ```
 
-First-party plugin: `plugins/redact`. Match by `Keys` (exact key names; honors `json` tags when matching struct fields) or `Patterns` (regex against string values). Walks nested maps, structs, slices, arrays, and pointers at any depth via reflection; preserves the caller's runtime type (struct in → struct out). Caller's input is never mutated. Dependency-free.
+Built-in plugin: `plugins/redact`. Match by `Keys` (exact key names; honors `json` tags when matching struct fields) or `Patterns` (regex against string values). Walks nested maps, structs, slices, arrays, and pointers at any depth via reflection; preserves the caller's runtime type (struct in → struct out). Caller's input is never mutated. Dependency-free.
 
 ## Shared Utilities
 

@@ -147,4 +147,4 @@ loglayer.New(loglayer.Config{
 
 ## Mutating metadata with a plugin
 
-If you want to redact, rewrite, or filter metadata globally before it reaches a transport, register a plugin with an `OnMetadataCalled` hook. See [Plugins](/plugins/) and the first-party [redact plugin](/plugins/redact).
+If you want to redact, rewrite, or filter metadata globally before it reaches a transport, register a plugin with an `OnMetadataCalled` hook. See [Plugins](/plugins/) and the built-in [redact plugin](/plugins/redact).

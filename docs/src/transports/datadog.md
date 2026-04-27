@@ -204,4 +204,6 @@ Indexing latency in Datadog is typically 5-60 seconds. Without `DD_API_KEY` the 
 
 ## Fatal Behavior
 
-Like the HTTP transport, this writes fatal entries normally. The core decides whether to call `os.Exit(1)` based on `Config.DisableFatalExit`. If you Fatal-log and exit, the worker may not have finished shipping that entry; for guaranteed delivery, set `DisableFatalExit: true` on the LogLayer config and call `tr.Close()` followed by `os.Exit(1)` yourself.
+<!--@include: ./_partials/fatal-passthrough.md-->
+
+Same async caveat as the underlying [HTTP transport](/transports/http#fatal-behavior): set `DisableFatalExit: true` and call `tr.Close()` before `os.Exit(1)` if you need guaranteed delivery of the fatal entry.

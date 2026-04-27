@@ -124,7 +124,7 @@ For transports with no underlying library (anything you write from scratch), ret
 
 ## Concurrency
 
-`SendToLogger` may be called from any goroutine. Make sure whatever you're writing to is safe, `os.Stdout`, `bytes.Buffer` (with a mutex), or a pre-locked `io.Writer`. The first-party transports rely on the writer being concurrency-safe; if yours isn't, wrap it.
+`SendToLogger` may be called from any goroutine. Make sure whatever you're writing to is safe, `os.Stdout`, `bytes.Buffer` (with a mutex), or a pre-locked `io.Writer`. The built-in transports rely on the writer being concurrency-safe; if yours isn't, wrap it.
 
 ## Don't Mutate TransportParams
 

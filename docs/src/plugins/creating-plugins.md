@@ -45,6 +45,45 @@ These are sugar over `loglayer.Plugin{...}` — use the struct literal directly 
 The `Plugin` struct is copied at `AddPlugin` time. Mutating its function fields *after* registration has no effect on the registered behavior — to update a plugin, build a new `Plugin` and `AddPlugin` it again (the existing one is replaced because IDs match).
 :::
 
+For the registration API (`AddPlugin`, `RemovePlugin`, etc.) see [Plugin Management](/plugins/#plugin-management) on the overview page.
+
+## Hooks
+
+Six hooks fire during emission. Implement only the ones you need.
+
+| Hook | Fires when | Return |
+|---|---|---|
+| `OnFieldsCalled` | `WithFields` is called | `Fields` to merge; nil drops the call |
+| `OnMetadataCalled` | `WithMetadata` / `MetadataOnly` | `any` metadata; nil drops it |
+| `OnBeforeDataOut` | per emission, after data assembly | `Data` to merge into the entry |
+| `OnBeforeMessageOut` | per emission, after data hooks | replacement messages slice; nil keeps |
+| `TransformLogLevel` | per emission, after the above | `(level, ok)`; ok=false leaves unchanged |
+| `ShouldSend` | once per (entry, transport) | `false` to skip that transport |
+
+`ShouldSend` is the only hook that sees the transport ID, so it's the place to gate dispatch per-transport.
+
+### Lifecycle
+
+```
+WithFields(...)            → OnFieldsCalled chain → fields merged onto logger
+WithMetadata(...)          → OnMetadataCalled chain → metadata stored
+
+emission (Info / Warn / ...)
+  ├─ assemble data (fields + error)
+  ├─ OnBeforeDataOut chain          (mutate the data map)
+  ├─ OnBeforeMessageOut chain       (mutate the messages slice)
+  ├─ TransformLogLevel chain        (last ok=true wins)
+  └─ for each transport:
+       ├─ ShouldSend (false → skip this transport)
+       └─ transport.SendToLogger(...)
+```
+
+Plugins run in the order they were added. `OnFieldsCalled` and `OnMetadataCalled` short-circuit on the first nil return; the dispatch-time hooks all run.
+
+### Child loggers inherit plugins
+
+`Child()` (and `WithFields`, `WithPrefix`) clones the plugin set by reference. Once either side mutates, the snapshots fork — copy-on-write. Adding a plugin to the child does not affect the parent.
+
 ## Picking the right hook
 
 | You want to…                                    | Use                  |
@@ -274,7 +313,7 @@ OnMetadataCalled: func(metadata any) any {
 
 `Cloner` handles maps (string-keyed), structs (json-tag aware), slices, arrays, pointers, and interface values. It skips unexported fields. Caller's input is never mutated.
 
-The first-party [`plugins/redact`](/plugins/redact) is built on `Cloner`; [its source](https://github.com/loglayer/loglayer-go/blob/main/plugins/redact/redact.go) is the canonical reference for this pattern.
+The [`plugins/redact`](/plugins/redact) plugin is built on `Cloner`; [its source](https://github.com/loglayer/loglayer-go/blob/main/plugins/redact/redact.go) is the canonical reference for this pattern.
 
 ### Recipe 3: normalize to a map first
 
@@ -294,15 +333,17 @@ OnMetadataCalled: func(metadata any) any {
 
 The trade-off: the metadata reaches downstream plugins and transports as a `map[string]any`, not the user's struct. Anything that type-switches on `params.Metadata` will see a map. For most rendering paths this is invisible (they marshal to JSON anyway), but tests that compare to the original struct break.
 
-## Performance
+## Concurrency and performance
 
-Hooks run on the dispatching goroutine. Don't block.
+Hooks run on the dispatching goroutine. They may be called from any goroutine concurrently — the same plugin instance can fire on many emissions in parallel. Make any state your hook touches safe for concurrent reads/writes (use a mutex, atomics, or build the plugin from immutable config).
+
+**Don't block in a hook**: it stalls the log call.
 
 - Map lookups, string comparisons, simple type assertions: fine.
 - Network or disk I/O: never. If you need to ship to an external system, enqueue to a channel and have a worker drain it.
 - Reflection or JSON-encoding for every entry: usually too slow at high log volume; cache or precompute where you can.
 
-The dispatcher pre-indexes hook membership at `AddPlugin` time, so the cost of having ten plugins of which only one implements `OnBeforeDataOut` is roughly the same as having one such plugin. You don't pay for hooks you don't implement.
+The dispatcher pre-indexes hook membership at `AddPlugin` time, so having ten plugins where only one implements `OnBeforeDataOut` costs roughly the same as having one such plugin. You don't pay for hooks you don't implement.
 
 ## Convention: package shape
 
@@ -320,5 +361,5 @@ The constructor signature `func New(Config) loglayer.Plugin` matches the [`plugi
 
 ## See also
 
-- [Plugins overview](/plugins/) — lifecycle, ordering, thread safety
-- [`plugins/redact`](/plugins/redact) — first-party reference plugin
+- [Plugins overview](/plugins/) — what hooks exist, when each fires, lifecycle and thread-safety semantics.
+- [`plugins/redact`](/plugins/redact) — built-in reference plugin built on `maputil.Cloner`.
