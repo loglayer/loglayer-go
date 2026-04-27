@@ -5,11 +5,11 @@ description: "Per-log structured data: maps, structs, or any value."
 
 # Logging with Metadata
 
-Metadata attaches structured data to a single log entry. Unlike [fields](/logging-api/fields), it does not persist. Once the entry is emitted, the metadata is discarded.
+Metadata attaches structured data to a single log entry. Unlike [fields](/logging-api/fields), it does not persist. Once the entry is emitted, the metadata is discarded. For a side-by-side comparison of `Fields`, `Metadata`, and `Data` (the third concept that surfaces in plugins), see [Fields, Metadata, and Data](/concepts/data-shapes).
 
 ## `loglayer.Metadata`: the canonical map shape
 
-The most common payload is a string-keyed bag of values, so `loglayer` exports a type alias `Metadata` for `map[string]any`. The two forms are 100% interchangeable at runtime; the alias just keeps call sites short.
+The most common payload is a string-keyed bag of values, so `loglayer` exports a named type `Metadata` for `map[string]any`. Map literals (`loglayer.Metadata{...}`) work like the underlying map for indexing, range, `len`, etc.; the named type lets the compiler distinguish `Metadata` from `Fields` (the persistent-on-logger shape) and `Data` (the assembled output transports see).
 
 ```go
 // Idiomatic

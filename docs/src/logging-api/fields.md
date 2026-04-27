@@ -5,7 +5,7 @@ description: Persistent, keyed data attached to every log entry from a logger.
 
 # Logging with Fields
 
-Fields are data that should appear on every log entry from a logger: request IDs, user info, session data, anything that identifies the unit of work in progress. They are the opposite of [metadata](/logging-api/metadata), which is per-call.
+Fields are data that should appear on every log entry from a logger: request IDs, user info, session data, anything that identifies the unit of work in progress. They are the opposite of [metadata](/logging-api/metadata), which is per-call. For a side-by-side comparison of `Fields`, `Metadata`, and `Data` (the third concept that surfaces in plugins), see [Fields, Metadata, and Data](/concepts/data-shapes).
 
 ## Adding Fields
 

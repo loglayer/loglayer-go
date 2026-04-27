@@ -18,3 +18,26 @@ A transport is what actually emits a log entry: to stdout, to a file, to a third
 <!--@include: ./_partials/transport-list.md-->
 
 A single LogLayer can fan out to several transports at once — see [Multiple Transports](/transports/multiple-transports). To wrap a logger LogLayer doesn't ship a transport for, see [Creating Transports](/transports/creating-transports).
+
+## Level mapping across transports
+
+LogLayer has six levels (`Trace`, `Debug`, `Info`, `Warn`, `Error`, `Fatal`). Underlying loggers vary in what they support, so each wrapper maps LogLayer levels to its target's native scale. The table below shows how each transport handles the two levels that don't always have a direct equivalent: `Trace` and `Fatal`.
+
+| Transport       | `LogLevelTrace` →           | `LogLevelFatal` →             | Fatal exits process? |
+|-----------------|-----------------------------|-------------------------------|----------------------|
+| `console`       | `Trace` (own constant)      | `Fatal` (own constant)        | Core decides via `DisableFatalExit` |
+| `pretty`        | `Trace` (own constant)      | `Fatal` (own constant)        | Core decides         |
+| `structured`    | `Trace` (own constant)      | `Fatal` (own constant)        | Core decides         |
+| `testing`       | preserved as-is             | preserved as-is               | Core decides         |
+| `blank`         | preserved as-is             | preserved as-is               | Core decides         |
+| `http`          | preserved (encoder choice)  | preserved (encoder choice)    | Core decides         |
+| `datadog`       | `debug` (Datadog status)    | `critical` (Datadog status)   | Core decides         |
+| `zerolog`       | `Trace`                     | uses `WithLevel(Fatal)` (no exit) | Core decides     |
+| `zap`           | `Debug` (zap has no Trace)  | `Fatal` via no-op hook        | Core decides         |
+| `slog`          | `Debug` (slog has no Trace) | `LevelError + 4`              | Core decides         |
+| `phuslu`        | `Trace`                     | `Fatal`                       | **Always exits** (phuslu calls `os.Exit` internally; cannot be suppressed) |
+| `logrus`        | `Trace`                     | `Fatal` via no-op `ExitFunc`  | Core decides         |
+| `charmlog`      | `Debug` (charmlog has no Trace) | `Fatal` via `Log()`       | Core decides         |
+| `otellog`       | `SeverityTrace` (1)         | `SeverityFatal` (21)          | Core decides         |
+
+Three transports collapse `Trace` to `Debug` because their underlying library has no Trace level (zap, slog, charmlog). One transport — `phuslu` — cannot honor `Config.DisableFatalExit` because the underlying library calls `os.Exit` from its fatal dispatch path; if you need fatal-without-exit, pick another transport. Every other wrapper neutralizes its library's Fatal so the LogLayer core controls the exit decision.

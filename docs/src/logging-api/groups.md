@@ -107,6 +107,82 @@ authDB.Error("auth DB failure")  // routes to both 'auth' and 'database' transpo
 
 The parent logger is unchanged.
 
+## Worked Example: Multi-Service Routing
+
+A realistic setup makes the routing rules click. Suppose your service has three concerns and three places log entries should land:
+
+- **`pretty`** (terminal): everything in development.
+- **`structured-file`** (JSON to disk): everything in production for the local fluentd agent to ship.
+- **`datadog`** (network): only `error` and `fatal` from the `billing` and `auth` paths, because Datadog log volume is metered.
+
+Configure groups to express that policy:
+
+```go
+log := loglayer.New(loglayer.Config{
+    Transports: []loglayer.Transport{
+        pretty.New(pretty.Config{BaseConfig: transport.BaseConfig{ID: "pretty"}}),
+        structured.New(structured.Config{BaseConfig: transport.BaseConfig{ID: "structured-file"}, Writer: file}),
+        datadogtransport.New(datadogtransport.Config{
+            BaseConfig: transport.BaseConfig{ID: "datadog"},
+            APIKey:     os.Getenv("DD_API_KEY"),
+        }),
+    },
+    Groups: map[string]loglayer.LogGroup{
+        // "billing" entries go to all three transports, but Datadog
+        // only receives error+fatal because of the per-group level.
+        "billing": {
+            Transports: []string{"pretty", "structured-file", "datadog"},
+            Level:      loglayer.LogLevelError,
+        },
+        "auth": {
+            Transports: []string{"pretty", "structured-file", "datadog"},
+            Level:      loglayer.LogLevelError,
+        },
+        // Database concern: noisy, never ship to Datadog.
+        "database": {
+            Transports: []string{"pretty", "structured-file"},
+        },
+    },
+    // Untagged entries (the dispatcher's own logs, ad-hoc Info calls in
+    // main.go) go to pretty + structured-file but NOT Datadog.
+    UngroupedRouting: loglayer.UngroupedRouting{
+        Mode:       loglayer.UngroupedToTransports,
+        Transports: []string{"pretty", "structured-file"},
+    },
+})
+
+billingLog := log.WithGroup("billing")
+authLog    := log.WithGroup("auth")
+dbLog      := log.WithGroup("database")
+```
+
+What happens at emission time, for the configuration above:
+
+| Call                                           | Routes to                                       | Why                                                                  |
+|------------------------------------------------|-------------------------------------------------|----------------------------------------------------------------------|
+| `billingLog.Error("invoice rejected")`         | `pretty`, `structured-file`, `datadog`          | `billing` group lists all three; `Error` passes the per-group level. |
+| `billingLog.Info("invoice created")`           | dropped from all three                          | `billing` group's `Level: Error` filters the whole group, not just Datadog. |
+| `dbLog.Debug("acquired conn")`                 | `pretty`, `structured-file`                     | `database` group lists those two; no Datadog. No per-group level set, so `Debug` passes. |
+| `log.Info("server started")` (no `WithGroup`)  | `pretty`, `structured-file`                     | Untagged, so `UngroupedRouting` decides; Datadog excluded.           |
+| `authLog.WithGroup("billing").Error("...")`    | `pretty`, `structured-file`, `datadog`          | Two groups; route to the union of their transports.                  |
+
+::: warning Per-group level is per-*group*, not per-*transport*
+Notice the `billingLog.Info(...)` row: the `Level: Error` on the `billing` group **drops the entry from every transport in that group**, including `pretty`. If you want `Info` to land on pretty/structured but only `Error+` on Datadog, the group level isn't the right tool. Split the work across two groups:
+:::
+
+```go
+Groups: map[string]loglayer.LogGroup{
+    "billing-all":    {Transports: []string{"pretty", "structured-file"}},
+    "billing-remote": {Transports: []string{"datadog"}, Level: loglayer.LogLevelError},
+}
+
+billingLog := log.WithGroup("billing-all", "billing-remote")
+billingLog.Info(...)   // → pretty, structured-file (billing-remote drops below Error)
+billingLog.Error(...)  // → all three
+```
+
+Now the per-transport filtering is explicit, and a glance at the group definitions tells you where each level goes.
+
 ## Group Level Filtering
 
 Each group has its own minimum log level; entries below it are dropped for that group's transports:
