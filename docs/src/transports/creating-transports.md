@@ -100,12 +100,34 @@ The `transport` package exposes helpers that encode each policy. Reach for them 
 
 ### Picking a policy
 
-The right choice depends on what the backend can render natively. Two complete, runnable examples live in the repo:
+The right choice depends on what the backend can render natively. Pick the section that matches your backend; each ends with a runnable example in the repo.
 
-- **Backends with no native struct support** (raw JSON, terminal lines): roundtrip via `MetadataAsMap` so struct fields surface as named root attributes. Slices and scalars don't roundtrip into a map, so decide explicitly: drop them (`structured`, `console`), fall back to a single key like `_metadata` (`pretty`), or nest them under a fixed key (`http`, `datadog`). See [`examples/custom-transport`](https://github.com/loglayer/loglayer-go/blob/main/examples/custom-transport/main.go) for a worked implementation using `MergeFieldsAndMetadata`.
-- **Backends with native attribute serializers** (zap, zerolog, slog, logrus, charmlog, phuslu, OpenTelemetry): use `MetadataAsRootMap` to flatten the map case, then hand non-map metadata directly to the backend's `Any` / `Interface` / `KeyValue` constructor under `MetadataFieldName`. Skip the roundtrip, the backend will serialize the value natively. See [`examples/custom-transport-attribute`](https://github.com/loglayer/loglayer-go/blob/main/examples/custom-transport-attribute/main.go) for a worked implementation against a stand-in attribute backend.
+#### Renderer / "flatten" policy
 
-The built-in transports follow these two patterns so callers see consistent behavior across them. The contract those transports advertise on the [Metadata page](/logging-api/metadata) (map metadata flattens, struct metadata renders idiomatically per transport) is exactly what these helpers implement.
+Use this when your backend writes a flat shape like JSON-per-line or a terminal column ("key=value key=value"). Flatten everything to the root via `MergeFieldsAndMetadata`: map metadata merges in place, struct metadata is JSON-roundtripped, and slices / scalars are dropped (since they don't roundtrip into a map).
+
+If silently dropping non-roundtrippable values is wrong for your audience, decide explicitly what to do with them:
+
+- `structured`, `console`: drop them.
+- `pretty`: fall back to a single `_metadata` key with a stringified value (so a human reader still sees something).
+- `http`, `datadog`: nest them under a fixed `metadata` key.
+
+Worked example: [`examples/custom-transport`](https://github.com/loglayer/loglayer-go/blob/main/examples/custom-transport/main.go).
+
+#### Wrapper / "attribute-forwarding" policy
+
+Use this when your backend already has an attribute API (zap's `zap.Any`, zerolog's `Event.Interface`, OTel's `KeyValue`, slog's `Attr`, ...). Branch on metadata shape via `MetadataAsRootMap`:
+
+- If it's a map, flatten each entry into its own attribute call.
+- If it's not, forward the raw value as a single attribute under `MetadataFieldName` and let the backend's marshaler render it natively. **Skip the JSON roundtrip**, the backend will encode the value at write time.
+
+This is what every wrapper transport in the repo does (zap, zerolog, slog, logrus, charmlog, phuslu, OpenTelemetry).
+
+Worked example: [`examples/custom-transport-attribute`](https://github.com/loglayer/loglayer-go/blob/main/examples/custom-transport-attribute/main.go).
+
+#### Why two policies, not one
+
+The built-in transports settle on whichever of the two matches their backend, so callers see consistent behavior: map metadata always flattens to root keys; struct metadata always renders idiomatically per transport. That contract is what the [Metadata page](/logging-api/metadata) advertises to users, and the helpers above are how it's enforced.
 
 ### Don't reinvent
 
