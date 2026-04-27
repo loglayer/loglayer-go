@@ -170,8 +170,8 @@ How each class achieves safety:
 - **Emission methods** (`Info`, `Warn`, `Error`, `Debug`, `Trace`, `Fatal`,
   `WithMetadata`, `WithError`, `WithCtx`, `Raw`, `MetadataOnly`, `ErrorOnly`):
   read-only on logger state.
-- **Returns-new** (`WithFields`, `WithoutFields`, `Child`, `WithPrefix`): build a
-  new logger; receiver untouched.
+- **Returns-new** (`WithFields`, `WithoutFields`, `Child`, `WithPrefix`,
+  `WithGroup` on `*LogLayer`): build a new logger; receiver untouched.
 - **Read-only** (`GetFields`, `GetLoggerInstance`, `IsLevelEnabled`): no state
   change.
 - **Level mutators** (`SetLevel`, `EnableLevel`, `DisableLevel`,
@@ -187,6 +187,13 @@ How each class achieves safety:
   `UnmuteMetadata`): backed by `atomic.Bool` state on `*LogLayer`. Construction
   values come from `Config.MuteFields` / `Config.MuteMetadata` and are latched
   into the atomic state in `build()`.
+- **Plugin mutators** (`AddPlugin`, `RemovePlugin`): publish a new
+  immutable `pluginSet` via `atomic.Pointer[pluginSet]`. Same pattern as
+  transports; serialized by `pluginMu`. The dispatch hot path only loads.
+- **Group mutators** (`AddGroup`, `RemoveGroup`, `EnableGroup`,
+  `DisableGroup`, `SetGroupLevel`, `SetActiveGroups`,
+  `ClearActiveGroups`): publish a new immutable `groupSet` via
+  `atomic.Pointer[groupSet]`. Same pattern, serialized by `groupMu`.
 
 The contract above is verified by `concurrency_test.go` under `-race`,
 including a runtime-level-toggle test and a transport hot-swap test.
@@ -261,10 +268,8 @@ bottleneck.
 
 These exist in upstream loglayer but are not in the Go v1:
 
-- Plugin system
 - Field managers (TS calls these "context managers": Linked / Isolated / Default. Fields behave as a flat copied map here)
 - Log level managers (LinkedLogLevelManager / etc.; level state is per-instance, copied on `Child()`)
-- Group routing
 - Lazy / async lazy evaluation
 - Mixins (the `useLogLayerMixin` augmentation pattern)
 

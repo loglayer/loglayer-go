@@ -18,6 +18,9 @@ func (l *LogLayer) WithFields(f Fields) *LogLayer {
 	// child so call sites that always reassign get the expected behavior).
 	f = l.loadPlugins().runOnFieldsCalled(f)
 	out := l.Child()
+	if len(f) > 0 && out.fields == nil {
+		out.fields = make(Fields, len(f))
+	}
 	for k, v := range f {
 		out.fields[k] = v
 	}

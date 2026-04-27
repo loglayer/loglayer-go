@@ -71,6 +71,73 @@ type Config struct {
 	// their underlying library's exit before this option takes effect. See
 	// each wrapper's docs for details.
 	DisableFatalExit bool
+
+	// Groups defines named routing rules. Each group lists the transport
+	// IDs it routes to, an optional minimum level, and an optional disabled
+	// flag. Tag entries with a group via WithGroup to limit dispatch to
+	// that group's transports.
+	//
+	// When Groups is nil/empty there is no group routing: every transport
+	// receives every entry (existing behavior).
+	Groups map[string]LogGroup
+
+	// ActiveGroups, when non-empty, restricts routing to only these groups.
+	// Logs tagged with groups not in this list are dropped (or fall back to
+	// UngroupedRouting if none of the entry's groups are active).
+	// Nil/empty means "no filter — all defined groups are active".
+	ActiveGroups []string
+
+	// UngroupedRouting controls what happens to entries with no group tag
+	// when Groups is configured. Zero value (Mode: UngroupedToAll) preserves
+	// the no-routing behavior of every transport receiving every ungrouped
+	// entry.
+	UngroupedRouting UngroupedRouting
+}
+
+// LogGroup is a named routing rule.
+type LogGroup struct {
+	// Transports lists the IDs of transports this group routes to.
+	// Required for the group to do anything.
+	Transports []string
+
+	// Level is the minimum log level for this group. Entries below this
+	// level are dropped for this group's transports. Zero value
+	// (LogLevelTrace=0 indirectly via the levelIndex check) means "no
+	// per-group filter — all levels pass".
+	Level LogLevel
+
+	// Disabled suppresses this group's routing when true. Entries tagged
+	// only with disabled groups are dropped. Entries tagged with both a
+	// disabled and an enabled group still route through the enabled one.
+	//
+	// (Contrast with an undefined group name in the tag list: if every
+	// tag refers to an undefined group, the entry falls back to
+	// UngroupedRouting. Disabled is "explicitly off"; undefined is
+	// "treated as no tag.")
+	Disabled bool
+}
+
+// UngroupedMode is the routing strategy for entries that have no group tag.
+type UngroupedMode uint8
+
+const (
+	// UngroupedToAll routes ungrouped entries to every transport. Default.
+	UngroupedToAll UngroupedMode = iota
+	// UngroupedToNone drops ungrouped entries entirely.
+	UngroupedToNone
+	// UngroupedToTransports routes ungrouped entries only to the transport
+	// IDs listed in UngroupedRouting.Transports.
+	UngroupedToTransports
+)
+
+// UngroupedRouting controls how entries with no group tag are dispatched
+// when group routing is configured.
+type UngroupedRouting struct {
+	// Mode selects the routing strategy. Zero value is UngroupedToAll.
+	Mode UngroupedMode
+	// Transports is the allowlist used when Mode == UngroupedToTransports.
+	// Ignored for the other modes.
+	Transports []string
 }
 
 // CopyMsgPolicy controls per-call whether ErrorOnly copies err.Error()
@@ -120,4 +187,7 @@ type RawLogEntry struct {
 	// via TransportParams.Ctx. Use it to carry trace IDs, deadlines, or anything
 	// else a transport may extract.
 	Ctx context.Context
+	// Groups overrides the logger's assigned group tags for routing. Nil
+	// uses the logger's groups (set via WithGroup).
+	Groups []string
 }

@@ -177,6 +177,25 @@ log.AddPlugin(redact.New(redact.Config{
 
 See [Plugins](/plugins/) for the full lifecycle, hook ordering, and nil-return semantics. Third-party plugins can use [`utils/maputil`](https://pkg.go.dev/go.loglayer.dev/utils/maputil) for the same reflection-based deep-clone primitive that the redact plugin uses.
 
+## Groups
+
+Groups port directly. The TS `string | string[]` argument shape becomes Go variadic, and `null` for "clear filter" becomes a separate `ClearActiveGroups` method.
+
+| TypeScript | Go |
+|---|---|
+| `log.withGroup('database')` | `log.WithGroup("database")` |
+| `log.withGroup(['database', 'auth'])` | `log.WithGroup("database", "auth")` |
+| `log.addGroup(name, { ... })` | `log.AddGroup(name, loglayer.LogGroup{...})` |
+| `log.disableGroup(name)` / `enableGroup(name)` | `log.DisableGroup(name)` / `EnableGroup(name)` |
+| `log.setGroupLevel(name, 'debug')` | `log.SetGroupLevel(name, loglayer.LogLevelDebug)` |
+| `log.setActiveGroups(['db'])` | `log.SetActiveGroups("db")` |
+| `log.setActiveGroups(null)` | `log.ClearActiveGroups()` |
+| `log.getGroups()` | `log.GetGroups()` (shallow copy) |
+| `LOGLAYER_GROUPS` env var auto-read | `Config.ActiveGroups: loglayer.ActiveGroupsFromEnv("LOGLAYER_GROUPS")` (explicit) |
+| `ungroupedBehavior: 'all' \| 'none' \| string[]` | `Config.UngroupedRouting: loglayer.UngroupedRouting{Mode, Transports}` (typed enum) |
+
+The Go port does not auto-read environment variables (libraries shouldn't); `ActiveGroupsFromEnv` is a helper you opt into. See [Groups](/logging-api/groups) for the full reference.
+
 ## Currently out of scope
 
 These exist in TypeScript loglayer but are not yet implemented in the Go port:
@@ -184,7 +203,6 @@ These exist in TypeScript loglayer but are not yet implemented in the Go port:
 - **Mixins** — the `useLogLayerMixin` augmentation pattern
 - **Context managers** — `LinkedContextManager`, `IsolatedContextManager`. Go's flat fields-as-map model covers most use cases.
 - **Lazy evaluation** — `withMetadataLazy`, `withContextLazy`. Possible to add but the ergonomic story is weaker in Go.
-- **Group routing** — multi-target dispatch by group key.
 
 If any of these are blockers for your use case, open an issue at [github.com/loglayer/loglayer-go](https://github.com/loglayer/loglayer-go).
 

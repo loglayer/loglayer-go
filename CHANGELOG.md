@@ -93,6 +93,34 @@ Initial release. Pre-1.0; the API may still shift before v1.
   `withoutContext` precedent. Migration: `log = log.ClearFields(...)`
   becomes `log = log.WithoutFields(...)`.
 
+### Groups
+
+- Group routing: named rules that decide which transports receive
+  which log entries based on tags. Mirrors the TypeScript loglayer's
+  `withGroup` feature.
+- `Config.Groups map[string]LogGroup` defines named groups. Each group
+  lists the transport IDs it routes to plus an optional minimum level
+  and a `Disabled` toggle.
+- `Config.ActiveGroups []string` restricts routing to a named subset;
+  nil/empty means "no filter."
+- `Config.UngroupedRouting` controls entries with no group tag. Three
+  modes: `UngroupedToAll` (default, backwards-compatible),
+  `UngroupedToNone`, `UngroupedToTransports` (allowlist).
+- Per-call tagging via `(*LogBuilder).WithGroup(groups ...string)`.
+- Persistent tagging via `(*LogLayer).WithGroup(groups ...string)`,
+  which returns a child logger. Tags accumulate across chained calls
+  (deduplicated).
+- Runtime mutators: `AddGroup`, `RemoveGroup`, `EnableGroup`,
+  `DisableGroup`, `SetGroupLevel`, `SetActiveGroups`,
+  `ClearActiveGroups`, `GetGroups`. All safe from any goroutine
+  (atomic publish + mutex-serialized writers).
+- `Raw(RawLogEntry{Groups: ...})` overrides assigned groups for
+  forwarded entries.
+- `loglayer.ActiveGroupsFromEnv(envName)` parses a comma-separated
+  group list from an environment variable. Use it explicitly to set
+  `Config.ActiveGroups` from `LOGLAYER_GROUPS` or similar; the library
+  does not read environment variables on your behalf.
+
 ### Thread safety
 
 Every method on `*LogLayer` is safe to call from any goroutine, including

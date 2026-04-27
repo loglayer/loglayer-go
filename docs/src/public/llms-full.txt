@@ -323,13 +323,33 @@ First-party plugin: `plugins/redact`. Match by `Keys` (exact key names; honors `
 
 Third-party plugin and transport authors can import these directly from `go.loglayer.dev/utils/maputil`.
 
+## Groups
+
+Named routing rules port directly from TS loglayer's `withGroup` feature. Define groups in `Config.Groups map[string]LogGroup`; each group lists transport IDs (`Transports []string`), an optional minimum `Level`, and a `Disabled` toggle. Tag entries with one or more groups via `(*LogBuilder).WithGroup(...string)` (per-call) or `(*LogLayer).WithGroup(...string)` (returns a child where every log is tagged). Tags accumulate (deduplicated) across chained calls; multi-group entries route to the union of their groups' transports.
+
+`Config.ActiveGroups []string` restricts routing to a subset (nil/empty = no filter). `Config.UngroupedRouting` is a typed enum struct controlling untagged entries: `UngroupedToAll` (default — backward compatible), `UngroupedToNone` (drop), `UngroupedToTransports` (allowlist). Disabled groups drop their entries (no fall-back); undefined groups in the tag list fall back to ungrouped (graceful for typos and not-yet-registered groups).
+
+Runtime mutators (atomic publish, mutex-serialized): `AddGroup`, `RemoveGroup`, `EnableGroup`, `DisableGroup`, `SetGroupLevel`, `SetActiveGroups`, `ClearActiveGroups`, `GetGroups`. `Raw(RawLogEntry{Groups: ...})` overrides assigned groups for forwarded entries. `loglayer.ActiveGroupsFromEnv("LOGLAYER_GROUPS")` parses a comma-separated env-var list explicitly (we don't read env vars on your behalf).
+
+```go
+log := loglayer.New(loglayer.Config{
+    Transports: []loglayer.Transport{...},
+    Groups: map[string]loglayer.LogGroup{
+        "database": {Transports: []string{"datadog"}, Level: loglayer.LogLevelError},
+        "auth":     {Transports: []string{"sentry"}, Level: loglayer.LogLevelWarn},
+    },
+})
+log.WithGroup("database").Error("connection lost")
+log.WithGroup("auth", "database").Error("auth db failure") // routes to both groups' transports
+dbLog := log.WithGroup("database") // child logger; all logs tagged
+```
+
 ## What's Out of Scope (v1)
 
 These exist in upstream TS loglayer but are not in the Go port:
 
 - Field managers (TS calls these "context managers": Linked / Isolated / Default)
 - Log level managers (LinkedLogLevelManager / etc.)
-- Group routing
 - Lazy / async lazy evaluation
 - Mixins (the `useLogLayerMixin` augmentation pattern)
 

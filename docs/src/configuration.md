@@ -22,18 +22,21 @@ Most application setup should stick with `New`: misconfiguration of the logger i
 
 ```go
 type Config struct {
-    Transport          Transport       // single transport (mutually exclusive with Transports)
-    Transports         []Transport     // multiple transports (mutually exclusive with Transport)
-    Plugins            []Plugin        // plugins to register at construction time
-    Prefix             string          // prepended to first string message
-    Disabled           bool            // suppress all output (default: false)
-    ErrorSerializer    ErrorSerializer // customize error rendering
-    ErrorFieldName     string          // key for serialized error (default: "err")
-    CopyMsgOnOnlyError bool            // copy err.Error() into the message in ErrorOnly
-    FieldsKey          string          // nest fields under this key (default: merged at root)
-    MuteFields         bool            // disable fields in output
-    MuteMetadata       bool            // disable metadata in output
-    DisableFatalExit   bool            // skip os.Exit(1) after a Fatal log
+    Transport          Transport            // single transport (mutually exclusive with Transports)
+    Transports         []Transport          // multiple transports (mutually exclusive with Transport)
+    Plugins            []Plugin             // plugins to register at construction time
+    Groups             map[string]LogGroup  // named routing rules (see Groups)
+    ActiveGroups       []string             // restrict routing to these groups (nil/empty = no filter)
+    UngroupedRouting   UngroupedRouting     // how to route entries with no group tag
+    Prefix             string               // prepended to first string message
+    Disabled           bool                 // suppress all output (default: false)
+    ErrorSerializer    ErrorSerializer      // customize error rendering
+    ErrorFieldName     string               // key for serialized error (default: "err")
+    CopyMsgOnOnlyError bool                 // copy err.Error() into the message in ErrorOnly
+    FieldsKey          string               // nest fields under this key (default: merged at root)
+    MuteFields         bool                 // disable fields in output
+    MuteMetadata       bool                 // disable metadata in output
+    DisableFatalExit   bool                 // skip os.Exit(1) after a Fatal log
 }
 ```
 
@@ -76,6 +79,22 @@ log := loglayer.New(loglayer.Config{
 Plugin order matters: hooks run in the order plugins were added, and each plugin sees the previous plugin's output. See [Plugins](/plugins/) for the full lifecycle.
 
 `Build` returns `ErrPluginNoID` (and `New` panics with it) if any plugin has an empty `ID`.
+
+## Groups, ActiveGroups, UngroupedRouting
+
+Named routing rules for sending log entries to specific transports based on tags. When `Groups` is nil/empty there is no routing: every transport receives every entry. Once configured, tag entries via `WithGroup` to opt them into a group's routing.
+
+```go
+log := loglayer.New(loglayer.Config{
+    Transports: []loglayer.Transport{...},
+    Groups: map[string]loglayer.LogGroup{
+        "database": {Transports: []string{"datadog"}, Level: loglayer.LogLevelError},
+    },
+    ActiveGroups: loglayer.ActiveGroupsFromEnv("LOGLAYER_GROUPS"), // optional env-driven filter
+})
+```
+
+See [Groups](/logging-api/groups) for the full reference: per-group level filters, multi-group routing, ungrouped behavior modes, runtime mutators.
 
 ## Prefix
 

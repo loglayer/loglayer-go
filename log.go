@@ -127,5 +127,9 @@ func (l *LogLayer) Raw(entry RawLogEntry) {
 	if fields == nil {
 		fields = l.fields
 	}
-	l.processLog(entry.LogLevel, entry.Messages, fields, entry.Ctx, entry.Metadata, entry.Err)
+	groups := entry.Groups
+	if groups == nil {
+		groups = l.assignedGroups
+	}
+	l.processLog(entry.LogLevel, entry.Messages, fields, entry.Ctx, entry.Metadata, entry.Err, groups)
 }

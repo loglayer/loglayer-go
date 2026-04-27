@@ -18,6 +18,7 @@ type LogBuilder struct {
 	metadata any
 	err      error
 	ctx      context.Context
+	groups   []string // per-call group tags from WithGroup
 }
 
 func newLogBuilder(l *LogLayer) *LogBuilder {
@@ -49,6 +50,27 @@ func (b *LogBuilder) WithError(err error) *LogBuilder {
 // fields), WithCtx is per-call only. Passing nil is a no-op.
 func (b *LogBuilder) WithCtx(ctx context.Context) *LogBuilder {
 	b.ctx = ctx
+	return b
+}
+
+// WithGroup tags this single log entry with one or more group names.
+// Routing rules in Config.Groups decide which transports receive the
+// entry. Tags are merged with any persistent groups assigned via
+// (*LogLayer).WithGroup.
+//
+// Calling this multiple times accumulates groups (deduplicated).
+func (b *LogBuilder) WithGroup(groups ...string) *LogBuilder {
+	if len(groups) == 0 {
+		return b
+	}
+	merged := mergeGroups(b.groups, groups)
+	// Detach from the caller's variadic backing on the first WithGroup
+	// call so a mutation between WithGroup and the terminal level call
+	// can't leak through.
+	if len(b.groups) == 0 {
+		merged = append([]string(nil), merged...)
+	}
+	b.groups = merged
 	return b
 }
 
@@ -103,5 +125,12 @@ func (b *LogBuilder) Fatal(messages ...any) {
 
 func (b *LogBuilder) dispatch(level LogLevel, messages []any) {
 	applyPrefix(b.layer.config.Prefix, messages)
-	b.layer.processLog(level, messages, b.layer.fields, b.ctx, b.metadata, b.err)
+	// Hot path: builder has no per-call groups → pass the layer's
+	// assigned groups straight through. mergeGroups is out-of-line and
+	// would be a measurable hit per emission for the dominant case.
+	groups := b.layer.assignedGroups
+	if len(b.groups) > 0 {
+		groups = mergeGroups(groups, b.groups)
+	}
+	b.layer.processLog(level, messages, b.layer.fields, b.ctx, b.metadata, b.err, groups)
 }

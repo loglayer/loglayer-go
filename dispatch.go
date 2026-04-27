@@ -9,7 +9,7 @@ import (
 // using the logger's persistent fields.
 func (l *LogLayer) formatLog(level LogLevel, messages []any, goCtx context.Context, metadata any, err error) {
 	applyPrefix(l.config.Prefix, messages)
-	l.processLog(level, messages, l.fields, goCtx, metadata, err)
+	l.processLog(level, messages, l.fields, goCtx, metadata, err, l.assignedGroups)
 }
 
 // processLog assembles Data from fields + error, builds TransportParams, and
@@ -17,7 +17,9 @@ func (l *LogLayer) formatLog(level LogLevel, messages []any, goCtx context.Conte
 // fatal-level entries unless Config.DisableFatalExit is set.
 //
 // goCtx is the optional per-call Go context.Context attached via WithCtx.
-func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goCtx context.Context, metadata any, err error) {
+// entryGroups is the merged set of persistent + per-call group tags for
+// routing decisions (nil when no groups apply).
+func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goCtx context.Context, metadata any, err error, entryGroups []string) {
 	cfg := &l.config
 	includeFields := !l.muteFields.Load() && len(fields) > 0
 
@@ -103,8 +105,13 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 	}
 
 	hasShouldSend := len(plugins.shouldSend) > 0
+	groupsConfig := l.loadGroups()
+	needsRouting := groupsConfig.hasGroups
 	for _, t := range l.loadTransports().list {
 		if !t.IsEnabled() {
+			continue
+		}
+		if needsRouting && !groupsConfig.shouldRoute(t.ID(), level, entryGroups) {
 			continue
 		}
 		if hasShouldSend && !plugins.runShouldSend(ShouldSendParams{

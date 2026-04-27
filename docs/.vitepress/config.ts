@@ -108,6 +108,7 @@ export default defineConfig({
           { text: 'Error Handling', link: '/logging-api/error-handling' },
           { text: 'Child Loggers', link: '/logging-api/child-loggers' },
           { text: 'Transport Management', link: '/logging-api/transport-management' },
+          { text: 'Groups', link: '/logging-api/groups' },
           { text: 'Raw Logging', link: '/logging-api/raw' },
           { text: 'Mocking', link: '/logging-api/mocking' },
         ],

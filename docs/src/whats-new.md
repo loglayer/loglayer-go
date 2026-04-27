@@ -42,6 +42,13 @@ Initial release of LogLayer for Go: a transport-agnostic structured logging faca
 - `transports/http` errors propagated to `OnError` now include the `loglayer/transports/http:` package prefix so callers can identify the source at a glance.
 - `ClearFields` renamed to `WithoutFields`. The method returns a new logger; the prior `Clear*` prefix violated the "With* returns new" convention. Matches the TypeScript loglayer's `withoutContext` precedent.
 
+### Groups
+
+- Group routing ported from TS loglayer's `withGroup` feature. Define named routing rules in `Config.Groups`, then tag entries via `(*LogBuilder).WithGroup(...string)` (single entry) or `(*LogLayer).WithGroup(...string)` (returns a child where every log is tagged). Each group lists transport IDs to route to, plus optional minimum level and `Disabled` toggle. Backward compatible: when `Groups` is nil/empty, every transport receives every entry as before.
+- `Config.ActiveGroups []string` filters routing to named groups; `Config.UngroupedRouting` (typed enum: `UngroupedToAll` / `UngroupedToNone` / `UngroupedToTransports`) controls untagged entries.
+- Runtime mutators: `AddGroup`, `RemoveGroup`, `EnableGroup`, `DisableGroup`, `SetGroupLevel`, `SetActiveGroups`, `ClearActiveGroups`, `GetGroups`.
+- `loglayer.ActiveGroupsFromEnv("LOGLAYER_GROUPS")` parses a comma-separated env-var list into `[]string` for `Config.ActiveGroups`. (We don't read environment variables on your behalf, but the helper makes the common case one line.)
+
 ### Shared utilities
 
 - New `loglayer.MetadataPlugin`, `loglayer.FieldsPlugin`, `loglayer.LevelPlugin` convenience constructors for the common single-hook plugin cases.

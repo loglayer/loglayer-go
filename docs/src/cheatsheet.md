@@ -159,9 +159,45 @@ log.EnableLogging()
 ```go
 log.AddTransport(t)                    // append (replaces if same ID)
 log.RemoveTransport("id")              // returns true if removed
-log.SetTransports(t1, t2)        // replace all
+log.SetTransports(t1, t2)              // replace all
 log.GetLoggerInstance("id")            // underlying logger from a transport
 ```
+
+## Groups
+
+```go
+// Define routing rules at construction
+log := loglayer.New(loglayer.Config{
+    Transports: []loglayer.Transport{...},
+    Groups: map[string]loglayer.LogGroup{
+        "database": {Transports: []string{"datadog"}, Level: loglayer.LogLevelError},
+        "auth":     {Transports: []string{"sentry"}, Level: loglayer.LogLevelWarn},
+    },
+})
+
+// Tag a single entry
+log.WithGroup("database").Error("connection lost")
+log.WithGroup("database", "auth").Error("auth db failure")  // union of both groups' transports
+
+// Persistent tagging via a child logger
+dbLog := log.WithGroup("database")
+dbLog.Error("pool exhausted")  // every log routes via 'database'
+
+// Runtime management
+log.AddGroup("inbox", loglayer.LogGroup{Transports: []string{"datadog"}})
+log.RemoveGroup("inbox")            // returns bool
+log.EnableGroup("database")
+log.DisableGroup("database")
+log.SetGroupLevel("database", loglayer.LogLevelDebug)
+log.SetActiveGroups("database")     // restrict to these groups
+log.ClearActiveGroups()             // remove the filter
+log.GetGroups()                     // shallow copy of current config
+
+// Drive the active filter from an env var
+loglayer.ActiveGroupsFromEnv("LOGLAYER_GROUPS") // returns []string for Config.ActiveGroups
+```
+
+See [Groups](/logging-api/groups) for routing precedence and `UngroupedRouting` modes.
 
 ## Plugins
 

@@ -64,8 +64,15 @@ type LogLayer struct {
 	levels       *levelState
 	transports   atomic.Pointer[transportSet]
 	plugins      atomic.Pointer[pluginSet]
+	groups       atomic.Pointer[groupSet]
 	muteFields   atomic.Bool
 	muteMetadata atomic.Bool
+	// assignedGroups are the persistent group tags applied by WithGroup
+	// on this logger. Per-call WithGroup on a builder merges with these.
+	// Set only between Child() and the WithGroup call that produced this
+	// logger; never mutated post-publish, so the dispatch path can read
+	// it without synchronization.
+	assignedGroups []string
 	// txMu serializes transport mutators (AddTransport / RemoveTransport /
 	// SetTransports) so two concurrent admin operations on the same
 	// logger don't lose updates. The dispatch path doesn't take this lock;
@@ -74,6 +81,8 @@ type LogLayer struct {
 	// pluginMu serializes plugin mutators (AddPlugin / RemovePlugin); same
 	// pattern as txMu.
 	pluginMu sync.Mutex
+	// groupMu serializes group mutators; same pattern as txMu.
+	groupMu sync.Mutex
 }
 
 // New creates a new LogLayer from the given Config.
@@ -134,6 +143,12 @@ func build(config Config) (*LogLayer, error) {
 	}
 	l.plugins.Store(newPluginSet(append([]Plugin(nil), config.Plugins...)))
 
+	ung := config.UngroupedRouting
+	if ung.Mode != UngroupedToTransports && len(ung.Transports) > 0 {
+		return nil, ErrUngroupedTransportsWithoutMode
+	}
+	l.groups.Store(newGroupSet(config.Groups, config.ActiveGroups, ung))
+
 	return l, nil
 }
 
@@ -166,22 +181,25 @@ func (l *LogLayer) loadTransports() *transportSet {
 }
 
 // Child creates a new LogLayer that inherits the current config, fields (shallow copy),
-// level state, transports, and plugins. Changes to the child do not affect the parent.
+// level state, transports, plugins, and group routing. Changes to the
+// child do not affect the parent.
 func (l *LogLayer) Child() *LogLayer {
-	parentSet := l.loadTransports()
-	transports := make([]Transport, len(parentSet.list))
-	copy(transports, parentSet.list)
 	child := &LogLayer{
-		config: l.config,
-		fields: copyFields(l.fields),
-		levels: l.levels.clone(),
+		config:         l.config,
+		fields:         copyFields(l.fields),
+		levels:         l.levels.clone(),
+		assignedGroups: l.assignedGroups,
 	}
 	child.muteFields.Store(l.muteFields.Load())
 	child.muteMetadata.Store(l.muteMetadata.Load())
-	child.publishTransports(transports)
-	// pluginSet is immutable; mutators publish a new set via copy-on-write,
-	// so child can share the parent's snapshot until either side mutates.
+	// transportSet, pluginSet, and groupSet are immutable; mutators publish
+	// new sets via copy-on-write, so the child can share the parent's
+	// snapshots until either side mutates. assignedGroups is also immutable
+	// post-publish (only WithGroup writes it, and only on a fresh child
+	// before returning), so it can also be shared by reference.
+	child.transports.Store(l.loadTransports())
 	child.plugins.Store(l.loadPlugins())
+	child.groups.Store(l.loadGroups())
 	return child
 }
 
@@ -201,7 +219,15 @@ func applyPrefix(prefix string, messages []any) {
 	}
 }
 
+// copyFields returns a shallow copy of src, or nil when src is empty.
+// Returning nil saves an allocation per Child() call on loggers that
+// haven't accumulated any fields yet (the dominant case for fresh
+// per-request loggers built via middleware). Callers that need to write
+// must allocate the destination map themselves.
 func copyFields(src Fields) Fields {
+	if len(src) == 0 {
+		return nil
+	}
 	dst := make(Fields, len(src))
 	for k, v := range src {
 		dst[k] = v
