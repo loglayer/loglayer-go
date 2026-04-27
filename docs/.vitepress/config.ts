@@ -96,6 +96,7 @@ export default defineConfig({
           { text: 'Common Pitfalls', link: '/common-pitfalls' },
           { text: 'For TypeScript Developers', link: '/for-typescript-developers' },
           { text: 'Use with AI / LLMs', link: '/llms' },
+          { text: "What's New", link: '/whats-new' },
         ],
       },
       {
@@ -122,7 +123,6 @@ export default defineConfig({
           { text: 'Go Context', link: '/logging-api/go-context' },
           { text: 'Error Handling', link: '/logging-api/error-handling' },
           { text: 'Child Loggers', link: '/logging-api/child-loggers' },
-          { text: 'Transport Management', link: '/logging-api/transport-management' },
           { text: 'Groups', link: '/logging-api/groups' },
           { text: 'Raw Logging', link: '/logging-api/raw' },
           { text: 'Mocking', link: '/logging-api/mocking' },
@@ -132,6 +132,8 @@ export default defineConfig({
         text: 'Transports',
         items: [
           { text: 'Overview', link: '/transports/' },
+          { text: 'Configuration', link: '/transports/configuration' },
+          { text: 'Management', link: '/transports/management' },
           { text: 'Multiple Transports', link: '/transports/multiple-transports' },
           { text: 'Creating Transports', link: '/transports/creating-transports' },
           {
@@ -169,6 +171,8 @@ export default defineConfig({
         text: 'Plugins',
         items: [
           { text: 'Overview', link: '/plugins/' },
+          { text: 'Configuration', link: '/plugins/configuration' },
+          { text: 'Management', link: '/plugins/management' },
           { text: 'Creating Plugins', link: '/plugins/creating-plugins' },
           { text: 'Redact', link: '/plugins/redact' },
           { text: 'Datadog APM Trace Injector', link: '/plugins/datadogtrace' },

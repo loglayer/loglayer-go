@@ -22,6 +22,20 @@ func ParseJSONLine(t *testing.T, buf *bytes.Buffer) map[string]any {
 	return obj
 }
 
+// tryParseJSONLine is the non-fatal counterpart of ParseJSONLine: it returns
+// (nil, err) instead of failing the test when the buffer doesn't contain
+// strict JSON. Used by contract tests that fall back to substring assertions
+// for wrappers (charmlog) whose JSON formatter occasionally renders nested
+// values as quoted strings rather than nested objects.
+func tryParseJSONLine(buf *bytes.Buffer) (map[string]any, error) {
+	line := strings.TrimSpace(buf.String())
+	var obj map[string]any
+	if err := json.Unmarshal([]byte(line), &obj); err != nil {
+		return nil, err
+	}
+	return obj, nil
+}
+
 // MessageContains reports whether messages includes a string equal to want.
 // Used by tests that assert on the loglayer.LogLine.Messages slice.
 func MessageContains(messages []any, want string) bool {

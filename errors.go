@@ -11,11 +11,6 @@ var ErrNoTransport = errors.New("loglayer: at least one transport must be provid
 // avoid silently dropping entries.
 var ErrTransportAndTransports = errors.New("loglayer: set Transport or Transports, not both")
 
-// ErrPluginNoID is returned by Build (and panicked by New) when a Config
-// includes a Plugin with an empty ID. Plugin IDs are required for
-// AddPlugin / RemovePlugin / GetPlugin semantics.
-var ErrPluginNoID = errors.New("loglayer: Plugin.ID is required")
-
 // ErrUngroupedTransportsWithoutMode is returned by Build (and panicked by
 // New) when Config.UngroupedRouting.Transports is non-empty but
 // UngroupedRouting.Mode is left at its zero value (UngroupedToAll).

@@ -2,7 +2,10 @@
 // used by all LogLayer transport implementations.
 package transport
 
-import "go.loglayer.dev"
+import (
+	"go.loglayer.dev"
+	"go.loglayer.dev/utils/idgen"
+)
 
 // BaseTransport provides common fields and level-filtering logic for transports.
 // Concrete transports should embed *BaseTransport and implement ShipToLogger.
@@ -14,7 +17,10 @@ type BaseTransport struct {
 
 // BaseConfig holds the common configuration fields shared by all transports.
 type BaseConfig struct {
-	// ID uniquely identifies this transport. Required for transport management.
+	// ID uniquely identifies this transport. Optional: when empty,
+	// NewBaseTransport assigns an auto-generated identifier. Supply your
+	// own when you intend to call RemoveTransport / GetLoggerInstance by
+	// ID later.
 	ID string
 
 	// Disabled suppresses this transport from accepting log entries when true.
@@ -26,14 +32,19 @@ type BaseConfig struct {
 	Level loglayer.LogLevel
 }
 
-// NewBaseTransport creates a BaseTransport from a BaseConfig.
+// NewBaseTransport creates a BaseTransport from a BaseConfig. An empty
+// cfg.ID is replaced with an auto-generated identifier.
 func NewBaseTransport(cfg BaseConfig) BaseTransport {
 	level := loglayer.LogLevelTrace
 	if cfg.Level != 0 {
 		level = cfg.Level
 	}
+	id := cfg.ID
+	if id == "" {
+		id = idgen.Random(idgen.TransportPrefix)
+	}
 	return BaseTransport{
-		id:      cfg.ID,
+		id:      id,
 		enabled: !cfg.Disabled,
 		level:   level,
 	}

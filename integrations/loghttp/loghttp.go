@@ -18,14 +18,13 @@
 package loghttp
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"net/http"
 	"time"
 
 	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
+	"go.loglayer.dev/utils/idgen"
+	"go.loglayer.dev/utils/sanitize"
 )
 
 // FieldNames customizes the keys emitted by the middleware. Empty values fall
@@ -91,7 +90,7 @@ func (c Config) withDefaults() Config {
 		out.RequestIDHeader = "X-Request-ID"
 	}
 	if out.RequestIDGenerator == nil {
-		out.RequestIDGenerator = randomID
+		out.RequestIDGenerator = func() string { return idgen.Random("") }
 	}
 	if out.FieldNames.RequestID == "" {
 		out.FieldNames.RequestID = "requestId"
@@ -126,12 +125,6 @@ func defaultStatusLevels(status int) loglayer.LogLevel {
 	default:
 		return loglayer.LogLevelInfo
 	}
-}
-
-func randomID() string {
-	var b [8]byte
-	_, _ = rand.Read(b[:])
-	return hex.EncodeToString(b[:])
 }
 
 // Middleware returns an HTTP middleware that derives a per-request logger
@@ -273,14 +266,14 @@ func shouldEmitStart(c Config, r *http.Request) bool {
 // bloating a log record.
 const maxLoggedHeaderLen = 4096
 
-// sanitizeForLog bounds the value's length and strips ASCII control
-// characters via transport.SanitizeMessage, so an attacker-controlled
-// HTTP header can't forge log lines or smuggle ANSI escapes.
+// sanitizeForLog bounds the value's length and strips control characters,
+// so an attacker-controlled HTTP header can't forge log lines or smuggle
+// ANSI escapes.
 func sanitizeForLog(s string) string {
 	if len(s) > maxLoggedHeaderLen {
 		s = s[:maxLoggedHeaderLen]
 	}
-	return transport.SanitizeMessage(s)
+	return sanitize.Message(s)
 }
 
 func (w *responseWriter) WriteHeader(status int) {

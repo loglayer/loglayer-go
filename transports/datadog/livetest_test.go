@@ -24,8 +24,6 @@
 package datadog_test
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"os"
 	"sync"
@@ -35,6 +33,7 @@ import (
 	"go.loglayer.dev"
 	"go.loglayer.dev/transports/datadog"
 	httptr "go.loglayer.dev/transports/http"
+	"go.loglayer.dev/utils/idgen"
 )
 
 func TestLive_Datadog_SendsLog(t *testing.T) {
@@ -48,7 +47,7 @@ func TestLive_Datadog_SendsLog(t *testing.T) {
 	service := envOr("DD_SERVICE", "loglayer-go-livetest")
 	hostname := os.Getenv("DD_HOSTNAME")
 	tags := envOr("DD_TAGS", "env:livetest")
-	livetestID := randomID()
+	livetestID := idgen.Random("")
 
 	var (
 		errMu    sync.Mutex
@@ -118,10 +117,4 @@ func envOr(key, fallback string) string {
 		return v
 	}
 	return fallback
-}
-
-func randomID() string {
-	var b [6]byte
-	_, _ = rand.Read(b[:])
-	return hex.EncodeToString(b[:])
 }

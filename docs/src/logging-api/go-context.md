@@ -5,7 +5,7 @@ description: Bind a context.Context to a logger so transports and plugins can ex
 
 # Go Context
 
-LogLayer can attach a `context.Context` to log entries. Transports receive it via `TransportParams.Ctx`; plugins see it on dispatch-time hook params (`OnBeforeDataOut`, `OnBeforeMessageOut`, `TransformLogLevel`, `ShouldSend`). They can extract anything carried by the context: trace IDs, span context, deadlines, request-scoped values.
+LogLayer can attach a `context.Context` to log entries. Transports and plugins that opt in can extract anything the context carries: trace IDs, span context, deadlines, request-scoped values.
 
 `WithCtx` works two ways depending on the receiver, mirroring the [`WithGroup`](/logging-api/groups) pattern:
 
@@ -63,31 +63,15 @@ span.Finish()
 log.Info("back to root span")
 ```
 
-## Reading the context in a transport or plugin
+## What reads the context
 
-Transports see it as `params.Ctx`. Plugins see it on each dispatch-time hook's params struct:
+Pre-built consumers of the bound context:
 
-```go
-loglayer.Plugin{
-    ID: "trace-injector",
-    OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data {
-        if p.Ctx == nil {
-            return nil
-        }
-        if span := trace.SpanFromContext(p.Ctx); span.SpanContext().IsValid() {
-            return loglayer.Data{
-                "trace_id": span.SpanContext().TraceID().String(),
-                "span_id":  span.SpanContext().SpanID().String(),
-            }
-        }
-        return nil
-    },
-}
-```
+- The [`plugins/datadogtrace`](/plugins/datadogtrace) and [`plugins/oteltrace`](/plugins/oteltrace) plugins read it to inject trace and span IDs into every entry.
+- The [OpenTelemetry transport](/transports/otellog) forwards it to the OTel logs SDK, so the active span correlates with the emitted record.
+- The [log/slog transport](/transports/slog) forwards it to context-aware `slog.Handler` implementations.
 
-`p.Ctx` (and `params.Ctx` in transports) is nil when no context is bound and `WithCtx` wasn't called per-call. Always check before using.
-
-The built-in [`plugins/datadogtrace`](/plugins/datadogtrace) is a working example of a plugin that uses `params.Ctx` to inject Datadog trace IDs.
+If you're building your own transport or plugin, see [Creating Transports](/transports/creating-transports#reading-params-ctx) and [Creating Plugins](/plugins/creating-plugins#per-call-context-context) for how to read it on the receive side.
 
 ## Use the Raw entry for context
 

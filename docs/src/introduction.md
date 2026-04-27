@@ -86,23 +86,7 @@ See the dedicated pages for [fields](/logging-api/fields), [metadata](/logging-a
 
 ## Powerful Plugin System
 
-Extend functionality with plugins that hook into the emission pipeline:
-
-```go
-log.AddPlugin(loglayer.Plugin{
-    ID: "redact-passwords",
-    OnMetadataCalled: func(metadata any) any {
-        if m, ok := metadata.(map[string]any); ok {
-            if _, has := m["password"]; has {
-                m["password"] = "[REDACTED]"
-            }
-        }
-        return metadata
-    },
-})
-```
-
-The built-in [`plugins/redact`](/plugins/redact) plugin walks structs, maps, and slices via reflection, redacting matched keys at any nesting depth. See more about using and creating [plugins](/plugins/).
+Plugins extend the emission pipeline so you can rewrite, filter, or enrich entries globally without touching call sites. The built-in [`plugins/redact`](/plugins/redact) plugin walks structs, maps, and slices via reflection, redacting matched keys at any nesting depth. The [`plugins/datadogtrace`](/plugins/datadogtrace) and [`plugins/oteltrace`](/plugins/oteltrace) plugins inject trace IDs from the bound context. See [Plugins](/plugins/) for the catalog and [Creating Plugins](/plugins/creating-plugins) to write your own.
 
 ## Multi-Transport Support
 

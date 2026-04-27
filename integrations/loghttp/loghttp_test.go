@@ -90,8 +90,8 @@ func TestMiddleware_GeneratesRequestIDWhenAbsent(t *testing.T) {
 	if id == "" {
 		t.Errorf("expected generated requestId, got empty")
 	}
-	if len(id) != 16 {
-		t.Errorf("expected 16-char hex requestId, got %q", id)
+	if len(id) != 12 {
+		t.Errorf("expected 12-char hex requestId, got %q", id)
 	}
 }
 

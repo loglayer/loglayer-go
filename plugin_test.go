@@ -224,48 +224,33 @@ func TestPlugin_GetPlugin(t *testing.T) {
 	}
 }
 
-func TestPlugin_AddPlugin_PanicsOnEmptyID(t *testing.T) {
-	defer func() {
-		r := recover()
-		if r == nil {
-			t.Fatal("expected panic when AddPlugin called with empty ID")
-		}
-		err, ok := r.(error)
-		if !ok || !errors.Is(err, loglayer.ErrPluginNoID) {
-			t.Errorf("panic value: got %v, want ErrPluginNoID", r)
-		}
-	}()
+func TestPlugin_AddPlugin_AutoGeneratesEmptyID(t *testing.T) {
 	log, _ := setup(t)
-	log.AddPlugin(loglayer.Plugin{})
-}
-
-func TestBuild_PluginNoID_Errors(t *testing.T) {
-	tr := discardTransport{}
-	_, err := loglayer.Build(loglayer.Config{
-		Transport: tr,
-		Plugins:   []loglayer.Plugin{{ID: ""}},
+	before := log.PluginCount()
+	log.AddPlugin(loglayer.Plugin{
+		OnBeforeDataOut: func(_ loglayer.BeforeDataOutParams) loglayer.Data { return nil },
 	})
-	if !errors.Is(err, loglayer.ErrPluginNoID) {
-		t.Errorf("Build should return ErrPluginNoID; got %v", err)
+	if log.PluginCount() != before+1 {
+		t.Fatalf("plugin count: got %d, want %d", log.PluginCount(), before+1)
 	}
+	// The auto-generated ID isn't directly returned, but the plugin should be
+	// registered and reachable via the catalog (one new entry, prefixed).
 }
 
-func TestNew_PluginNoID_Panics(t *testing.T) {
-	defer func() {
-		r := recover()
-		if r == nil {
-			t.Fatal("expected panic when New is given a plugin with empty ID")
-		}
-		err, ok := r.(error)
-		if !ok || !errors.Is(err, loglayer.ErrPluginNoID) {
-			t.Errorf("panic value: got %v, want ErrPluginNoID", r)
-		}
-	}()
+func TestBuild_PluginEmptyID_AutoGenerates(t *testing.T) {
 	tr := discardTransport{}
-	loglayer.New(loglayer.Config{
+	log, err := loglayer.Build(loglayer.Config{
 		Transport: tr,
-		Plugins:   []loglayer.Plugin{{ID: ""}},
+		Plugins: []loglayer.Plugin{{
+			OnBeforeDataOut: func(_ loglayer.BeforeDataOutParams) loglayer.Data { return nil },
+		}},
 	})
+	if err != nil {
+		t.Fatalf("Build with empty plugin ID should succeed; got %v", err)
+	}
+	if log.PluginCount() != 1 {
+		t.Errorf("plugin count: got %d, want 1", log.PluginCount())
+	}
 }
 
 func TestPlugin_ChildInheritsPlugins(t *testing.T) {

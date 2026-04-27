@@ -36,6 +36,28 @@ log.WithMetadata(User{ID: 7, Email: "alice@example.com"}).Info("user")
 
 The core logger does **zero conversion**: your value is handed to the transport as-is. The transport decides how to render it. See each transport's page for exact shape.
 
+## Building the Value First
+
+`WithMetadata` accepts any Go value, so you don't have to construct the literal at the call site. Build the value (map, struct, pointer, slice, scalar) ahead of time and pass the variable in:
+
+```go
+// Map built first, passed as a variable
+md := loglayer.Metadata{"userId": 42, "action": "login"}
+md["browser"] = r.Header.Get("User-Agent")
+log.WithMetadata(md).Info("user logged in")
+
+// Struct built first, passed as a variable
+evt := UserEvent{UserID: 42, Name: "Alice"}
+log.WithMetadata(evt).Info("user logged in")
+
+// Pointer works too; the transport's encoder dereferences when it serializes
+log.WithMetadata(&evt).Info("user logged in")
+```
+
+This is useful when the payload is computed across several lines, populated conditionally, or reused across multiple log calls. The runtime behavior is identical to passing the literal inline.
+
+The core never dereferences or copies the value: it stores `any` and hands it to the transport. Pointer-vs-value behavior is therefore a transport concern. Transports that use `encoding/json` (structured, http, datadog) and the wrappers that hand off to a JSON-aware logger (zap, zerolog, slog, logrus, charmlog, phuslu) all dereference pointers via the standard library or their own marshaler.
+
 ## Map Metadata
 
 The common case. Keys are merged at the root by default:
@@ -86,7 +108,7 @@ A typical JSON output:
 }
 ```
 
-The exact shape (whether the struct flattens at the root or nests under a key) depends on the transport. See each transport's page for its rendering rules.
+The exact shape (whether the struct flattens at the root or nests under a key) depends on the transport. See each transport's page for its rendering rules, or [Creating Transports: Handling `any` Metadata](/transports/creating-transports#handling-any-metadata) for the underlying placement policies and the helpers that implement them.
 
 ## Replacing, Not Merging
 

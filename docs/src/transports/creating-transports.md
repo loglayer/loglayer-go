@@ -81,27 +81,59 @@ type TransportParams struct {
 
 ## Handling `any` Metadata
 
-Map metadata is the common case; structs and other values come through too. The pattern used by the renderer transports:
+`params.Metadata` is whatever the caller passed to `WithMetadata`: a map, a struct, a pointer, a slice, a scalar, or `nil`. Your transport picks a **placement policy** for each shape. The common choices:
+
+- Flatten a map's keys at the root of the log object.
+- JSON-roundtrip a struct so its fields surface as root keys.
+- Nest a non-map value under a single `metadata`-style key.
+- Hand the raw value to an attribute-aware backend and let it serialize.
+
+The `transport` package exposes helpers that encode each policy. Reach for them before writing your own type switch.
+
+| Helper | What it does | Use when |
+|--------|--------------|----------|
+| `transport.MetadataAsRootMap(v) (map[string]any, bool)` | Returns the map directly if `v` is `loglayer.Metadata` or `map[string]any`; otherwise `nil, false`. No allocation, no roundtrip. | Deciding whether to flatten or nest. The wrapper transports (zap, zerolog, slog, logrus, charmlog, phuslu) call this first, then nest non-map values under `MetadataFieldName`. |
+| `transport.MetadataAsMap(v) map[string]any` | Map fast path; non-map values are JSON-roundtripped into a map. Returns nil on roundtrip failure (channels, cycles, marshalers producing a non-object). | Renderers that flatten everything at the root, used by `structured` and (via `MergeFieldsAndMetadata`) by `console`. |
+| `transport.MergeFieldsAndMetadata(p) map[string]any` | Combines `p.Data` and metadata into a single root-flat map. Map metadata merges at root; non-map is roundtripped via `MetadataAsMap` and dropped if the roundtrip fails. | Renderers that emit a single flat object. |
+| `transport.MergeIntoMap(dst, data, metadata)` | Mutates `dst` in place. Map metadata merges at root; non-map metadata lands raw under the `metadata` key (no JSON roundtrip). | Encoders that have already seeded `dst` with their own protocol fields (level, time, msg, ddsource, ...) and want to layer user data on top. Used by HTTP `JSONArrayEncoder` and Datadog. |
+| `transport.FieldEstimate(p) int` | Counts the eventual root-level fields. | Pre-sizing slices/maps in attribute-style backends (zap, charmlog, otellog). |
+
+### Picking a policy
+
+The right choice depends on what the backend can render natively:
+
+- **Backends with no native struct support** (raw JSON, terminal lines): roundtrip via `MetadataAsMap` so struct fields surface as named root attributes. Slices and scalars don't roundtrip into a map, so decide explicitly: drop them (`structured`, `console`), fall back to a single key like `_metadata` (`pretty`), or nest them under a fixed key (`http`, `datadog`).
+- **Backends with native attribute serializers** (zap, zerolog, slog, logrus, charmlog, phuslu, OpenTelemetry): use `MetadataAsRootMap` to flatten the map case, then hand non-map metadata directly to the backend's `Any` / `Interface` / `KeyValue` constructor under `MetadataFieldName`. Skip the roundtrip, the backend will serialize the value natively.
+
+The built-in transports follow these two patterns so callers see consistent behavior across them. The contract those transports advertise on the [Metadata page](/logging-api/metadata) (map metadata flattens, struct metadata renders idiomatically per transport) is exactly what these helpers implement.
+
+### Don't reinvent
+
+Don't roll your own `metadataAsMap` unless your transport needs a placement policy these helpers don't already encode. The pretty transport's `_metadata` fallback is the only built-in example, and it's there because pretty is a human-readable renderer where dropping a slice silently is worse than showing it stringified.
+
+## Reading `params.Ctx`
+
+`params.Ctx` carries the `context.Context` the caller bound via [`WithCtx`](/logging-api/go-context). It's `nil` when no context was attached. Use it when your transport needs to forward the context to a downstream library (OpenTelemetry, slog handlers, anything context-aware) or extract values from it (trace IDs, deadlines, request-scoped data).
 
 ```go
-func metadataAsMap(v any) map[string]any {
-    if v == nil {
-        return nil
+func (t *Transport) SendToLogger(p loglayer.TransportParams) {
+    if !t.ShouldProcess(p.LogLevel) {
+        return
     }
-    if m, ok := v.(map[string]any); ok {
-        return m
+    ctx := p.Ctx
+    if ctx == nil {
+        ctx = context.Background() // for downstream calls that demand a non-nil ctx
     }
-    b, err := json.Marshal(v)
-    if err != nil {
-        return nil
-    }
-    var m map[string]any
-    _ = json.Unmarshal(b, &m)
-    return m
+    t.downstream.WithContext(ctx).Log(p.LogLevel, transport.JoinMessages(p.Messages))
 }
 ```
 
-If your backend can render structs natively (zerolog, zap, slog), prefer that path, skip the JSON roundtrip. The point of LogLayer's "metadata is any" design is exactly to let transports use the cheapest serialization for the runtime they're targeting.
+Two patterns built-in transports follow:
+
+- **Wrapper transports forward the context** so the underlying library sees the same `context.Context` the caller bound. The slog wrapper passes `params.Ctx` to `slog.Logger.LogAttrs`; the OpenTelemetry transport hands it to the OTel logs SDK so the active span's trace/span IDs land on the record automatically. Any wrapper around a context-aware backend should do this.
+- **Self-contained renderers usually ignore it.** Pretty, structured, and console don't read context values themselves — that's a [plugin's](/plugins/creating-plugins) job. If you find yourself extracting trace IDs in a transport, prefer writing a plugin and pairing it with the transport: the plugin runs once per entry and feeds every transport, while transport-side extraction repeats per transport and bypasses the dispatch-time hook ordering.
+
+If your transport extracts values from the context (rather than just forwarding it), test that path with a context that carries a sentinel value and assert the transport surfaced it.
 
 ## Level Filtering
 

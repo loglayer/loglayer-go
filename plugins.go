@@ -1,14 +1,17 @@
 package loglayer
 
+import "go.loglayer.dev/utils/idgen"
+
 // loadPlugins returns the current plugin snapshot. Hot path: called on every
 // emission for hook lookup.
 func (l *LogLayer) loadPlugins() *pluginSet {
 	return l.plugins.Load()
 }
 
-// AddPlugin registers one or more plugins. If a plugin with the same ID
-// already exists it is replaced (matching the AddTransport convention).
-// Each Plugin.ID is required; an empty ID panics with ErrPluginNoID.
+// AddPlugin registers one or more plugins. Plugins with an empty ID get an
+// auto-generated identifier; supply your own ID if you plan to call
+// RemovePlugin / GetPlugin or replace the plugin later. If a plugin's ID
+// matches an already-registered plugin, the existing one is replaced.
 //
 // Safe to call from any goroutine: the plugin set is published atomically.
 // Concurrent mutators on the same logger serialize via an internal mutex.
@@ -16,11 +19,7 @@ func (l *LogLayer) AddPlugin(plugins ...Plugin) *LogLayer {
 	if len(plugins) == 0 {
 		return l
 	}
-	for _, p := range plugins {
-		if p.ID == "" {
-			panic(ErrPluginNoID)
-		}
-	}
+	assignAutoPluginIDs(plugins)
 	l.pluginMu.Lock()
 	defer l.pluginMu.Unlock()
 
@@ -38,6 +37,16 @@ func (l *LogLayer) AddPlugin(plugins ...Plugin) *LogLayer {
 	out = append(out, plugins...)
 	l.plugins.Store(newPluginSet(out))
 	return l
+}
+
+// assignAutoPluginIDs mutates the caller-owned slice in place, replacing
+// empty IDs with auto-generated ones.
+func assignAutoPluginIDs(plugins []Plugin) {
+	for i := range plugins {
+		if plugins[i].ID == "" {
+			plugins[i].ID = idgen.Random(idgen.PluginPrefix)
+		}
+	}
 }
 
 // RemovePlugin removes the plugin with the given ID. Returns true if a

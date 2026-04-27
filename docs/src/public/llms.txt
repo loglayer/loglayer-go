@@ -21,7 +21,8 @@ LogLayer for Go gives you one consistent API for messages, persistent fields, pe
 - [Error Handling](https://go.loglayer.dev/logging-api/error-handling): WithError, ErrorOnly, custom ErrorSerializer (recommend rotisserie/eris).
 - [Go Context](https://go.loglayer.dev/logging-api/go-context): WithCtx on *LogLayer binds a context.Context to every emission from the returned logger; on *LogBuilder it's a per-call override. Surfaced to transports via TransportParams.Ctx and to plugin dispatch hooks via params.Ctx. loghttp middleware auto-binds r.Context().
 - [Child Loggers](https://go.loglayer.dev/logging-api/child-loggers): Child(), WithPrefix(), isolation semantics.
-- [Transport Management](https://go.loglayer.dev/logging-api/transport-management): AddTransport, RemoveTransport, SetTransports, GetLoggerInstance.
+- [Transport Configuration](https://go.loglayer.dev/transports/configuration): Config.Transport / Transports, BaseConfig (ID/Disabled/Level), transport ID semantics.
+- [Transport Management](https://go.loglayer.dev/transports/management): AddTransport, RemoveTransport, SetTransports, GetLoggerInstance.
 - [Groups](https://go.loglayer.dev/logging-api/groups): Named routing rules. Config.Groups + WithGroup(...string) on logger or builder. ActiveGroups filter, UngroupedRouting modes (UngroupedToAll/None/Transports), runtime mutators, ActiveGroupsFromEnv helper.
 - [Raw Logging](https://go.loglayer.dev/logging-api/raw): Raw(RawLogEntry) bypasses the builder.
 - [Mocking](https://go.loglayer.dev/logging-api/mocking): loglayer.NewMock() for silent mocks; transports/testing for capture.

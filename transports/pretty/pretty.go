@@ -11,6 +11,7 @@ import (
 
 	"go.loglayer.dev"
 	"go.loglayer.dev/transport"
+	"go.loglayer.dev/utils/sanitize"
 )
 
 // ViewMode controls how each log entry is rendered.
@@ -118,7 +119,7 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 	// rendered separately through the theme's Style functions; see
 	// pretty's doc for the threat-model boundary (this transport is
 	// for human terminals, not for log pipelines).
-	message := transport.SanitizeMessage(transport.JoinMessages(params.Messages))
+	message := sanitize.Message(transport.JoinMessages(params.Messages))
 	if message == "" {
 		message = "(no message)"
 	}

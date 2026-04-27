@@ -5,7 +5,9 @@ description: Add, remove, and replace transports at runtime; reach the underlyin
 
 # Transport Management
 
-A `*loglayer.LogLayer` holds a list of transports. You configure them at construction time via `Config.Transport` or `Config.Transports`, and you can mutate the list at runtime. Mutators are safe to call from any goroutine, including concurrently with emission.
+A `*loglayer.LogLayer` holds a list of transports. After construction, you can mutate the list at runtime: add a new shipper, remove a noisy console transport, hot-swap the entire set. All mutators are safe to call from any goroutine, including concurrently with emission.
+
+For construction-time setup (wiring transports via `Config.Transport` / `Config.Transports`, picking IDs and levels), see [Transport Configuration](/transports/configuration).
 
 ## Add
 
@@ -61,19 +63,6 @@ if zerologLogger, ok := log.GetLoggerInstance("zerolog").(*zlog.Logger); ok {
 
 For transports without an underlying library (console, structured), `GetLoggerInstance` returns `nil`. The `testing` transport returns its `*TestLoggingLibrary`.
 
-## Why IDs Matter
+## Concurrency
 
-IDs are how you address a specific transport later. If you only have one transport and never plan to swap it, you can leave `ID` empty, but `GetLoggerInstance("")` will look it up by empty-string key, and `RemoveTransport("")` won't help if you ever add a second.
-
-A safe default: name every transport.
-
-```go
-console.New(console.Config{
-    BaseConfig: transport.BaseConfig{ID: "console"},
-})
-```
-
-## See Also
-
-- [Multiple Transports](/transports/multiple-transports), fan-out semantics and dispatch order.
-- [Creating Transports](/transports/creating-transports), implementing the `Transport` interface yourself.
+`AddTransport`, `RemoveTransport`, and `SetTransports` publish a new immutable transport set via `atomic.Pointer`, so the dispatch hot path only loads a pointer. Concurrent mutators on the same logger serialize via an internal mutex.

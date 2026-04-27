@@ -49,38 +49,18 @@ LogLayer doesn't deep-copy maps you pass it. A transport that holds onto the map
 ```go
 ctx := r.Context()
 log.WithCtx(ctx)             // ❌ no assignment, ctx not bound
-log.Info("served")           // plugin's BeforeDataOutParams.Ctx is nil
+log.Info("served")           // transports/plugins see no context
 ```
 
 `(*LogLayer).WithCtx` returns a new logger; without assignment, nothing is bound. The builder-level `(*LogBuilder).WithCtx(ctx).Info(...)` form does NOT have this problem because the builder is single-use, but you can only attach for one emission at a time.
 
 ```go
 log = log.WithCtx(r.Context())   // ✅ persistent on logger
-log.Info("served")               // plugin's Ctx is r.Context()
-log.Info("downstream done")      // also r.Context()
+log.Info("served")               // r.Context() is bound
+log.Info("downstream done")      // still r.Context()
 ```
 
 The `loghttp` middleware does this binding automatically — see [Go Context](/logging-api/go-context).
-
-## Plugin panics are recovered silently if you don't set `OnError`
-
-```go
-log.AddPlugin(loglayer.Plugin{
-    ID: "broken",
-    OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data {
-        return brokenFunc()  // panics
-    },
-    // OnError nil → panic recovered, logging continues, you never see it
-})
-```
-
-The framework recovers every plugin hook panic so a buggy plugin can't tear down the calling goroutine. By default the recovery is silent. **Always set `OnError`** during development — at minimum log it to stderr so panics surface:
-
-```go
-OnError: func(err error) { fmt.Fprintln(os.Stderr, "plugin panic:", err) }
-```
-
-For typed inspection, the error passed to `OnError` is a `*loglayer.RecoveredPanicError` exposing the hook name and the original panic value.
 
 ## Fatal exit behavior depends on the transport
 

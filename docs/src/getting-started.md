@@ -5,32 +5,12 @@ description: Install LogLayer, pick a transport, and write your first structured
 
 # Getting Started
 
-LogLayer for Go targets **Go 1.25+** for the main module: `go.loglayer.dev`. Most transports are sub-packages of that module, so you only pull in dependencies for the transports you actually use.
-
-Two OpenTelemetry-flavored packages live in their own Go modules so the OTel SDK's dep graph doesn't bind users who don't need it:
-
-- `go.loglayer.dev/transports/otellog` — the OTel logs transport.
-- `go.loglayer.dev/plugins/oteltrace` — the OTel trace-injector plugin.
-
-Both currently require Go 1.25+ as well, but because they're separate modules, future OTel updates that demand newer Go don't drag the rest of the library along. Individual transports and plugins call out any stricter requirement on their per-page docs.
+LogLayer for Go targets **Go 1.25+** for the main module: `go.loglayer.dev`. Most transports are sub-packages of that module, so you only pull in dependencies for the transports you actually use. Individual transports and plugins call out any stricter requirement on their per-page docs.
 
 ## Installation
 
 ```sh
 go get go.loglayer.dev
-```
-
-To use a specific transport, also pull in its package:
-
-```sh
-# Renderers (no third-party deps)
-go get go.loglayer.dev/transports/console
-go get go.loglayer.dev/transports/structured
-go get go.loglayer.dev/transports/testing
-
-# Logger wrappers (each pulls in its underlying library)
-go get go.loglayer.dev/transports/zerolog
-go get go.loglayer.dev/transports/zap
 ```
 
 ## Basic Usage with the Structured Transport
@@ -77,44 +57,7 @@ For local development, the [Pretty Transport](/transports/pretty) gives you colo
 
 ## Using a Logger Wrapper
 
-To wrap an existing zerolog or zap logger, pass it to the matching transport:
-
-::: code-group
-
-```go [zerolog]
-import (
-    zlog "github.com/rs/zerolog"
-    "os"
-
-    "go.loglayer.dev"
-    llzero "go.loglayer.dev/transports/zerolog"
-)
-
-z := zlog.New(os.Stderr).With().Timestamp().Logger()
-log := loglayer.New(loglayer.Config{
-    Transport: llzero.New(llzero.Config{Logger: &z}),
-})
-
-log.WithMetadata(loglayer.Metadata{"k": "v"}).Info("hi")
-```
-
-```go [zap]
-import (
-    "go.uber.org/zap"
-
-    "go.loglayer.dev"
-    llzap "go.loglayer.dev/transports/zap"
-)
-
-z, _ := zap.NewProduction()
-log := loglayer.New(loglayer.Config{
-    Transport: llzap.New(llzap.Config{Logger: z}),
-})
-
-log.WithMetadata(loglayer.Metadata{"k": "v"}).Info("hi")
-```
-
-:::
+If you already have an existing logging stack, LogLayer can wrap it so your call sites use the LogLayer API while emission goes through the underlying logger you've already configured. See the [Transports overview](/transports/) for the full list of supported loggers and their setup.
 
 ## Capturing Stack Traces with eris
 

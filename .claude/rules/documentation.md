@@ -129,11 +129,11 @@ When adding a transport, plugin, or integration:
 
 2. **If you split**, mirror the structure used by `transports/otellog/`: own `go.mod` with `module go.loglayer.dev/<path>`, `replace go.loglayer.dev => ../...` for development, a placeholder `require go.loglayer.dev v0.0.0-...` line that the replace directive overrides. Add a CI step in `.github/workflows/ci.yml` that `cd`s into the new module and runs tests. Update the `Mostly single Go module` bullet in AGENTS.md "Key Design Decisions" with the new module path.
 
-3. **If you don't split and the floor moves**, update `go.mod`, the matrix in `.github/workflows/ci.yml`, and the version statements in `README.md`, `docs/src/getting-started.md`, the `transport-list` and `plugin-list` partials, and `AGENTS.md`. Mention the bump in `CHANGELOG.md` and `docs/src/whats-new.md`.
+3. **If you don't split and the floor moves**, update `go.mod`, the matrix in `.github/workflows/ci.yml`, and the version statements in `README.md`, `docs/src/getting-started.md`, and `AGENTS.md`. Mention the bump in `CHANGELOG.md` and `docs/src/whats-new.md`.
 
-4. **Per-transport/plugin pages** for split modules need an `::: info Separate module` block at the top stating the import path and floor. Pages for sub-packages of the main module default to "inherits the module's floor" without restating the number — only call it out when the floor differs from the main module.
+4. **Per-transport/plugin pages** for split modules need an `::: info Separate module` block at the top stating the import path and floor. Pages for sub-packages of the main module default to "inherits the module's floor" without restating the number; only call it out when the floor differs from the main module.
 
-The partial-list headers (`transports/_partials/transport-list.md`, `plugins/_partials/plugin-list.md`) carry the canonical statement of the main-module floor in an `::: info Go version` block, and they enumerate the split sub-modules so readers see the structure on the catalog pages. Update both whenever a floor moves or a new sub-module is created.
+The catalog partials (`transports/_partials/transport-list.md`, `plugins/_partials/plugin-list.md`) deliberately do not restate the Go floor: per-transport/plugin pages own that information. Don't reintroduce a Go-version block to the catalog pages.
 
 ## When Adding a New API or Config Field
 

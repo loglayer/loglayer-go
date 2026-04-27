@@ -25,10 +25,11 @@ log.Info("user signed in") // both transports receive it
 
 ## Dispatch Semantics
 
-- Each transport's `SendToLogger` is called sequentially in registration order on the goroutine that called the log method.
-- Disabled transports (per `IsEnabled()` or `BaseConfig.Level` filtering) are skipped.
+- Transports are called sequentially in registration order on the goroutine that called the log method.
+- Disabled transports (per the transport's enabled flag or its `BaseConfig.Level` filter) are skipped.
 - Transports do not see each other's output.
-- The same `TransportParams` value is passed to all of them. Don't mutate it inside a transport, other transports will see your changes.
+
+Authoring a custom transport? See [Creating Transports](/transports/creating-transports) for the dispatch-side contract (immutable params, error handling, concurrency).
 
 ## Why Sequential, Not Parallel
 
@@ -67,7 +68,7 @@ log.RemoveTransport("ship")
 log.SetTransports(t1, t2) // replace all
 ```
 
-See [Transport Management](/logging-api/transport-management).
+See [Transport Management](/transports/management).
 
 ## Single vs Multiple
 

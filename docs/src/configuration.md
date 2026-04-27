@@ -69,7 +69,7 @@ log := loglayer.New(loglayer.Config{
 
 Plugin order matters: hooks run in the order plugins were added, and each plugin sees the previous plugin's output. See [Plugins](/plugins/) for the full lifecycle.
 
-`Build` returns `ErrPluginNoID` (and `New` panics with it) if any plugin has an empty `ID`.
+Plugin `ID` is optional; LogLayer auto-generates one when you omit it. Supply your own ID when you intend to call `RemovePlugin` / `GetPlugin` later.
 
 ## Groups, ActiveGroups, UngroupedRouting
 
@@ -202,4 +202,4 @@ type BaseConfig struct {
 }
 ```
 
-Transport-level `Level` filtering happens *in addition to* the logger's level filtering. See [Transport Management](/logging-api/transport-management) and individual transport pages.
+Transport-level `Level` filtering happens *in addition to* the logger's level filtering. See [Transport Configuration](/transports/configuration) and individual transport pages.

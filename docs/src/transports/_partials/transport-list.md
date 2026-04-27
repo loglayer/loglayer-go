@@ -1,7 +1,3 @@
-::: info Go version
-The main module currently requires **Go 1.25+** (driven by upstream `golang.org/x/exp` via `charmbracelet/log` and `golang.org/x/sys`). Some transports that bring heavier SDK dependencies live in their own Go modules so their floors don't drag the main module up: `transports/otellog` is published as `go.loglayer.dev/transports/otellog` and pinned to its own (currently identical) Go floor. Per-transport pages call out the install path and any stricter floor.
-:::
-
 ### Renderers
 
 Self-contained transports that format the entry and write it to an `io.Writer`. Pick one of these when you want LogLayer to do the rendering itself.

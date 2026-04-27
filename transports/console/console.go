@@ -10,6 +10,7 @@ import (
 
 	"go.loglayer.dev"
 	"go.loglayer.dev/transport"
+	"go.loglayer.dev/utils/sanitize"
 )
 
 // Config holds configuration options for Transport.
@@ -106,7 +107,7 @@ func buildMessages(params loglayer.TransportParams, cfg Config) []any {
 	// doesn't introduce control characters.
 	for i, m := range messages {
 		if s, ok := m.(string); ok {
-			messages[i] = transport.SanitizeMessage(s)
+			messages[i] = sanitize.Message(s)
 		}
 	}
 

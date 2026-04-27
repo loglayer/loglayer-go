@@ -5,7 +5,7 @@ description: How to write a LogLayer plugin and which hook to reach for.
 
 # Creating Plugins
 
-A plugin is a [`loglayer.Plugin`](https://pkg.go.dev/go.loglayer.dev#Plugin) struct: an `ID` plus one or more hook function fields. Construct one inline and register it with `log.AddPlugin(...)`, or have a constructor function in your own package that returns a `loglayer.Plugin`.
+A plugin is a [`loglayer.Plugin`](https://pkg.go.dev/go.loglayer.dev#Plugin) struct with one or more hook function fields. The `ID` field is optional; LogLayer auto-assigns one (via `loglayer.AutoPluginID()`) when you omit it. **Supply your own ID** when callers need to call `RemovePlugin` / `GetPlugin` or replace the plugin via `AddPlugin` later: those operations key off the ID. Construct one inline and register it with `log.AddPlugin(...)`, or have a constructor function in your own package that returns a `loglayer.Plugin` with the ID already set:
 
 ```go
 package mything
