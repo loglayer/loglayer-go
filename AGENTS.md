@@ -233,6 +233,32 @@ To cut a release:
 4. Merge the release-please PR. Tags + GitHub Releases are created
    automatically.
 
+## Vulnerability scanning (advisory, not gating)
+
+`scripts/agent-vulncheck.sh` runs `govulncheck` across all modules and
+emits a compact summary of findings. It's wired up as a Claude Code
+`SessionStart` hook in `.claude/settings.json`, so any agent working
+in the repo sees current findings as session context. CI runs the same
+scan as a separate job (`govulncheck` in `ci.yml`).
+
+Findings come in three flavors and only some are addressable here:
+
+1. **Standard library vulns** (`crypto/x509@go1.25` → `go1.25.9`):
+   fixed by the operator upgrading their Go install. The repo can bump
+   the `go` directive in go.mod to require a patched version, which
+   forces downstream users onto it. Worth doing when patches accumulate
+   but trades adoption for urgency. Don't bump on every advisory.
+2. **Direct dependency vulns**: usually fixable with `go get -u
+   <module>` followed by `go mod tidy`. Pre-push tests catch
+   regressions.
+3. **Indirect / unreachable vulns**: govulncheck reports these as
+   "imports" but doesn't show a call path. Typically false positives
+   for our use case; ignore unless they migrate to the "Your code is
+   affected" section on a future scan.
+
+The hook never blocks. If a finding warrants action, an agent or
+human surfaces it in a PR; otherwise the noise floor stays advisory.
+
 ## Thread Safety
 
 Every method on `*LogLayer` is safe to call from any goroutine, including
