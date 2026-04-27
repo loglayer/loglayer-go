@@ -27,8 +27,11 @@ func newLogBuilder(l *LogLayer) *LogBuilder {
 // WithMetadata attaches metadata to the log entry. Accepts any value: a struct,
 // a map, or any other type. Serialization is handled by the transport.
 // Calling this multiple times replaces the previous value.
+//
+// OnMetadataCalled plugin hooks run here. A hook returning nil drops the
+// metadata entirely for this entry.
 func (b *LogBuilder) WithMetadata(v any) *LogBuilder {
-	b.metadata = v
+	b.metadata = b.layer.loadPlugins().runOnMetadataCalled(v)
 	return b
 }
 

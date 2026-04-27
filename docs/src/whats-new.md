@@ -64,3 +64,14 @@ Logger wrappers:
 ### Integrations
 
 - `integrations/loghttp`: HTTP middleware that derives a per-request logger from a base logger, attaches `requestId`/`method`/`path`, stores it in the request context via `loglayer.NewContext`, and emits a "request completed" log line with status, bytes, and duration. One line at server setup; downstream handlers retrieve the logger via `loghttp.FromRequest(r)`. Wraps any `net/http`-compatible router (chi, gorilla, gin, echo, stdlib). Functional options for request-ID header, request-ID generator, field names, status-based level escalation, optional start log, and an extra-fields hook.
+
+### Plugins
+
+- Plugin system with six lifecycle hooks: `OnFieldsCalled`, `OnMetadataCalled`, `OnBeforeDataOut`, `OnBeforeMessageOut`, `TransformLogLevel`, `ShouldSend` (per-transport gate). Plugins are function-field structs; populate the hook fields you want and `log.AddPlugin(loglayer.Plugin{...})`. Hook membership is pre-indexed at registration time so the dispatch path only walks plugins that actually implement the hook. Safe to add and remove from any goroutine, including concurrently with emission. Child loggers inherit plugins.
+- All four dispatch-time hooks (`OnBeforeDataOut`, `OnBeforeMessageOut`, `TransformLogLevel`, `ShouldSend`) receive `Ctx context.Context` on their params, populated from `WithCtx`. Lets plugins read trace IDs, check cancellation, or otherwise make context-aware decisions per call.
+- `loglayer.MetadataPlugin`, `loglayer.FieldsPlugin`, `loglayer.LevelPlugin` convenience constructors for the common single-hook cases. Sugar over `loglayer.Plugin{ID: id, OnX: fn}`.
+- `plugins/redact`: first-party redaction plugin. Match by `Keys` (exact key names; honors `json` tags when matching struct fields) or `Patterns` (regular expressions against string values). Walks nested maps, structs, slices, arrays, and pointers at any depth via reflection. Preserves the caller's runtime type: a struct in comes back as the same struct with sensitive fields replaced. Caller's input is never mutated. Dependency-free; works on both metadata and persistent fields.
+
+### Utilities
+
+- `utils/maputil`: shared value-conversion and deep-clone primitives. `ToMap(any) map[string]any` normalizes any value to a flat map via JSON roundtrip. `Cloner.Clone(any) any` deep-clones a value with predicate-based key/value replacement at any depth, preserving the runtime type. Public so that third-party plugin and transport authors can build on the same foundation as the first-party packages.

@@ -57,6 +57,16 @@ LogLayer for Go gives you one consistent API for messages, persistent fields, pe
 
 - [HTTP middleware (loghttp)](https://go.loglayer.dev/integrations/loghttp): One-line middleware that derives a per-request logger with requestId/method/path, stores it in the request context, emits a "request completed" log with status, bytes, and duration. Wraps any net/http-compatible router (chi, gorilla, gin, echo, stdlib).
 
+## Plugins
+
+- [Plugins overview](https://go.loglayer.dev/plugins/): Six lifecycle hooks (OnFieldsCalled, OnMetadataCalled, OnBeforeDataOut, OnBeforeMessageOut, TransformLogLevel, ShouldSend). Function-field struct API; AddPlugin/RemovePlugin/GetPlugin/PluginCount. Dispatch-time hooks receive context.Context via Params.Ctx. Convenience constructors: MetadataPlugin/FieldsPlugin/LevelPlugin.
+- [Creating Plugins](https://go.loglayer.dev/plugins/creating-plugins): Per-hook reference and design patterns.
+- [Redact](https://go.loglayer.dev/plugins/redact): First-party redaction plugin. Match by Keys (exact, json-tag aware) or Patterns (regex against string values). Walks nested maps, structs, slices, and pointers at any depth via reflection; preserves the caller's runtime type. Dependency-free.
+
+## Utilities
+
+- `utils/maputil`: public shared value-conversion and deep-clone helpers. `ToMap(any) map[string]any` normalizes any value to a map via JSON roundtrip. `Cloner{MatchKey, MatchValue, Censor}.Clone(any) any` deep-clones with predicate-based replacement at any depth, preserving the runtime type. Used by structured/pretty/datadog transports and the redact plugin; available for third-party plugin and transport authors.
+
 ## Key Patterns
 
 ```go

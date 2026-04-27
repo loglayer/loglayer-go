@@ -66,6 +66,32 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 		rawMetadata = metadata
 	}
 
+	plugins := l.loadPlugins()
+	if plugins.anyDispatchHook {
+		d = plugins.runOnBeforeDataOut(BeforeDataOutParams{
+			LogLevel: level,
+			Data:     d,
+			Fields:   fields,
+			Metadata: rawMetadata,
+			Err:      err,
+			Ctx:      goCtx,
+		})
+		messages = plugins.runOnBeforeMessageOut(BeforeMessageOutParams{
+			LogLevel: level,
+			Messages: messages,
+			Ctx:      goCtx,
+		})
+		level = plugins.runTransformLogLevel(TransformLogLevelParams{
+			LogLevel: level,
+			Data:     d,
+			Messages: messages,
+			Fields:   fields,
+			Metadata: rawMetadata,
+			Err:      err,
+			Ctx:      goCtx,
+		})
+	}
+
 	params := TransportParams{
 		LogLevel: level,
 		Messages: messages,
@@ -77,10 +103,24 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 		Ctx:      goCtx,
 	}
 
+	hasShouldSend := len(plugins.shouldSend) > 0
 	for _, t := range l.loadTransports().list {
-		if t.IsEnabled() {
-			t.SendToLogger(params)
+		if !t.IsEnabled() {
+			continue
 		}
+		if hasShouldSend && !plugins.runShouldSend(ShouldSendParams{
+			TransportID: t.ID(),
+			LogLevel:    level,
+			Messages:    messages,
+			Data:        d,
+			Fields:      fields,
+			Metadata:    rawMetadata,
+			Err:         err,
+			Ctx:         goCtx,
+		}) {
+			continue
+		}
+		t.SendToLogger(params)
 	}
 
 	if level == LogLevelFatal && !cfg.DisableFatalExit {

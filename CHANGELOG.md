@@ -102,4 +102,37 @@ Logger wrappers:
   hook. Wraps any `net/http`-compatible router (chi, gorilla, gin, echo,
   stdlib).
 
+### Plugins
+
+- Plugin system with six lifecycle hooks: `OnFieldsCalled`,
+  `OnMetadataCalled`, `OnBeforeDataOut`, `OnBeforeMessageOut`,
+  `TransformLogLevel`, `ShouldSend` (per-transport gate). Plugins are
+  function-field structs registered via `*LogLayer.AddPlugin`. Hook
+  membership is pre-indexed at registration time; dispatch path pays only
+  for hooks that are populated. Safe to add/remove from any goroutine.
+  Child loggers inherit plugins.
+- All four dispatch-time hooks
+  (`OnBeforeDataOut`, `OnBeforeMessageOut`, `TransformLogLevel`,
+  `ShouldSend`) receive `Ctx context.Context` on their params, populated
+  from `WithCtx`. Lets plugins read trace IDs, check cancellation, etc.
+- Convenience constructors `loglayer.MetadataPlugin`,
+  `loglayer.FieldsPlugin`, `loglayer.LevelPlugin` for the common
+  single-hook cases.
+- `plugins/redact`: first-party redaction plugin. Matches by `Keys`
+  (exact key names, json-tag aware for struct fields) or `Patterns`
+  (regular expressions against string values). Walks nested maps,
+  structs, slices, and pointers at any depth via reflection;
+  preserves the caller's runtime type (struct in → struct out).
+  Caller's input is never mutated. Dependency-free.
+
+### Utilities
+
+- `utils/maputil`: shared value-conversion and deep-clone helpers.
+  `ToMap(any)` normalizes any value to `map[string]any` via JSON
+  roundtrip. `Cloner{MatchKey, MatchValue, Censor}.Clone(any)` deep-
+  clones a value with replacement predicates applied at any depth,
+  preserving the runtime type. Used by the structured/pretty/datadog
+  transports and the redact plugin; available to third-party plugins
+  and transports.
+
 [Unreleased]: https://github.com/loglayer/loglayer-go/commits/main

@@ -12,6 +12,11 @@ package loglayer
 //
 // Discarding the return value is a no-op. The compiler does not catch this.
 func (l *LogLayer) WithFields(f Fields) *LogLayer {
+	// Plugin OnFieldsCalled hooks run before the fields are merged. A hook
+	// returning nil drops the WithFields call entirely; the receiver's
+	// existing fields are preserved either way (we still return a fresh
+	// child so call sites that always reassign get the expected behavior).
+	f = l.loadPlugins().runOnFieldsCalled(f)
 	out := l.Child()
 	for k, v := range f {
 		out.fields[k] = v

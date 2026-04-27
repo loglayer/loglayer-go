@@ -99,11 +99,14 @@ func (l *LogLayer) ErrorOnly(err error, opts ...ErrorOnlyOpts) {
 
 // MetadataOnly logs metadata without a message. The log level defaults to info.
 // Accepts any value: a struct, a map, or any other type.
+//
+// OnMetadataCalled plugin hooks run here, same as WithMetadata.
 func (l *LogLayer) MetadataOnly(v any, level ...LogLevel) {
 	lvl := LogLevelInfo
 	if len(level) > 0 && level[0] != 0 {
 		lvl = level[0]
 	}
+	v = l.loadPlugins().runOnMetadataCalled(v)
 	if !l.levels.isEnabled(lvl) || l.config.MuteMetadata || v == nil {
 		return
 	}

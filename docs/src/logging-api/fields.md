@@ -177,3 +177,7 @@ See [Child Loggers](/logging-api/child-loggers).
 Every method on `*loglayer.LogLayer` is safe to call from any goroutine, including concurrently with emission. `WithFields`, `ClearFields`, `Child`, and `WithPrefix` return a new logger; the receiver is unchanged. Level toggling, transport changes, and mute toggles can all run live without any coordination on your side.
 
 See the full [thread-safety contract](https://github.com/loglayer/loglayer-go/blob/main/AGENTS.md#thread-safety) for the per-method breakdown.
+
+## Mutating fields with a plugin
+
+If you want to redact, rename, or otherwise rewrite fields globally before they're stored, register a plugin with an `OnFieldsCalled` hook. See [Plugins](/plugins/) and the first-party [redact plugin](/plugins/redact).

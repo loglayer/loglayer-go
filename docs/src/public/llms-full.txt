@@ -277,11 +277,56 @@ Every method on `*LogLayer` is safe to call from any goroutine, including concur
 
 Verified by `concurrency_test.go` under `-race`.
 
+## Plugins
+
+Plugins are function-field structs with one or more lifecycle hooks. Register via `*LogLayer.AddPlugin(loglayer.Plugin{...})`. Hook membership is pre-indexed so the dispatch path only walks plugins that implement the hook. Safe to add/remove from any goroutine. Child loggers inherit plugins.
+
+Six hooks:
+
+- `OnFieldsCalled(fields Fields) Fields` — fires from WithFields. Return new fields or nil to drop.
+- `OnMetadataCalled(metadata any) any` — fires from WithMetadata / MetadataOnly. Return new metadata or nil to drop.
+- `OnBeforeDataOut(BeforeDataOutParams) Data` — per emission, after data assembly. Return a map to merge.
+- `OnBeforeMessageOut(BeforeMessageOutParams) []any` — per emission. Return replacement messages or nil to keep.
+- `TransformLogLevel(TransformLogLevelParams) (LogLevel, bool)` — per emission. Last ok=true wins.
+- `ShouldSend(ShouldSendParams) bool` — per (entry, transport). Any false vetoes that transport.
+
+All four dispatch-time hook param structs (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`) include a `Ctx context.Context` field populated from `WithCtx`. Use it to read trace IDs, check cancellation, etc. `OnFieldsCalled` and `OnMetadataCalled` do not receive a context (they fire from the builder phase, before the level method).
+
+Convenience constructors for the common single-hook cases:
+
+- `loglayer.MetadataPlugin(id, func(any) any) Plugin`
+- `loglayer.FieldsPlugin(id, func(Fields) Fields) Plugin`
+- `loglayer.LevelPlugin(id, func(TransformLogLevelParams) (LogLevel, bool)) Plugin`
+
+```go
+log.AddPlugin(loglayer.Plugin{
+    ID: "redact-password",
+    OnMetadataCalled: func(metadata any) any {
+        if m, ok := metadata.(map[string]any); ok {
+            if _, has := m["password"]; has {
+                m["password"] = "[REDACTED]"
+            }
+        }
+        return metadata
+    },
+})
+```
+
+First-party plugin: `plugins/redact`. Match by `Keys` (exact key names; honors `json` tags when matching struct fields) or `Patterns` (regex against string values). Walks nested maps, structs, slices, arrays, and pointers at any depth via reflection; preserves the caller's runtime type (struct in → struct out). Caller's input is never mutated. Dependency-free.
+
+## Shared Utilities
+
+`utils/maputil` exposes two primitives used by transports and plugins, both safe to call from any goroutine:
+
+- `ToMap(v any) map[string]any` normalizes any value (struct, pointer, map) to a flat map via JSON roundtrip. Used by `transport.MetadataAsMap` (still available as a thin wrapper). Lossy on type.
+- `Cloner{MatchKey, MatchValue, Censor}.Clone(v any) any` deep-clones a value with key-name and string-value predicates applied at any depth. Honors `json` tags on struct fields, skips unexported fields, freshly allocates every container, returns a value of the same runtime type as the input. The redact plugin is a thin shell over this.
+
+Third-party plugin and transport authors can import these directly from `go.loglayer.dev/utils/maputil`.
+
 ## What's Out of Scope (v1)
 
 These exist in upstream TS loglayer but are not in the Go port:
 
-- Plugin system
 - Field managers (TS calls these "context managers": Linked / Isolated / Default)
 - Log level managers (LinkedLogLevelManager / etc.)
 - Group routing

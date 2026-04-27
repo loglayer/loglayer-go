@@ -144,3 +144,7 @@ loglayer.New(loglayer.Config{
 ## Combining with Fields and Errors
 
 <!--@include: ./_partials/combining-example.md-->
+
+## Mutating metadata with a plugin
+
+If you want to redact, rewrite, or filter metadata globally before it reaches a transport, register a plugin with an `OnMetadataCalled` hook. See [Plugins](/plugins/) and the first-party [redact plugin](/plugins/redact).

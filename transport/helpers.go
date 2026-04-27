@@ -1,13 +1,13 @@
 package transport
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 
 	"go.loglayer.dev"
+	"go.loglayer.dev/utils/maputil"
 )
 
 // WriterOrStderr returns w if non-nil, otherwise os.Stderr. Used by wrapper
@@ -58,21 +58,7 @@ func JoinMessages(messages []any) string {
 // through directly; other types are converted via a JSON roundtrip so their
 // exported fields land at the root of the log object. Returns nil on failure.
 func MetadataAsMap(v any) map[string]any {
-	if v == nil {
-		return nil
-	}
-	if m, ok := v.(map[string]any); ok {
-		return m
-	}
-	b, err := json.Marshal(v)
-	if err != nil {
-		return nil
-	}
-	var m map[string]any
-	if err := json.Unmarshal(b, &m); err != nil {
-		return nil
-	}
-	return m
+	return maputil.ToMap(v)
 }
 
 // MergeFieldsAndMetadata combines params.Data (the assembled fields + error

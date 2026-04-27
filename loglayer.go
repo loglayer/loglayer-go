@@ -63,6 +63,7 @@ type LogLayer struct {
 	fields       Fields
 	levels       *levelState
 	transports   atomic.Pointer[transportSet]
+	plugins      atomic.Pointer[pluginSet]
 	muteFields   atomic.Bool
 	muteMetadata atomic.Bool
 	// txMu serializes transport mutators (AddTransport / RemoveTransport /
@@ -70,6 +71,9 @@ type LogLayer struct {
 	// logger don't lose updates. The dispatch path doesn't take this lock;
 	// it just Loads the current snapshot.
 	txMu sync.Mutex
+	// pluginMu serializes plugin mutators (AddPlugin / RemovePlugin); same
+	// pattern as txMu.
+	pluginMu sync.Mutex
 }
 
 // New creates a new LogLayer from the given Config.
@@ -119,6 +123,14 @@ func build(config Config) (*LogLayer, error) {
 	l.muteFields.Store(config.MuteFields)
 	l.muteMetadata.Store(config.MuteMetadata)
 	l.transports.Store(newTransportSet(all))
+
+	for _, p := range config.Plugins {
+		if p.ID == "" {
+			panic("loglayer: Plugin.ID is required")
+		}
+	}
+	l.plugins.Store(newPluginSet(append([]Plugin(nil), config.Plugins...)))
+
 	return l, nil
 }
 
@@ -151,7 +163,7 @@ func (l *LogLayer) loadTransports() *transportSet {
 }
 
 // Child creates a new LogLayer that inherits the current config, fields (shallow copy),
-// and level state. Changes to the child's fields or levels do not affect the parent.
+// level state, transports, and plugins. Changes to the child do not affect the parent.
 func (l *LogLayer) Child() *LogLayer {
 	parentSet := l.loadTransports()
 	transports := make([]Transport, len(parentSet.list))
@@ -164,6 +176,9 @@ func (l *LogLayer) Child() *LogLayer {
 	child.muteFields.Store(l.muteFields.Load())
 	child.muteMetadata.Store(l.muteMetadata.Load())
 	child.publishTransports(transports)
+	// pluginSet is immutable; mutators publish a new set via copy-on-write,
+	// so child can share the parent's snapshot until either side mutates.
+	child.plugins.Store(l.loadPlugins())
 	return child
 }
 

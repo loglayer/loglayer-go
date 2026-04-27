@@ -27,6 +27,11 @@ type Config struct {
 	// Transports is a slice of transports. Set either Transport or Transports, not both.
 	Transports []Transport
 
+	// Plugins are added to the logger at construction time, in slice order.
+	// Equivalent to calling AddPlugin for each entry after construction;
+	// either form is fine.
+	Plugins []Plugin
+
 	// Prefix is prepended to the first string message of every log call.
 	Prefix string
 
