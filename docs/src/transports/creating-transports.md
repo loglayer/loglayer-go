@@ -69,11 +69,11 @@ That's the whole shape. From here it's a question of how you want to render the 
 type TransportParams struct {
     LogLevel LogLevel
     Messages []any   // already prefix-applied
-    Data     Data    // assembled fields + error map (nil if HasData is false)
-    HasData  bool
+    Data     Data    // assembled fields + error map; nil when both are absent. Use len(Data) > 0 to check.
     Metadata any     // raw value passed to WithMetadata, your transport decides serialization
     Err      error
     Fields   Fields
+    Ctx      context.Context // per-call WithCtx value, or nil
 }
 ```
 

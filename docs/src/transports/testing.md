@@ -5,7 +5,7 @@ description: Capture log entries in memory for assertions in tests.
 
 # Testing Transport
 
-The `transports/testing` package is the transport you want in test code: it captures every log entry into a mutex-safe in-memory library, exposing `Messages`, `Data`, `HasData`, and `Metadata` as typed fields on each captured `LogLine`.
+The `transports/testing` package is the transport you want in test code: it captures every log entry into a mutex-safe in-memory library, exposing `Messages`, `Data`, and `Metadata` as typed fields on each captured `LogLine`.
 
 For a usage walkthrough see the [Mocking](/logging-api/mocking) page in the logging API section. This page covers the package surface.
 
@@ -48,8 +48,7 @@ type Config struct {
 type LogLine struct {
     Level    loglayer.LogLevel
     Messages []any
-    Data     loglayer.Data // assembled fields + error map (nil when HasData is false)
-    HasData  bool
+    Data     loglayer.Data // assembled fields + error map; nil when neither were set
     Metadata any           // raw value passed to WithMetadata
 }
 ```

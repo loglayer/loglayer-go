@@ -22,9 +22,12 @@ type ErrorSerializer func(err error) map[string]any
 
 // Config is the initialization configuration for a LogLayer instance.
 type Config struct {
-	// Transport is a single transport. Set either Transport or Transports, not both.
+	// Transport is a convenience for the single-transport case. Mutually
+	// exclusive with Transports; setting both panics with
+	// ErrTransportAndTransports (or returns it from Build).
 	Transport Transport
-	// Transports is a slice of transports. Set either Transport or Transports, not both.
+	// Transports is a slice for the multi-transport case. Mutually exclusive
+	// with Transport.
 	Transports []Transport
 
 	// Plugins are added to the logger at construction time, in slice order.
@@ -35,8 +38,9 @@ type Config struct {
 	// Prefix is prepended to the first string message of every log call.
 	Prefix string
 
-	// Enabled controls whether logging is active. Defaults to true.
-	Enabled *bool
+	// Disabled suppresses all log output when true. Defaults to false
+	// (logging on). Equivalent to calling DisableLogging() after construction.
+	Disabled bool
 
 	// ErrorSerializer customizes how errors are serialized into the log data.
 	ErrorSerializer ErrorSerializer
@@ -69,14 +73,36 @@ type Config struct {
 	DisableFatalExit bool
 }
 
+// CopyMsgPolicy controls per-call whether ErrorOnly copies err.Error()
+// into the log message. The zero value (CopyMsgDefault) defers to
+// Config.CopyMsgOnOnlyError.
+type CopyMsgPolicy uint8
+
+const (
+	// CopyMsgDefault uses Config.CopyMsgOnOnlyError. Zero value.
+	CopyMsgDefault CopyMsgPolicy = iota
+	// CopyMsgEnabled forces err.Error() to be copied as the log message
+	// for this call, regardless of Config.CopyMsgOnOnlyError.
+	CopyMsgEnabled
+	// CopyMsgDisabled forces no message copy for this call, regardless of
+	// Config.CopyMsgOnOnlyError.
+	CopyMsgDisabled
+)
+
 // ErrorOnlyOpts are optional settings for the ErrorOnly method.
 type ErrorOnlyOpts struct {
 	// LogLevel overrides the default error level. Defaults to LogLevelError.
 	LogLevel LogLevel
 
-	// CopyMsg overrides Config.CopyMsgOnOnlyError for this call.
-	// nil means "use the config default".
-	CopyMsg *bool
+	// CopyMsg overrides Config.CopyMsgOnOnlyError for this call. Zero
+	// value (CopyMsgDefault) keeps the config default.
+	CopyMsg CopyMsgPolicy
+}
+
+// MetadataOnlyOpts are optional settings for the MetadataOnly method.
+type MetadataOnlyOpts struct {
+	// LogLevel overrides the default info level. Defaults to LogLevelInfo.
+	LogLevel LogLevel
 }
 
 // RawLogEntry is a fully specified log entry used with the Raw method.

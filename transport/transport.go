@@ -17,8 +17,10 @@ type BaseConfig struct {
 	// ID uniquely identifies this transport. Required for transport management.
 	ID string
 
-	// Enabled controls whether the transport accepts log entries. Defaults to true.
-	Enabled *bool
+	// Disabled suppresses this transport from accepting log entries when true.
+	// Defaults to false (transport active). Equivalent to calling
+	// SetEnabled(false) after construction.
+	Disabled bool
 
 	// Level sets the minimum log level this transport will process. Defaults to LogLevelTrace.
 	Level loglayer.LogLevel
@@ -26,17 +28,13 @@ type BaseConfig struct {
 
 // NewBaseTransport creates a BaseTransport from a BaseConfig.
 func NewBaseTransport(cfg BaseConfig) BaseTransport {
-	enabled := true
-	if cfg.Enabled != nil {
-		enabled = *cfg.Enabled
-	}
 	level := loglayer.LogLevelTrace
 	if cfg.Level != 0 {
 		level = cfg.Level
 	}
 	return BaseTransport{
 		id:      cfg.ID,
-		enabled: enabled,
+		enabled: !cfg.Disabled,
 		level:   level,
 	}
 }

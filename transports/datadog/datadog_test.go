@@ -2,6 +2,7 @@ package datadog_test
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -168,11 +169,23 @@ func TestDatadog_OmitsEmptyOptionalFields(t *testing.T) {
 
 func TestDatadog_PanicsWithoutAPIKey(t *testing.T) {
 	defer func() {
-		if r := recover(); r == nil {
-			t.Error("expected panic when APIKey missing")
+		r := recover()
+		if r == nil {
+			t.Fatal("expected panic when APIKey missing")
+		}
+		err, ok := r.(error)
+		if !ok || !errors.Is(err, datadog.ErrAPIKeyRequired) {
+			t.Errorf("panic value: got %v, want ErrAPIKeyRequired", r)
 		}
 	}()
 	_ = datadog.New(datadog.Config{})
+}
+
+func TestDatadog_Build_ReturnsErrAPIKeyRequired(t *testing.T) {
+	_, err := datadog.Build(datadog.Config{})
+	if !errors.Is(err, datadog.ErrAPIKeyRequired) {
+		t.Errorf("Build with missing APIKey: got %v, want ErrAPIKeyRequired", err)
+	}
 }
 
 func TestDatadog_SiteIntakeURL(t *testing.T) {

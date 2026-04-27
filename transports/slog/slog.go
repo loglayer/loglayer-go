@@ -69,7 +69,7 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 
 	attrs := make([]slog.Attr, 0, transport.FieldEstimate(params))
 
-	if params.HasData {
+	if len(params.Data) > 0 {
 		for k, v := range params.Data {
 			attrs = append(attrs, slog.Any(k, v))
 		}

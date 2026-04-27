@@ -1,4 +1,4 @@
-// Package console provides a ConsoleTransport that writes log entries to stdout/stderr.
+// Package console provides a Transport that writes log entries to stdout/stderr.
 package console
 
 import (
@@ -12,7 +12,7 @@ import (
 	"go.loglayer.dev/transport"
 )
 
-// Config holds configuration options for ConsoleTransport.
+// Config holds configuration options for Transport.
 type Config struct {
 	transport.BaseConfig
 
@@ -52,25 +52,25 @@ type Config struct {
 	Writer io.Writer
 }
 
-// ConsoleTransport writes log entries to stdout (info/debug/trace) or stderr (warn/error/fatal).
-type ConsoleTransport struct {
+// Transport writes log entries to stdout (info/debug/trace) or stderr (warn/error/fatal).
+type Transport struct {
 	transport.BaseTransport
 	cfg Config
 }
 
-// New creates a ConsoleTransport from the given Config.
-func New(cfg Config) *ConsoleTransport {
-	return &ConsoleTransport{
+// New creates a Transport from the given Config.
+func New(cfg Config) *Transport {
+	return &Transport{
 		BaseTransport: transport.NewBaseTransport(cfg.BaseConfig),
 		cfg:           cfg,
 	}
 }
 
 // GetLoggerInstance returns nil; console transport has no underlying logger library.
-func (c *ConsoleTransport) GetLoggerInstance() any { return nil }
+func (c *Transport) GetLoggerInstance() any { return nil }
 
 // SendToLogger implements loglayer.Transport.
-func (c *ConsoleTransport) SendToLogger(params loglayer.TransportParams) {
+func (c *Transport) SendToLogger(params loglayer.TransportParams) {
 	if !c.ShouldProcess(params.LogLevel) {
 		return
 	}
@@ -79,7 +79,7 @@ func (c *ConsoleTransport) SendToLogger(params loglayer.TransportParams) {
 }
 
 // writer picks the appropriate output stream for a log level.
-func (c *ConsoleTransport) writer(level loglayer.LogLevel) io.Writer {
+func (c *Transport) writer(level loglayer.LogLevel) io.Writer {
 	if c.cfg.Writer != nil {
 		return c.cfg.Writer
 	}

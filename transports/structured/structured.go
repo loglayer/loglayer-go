@@ -1,4 +1,4 @@
-// Package structured provides a StructuredTransport that always outputs a single
+// Package structured provides a Transport that always outputs a single
 // JSON object per log entry with msg, level, and time fields by default.
 package structured
 
@@ -13,7 +13,7 @@ import (
 	"go.loglayer.dev/transport"
 )
 
-// Config holds configuration options for StructuredTransport.
+// Config holds configuration options for Transport.
 type Config struct {
 	transport.BaseConfig
 
@@ -39,15 +39,15 @@ type Config struct {
 	Writer io.Writer
 }
 
-// StructuredTransport always outputs one JSON object per log entry.
+// Transport always outputs one JSON object per log entry.
 // All messages are joined with a space and placed under MessageField.
-type StructuredTransport struct {
+type Transport struct {
 	transport.BaseTransport
 	cfg Config
 }
 
-// New creates a StructuredTransport from the given Config.
-func New(cfg Config) *StructuredTransport {
+// New creates a Transport from the given Config.
+func New(cfg Config) *Transport {
 	if cfg.MessageField == "" {
 		cfg.MessageField = "msg"
 	}
@@ -57,17 +57,17 @@ func New(cfg Config) *StructuredTransport {
 	if cfg.LevelField == "" {
 		cfg.LevelField = "level"
 	}
-	return &StructuredTransport{
+	return &Transport{
 		BaseTransport: transport.NewBaseTransport(cfg.BaseConfig),
 		cfg:           cfg,
 	}
 }
 
 // GetLoggerInstance returns nil; structured transport has no underlying logger library.
-func (s *StructuredTransport) GetLoggerInstance() any { return nil }
+func (s *Transport) GetLoggerInstance() any { return nil }
 
 // SendToLogger implements loglayer.Transport.
-func (s *StructuredTransport) SendToLogger(params loglayer.TransportParams) {
+func (s *Transport) SendToLogger(params loglayer.TransportParams) {
 	if !s.ShouldProcess(params.LogLevel) {
 		return
 	}
@@ -82,7 +82,7 @@ func (s *StructuredTransport) SendToLogger(params loglayer.TransportParams) {
 	obj[s.cfg.DateField] = s.dateValue()
 	obj[s.cfg.MessageField] = transport.JoinMessages(messages)
 
-	if params.HasData {
+	if len(params.Data) > 0 {
 		for k, v := range params.Data {
 			obj[k] = v
 		}
@@ -102,21 +102,21 @@ func (s *StructuredTransport) SendToLogger(params loglayer.TransportParams) {
 	fmt.Fprintln(s.writer(), string(b))
 }
 
-func (s *StructuredTransport) writer() io.Writer {
+func (s *Transport) writer() io.Writer {
 	if s.cfg.Writer != nil {
 		return s.cfg.Writer
 	}
 	return os.Stdout
 }
 
-func (s *StructuredTransport) dateValue() string {
+func (s *Transport) dateValue() string {
 	if s.cfg.DateFn != nil {
 		return s.cfg.DateFn()
 	}
 	return time.Now().UTC().Format(time.RFC3339Nano)
 }
 
-func (s *StructuredTransport) levelValue(level loglayer.LogLevel) string {
+func (s *Transport) levelValue(level loglayer.LogLevel) string {
 	if s.cfg.LevelFn != nil {
 		return s.cfg.LevelFn(level)
 	}

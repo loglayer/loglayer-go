@@ -422,3 +422,24 @@ func TestHTTP_CustomEncoder(t *testing.T) {
 		t.Errorf("body: %q", body)
 	}
 }
+
+func TestHTTP_New_PanicsWithoutURL(t *testing.T) {
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Fatal("expected panic when URL missing")
+		}
+		err, ok := r.(error)
+		if !ok || !errors.Is(err, httptr.ErrURLRequired) {
+			t.Errorf("panic value: got %v, want ErrURLRequired", r)
+		}
+	}()
+	_ = httptr.New(httptr.Config{})
+}
+
+func TestHTTP_Build_ReturnsErrURLRequired(t *testing.T) {
+	_, err := httptr.Build(httptr.Config{})
+	if !errors.Is(err, httptr.ErrURLRequired) {
+		t.Errorf("Build with missing URL: got %v, want ErrURLRequired", err)
+	}
+}

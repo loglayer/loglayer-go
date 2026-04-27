@@ -91,7 +91,7 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 	}
 	fields := logrus.Fields{}
 
-	if params.HasData {
+	if len(params.Data) > 0 {
 		for k, v := range params.Data {
 			fields[k] = v
 		}

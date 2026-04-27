@@ -80,8 +80,11 @@ func (l *LogLayer) ErrorOnly(err error, opts ...ErrorOnlyOpts) {
 		if o.LogLevel != 0 {
 			level = o.LogLevel
 		}
-		if o.CopyMsg != nil {
-			copyMsg = *o.CopyMsg
+		switch o.CopyMsg {
+		case CopyMsgEnabled:
+			copyMsg = true
+		case CopyMsgDisabled:
+			copyMsg = false
 		}
 	}
 
@@ -101,16 +104,16 @@ func (l *LogLayer) ErrorOnly(err error, opts ...ErrorOnlyOpts) {
 // Accepts any value: a struct, a map, or any other type.
 //
 // OnMetadataCalled plugin hooks run here, same as WithMetadata.
-func (l *LogLayer) MetadataOnly(v any, level ...LogLevel) {
-	lvl := LogLevelInfo
-	if len(level) > 0 && level[0] != 0 {
-		lvl = level[0]
+func (l *LogLayer) MetadataOnly(v any, opts ...MetadataOnlyOpts) {
+	level := LogLevelInfo
+	if len(opts) > 0 && opts[0].LogLevel != 0 {
+		level = opts[0].LogLevel
 	}
 	v = l.loadPlugins().runOnMetadataCalled(v)
-	if !l.levels.isEnabled(lvl) || l.config.MuteMetadata || v == nil {
+	if !l.levels.isEnabled(level) || l.config.MuteMetadata || v == nil {
 		return
 	}
-	l.formatLog(lvl, nil, nil, v, nil)
+	l.formatLog(level, nil, nil, v, nil)
 }
 
 // Raw dispatches a fully specified log entry, bypassing the builder API.

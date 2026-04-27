@@ -27,7 +27,7 @@ func main() {
 	mux.HandleFunc("/users", usersHandler)
 	mux.HandleFunc("/healthz", healthHandler)
 
-	handler := loghttp.Middleware(serverLog)(mux)
+	handler := loghttp.Middleware(serverLog, loghttp.Config{})(mux)
 
 	serverLog.Info("listening on :8080")
 	_ = http.ListenAndServe(":8080", handler)

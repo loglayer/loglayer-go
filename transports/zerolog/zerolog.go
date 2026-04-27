@@ -1,4 +1,10 @@
 // Package zerolog provides a LogLayer transport backed by github.com/rs/zerolog.
+//
+// Fatal-level events are routed through zerolog.WithLevel rather than
+// zerolog.Fatal, so loglayer's core decides whether to call os.Exit (per
+// Config.DisableFatalExit). This transport never invokes the underlying
+// library's exit path, regardless of how the wrapped *zerolog.Logger is
+// configured.
 package zerolog
 
 import (
@@ -26,12 +32,6 @@ type Config struct {
 	// emitted (structs, scalars, slices, etc.). Map metadata is always merged
 	// at the root. Defaults to "metadata".
 	MetadataFieldName string
-
-	// DisableFatalExit overrides the underlying zerolog behavior when handling
-	// fatal-level events. loglayer's contract is that Fatal does NOT terminate
-	// the process — this transport always honors that contract regardless of
-	// this setting (kept here only to flag the intentional divergence).
-	DisableFatalExit bool
 }
 
 // Transport sends log entries to a zerolog.Logger.
@@ -73,7 +73,7 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 		return
 	}
 
-	if params.HasData {
+	if len(params.Data) > 0 {
 		event = event.Fields(map[string]any(params.Data))
 	}
 

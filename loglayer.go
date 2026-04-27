@@ -33,9 +33,9 @@ type Transport interface {
 type TransportParams struct {
 	LogLevel LogLevel
 	Messages []any
-	// Data holds the assembled persistent fields and error.
-	Data    Data
-	HasData bool
+	// Data holds the assembled persistent fields and error. Nil when no
+	// fields are set and no error is attached. Use len(Data) > 0 to test.
+	Data Data
 	// Metadata is the raw value passed to WithMetadata. May be a struct, map,
 	// or any other type. Nil if WithMetadata was not called or metadata is muted.
 	Metadata any
@@ -67,7 +67,7 @@ type LogLayer struct {
 	muteFields   atomic.Bool
 	muteMetadata atomic.Bool
 	// txMu serializes transport mutators (AddTransport / RemoveTransport /
-	// WithFreshTransports) so two concurrent admin operations on the same
+	// SetTransports) so two concurrent admin operations on the same
 	// logger don't lose updates. The dispatch path doesn't take this lock;
 	// it just Loads the current snapshot.
 	txMu sync.Mutex
@@ -98,6 +98,9 @@ func Build(config Config) (*LogLayer, error) {
 }
 
 func build(config Config) (*LogLayer, error) {
+	if config.Transport != nil && len(config.Transports) > 0 {
+		return nil, ErrTransportAndTransports
+	}
 	all := config.Transports
 	if config.Transport != nil {
 		all = []Transport{config.Transport}
@@ -116,7 +119,7 @@ func build(config Config) (*LogLayer, error) {
 		l.config.ErrorFieldName = "err"
 	}
 
-	if config.Enabled != nil && !*config.Enabled {
+	if config.Disabled {
 		l.levels.setMaster(false)
 	}
 
@@ -126,7 +129,7 @@ func build(config Config) (*LogLayer, error) {
 
 	for _, p := range config.Plugins {
 		if p.ID == "" {
-			panic("loglayer: Plugin.ID is required")
+			return nil, ErrPluginNoID
 		}
 	}
 	l.plugins.Store(newPluginSet(append([]Plugin(nil), config.Plugins...)))

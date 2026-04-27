@@ -35,7 +35,7 @@ func runOne(t *testing.T, h http.Handler, req *http.Request) *httptest.ResponseR
 
 func TestMiddleware_RequestCompletedLog(t *testing.T) {
 	log, lib := setupLogger(t)
-	handler := loghttp.Middleware(log)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := loghttp.Middleware(log, loghttp.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("ok"))
 	}))
 
@@ -79,7 +79,7 @@ func TestMiddleware_RequestCompletedLog(t *testing.T) {
 
 func TestMiddleware_GeneratesRequestIDWhenAbsent(t *testing.T) {
 	log, lib := setupLogger(t)
-	handler := loghttp.Middleware(log)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	handler := loghttp.Middleware(log, loghttp.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 
 	runOne(t, handler, httptest.NewRequest(http.MethodGet, "/", nil))
 
@@ -97,7 +97,7 @@ func TestMiddleware_FromRequest(t *testing.T) {
 	log, lib := setupLogger(t)
 
 	var inner *loglayer.LogLayer
-	handler := loghttp.Middleware(log)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := loghttp.Middleware(log, loghttp.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		inner = loghttp.FromRequest(r)
 		inner.Info("inside handler")
 	}))
@@ -121,7 +121,7 @@ func TestMiddleware_FromRequest(t *testing.T) {
 
 func TestMiddleware_StatusCapture(t *testing.T) {
 	log, lib := setupLogger(t)
-	handler := loghttp.Middleware(log)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := loghttp.Middleware(log, loghttp.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	}))
 
@@ -139,7 +139,7 @@ func TestMiddleware_StatusCapture(t *testing.T) {
 
 func TestMiddleware_ServerErrorEscalatesToError(t *testing.T) {
 	log, lib := setupLogger(t)
-	handler := loghttp.Middleware(log)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := loghttp.Middleware(log, loghttp.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
 
@@ -153,7 +153,7 @@ func TestMiddleware_ServerErrorEscalatesToError(t *testing.T) {
 
 func TestMiddleware_StartLogToggle(t *testing.T) {
 	log, lib := setupLogger(t)
-	handler := loghttp.Middleware(log, loghttp.WithStartLog(true))(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	handler := loghttp.Middleware(log, loghttp.Config{StartLog: true})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 
 	runOne(t, handler, httptest.NewRequest(http.MethodGet, "/", nil))
 
@@ -171,12 +171,12 @@ func TestMiddleware_StartLogToggle(t *testing.T) {
 
 func TestMiddleware_CustomFieldNames(t *testing.T) {
 	log, lib := setupLogger(t)
-	handler := loghttp.Middleware(log,
-		loghttp.WithFieldNames(loghttp.FieldNames{
+	handler := loghttp.Middleware(log, loghttp.Config{
+		FieldNames: loghttp.FieldNames{
 			RequestID: "trace_id",
 			Status:    "http_status",
-		}),
-	)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+		},
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set("X-Request-ID", "abc")
@@ -197,11 +197,11 @@ func TestMiddleware_CustomFieldNames(t *testing.T) {
 
 func TestMiddleware_ExtraFields(t *testing.T) {
 	log, lib := setupLogger(t)
-	handler := loghttp.Middleware(log,
-		loghttp.WithExtraFields(func(r *http.Request) loglayer.Fields {
+	handler := loghttp.Middleware(log, loghttp.Config{
+		ExtraFields: func(r *http.Request) loglayer.Fields {
 			return loglayer.Fields{"tenant": r.Header.Get("X-Tenant")}
-		}),
-	)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+		},
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set("X-Tenant", "acme")
@@ -217,7 +217,7 @@ func TestMiddleware_BaseLoggerNotMutated(t *testing.T) {
 	log, _ := setupLogger(t)
 	beforeFields := log.GetFields()
 
-	handler := loghttp.Middleware(log)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	handler := loghttp.Middleware(log, loghttp.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	for i := 0; i < 5; i++ {
 		runOne(t, handler, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
@@ -230,7 +230,7 @@ func TestMiddleware_BaseLoggerNotMutated(t *testing.T) {
 
 func TestMiddleware_CustomRequestIDHeader(t *testing.T) {
 	log, lib := setupLogger(t)
-	handler := loghttp.Middleware(log, loghttp.WithRequestIDHeader("X-Trace"))(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	handler := loghttp.Middleware(log, loghttp.Config{RequestIDHeader: "X-Trace"})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set("X-Trace", "trace-xyz")

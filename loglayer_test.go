@@ -1,7 +1,7 @@
 package loglayer_test
 
 // Core tests + shared test helpers. Per-feature tests live in:
-//   fields_test.go      WithFields / ClearFields / mute / get / FieldsKey
+//   fields_test.go      WithFields / WithoutFields / mute / get / FieldsKey
 //   metadata_test.go    WithMetadata / MetadataOnly / mute
 //   errors_test.go      WithError / ErrorOnly / ErrorSerializer
 //   levels_test.go      SetLevel / Enable / Disable / IsLevelEnabled

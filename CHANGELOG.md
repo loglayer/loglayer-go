@@ -18,7 +18,7 @@ Initial release. Pre-1.0; the API may still shift before v1.
 - `loglayer.LogLayer` with the six standard log levels (Trace, Debug, Info,
   Warn, Error, Fatal) and a fluent builder API: `WithMetadata`, `WithError`,
   `WithCtx`, chained into a level method (`Info`, `Warn`, etc.).
-- Persistent fields via `WithFields(loglayer.Fields)` and `ClearFields(keys...)`.
+- Persistent fields via `WithFields(loglayer.Fields)` and `WithoutFields(keys...)`.
   Both return a new logger; the receiver is unchanged. Matches the convention
   of zerolog, zap, slog, and logrus.
 - `loglayer.Fields` and `loglayer.Metadata` type aliases for `map[string]any`.
@@ -39,13 +39,67 @@ Initial release. Pre-1.0; the API may still shift before v1.
   context (zerolog-style middleware pattern). `MustFromContext` panics on
   absence.
 
+### Configuration
+
+- `Config.Disabled bool` replaces the prior `Config.Enabled *bool`. Same for
+  `transport.BaseConfig.Disabled bool` (was `Enabled *bool`). The `*bool`
+  trick was un-idiomatic; the negated field works because the zero value
+  (`false`) means "logger is on", matching the runtime
+  `EnableLogging`/`DisableLogging` methods.
+- `Config{Transport: ..., Transports: ...}` is now rejected at construction
+  with `ErrTransportAndTransports`. Previously `Transport` silently won.
+- `MetadataOnly` now takes `MetadataOnlyOpts` (was a variadic `LogLevel`),
+  matching the existing `ErrorOnly` shape. Old:
+  `log.MetadataOnly(m, loglayer.LogLevelWarn)`. New:
+  `log.MetadataOnly(m, loglayer.MetadataOnlyOpts{LogLevel: loglayer.LogLevelWarn})`.
+- `transports/console.ConsoleTransport` and
+  `transports/structured.StructuredTransport` renamed to `Transport` to
+  match the rest of the transports (no more `console.ConsoleTransport`
+  stutter).
+- New `ErrPluginNoID` sentinel. `Build` now returns it instead of
+  panicking when a `Config.Plugins` entry has an empty ID. `New` and
+  `AddPlugin` still panic, but with the sentinel.
+- `transports/http` and `transports/datadog` gain `Build(Config) (*Transport, error)`
+  siblings to their panic-on-misconfig `New`. New sentinels:
+  `httptransport.ErrURLRequired` and `datadog.ErrAPIKeyRequired`. Use
+  `Build` when loading required values from environment variables.
+- `TransportParams.HasData` removed (was always `Data != nil`). Use
+  `len(params.Data) > 0` directly. Same for `transports/testing.LogLine`.
+- `integrations/loghttp.Middleware` now takes `loghttp.Config` instead
+  of variadic functional options, matching every other package in the
+  library. Old: `loghttp.Middleware(log, loghttp.WithStartLog(true))`.
+  New: `loghttp.Middleware(log, loghttp.Config{StartLog: true})`. The
+  `WithXxx` Option constructors are removed.
+- `transports/zerolog.Config.DisableFatalExit` removed. The field was
+  declared but never read; the rationale ("the transport always honors
+  loglayer's contract") moved to the package doc comment.
+- `ErrorOnlyOpts.CopyMsg` is now a typed `CopyMsgPolicy` enum
+  (`CopyMsgDefault`, `CopyMsgEnabled`, `CopyMsgDisabled`) instead of
+  `*bool`. The zero value defers to `Config.CopyMsgOnOnlyError`. Old:
+  `b := true; opts.CopyMsg = &b`. New: `opts.CopyMsg = loglayer.CopyMsgEnabled`.
+- `WithFreshTransports` renamed to `SetTransports`. The method mutates
+  the receiver in place; the prior `With*` prefix violated the
+  documented "With* returns a new logger" convention.
+- `AddPlugin` is now variadic, matching `AddTransport`. Old:
+  `log.AddPlugin(p)`. New: same call works, plus `log.AddPlugin(p1, p2, p3)`
+  and `log.AddPlugin(plugins...)`.
+- `transports/http` worker errors now include the package prefix
+  (`loglayer/transports/http: encode: ...` rather than just `encode: ...`)
+  so callers receiving them via `OnError` can identify the source.
+- Removed obsolete `PLAN.md` from the repo root.
+- `ClearFields` renamed to `WithoutFields`. The method returns a new
+  logger; the prior `Clear*` prefix violated the documented "With*
+  returns a new logger" convention. Matches the TypeScript loglayer's
+  `withoutContext` precedent. Migration: `log = log.ClearFields(...)`
+  becomes `log = log.WithoutFields(...)`.
+
 ### Thread safety
 
 Every method on `*LogLayer` is safe to call from any goroutine, including
 concurrently with emission. There is no setup-only category. See
 `AGENTS.md#thread-safety` for the per-method breakdown:
 
-- Returns-new methods (`WithFields`, `ClearFields`, `Child`, `WithPrefix`)
+- Returns-new methods (`WithFields`, `WithoutFields`, `Child`, `WithPrefix`)
   build a new logger; receiver untouched.
 - Level mutators backed by `atomic.Uint32` bitmap (mirrors `zap.AtomicLevel`).
 - Transport mutators backed by `atomic.Pointer[transportSet]`; concurrent

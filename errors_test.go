@@ -61,6 +61,35 @@ func TestErrorOnlyCopyMsg(t *testing.T) {
 	}
 }
 
+func TestErrorOnlyCopyMsgPolicy(t *testing.T) {
+	t.Run("Default uses config setting (true)", func(t *testing.T) {
+		log, lib := setupWithConfig(t, loglayer.Config{CopyMsgOnOnlyError: true})
+		log.ErrorOnly(errors.New("from config"), loglayer.ErrorOnlyOpts{}) // CopyMsgDefault
+		line := lib.PopLine()
+		if !transporttest.MessageContains(line.Messages, "from config") {
+			t.Errorf("expected message copied via config: got %v", line.Messages)
+		}
+	})
+
+	t.Run("Disabled overrides config true", func(t *testing.T) {
+		log, lib := setupWithConfig(t, loglayer.Config{CopyMsgOnOnlyError: true})
+		log.ErrorOnly(errors.New("suppressed"), loglayer.ErrorOnlyOpts{CopyMsg: loglayer.CopyMsgDisabled})
+		line := lib.PopLine()
+		if len(line.Messages) != 0 {
+			t.Errorf("CopyMsgDisabled should suppress message; got %v", line.Messages)
+		}
+	})
+
+	t.Run("Enabled overrides config false", func(t *testing.T) {
+		log, lib := setupWithConfig(t, loglayer.Config{CopyMsgOnOnlyError: false})
+		log.ErrorOnly(errors.New("forced"), loglayer.ErrorOnlyOpts{CopyMsg: loglayer.CopyMsgEnabled})
+		line := lib.PopLine()
+		if !transporttest.MessageContains(line.Messages, "forced") {
+			t.Errorf("CopyMsgEnabled should force message: got %v", line.Messages)
+		}
+	})
+}
+
 func TestCustomErrorSerializer(t *testing.T) {
 	log, lib := setupWithConfig(t, loglayer.Config{
 		ErrorSerializer: func(err error) map[string]any {

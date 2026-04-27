@@ -50,10 +50,10 @@ func (l *LogLayer) RemoveTransport(id string) bool {
 	return true
 }
 
-// WithFreshTransports replaces all existing transports.
+// SetTransports replaces all existing transports.
 //
 // Safe to call concurrently with log emission.
-func (l *LogLayer) WithFreshTransports(transports ...Transport) *LogLayer {
+func (l *LogLayer) SetTransports(transports ...Transport) *LogLayer {
 	l.txMu.Lock()
 	defer l.txMu.Unlock()
 

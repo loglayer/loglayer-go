@@ -18,7 +18,7 @@ Use the right replacement based on what the em dash was doing. **A bare comma is
 ```markdown
 ✅ "Fields are keyed data: request IDs, user info, session data."  (colon for elaboration)
 ✅ "WithFields merges. It does not replace."  (period for two clauses)
-✅ "WithFields merges; ClearFields removes by key."  (semicolon for tight pair)
+✅ "WithFields merges; WithoutFields removes by key."  (semicolon for tight pair)
 ✅ "Use ApplicationFn (or override per-call) to customize."  (parens for aside)
 ✅ "## loglayer.Metadata: the canonical map shape"  (heading colon)
 ✅ "- WithFields: persists across logs."  (bullet colon)

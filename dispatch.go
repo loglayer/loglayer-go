@@ -96,7 +96,6 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 		LogLevel: level,
 		Messages: messages,
 		Data:     d,
-		HasData:  d != nil,
 		Metadata: rawMetadata,
 		Err:      err,
 		Fields:   fields,

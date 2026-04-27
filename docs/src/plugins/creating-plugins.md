@@ -59,6 +59,21 @@ The `Plugin` struct is copied at `AddPlugin` time. Mutating its function fields 
 
 ## Hook reference
 
+::: warning Nil-return semantics differ by hook
+The two **input-side** hooks treat a nil return as "drop the input." The four **dispatch-time** hooks treat a nil return as "no transformation." This asymmetry is intentional but easy to misremember.
+
+| Hook | Returning nil means |
+|---|---|
+| `OnFieldsCalled` | Drop the WithFields call (receiver's existing fields preserved) |
+| `OnMetadataCalled` | Drop metadata for this entry |
+| `OnBeforeDataOut` | Leave the assembled data unchanged |
+| `OnBeforeMessageOut` | Leave the messages unchanged |
+| `TransformLogLevel` | (Returns `(_, false)` instead of nil) Leave the level unchanged |
+| `ShouldSend` | (Not applicable — returns `bool`) |
+
+The split: **input-side hooks** fire from `WithFields` / `WithMetadata`, where the user explicitly attached a value. Returning nil there is a meaningful "drop." **Output-side hooks** fire during dispatch, often from plugins that only want to transform sometimes. Returning nil there means "I don't have an opinion about this entry" rather than "drop everything."
+:::
+
 ### `OnFieldsCalled(fields Fields) Fields`
 
 Fires from `WithFields`. You receive the fields about to be merged onto the logger. Return the fields to actually merge; return `nil` to drop the call (the receiver's existing fields are preserved either way).

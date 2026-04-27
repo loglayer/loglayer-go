@@ -61,12 +61,14 @@ Plugins run in the order they were added.
 
 ## Ordering and Replacement
 
-`AddPlugin` registers a plugin. If a plugin with the same `ID` already exists, it is **replaced** (matching the `AddTransport` convention). Adding the same plugin twice with the same ID is therefore a way to update its config in place.
+`AddPlugin` registers one or more plugins. If a plugin with the same `ID` already exists, it is **replaced** (matching the `AddTransport` convention). Adding the same plugin twice with the same ID is therefore a way to update its config in place.
 
 ```go
-log.AddPlugin(loglayer.Plugin{ID: "redact", ...})  // first add
-log.AddPlugin(loglayer.Plugin{ID: "redact", ...})  // replaces, doesn't duplicate
-log.PluginCount()                                  // 1
+log.AddPlugin(loglayer.Plugin{ID: "redact", ...})            // single
+log.AddPlugin(redact.New(...), audit.New(...))               // multiple at once
+log.AddPlugin(plugins...)                                    // splat a slice
+log.AddPlugin(loglayer.Plugin{ID: "redact", ...})            // replaces, doesn't duplicate
+log.PluginCount()                                            // count
 ```
 
 `RemovePlugin(id)` removes a plugin and returns whether it was present.

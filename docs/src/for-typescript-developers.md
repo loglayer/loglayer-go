@@ -33,7 +33,7 @@ The TS library calls the persistent key/value bag **context** (`withContext`, `c
 So Go uses **`Fields`**:
 
 - `withContext` → `WithFields`
-- `clearContext` → `ClearFields`
+- `clearContext` → `WithoutFields`
 - `muteContext` → `MuteFields`
 - `contextFieldName` → `FieldsKey`
 - The type alias `loglayer.Fields` is `map[string]any`, same as TS's loose object shape.
@@ -99,7 +99,7 @@ This is where Go and TS genuinely diverge. JavaScript runs on a single-threaded 
 LogLayer for Go's contract:
 
 - Every method on `*LogLayer` is safe to call from any goroutine, including concurrently with emission.
-- `WithFields`, `ClearFields`, `Child`, `WithPrefix` return a **new** logger; the receiver is unchanged. (This matches the convention used by zerolog, zap, slog, and logrus.) **Always assign the result**: `log = log.WithFields(...)`.
+- `WithFields`, `WithoutFields`, `Child`, `WithPrefix` return a **new** logger; the receiver is unchanged. (This matches the convention used by zerolog, zap, slog, and logrus.) **Always assign the result**: `log = log.WithFields(...)`.
 - Level mutators, transport mutators, and mute toggles are all safe to call live (e.g. operator-driven debug toggling via SIGUSR1, hot-reload of transport lists), with no special coordination on your side.
 
 See the full [thread-safety contract](https://github.com/loglayer/loglayer-go/blob/main/AGENTS.md#thread-safety).
@@ -109,7 +109,7 @@ See the full [thread-safety contract](https://github.com/loglayer/loglayer-go/bl
 The pattern is the same in both languages: derive a per-request logger and pass it down. The Go port ships first-class HTTP middleware in [`integrations/loghttp`](/integrations/loghttp) so this is one line at server setup:
 
 ```go
-http.ListenAndServe(":8080", loghttp.Middleware(log)(mux))
+http.ListenAndServe(":8080", loghttp.Middleware(log, loghttp.Config{})(mux))
 ```
 
 Inside a handler:
@@ -134,11 +134,53 @@ TypeScript's `@loglayer/transport-pino`, `@loglayer/plugin-redaction`, etc. are 
 
 You install once (`go get go.loglayer.dev`) and import the sub-packages you need. Go's [lazy module loading](https://go.dev/ref/mod#lazy-loading) means transports you don't import don't add to your binary or `go.sum`.
 
+## Plugins
+
+The TypeScript plugin system maps directly. Where TS has a class implementing optional methods on the `LogLayerPlugin` interface, Go has a `loglayer.Plugin` struct with optional function fields. nil fields are skipped.
+
+| TypeScript hook | Go field on `loglayer.Plugin` |
+|---|---|
+| `onContextCalled` | `OnFieldsCalled` |
+| `onMetadataCalled` | `OnMetadataCalled` |
+| `onBeforeDataOut` | `OnBeforeDataOut` |
+| `onBeforeMessageOut` | `OnBeforeMessageOut` |
+| `shouldSendToLogger` | `ShouldSend` |
+| (no equivalent) | `TransformLogLevel` |
+
+```go
+log.AddPlugin(loglayer.Plugin{
+    ID: "tag-service",
+    OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data {
+        return loglayer.Data{"service": "checkout"}
+    },
+})
+```
+
+Three convenience constructors for the common single-hook cases:
+
+```go
+log.AddPlugin(loglayer.MetadataPlugin("upper", fn))
+log.AddPlugin(loglayer.FieldsPlugin("rename", fn))
+log.AddPlugin(loglayer.LevelPlugin("promote", fn))
+```
+
+The first-party `plugins/redact` mirrors `@loglayer/plugin-redaction`. It supports key matching, regex value patterns, and json-tag-aware struct walking, all type-preserving:
+
+```go
+import "go.loglayer.dev/plugins/redact"
+
+log.AddPlugin(redact.New(redact.Config{
+    Keys:     []string{"password", "apiKey"},
+    Patterns: []*regexp.Regexp{regexp.MustCompile(`^\d{16}$`)},
+}))
+```
+
+See [Plugins](/plugins/) for the full lifecycle, hook ordering, and nil-return semantics. Third-party plugins can use [`utils/maputil`](https://pkg.go.dev/go.loglayer.dev/utils/maputil) for the same reflection-based deep-clone primitive that the redact plugin uses.
+
 ## Currently out of scope
 
 These exist in TypeScript loglayer but are not yet implemented in the Go port:
 
-- **Plugin system** — log transformation, redaction, filtering pipeline
 - **Mixins** — the `useLogLayerMixin` augmentation pattern
 - **Context managers** — `LinkedContextManager`, `IsolatedContextManager`. Go's flat fields-as-map model covers most use cases.
 - **Lazy evaluation** — `withMetadataLazy`, `withContextLazy`. Possible to add but the ergonomic story is weaker in Go.

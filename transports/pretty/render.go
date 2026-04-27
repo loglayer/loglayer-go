@@ -14,11 +14,11 @@ import (
 // rendering. Map metadata merges at root; struct metadata is JSON-roundtripped
 // into root fields.
 func combineData(params loglayer.TransportParams) map[string]any {
-	if !params.HasData && params.Metadata == nil {
+	if len(params.Data) == 0 && params.Metadata == nil {
 		return nil
 	}
 	out := make(map[string]any)
-	if params.HasData {
+	if len(params.Data) > 0 {
 		for k, v := range params.Data {
 			out[k] = v
 		}

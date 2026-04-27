@@ -33,10 +33,10 @@ if !removed {
 
 ## Replace
 
-`WithFreshTransports(transports...)` replaces the entire list. Existing transports are dropped:
+`SetTransports(transports...)` replaces the entire list. Existing transports are dropped:
 
 ```go
-log.WithFreshTransports(
+log.SetTransports(
     console.New(console.Config{BaseConfig: transport.BaseConfig{ID: "console"}}),
     structured.New(structured.Config{BaseConfig: transport.BaseConfig{ID: "ship"}, Writer: f}),
 )

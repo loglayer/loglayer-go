@@ -37,7 +37,7 @@ When adding new logging surface, fit it into one of these three. Do not introduc
 Every method on `*LogLayer` falls into one of three categories. Document which in the GoDoc comment.
 
 1. **Read-only**: emission methods (`Info`, `WithMetadata`, `Raw`, ...), getters. Always safe.
-2. **Returns-new**: `WithFields`, `ClearFields`, `Child`, `WithPrefix`. Always safe; receiver untouched.
+2. **Returns-new**: `WithFields`, `WithoutFields`, `Child`, `WithPrefix`. Always safe; receiver untouched.
 3. **Atomic-mutate**: level mutators (atomic.Uint32 bitmap), transport mutators (atomic.Pointer + mutex on the slow path). Always safe.
 4. **Setup-only mutate-in-place**: mute toggles. NOT safe concurrently with emission. GoDoc must say `// Setup-only:` explicitly.
 

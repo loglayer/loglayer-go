@@ -127,18 +127,9 @@ func TestFieldEstimate(t *testing.T) {
 		{
 			"data only",
 			loglayer.TransportParams{
-				Data:    loglayer.Data{"a": 1, "b": 2, "c": 3},
-				HasData: true,
+				Data: loglayer.Data{"a": 1, "b": 2, "c": 3},
 			},
 			3,
-		},
-		{
-			"data set but HasData false counts as 0",
-			loglayer.TransportParams{
-				Data:    loglayer.Data{"a": 1},
-				HasData: false,
-			},
-			0,
 		},
 		{
 			"map metadata only",
@@ -172,7 +163,6 @@ func TestFieldEstimate(t *testing.T) {
 			"data plus map metadata sums",
 			loglayer.TransportParams{
 				Data:     loglayer.Data{"a": 1, "b": 2},
-				HasData:  true,
 				Metadata: map[string]any{"c": 3, "d": 4},
 			},
 			4,
@@ -181,7 +171,6 @@ func TestFieldEstimate(t *testing.T) {
 			"data plus struct metadata sums",
 			loglayer.TransportParams{
 				Data:     loglayer.Data{"a": 1, "b": 2},
-				HasData:  true,
 				Metadata: metaUser{ID: 7, Name: "Alice"},
 			},
 			3,
@@ -210,8 +199,7 @@ func TestMergeFieldsAndMetadata(t *testing.T) {
 		{
 			name: "data only",
 			p: loglayer.TransportParams{
-				HasData: true,
-				Data:    loglayer.Data{"a": 1, "b": "two"},
+				Data: loglayer.Data{"a": 1, "b": "two"},
 			},
 			want: map[string]any{"a": 1, "b": "two"},
 		},
@@ -225,7 +213,6 @@ func TestMergeFieldsAndMetadata(t *testing.T) {
 		{
 			name: "data and metadata merge",
 			p: loglayer.TransportParams{
-				HasData:  true,
 				Data:     loglayer.Data{"a": 1},
 				Metadata: map[string]any{"b": 2},
 			},
@@ -234,7 +221,6 @@ func TestMergeFieldsAndMetadata(t *testing.T) {
 		{
 			name: "metadata overrides data on key conflict",
 			p: loglayer.TransportParams{
-				HasData:  true,
 				Data:     loglayer.Data{"k": "from-data"},
 				Metadata: map[string]any{"k": "from-metadata"},
 			},

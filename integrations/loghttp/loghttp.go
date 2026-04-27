@@ -7,7 +7,7 @@
 //
 //	mux := http.NewServeMux()
 //	mux.HandleFunc("/users", handler)
-//	http.ListenAndServe(":8080", loghttp.Middleware(log)(mux))
+//	http.ListenAndServe(":8080", loghttp.Middleware(log, loghttp.Config{})(mux))
 //
 //	func handler(w http.ResponseWriter, r *http.Request) {
 //	    log := loghttp.FromRequest(r)
@@ -37,93 +37,73 @@ type FieldNames struct {
 	Bytes      string // default "bytes"
 }
 
-type config struct {
-	requestIDHeader string
-	requestIDGen    func() string
-	fieldNames      FieldNames
-	startLog        bool
-	statusLevels    func(int) loglayer.LogLevel
-	extraFields     func(*http.Request) loglayer.Fields
+// Config holds middleware configuration. All fields are optional; the
+// zero-value Config gives you sensible defaults (X-Request-ID header,
+// random fallback IDs, the standard six field names, no start-log, status
+// → level mapping for 4xx/5xx).
+type Config struct {
+	// RequestIDHeader is the HTTP header read for an incoming request ID.
+	// Defaults to "X-Request-ID".
+	RequestIDHeader string
+
+	// RequestIDGenerator is called when no incoming request-ID header is
+	// present. Defaults to 8 random bytes hex-encoded.
+	RequestIDGenerator func() string
+
+	// FieldNames overrides the keys used in the emitted logs. Empty
+	// fields here fall back to defaults; the middleware always emits all
+	// six.
+	FieldNames FieldNames
+
+	// StartLog emits a "request started" line at the beginning of every
+	// request, in addition to the "request completed" line at the end.
+	// Defaults to false to keep log volume low.
+	StartLog bool
+
+	// StatusLevels picks a log level for the "request completed" line
+	// based on the response status code. Defaults to:
+	//
+	//   - 5xx → LogLevelError
+	//   - 4xx → LogLevelWarn
+	//   - else → LogLevelInfo
+	StatusLevels func(status int) loglayer.LogLevel
+
+	// ExtraFields, if set, is called once per request to attach extra
+	// fields to the per-request logger. Useful for tenant/user/trace IDs
+	// extracted from the request.
+	ExtraFields func(*http.Request) loglayer.Fields
 }
 
-// Option configures the middleware.
-type Option func(*config)
-
-// WithRequestIDHeader sets the HTTP header read for an incoming request ID.
-// Default: "X-Request-ID".
-func WithRequestIDHeader(name string) Option {
-	return func(c *config) { c.requestIDHeader = name }
-}
-
-// WithRequestIDGenerator sets the function called when no request ID header
-// is present. Default: 8 random bytes hex-encoded.
-func WithRequestIDGenerator(fn func() string) Option {
-	return func(c *config) { c.requestIDGen = fn }
-}
-
-// WithFieldNames overrides the field keys used in the emitted logs.
-// Fields left empty in names keep their defaults; this option cannot be used
-// to disable a field, only to rename it. The middleware always emits all six.
-func WithFieldNames(names FieldNames) Option {
-	return func(c *config) {
-		if names.RequestID != "" {
-			c.fieldNames.RequestID = names.RequestID
-		}
-		if names.Method != "" {
-			c.fieldNames.Method = names.Method
-		}
-		if names.Path != "" {
-			c.fieldNames.Path = names.Path
-		}
-		if names.Status != "" {
-			c.fieldNames.Status = names.Status
-		}
-		if names.DurationMs != "" {
-			c.fieldNames.DurationMs = names.DurationMs
-		}
-		if names.Bytes != "" {
-			c.fieldNames.Bytes = names.Bytes
-		}
+func (c Config) withDefaults() Config {
+	out := c
+	if out.RequestIDHeader == "" {
+		out.RequestIDHeader = "X-Request-ID"
 	}
-}
-
-// WithStartLog controls whether a "request started" line is emitted at the
-// start of every request (in addition to "request completed" at the end).
-// Default false to keep log volume low.
-func WithStartLog(enabled bool) Option {
-	return func(c *config) { c.startLog = enabled }
-}
-
-// WithStatusLevels overrides the function that picks a log level for the
-// "request completed" line based on the response status code. Default:
-//
-//   - 5xx → LogLevelError
-//   - 4xx → LogLevelWarn
-//   - else → LogLevelInfo
-func WithStatusLevels(fn func(status int) loglayer.LogLevel) Option {
-	return func(c *config) { c.statusLevels = fn }
-}
-
-// WithExtraFields attaches additional fields to the per-request logger.
-// Useful for tenant ID, user ID, trace ID, etc. extracted from the request.
-func WithExtraFields(fn func(*http.Request) loglayer.Fields) Option {
-	return func(c *config) { c.extraFields = fn }
-}
-
-func defaultConfig() *config {
-	return &config{
-		requestIDHeader: "X-Request-ID",
-		requestIDGen:    randomID,
-		fieldNames: FieldNames{
-			RequestID:  "requestId",
-			Method:     "method",
-			Path:       "path",
-			Status:     "status",
-			DurationMs: "durationMs",
-			Bytes:      "bytes",
-		},
-		statusLevels: defaultStatusLevels,
+	if out.RequestIDGenerator == nil {
+		out.RequestIDGenerator = randomID
 	}
+	if out.FieldNames.RequestID == "" {
+		out.FieldNames.RequestID = "requestId"
+	}
+	if out.FieldNames.Method == "" {
+		out.FieldNames.Method = "method"
+	}
+	if out.FieldNames.Path == "" {
+		out.FieldNames.Path = "path"
+	}
+	if out.FieldNames.Status == "" {
+		out.FieldNames.Status = "status"
+	}
+	if out.FieldNames.DurationMs == "" {
+		out.FieldNames.DurationMs = "durationMs"
+	}
+	if out.FieldNames.Bytes == "" {
+		out.FieldNames.Bytes = "bytes"
+	}
+	if out.StatusLevels == nil {
+		out.StatusLevels = defaultStatusLevels
+	}
+	return out
 }
 
 func defaultStatusLevels(status int) loglayer.LogLevel {
@@ -144,30 +124,30 @@ func randomID() string {
 }
 
 // Middleware returns an HTTP middleware that derives a per-request logger
-// from log and stores it in the request context. The middleware emits a
-// "request completed" log line at the end of every request, with status code,
-// bytes written, and duration in metadata. The base log is never mutated.
-func Middleware(log *loglayer.LogLayer, opts ...Option) func(http.Handler) http.Handler {
-	cfg := defaultConfig()
-	for _, opt := range opts {
-		opt(cfg)
-	}
+// from log and stores it in the request context. Emits a "request completed"
+// log line at the end of every request, with status code, bytes written,
+// and duration in metadata. The base log is never mutated.
+//
+// Pass a zero-value Config (loglayer.Config{}) to take the defaults; only
+// set the fields you want to override.
+func Middleware(log *loglayer.LogLayer, cfg Config) func(http.Handler) http.Handler {
+	c := cfg.withDefaults()
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			reqID := r.Header.Get(cfg.requestIDHeader)
+			reqID := r.Header.Get(c.RequestIDHeader)
 			if reqID == "" {
-				reqID = cfg.requestIDGen()
+				reqID = c.RequestIDGenerator()
 			}
 
 			extras := map[string]any(nil)
-			if cfg.extraFields != nil {
-				extras = cfg.extraFields(r)
+			if c.ExtraFields != nil {
+				extras = c.ExtraFields(r)
 			}
 			fields := make(loglayer.Fields, 3+len(extras))
-			fields[cfg.fieldNames.RequestID] = reqID
-			fields[cfg.fieldNames.Method] = r.Method
-			fields[cfg.fieldNames.Path] = r.URL.Path
+			fields[c.FieldNames.RequestID] = reqID
+			fields[c.FieldNames.Method] = r.Method
+			fields[c.FieldNames.Path] = r.URL.Path
 			for k, v := range extras {
 				fields[k] = v
 			}
@@ -178,7 +158,7 @@ func Middleware(log *loglayer.LogLayer, opts ...Option) func(http.Handler) http.
 			sw := wrapWriter(w)
 			start := time.Now()
 
-			if cfg.startLog {
+			if c.StartLog {
 				reqLog.Info("request started")
 			}
 
@@ -189,12 +169,12 @@ func Middleware(log *loglayer.LogLayer, opts ...Option) func(http.Handler) http.
 				status = http.StatusOK
 			}
 			reqLog.Raw(loglayer.RawLogEntry{
-				LogLevel: cfg.statusLevels(status),
+				LogLevel: c.StatusLevels(status),
 				Messages: []any{"request completed"},
 				Metadata: loglayer.Metadata{
-					cfg.fieldNames.Status:     status,
-					cfg.fieldNames.DurationMs: time.Since(start).Milliseconds(),
-					cfg.fieldNames.Bytes:      sw.bytes,
+					c.FieldNames.Status:     status,
+					c.FieldNames.DurationMs: time.Since(start).Milliseconds(),
+					c.FieldNames.Bytes:      sw.bytes,
 				},
 			})
 		})

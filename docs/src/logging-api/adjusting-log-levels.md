@@ -49,10 +49,9 @@ log.Info("emitted again")
 You can also disable from construction:
 
 ```go
-disabled := false
 log := loglayer.New(loglayer.Config{
     Transport: structured.New(structured.Config{}),
-    Enabled:   &disabled,
+    Disabled:  true,
 })
 ```
 

@@ -118,7 +118,7 @@ log.MetadataOnly(loglayer.Metadata{
 })
 
 // or at a specific level
-log.MetadataOnly(loglayer.Metadata{"cpu": "90%"}, loglayer.LogLevelWarn)
+log.MetadataOnly(loglayer.Metadata{"cpu": "90%"}, loglayer.MetadataOnlyOpts{LogLevel: loglayer.LogLevelWarn})
 ```
 
 The default level is `Info`. Passing `nil` is a no-op.

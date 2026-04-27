@@ -75,14 +75,12 @@ func MetadataAsMap(v any) map[string]any {
 // (preserves a _metadata fallback for slices/scalars). Other transports
 // should use this one.
 func MergeFieldsAndMetadata(p loglayer.TransportParams) map[string]any {
-	if !p.HasData && p.Metadata == nil {
+	if len(p.Data) == 0 && p.Metadata == nil {
 		return nil
 	}
 	out := make(map[string]any, FieldEstimate(p))
-	if p.HasData {
-		for k, v := range p.Data {
-			out[k] = v
-		}
+	for k, v := range p.Data {
+		out[k] = v
 	}
 	if p.Metadata != nil {
 		for k, v := range MetadataAsMap(p.Metadata) {
@@ -127,10 +125,7 @@ func MergeIntoMap(dst map[string]any, data map[string]any, metadata any) map[str
 // for the given params. Use it to size pre-allocated slices/maps in transports
 // that benefit from capacity hints (zap, charmlog).
 func FieldEstimate(p loglayer.TransportParams) int {
-	n := 0
-	if p.HasData {
-		n += len(p.Data)
-	}
+	n := len(p.Data)
 	if m, ok := p.Metadata.(map[string]any); ok {
 		n += len(m)
 	} else if p.Metadata != nil {

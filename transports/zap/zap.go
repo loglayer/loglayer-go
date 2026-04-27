@@ -75,7 +75,7 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 	}
 	fields := make([]zap.Field, 0, transport.FieldEstimate(params))
 
-	if params.HasData {
+	if len(params.Data) > 0 {
 		for k, v := range params.Data {
 			fields = append(fields, zap.Any(k, v))
 		}

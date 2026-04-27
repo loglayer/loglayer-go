@@ -66,7 +66,7 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 	}
 	keyvals := make([]any, 0, transport.FieldEstimate(params)*2)
 
-	if params.HasData {
+	if len(params.Data) > 0 {
 		for k, v := range params.Data {
 			keyvals = append(keyvals, k, v)
 		}

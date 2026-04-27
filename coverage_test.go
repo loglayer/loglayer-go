@@ -35,6 +35,33 @@ func TestNew_PanicsWithoutTransport(t *testing.T) {
 	loglayer.New(loglayer.Config{})
 }
 
+func TestBuild_TransportAndTransports_Errors(t *testing.T) {
+	_, err := loglayer.Build(loglayer.Config{
+		Transport:  discardTransport{},
+		Transports: []loglayer.Transport{discardTransport{}},
+	})
+	if !errors.Is(err, loglayer.ErrTransportAndTransports) {
+		t.Errorf("got %v, want ErrTransportAndTransports", err)
+	}
+}
+
+func TestNew_TransportAndTransports_Panics(t *testing.T) {
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Fatal("expected panic when both Transport and Transports are set")
+		}
+		err, ok := r.(error)
+		if !ok || !errors.Is(err, loglayer.ErrTransportAndTransports) {
+			t.Errorf("panic value: got %v, want ErrTransportAndTransports", r)
+		}
+	}()
+	loglayer.New(loglayer.Config{
+		Transport:  discardTransport{},
+		Transports: []loglayer.Transport{discardTransport{}},
+	})
+}
+
 type discardTransport struct{}
 
 func (discardTransport) ID() string                              { return "discard" }

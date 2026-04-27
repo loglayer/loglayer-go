@@ -108,22 +108,22 @@ fields := log.GetFields()
 
 ## Clearing Fields
 
-`ClearFields` returns a new logger with the given keys removed. With no arguments, all fields are cleared.
+`WithoutFields` returns a new logger with the given keys removed. With no arguments, all fields are cleared.
 
 ```go
 // Remove all
-log = log.ClearFields()
+log = log.WithoutFields()
 
 // Remove specific keys
-log = log.ClearFields("requestId")
-log = log.ClearFields("requestId", "userId")
+log = log.WithoutFields("requestId")
+log = log.WithoutFields("requestId", "userId")
 ```
 
 Chains compose because each method returns the new logger:
 
 ```go
 log = log.WithFields(loglayer.Fields{"a": 1, "b": 2, "c": 3}).
-    ClearFields("a")
+    WithoutFields("a")
 log.Info("only b and c remain")
 ```
 
@@ -174,7 +174,7 @@ See [Child Loggers](/logging-api/child-loggers).
 
 ## Thread Safety
 
-Every method on `*loglayer.LogLayer` is safe to call from any goroutine, including concurrently with emission. `WithFields`, `ClearFields`, `Child`, and `WithPrefix` return a new logger; the receiver is unchanged. Level toggling, transport changes, and mute toggles can all run live without any coordination on your side.
+Every method on `*loglayer.LogLayer` is safe to call from any goroutine, including concurrently with emission. `WithFields`, `WithoutFields`, `Child`, and `WithPrefix` return a new logger; the receiver is unchanged. Level toggling, transport changes, and mute toggles can all run live without any coordination on your side.
 
 See the full [thread-safety contract](https://github.com/loglayer/loglayer-go/blob/main/AGENTS.md#thread-safety) for the per-method breakdown.
 

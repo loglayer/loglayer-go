@@ -12,6 +12,10 @@ var ErrBufferFull = errors.New("loglayer/transports/http: buffer full, entry dro
 // ErrClosed is reported via OnError when SendToLogger is called after Close.
 var ErrClosed = errors.New("loglayer/transports/http: transport closed, entry dropped")
 
+// ErrURLRequired is returned by Build (and panicked by New) when Config.URL
+// is empty.
+var ErrURLRequired = errors.New("loglayer/transports/http: Config.URL is required")
+
 // HTTPError is reported via OnError when the server responds with a status
 // >= 400. The original entries are still passed to OnError so callers can
 // implement retry/dead-letter behavior.

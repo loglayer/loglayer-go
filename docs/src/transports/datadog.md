@@ -68,7 +68,7 @@ type Config struct {
 
 ### `APIKey`
 
-Required. Set as the `DD-API-KEY` header on every request.
+Required. Set as the `DD-API-KEY` header on every request. `datadog.New` panics with `datadog.ErrAPIKeyRequired` when this is empty; use `datadog.Build(cfg) (*Transport, error)` if you load the key from an environment variable and want to handle the missing-config case explicitly.
 
 ### `Source`, `Service`, `Hostname`, `Tags`
 

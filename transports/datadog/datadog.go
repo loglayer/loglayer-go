@@ -85,9 +85,22 @@ type Transport struct {
 }
 
 // New constructs a Datadog Transport. Panics if Config.APIKey is empty.
+// Use Build for an error-returning variant.
 func New(cfg Config) *Transport {
+	t, err := Build(cfg)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// Build constructs a Datadog Transport like New but returns
+// ErrAPIKeyRequired instead of panicking when cfg.APIKey is empty. Use
+// this when the API key is loaded at runtime (e.g. from an environment
+// variable) and you want to handle the missing-config case explicitly.
+func Build(cfg Config) (*Transport, error) {
 	if cfg.APIKey == "" {
-		panic("loglayer/transports/datadog: Config.APIKey is required")
+		return nil, ErrAPIKeyRequired
 	}
 
 	httpCfg := cfg.HTTP
@@ -103,7 +116,11 @@ func New(cfg Config) *Transport {
 	merged["DD-API-KEY"] = cfg.APIKey
 	httpCfg.Headers = merged
 
-	return &Transport{Transport: httptr.New(httpCfg)}
+	httpT, err := httptr.Build(httpCfg)
+	if err != nil {
+		return nil, err
+	}
+	return &Transport{Transport: httpT}, nil
 }
 
 // newEncoder produces the JSON-array encoder for Datadog's intake format.

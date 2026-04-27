@@ -32,7 +32,7 @@ func main() {
     mux := http.NewServeMux()
     mux.HandleFunc("/users", handler)
 
-    http.ListenAndServe(":8080", loghttp.Middleware(log)(mux))
+    http.ListenAndServe(":8080", loghttp.Middleware(log, loghttp.Config{})(mux))
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -74,55 +74,64 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 `FromRequest(r)` is a thin wrapper around `loglayer.FromContext(r.Context())`.
 
-## Options
+## Config
 
 ```go
-type Option func(*config)
+type Config struct {
+    RequestIDHeader    string
+    RequestIDGenerator func() string
+    FieldNames         FieldNames
+    StartLog           bool
+    StatusLevels       func(status int) loglayer.LogLevel
+    ExtraFields        func(*http.Request) loglayer.Fields
+}
 ```
 
-All options are functional options passed to `Middleware(log, opts...)`.
+All fields are optional. Pass `loghttp.Config{}` to take the defaults; only set the fields you need to override.
 
-### `WithRequestIDHeader(name string)`
+### `RequestIDHeader`
 
-Sets the HTTP header read for an incoming request ID. Default `"X-Request-ID"`.
+The HTTP header read for an incoming request ID. Default `"X-Request-ID"`.
 
 ```go
-loghttp.Middleware(log, loghttp.WithRequestIDHeader("X-Trace-ID"))
+loghttp.Middleware(log, loghttp.Config{RequestIDHeader: "X-Trace-ID"})
 ```
 
-### `WithRequestIDGenerator(fn func() string)`
+### `RequestIDGenerator`
 
-Function called when no request ID header is present. Default: 8 random bytes hex-encoded.
+Function called when no request-ID header is present. Default: 8 random bytes hex-encoded.
 
 ```go
-loghttp.Middleware(log, loghttp.WithRequestIDGenerator(func() string {
-    return uuid.NewString()
-}))
+loghttp.Middleware(log, loghttp.Config{
+    RequestIDGenerator: func() string { return uuid.NewString() },
+})
 ```
 
-### `WithFieldNames(names FieldNames)`
+### `FieldNames`
 
-Override the field keys. Empty values keep the default for that field.
+Override the field keys. Empty fields here keep their defaults.
 
 ```go
-loghttp.Middleware(log, loghttp.WithFieldNames(loghttp.FieldNames{
-    RequestID:  "trace_id",
-    Status:     "http_status",
-    DurationMs: "duration_ms",
-}))
+loghttp.Middleware(log, loghttp.Config{
+    FieldNames: loghttp.FieldNames{
+        RequestID:  "trace_id",
+        Status:     "http_status",
+        DurationMs: "duration_ms",
+    },
+})
 ```
 
 Default keys: `requestId`, `method`, `path`, `status`, `durationMs`, `bytes`.
 
-### `WithStartLog(enabled bool)`
+### `StartLog`
 
-When true, emit a "request started" log line at the start of every request in addition to the "request completed" line. Default false to keep log volume low.
+When true, emit a "request started" log line at the start of every request in addition to the "request completed" line. Default false.
 
 ```go
-loghttp.Middleware(log, loghttp.WithStartLog(true))
+loghttp.Middleware(log, loghttp.Config{StartLog: true})
 ```
 
-### `WithStatusLevels(fn func(status int) loglayer.LogLevel)`
+### `StatusLevels`
 
 Customize the log level for the completion log based on the response status code. Default:
 
@@ -133,25 +142,29 @@ Customize the log level for the completion log based on the response status code
 | else       | `LogLevelInfo`  |
 
 ```go
-loghttp.Middleware(log, loghttp.WithStatusLevels(func(status int) loglayer.LogLevel {
-    if status >= 500 {
-        return loglayer.LogLevelError
-    }
-    return loglayer.LogLevelInfo // demote 4xx to info
-}))
+loghttp.Middleware(log, loghttp.Config{
+    StatusLevels: func(status int) loglayer.LogLevel {
+        if status >= 500 {
+            return loglayer.LogLevelError
+        }
+        return loglayer.LogLevelInfo // demote 4xx to info
+    },
+})
 ```
 
-### `WithExtraFields(fn func(*http.Request) loglayer.Fields)`
+### `ExtraFields`
 
 Attach additional fields to the per-request logger. Useful for tenant ID, user ID, trace ID extracted from headers or the URL path.
 
 ```go
-loghttp.Middleware(log, loghttp.WithExtraFields(func(r *http.Request) loglayer.Fields {
-    return loglayer.Fields{
-        "tenant": r.Header.Get("X-Tenant-ID"),
-        "userId": userIDFromAuth(r),
-    }
-}))
+loghttp.Middleware(log, loghttp.Config{
+    ExtraFields: func(r *http.Request) loglayer.Fields {
+        return loglayer.Fields{
+            "tenant": r.Header.Get("X-Tenant-ID"),
+            "userId": userIDFromAuth(r),
+        }
+    },
+})
 ```
 
 ## Composing with Other Middleware
@@ -160,15 +173,15 @@ The middleware is shape `func(http.Handler) http.Handler`, the standard composit
 
 ```go
 // stdlib
-http.Handle("/", loghttp.Middleware(log)(myHandler))
+http.Handle("/", loghttp.Middleware(log, loghttp.Config{})(myHandler))
 
 // chi
 r := chi.NewRouter()
-r.Use(loghttp.Middleware(log))
+r.Use(loghttp.Middleware(log, loghttp.Config{}))
 
 // gorilla/mux
 r := mux.NewRouter()
-r.Use(loghttp.Middleware(log))
+r.Use(loghttp.Middleware(log, loghttp.Config{}))
 ```
 
 ## Optional Response Writer Interfaces

@@ -78,11 +78,11 @@ func ExampleLogLayer_WithFields() {
 	// Output: {"level":"info","msg":"processing","requestId":"abc-123","time":"2026-04-26T12:00:00Z"}
 }
 
-// ClearFields removes specific keys (or all keys when called with no args).
-func ExampleLogLayer_ClearFields() {
+// WithoutFields removes specific keys (or all keys when called with no args).
+func ExampleLogLayer_WithoutFields() {
 	log := exampleLogger()
 	log = log.WithFields(loglayer.Fields{"keep": "yes", "drop": "no"})
-	log = log.ClearFields("drop")
+	log = log.WithoutFields("drop")
 	log.Info("partial")
 	// Output: {"keep":"yes","level":"info","msg":"partial","time":"2026-04-26T12:00:00Z"}
 }
@@ -158,11 +158,12 @@ func ExampleLogLayer_Raw() {
 	// Output: {"level":"warn","msg":"upstream timeout","retries":3,"time":"2026-04-26T12:00:00Z"}
 }
 
-// SetLevel returns a logger that drops entries below the threshold. The
-// receiver is unchanged; assign the result.
+// SetLevel raises the threshold so entries below the given level are
+// dropped. Mutates the logger in place; the return value is the same
+// instance and exists only for chaining.
 func ExampleLogLayer_SetLevel() {
 	log := exampleLogger()
-	log = log.SetLevel(loglayer.LogLevelWarn)
+	log.SetLevel(loglayer.LogLevelWarn)
 	log.Info("dropped")
 	log.Warn("emitted")
 	// Output: {"level":"warn","msg":"emitted","time":"2026-04-26T12:00:00Z"}

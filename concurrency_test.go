@@ -5,7 +5,7 @@ package loglayer_test
 //
 // Contract: every method on *LogLayer is safe to call from any goroutine,
 // including concurrently with emission. Returns-new methods (WithFields,
-// ClearFields, Child, WithPrefix) build a new logger; level/transport/mute
+// WithoutFields, Child, WithPrefix) build a new logger; level/transport/mute
 // mutators are atomic.
 
 import (

@@ -112,10 +112,22 @@ type Transport struct {
 }
 
 // New constructs an HTTP Transport and starts its background worker.
-// Panics if cfg.URL is empty.
+// Panics if cfg.URL is empty. Use Build for an error-returning variant.
 func New(cfg Config) *Transport {
+	t, err := Build(cfg)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// Build constructs an HTTP Transport like New but returns ErrURLRequired
+// instead of panicking when cfg.URL is empty. Use this when the URL is
+// loaded at runtime (e.g. from an environment variable) and you want to
+// handle the missing-config case explicitly.
+func Build(cfg Config) (*Transport, error) {
 	if cfg.URL == "" {
-		panic("loglayer/transports/http: Config.URL is required")
+		return nil, ErrURLRequired
 	}
 	if cfg.Method == "" {
 		cfg.Method = http.MethodPost
@@ -147,7 +159,7 @@ func New(cfg Config) *Transport {
 	}
 	t.wg.Add(1)
 	go t.worker()
-	return t
+	return t, nil
 }
 
 // GetLoggerInstance returns nil; the HTTP transport has no underlying logger.
@@ -170,7 +182,7 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 		Messages: params.Messages,
 		Metadata: params.Metadata,
 	}
-	if params.HasData {
+	if len(params.Data) > 0 {
 		entry.Data = params.Data
 	}
 	select {
@@ -249,13 +261,13 @@ func (t *Transport) drainAndFlush(batch []Entry) {
 func (t *Transport) flush(entries []Entry) {
 	body, contentType, err := t.cfg.Encoder.Encode(entries)
 	if err != nil {
-		t.cfg.OnError(fmt.Errorf("encode: %w", err), entries)
+		t.cfg.OnError(fmt.Errorf("loglayer/transports/http: encode: %w", err), entries)
 		return
 	}
 
 	req, err := http.NewRequest(t.cfg.Method, t.cfg.URL, bytes.NewReader(body))
 	if err != nil {
-		t.cfg.OnError(fmt.Errorf("build request: %w", err), entries)
+		t.cfg.OnError(fmt.Errorf("loglayer/transports/http: build request: %w", err), entries)
 		return
 	}
 	req.Header.Set("Content-Type", contentType)
@@ -265,7 +277,7 @@ func (t *Transport) flush(entries []Entry) {
 
 	resp, err := t.cfg.Client.Do(req)
 	if err != nil {
-		t.cfg.OnError(fmt.Errorf("send: %w", err), entries)
+		t.cfg.OnError(fmt.Errorf("loglayer/transports/http: send: %w", err), entries)
 		return
 	}
 	defer resp.Body.Close()

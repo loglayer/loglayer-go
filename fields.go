@@ -24,10 +24,10 @@ func (l *LogLayer) WithFields(f Fields) *LogLayer {
 	return out
 }
 
-// ClearFields returns a new logger with the given keys removed from the
+// WithoutFields returns a new logger with the given keys removed from the
 // persistent fields bag. With no arguments, all fields are cleared. The
 // receiver is unchanged. Paired with WithFields; assign the result.
-func (l *LogLayer) ClearFields(keys ...string) *LogLayer {
+func (l *LogLayer) WithoutFields(keys ...string) *LogLayer {
 	out := l.Child()
 	if len(keys) == 0 {
 		out.fields = make(Fields)

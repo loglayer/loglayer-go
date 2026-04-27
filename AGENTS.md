@@ -37,7 +37,7 @@ loglayer-golang/
 ├── builder.go                  LogBuilder fluent chain
 ├── level.go                    LogLevel + per-level state
 ├── types.go                    Config, Fields, Data, Metadata aliases
-├── fields.go                   WithFields / ClearFields / mute methods
+├── fields.go                   WithFields / WithoutFields / mute methods
 ├── from_context.go             NewContext / FromContext / MustFromContext
 ├── mock.go                     loglayer.NewMock for silent mocking
 └── *_test.go                   Tests + benchmarks
@@ -170,7 +170,7 @@ How each class achieves safety:
 - **Emission methods** (`Info`, `Warn`, `Error`, `Debug`, `Trace`, `Fatal`,
   `WithMetadata`, `WithError`, `WithCtx`, `Raw`, `MetadataOnly`, `ErrorOnly`):
   read-only on logger state.
-- **Returns-new** (`WithFields`, `ClearFields`, `Child`, `WithPrefix`): build a
+- **Returns-new** (`WithFields`, `WithoutFields`, `Child`, `WithPrefix`): build a
   new logger; receiver untouched.
 - **Read-only** (`GetFields`, `GetLoggerInstance`, `IsLevelEnabled`): no state
   change.
@@ -179,7 +179,7 @@ How each class achieves safety:
   Mirrors `zap.AtomicLevel`. Designed for live runtime toggling (SIGUSR1,
   admin endpoints flipping debug on, etc.).
 - **Transport mutators** (`AddTransport`, `RemoveTransport`,
-  `WithFreshTransports`): publish a new immutable transport set via
+  `SetTransports`): publish a new immutable transport set via
   `atomic.Pointer[transportSet]`. Concurrent mutators on the same logger
   serialize via an internal mutex (slow path); the dispatch hot path only
   loads the pointer.
@@ -237,7 +237,7 @@ custom transport.
 
 A cached pointer to `transports[0]` for the single-transport fast path. Saved
 the loop-iteration cost (~2 ns) but had to be re-synced across `New`, `Child`,
-`AddTransport`, `RemoveTransport`, `WithFreshTransports`. Marginal speedup
+`AddTransport`, `RemoveTransport`, `SetTransports`. Marginal speedup
 didn't justify the maintenance burden.
 
 **Don't reintroduce** unless single-transport dispatch becomes a measured

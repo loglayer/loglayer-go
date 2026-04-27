@@ -49,9 +49,11 @@ log.ErrorOnly(err, loglayer.ErrorOnlyOpts{LogLevel: loglayer.LogLevelFatal})
 To use the error's text as the message body, set `CopyMsgOnOnlyError: true` on the config (or override per-call):
 
 ```go
-copyMsg := true
-log.ErrorOnly(err, loglayer.ErrorOnlyOpts{CopyMsg: &copyMsg})
+log.ErrorOnly(err, loglayer.ErrorOnlyOpts{CopyMsg: loglayer.CopyMsgEnabled})
+log.ErrorOnly(err, loglayer.ErrorOnlyOpts{CopyMsg: loglayer.CopyMsgDisabled}) // explicit opt-out
 ```
+
+The zero value (`CopyMsgDefault`) keeps the config setting; use `CopyMsgEnabled` or `CopyMsgDisabled` to override per call.
 
 ## Customizing Error Serialization
 

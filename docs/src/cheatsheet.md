@@ -5,6 +5,24 @@ description: One-page quick reference of the LogLayer for Go API.
 
 # Cheat Sheet
 
+## Method Conventions
+
+LogLayer uses two distinct method patterns. Knowing which is which avoids one of the few footguns in the API.
+
+| Prefix | Pattern | Example |
+|---|---|---|
+| `With*` | Returns a **new logger or builder**. The receiver is unchanged; **assign the return value** or your change is lost. | `log = log.WithFields(...)` |
+| `Mute`, `Unmute`, `Set`, `Enable`, `Disable`, `Add`, `Remove` | Mutates the receiver in place. Returns `*LogLayer` for chaining; the return value is the same instance. | `log.MuteFields()` |
+
+`Child()` is the one exception to the prefix rule: it returns a new logger (conventional name in Go logging libraries; mirrors zerolog/slog). Treat it the same as `With*` and assign the result.
+
+```go
+log = log.WithFields(loglayer.Fields{"req": "abc"}) // ✅ assigned
+log.WithFields(loglayer.Fields{"req": "abc"})       // ❌ result discarded; emits without req
+
+log.MuteFields()                                    // ✅ in-place mutation; no assignment needed
+```
+
 ## Construction
 
 ```go
@@ -52,7 +70,7 @@ log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
 
 // No message, log just the metadata
 log.MetadataOnly(loglayer.Metadata{"status": "healthy"})
-log.MetadataOnly(loglayer.Metadata{"status": "warn"}, loglayer.LogLevelWarn)
+log.MetadataOnly(loglayer.Metadata{"status": "warn"}, loglayer.MetadataOnlyOpts{LogLevel: loglayer.LogLevelWarn})
 ```
 
 ## Errors
@@ -66,17 +84,17 @@ log.ErrorOnly(err, loglayer.ErrorOnlyOpts{LogLevel: loglayer.LogLevelFatal})
 ## Fields (persistent)
 
 ```go
-// WithFields and ClearFields return a NEW logger; assign the result.
+// WithFields and WithoutFields return a NEW logger; assign the result.
 log = log.WithFields(loglayer.Fields{"requestId": "123"})
 
 // Read it back
 fields := log.GetFields()
 
 // Remove specific keys (returns new logger)
-log = log.ClearFields("requestId")
+log = log.WithoutFields("requestId")
 
 // Remove all (returns new logger)
-log = log.ClearFields()
+log = log.WithoutFields()
 
 // Mute / unmute output without losing the data (mutates in place)
 log.MuteFields().UnmuteFields()
@@ -141,9 +159,41 @@ log.EnableLogging()
 ```go
 log.AddTransport(t)                    // append (replaces if same ID)
 log.RemoveTransport("id")              // returns true if removed
-log.WithFreshTransports(t1, t2)        // replace all
+log.SetTransports(t1, t2)        // replace all
 log.GetLoggerInstance("id")            // underlying logger from a transport
 ```
+
+## Plugins
+
+```go
+import "go.loglayer.dev/plugins/redact"
+
+// Inline construction
+log.AddPlugin(loglayer.Plugin{
+    ID:               "tag",
+    OnBeforeDataOut:  func(p loglayer.BeforeDataOutParams) loglayer.Data {
+        return loglayer.Data{"service": "checkout"}
+    },
+})
+
+// Convenience constructors for single-hook plugins
+log.AddPlugin(loglayer.MetadataPlugin("upper", func(m any) any { ... }))
+log.AddPlugin(loglayer.FieldsPlugin("rename", func(f loglayer.Fields) loglayer.Fields { ... }))
+log.AddPlugin(loglayer.LevelPlugin("promote", func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) { ... }))
+
+// First-party redact plugin (key + regex matching, walks structs/maps/slices)
+log.AddPlugin(redact.New(redact.Config{
+    Keys:     []string{"password", "apiKey"},
+    Patterns: []*regexp.Regexp{regexp.MustCompile(`^\d{16}$`)}, // credit-card-shaped
+}))
+
+// Management
+log.RemovePlugin("id")                  // returns true if removed
+log.GetPlugin("id")                     // (Plugin, bool)
+log.PluginCount()                       // int
+```
+
+Six lifecycle hooks (any subset, nil fields skipped): `OnFieldsCalled`, `OnMetadataCalled`, `OnBeforeDataOut`, `OnBeforeMessageOut`, `TransformLogLevel`, `ShouldSend`. See [Plugins](/plugins/) for details.
 
 ## Raw
 

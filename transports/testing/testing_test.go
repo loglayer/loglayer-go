@@ -84,8 +84,8 @@ func TestTestTransportFieldsExposed(t *testing.T) {
 	if len(line.Messages) != 1 || line.Messages[0] != "msg" {
 		t.Errorf("Messages: got %v", line.Messages)
 	}
-	if !line.HasData {
-		t.Error("HasData should be true when context is set")
+	if len(line.Data) == 0 {
+		t.Error("Data should be populated when context is set")
 	}
 	if line.Data["ctx_key"] != "ctx_val" {
 		t.Errorf("Data ctx_key: got %v", line.Data["ctx_key"])

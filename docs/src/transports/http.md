@@ -69,7 +69,7 @@ type Config struct {
 
 ### `URL` and `Method`
 
-Required. The transport POSTs (or whatever `Method` you set) the encoded body to `URL`.
+Required. The transport POSTs (or whatever `Method` you set) the encoded body to `URL`. `httptr.New` panics with `httptr.ErrURLRequired` when `URL` is empty; use `httptr.Build(cfg) (*Transport, error)` if you load the URL from an environment variable and want to handle the missing-config case explicitly.
 
 ### `Headers`
 

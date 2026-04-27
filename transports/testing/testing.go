@@ -15,9 +15,8 @@ import (
 type LogLine struct {
 	Level    loglayer.LogLevel
 	Messages []any
-	// Data holds the assembled context + error map (nil when HasData is false).
-	Data    loglayer.Data
-	HasData bool
+	// Data holds the assembled fields + error map. Nil when neither were set.
+	Data loglayer.Data
 	// Metadata is the raw value passed to WithMetadata. Nil if not set.
 	Metadata any
 	// Ctx is the per-call context.Context attached via WithCtx. Nil if not set.
@@ -126,7 +125,6 @@ func (t *TestTransport) SendToLogger(params loglayer.TransportParams) {
 		Level:    params.LogLevel,
 		Messages: messages,
 		Data:     params.Data,
-		HasData:  params.HasData,
 		Metadata: params.Metadata,
 		Ctx:      params.Ctx,
 	})

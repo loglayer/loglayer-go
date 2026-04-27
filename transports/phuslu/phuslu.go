@@ -76,7 +76,7 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 		return
 	}
 
-	if params.HasData {
+	if len(params.Data) > 0 {
 		for k, v := range params.Data {
 			entry = entry.Any(k, v)
 		}

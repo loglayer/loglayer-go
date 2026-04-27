@@ -64,7 +64,7 @@ log.Warn("everywhere")  // both
 ```go
 log.AddTransport(extraTransport)
 log.RemoveTransport("ship")
-log.WithFreshTransports(t1, t2) // replace all
+log.SetTransports(t1, t2) // replace all
 ```
 
 See [Transport Management](/logging-api/transport-management).

@@ -11,7 +11,7 @@ func TestWithFields(t *testing.T) {
 	log = log.WithFields(loglayer.Fields{"requestId": "abc"})
 	log.Info("req")
 	line := lib.PopLine()
-	if !line.HasData {
+	if len(line.Data) == 0 {
 		t.Fatal("expected data populated")
 	}
 	if line.Data["requestId"] != "abc" {
@@ -30,21 +30,21 @@ func TestWithFieldsMerges(t *testing.T) {
 	}
 }
 
-func TestClearFieldsAll(t *testing.T) {
+func TestWithoutFieldsAll(t *testing.T) {
 	log, lib := setup(t)
 	log = log.WithFields(loglayer.Fields{"x": 1})
-	log = log.ClearFields()
+	log = log.WithoutFields()
 	log.Info("cleared")
 	line := lib.PopLine()
-	if line.HasData && line.Data["x"] != nil {
+	if line.Data["x"] != nil {
 		t.Errorf("expected fields cleared, got %v", line.Data)
 	}
 }
 
-func TestClearFieldsKeys(t *testing.T) {
+func TestWithoutFieldsKeys(t *testing.T) {
 	log, lib := setup(t)
 	log = log.WithFields(loglayer.Fields{"keep": "yes", "drop": "no"})
-	log = log.ClearFields("drop")
+	log = log.WithoutFields("drop")
 	log.Info("partial")
 	line := lib.PopLine()
 	if line.Data["drop"] != nil {
@@ -61,7 +61,7 @@ func TestMuteFields(t *testing.T) {
 	log.MuteFields()
 	log.Info("muted")
 	line := lib.PopLine()
-	if line.HasData && line.Data["secret"] != nil {
+	if line.Data["secret"] != nil {
 		t.Errorf("fields should be muted, got %v", line.Data)
 	}
 }

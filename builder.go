@@ -45,8 +45,8 @@ func (b *LogBuilder) WithError(err error) *LogBuilder {
 // via TransportParams.Ctx and can extract trace IDs, span context, or anything
 // else carried in the context.
 //
-// Unlike WithFields (which mutates the logger's persistent key/value bag),
-// WithCtx is per-call only. Passing nil is a no-op.
+// Unlike WithFields (which returns a derived logger that carries persistent
+// fields), WithCtx is per-call only. Passing nil is a no-op.
 func (b *LogBuilder) WithCtx(ctx context.Context) *LogBuilder {
 	b.ctx = ctx
 	return b

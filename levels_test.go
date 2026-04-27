@@ -65,11 +65,10 @@ func TestIsLevelEnabled(t *testing.T) {
 	}
 }
 
-func TestEnabledConfig(t *testing.T) {
-	f := false
-	log, lib := setupWithConfig(t, loglayer.Config{Enabled: &f})
+func TestDisabledConfig(t *testing.T) {
+	log, lib := setupWithConfig(t, loglayer.Config{Disabled: true})
 	log.Info("should not appear")
 	if lib.Len() != 0 {
-		t.Errorf("expected no lines when Enabled=false, got %d", lib.Len())
+		t.Errorf("expected no lines when Disabled=true, got %d", lib.Len())
 	}
 }

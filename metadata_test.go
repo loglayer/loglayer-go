@@ -82,7 +82,7 @@ func TestMetadataOnly(t *testing.T) {
 
 func TestMetadataOnlyCustomLevel(t *testing.T) {
 	log, lib := setup(t)
-	log.MetadataOnly(map[string]any{"k": 1}, loglayer.LogLevelWarn)
+	log.MetadataOnly(map[string]any{"k": 1}, loglayer.MetadataOnlyOpts{LogLevel: loglayer.LogLevelWarn})
 	line := lib.PopLine()
 	if line.Level != loglayer.LogLevelWarn {
 		t.Errorf("MetadataOnly custom level: got %s", line.Level)

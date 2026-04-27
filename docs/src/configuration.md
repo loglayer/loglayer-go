@@ -22,10 +22,11 @@ Most application setup should stick with `New`: misconfiguration of the logger i
 
 ```go
 type Config struct {
-    Transport          Transport       // single transport
-    Transports         []Transport     // multiple transports
+    Transport          Transport       // single transport (mutually exclusive with Transports)
+    Transports         []Transport     // multiple transports (mutually exclusive with Transport)
+    Plugins            []Plugin        // plugins to register at construction time
     Prefix             string          // prepended to first string message
-    Enabled            *bool           // master on/off (default: true)
+    Disabled           bool            // suppress all output (default: false)
     ErrorSerializer    ErrorSerializer // customize error rendering
     ErrorFieldName     string          // key for serialized error (default: "err")
     CopyMsgOnOnlyError bool            // copy err.Error() into the message in ErrorOnly
@@ -55,7 +56,26 @@ loglayer.New(loglayer.Config{
 })
 ```
 
-`loglayer.New` panics if neither is set. See [Multiple Transports](/transports/multiple-transports).
+`loglayer.New` panics if neither is set. Setting both panics with `ErrTransportAndTransports` (or `Build` returns it). See [Multiple Transports](/transports/multiple-transports).
+
+## Plugins
+
+Plugins to register at construction time. Equivalent to calling `log.AddPlugin` for each entry after `New`; either form is fine.
+
+```go
+import "go.loglayer.dev/plugins/redact"
+
+log := loglayer.New(loglayer.Config{
+    Transport: structured.New(structured.Config{}),
+    Plugins: []loglayer.Plugin{
+        redact.New(redact.Config{Keys: []string{"password", "apiKey"}}),
+    },
+})
+```
+
+Plugin order matters: hooks run in the order plugins were added, and each plugin sees the previous plugin's output. See [Plugins](/plugins/) for the full lifecycle.
+
+`Build` returns `ErrPluginNoID` (and `New` panics with it) if any plugin has an empty `ID`.
 
 ## Prefix
 
@@ -72,15 +92,14 @@ log.Info("started") // → "msg":"[auth] started"
 
 `WithPrefix(prefix)` returns a child logger with the prefix overridden, leaving the parent untouched.
 
-## Enabled
+## Disabled
 
-A pointer to a bool so you can distinguish "default true" from "explicitly false":
+Set to `true` to suppress all log output from construction. Equivalent to calling `log.DisableLogging()` immediately after `New`:
 
 ```go
-disabled := false
 log := loglayer.New(loglayer.Config{
     Transport: structured.New(structured.Config{}),
-    Enabled:   &disabled, // every level dropped
+    Disabled:  true, // every level dropped
 })
 ```
 
@@ -167,9 +186,9 @@ Each transport accepts a `transport.BaseConfig` for transport-level concerns:
 
 ```go
 type BaseConfig struct {
-    ID      string          // unique identifier (required for AddTransport / RemoveTransport)
-    Enabled *bool           // transport-level on/off
-    Level   loglayer.LogLevel // minimum level this transport will process
+    ID       string            // unique identifier (required for AddTransport / RemoveTransport)
+    Disabled bool              // suppress this transport (default: false)
+    Level    loglayer.LogLevel // minimum level this transport will process
 }
 ```
 

@@ -56,11 +56,11 @@ func TestRemoveTransportMissing(t *testing.T) {
 	}
 }
 
-func TestWithFreshTransports(t *testing.T) {
+func TestSetTransports(t *testing.T) {
 	log, oldLib := setup(t)
 	newLib := &lltest.TestLoggingLibrary{}
 	newTrans := lltest.New(lltest.Config{BaseConfig: transport.BaseConfig{ID: "new"}, Library: newLib})
-	log.WithFreshTransports(newTrans)
+	log.SetTransports(newTrans)
 	log.Info("new transport only")
 	if oldLib.Len() != 0 || newLib.Len() != 1 {
 		t.Errorf("after replace: old=%d new=%d", oldLib.Len(), newLib.Len())
