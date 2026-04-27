@@ -20,6 +20,7 @@ package loghttp
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -175,7 +176,29 @@ func Middleware(log *loglayer.LogLayer, cfg Config) func(http.Handler) http.Hand
 				reqLog.Info("request started")
 			}
 
-			next.ServeHTTP(sw, r)
+			// Defer panic-recovery so the request-{completed,panicked}
+			// log emits even when the handler crashes. We re-panic so
+			// any outer recovery middleware (chi.Recoverer, an APM
+			// interceptor, etc.) still gets to act; without our recover,
+			// the panic propagates and the log line is lost.
+			func() {
+				defer func() {
+					if rcv := recover(); rcv != nil {
+						status := sw.status
+						if status == 0 {
+							status = http.StatusInternalServerError
+						}
+						reqLog.WithMetadata(loglayer.Metadata{
+							c.FieldNames.Status:     status,
+							c.FieldNames.DurationMs: time.Since(start).Milliseconds(),
+							c.FieldNames.Bytes:      sw.bytes,
+							"panic":                 fmt.Sprintf("%v", rcv),
+						}).Error("request panicked")
+						panic(rcv)
+					}
+				}()
+				next.ServeHTTP(sw, r)
+			}()
 
 			status := sw.status
 			if status == 0 {

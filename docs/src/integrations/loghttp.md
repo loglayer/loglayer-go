@@ -184,6 +184,20 @@ r := mux.NewRouter()
 r.Use(loghttp.Middleware(log, loghttp.Config{}))
 ```
 
+## Handler Panics
+
+When the wrapped handler panics, the middleware recovers, emits a `request panicked` log entry at Error level (with `panic`, `status: 500`, `durationMs`, and `bytes` in metadata), and re-panics. Re-panicking lets any outer recovery middleware (`chi.Recoverer`, an APM auto-instrumented middleware, etc.) still act; the explicit recovery here just makes sure the log line emits before the panic propagates.
+
+If you don't already have a recovery middleware, install one above `loghttp.Middleware`. Without it, the panic will tear down the request goroutine and `http.Server` will close the connection without writing a body.
+
+```go
+// chi.Recoverer above loghttp keeps both behaviors:
+// - chi.Recoverer turns the panic into a 500 response
+// - loghttp emits the "request panicked" log line first
+r.Use(middleware.Recoverer)
+r.Use(loghttp.Middleware(log, loghttp.Config{}))
+```
+
 ## Optional Response Writer Interfaces
 
 The middleware wraps `http.ResponseWriter` to capture status and bytes. The wrapper implements `Unwrap() http.ResponseWriter`, so handlers needing optional interfaces (`Flusher`, `Hijacker`, `Pusher`) should use `http.NewResponseController(w)` rather than type-asserting on the wrapper directly. This is the modern idiom (Go 1.20+).

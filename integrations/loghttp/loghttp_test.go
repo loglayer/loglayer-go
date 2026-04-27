@@ -310,3 +310,52 @@ func TestMiddleware_BindsRequestContextToLogger(t *testing.T) {
 		}
 	}
 }
+
+// When a handler panics, the middleware logs a "request panicked" entry
+// at Error level and re-panics so any outer recovery middleware (or
+// http.Server's connection-close behavior) still acts. Without this,
+// the request-completed log would be lost and the failure would have no
+// log trail.
+func TestMiddleware_PanicEmitsLogAndRePanics(t *testing.T) {
+	log, lib := setupLogger(t)
+	handler := loghttp.Middleware(log, loghttp.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		panic("boom")
+	}))
+
+	defer func() {
+		rcv := recover()
+		if rcv == nil {
+			t.Fatal("middleware should re-panic so outer recovery can act")
+		}
+		if rcv != "boom" {
+			t.Errorf("re-panicked value: got %v, want %q", rcv, "boom")
+		}
+
+		// The "request panicked" log should have emitted before the
+		// re-panic.
+		lines := lib.Lines()
+		if len(lines) != 1 {
+			t.Fatalf("expected 1 log line, got %d", len(lines))
+		}
+		if !transporttest.MessageContains(lines[0].Messages, "request panicked") {
+			t.Errorf("message: got %v, want 'request panicked'", lines[0].Messages)
+		}
+		if lines[0].Level != loglayer.LogLevelError {
+			t.Errorf("level: got %v, want Error", lines[0].Level)
+		}
+		// Metadata should carry the panic value, status (500 since the
+		// handler never wrote), duration, and bytes.
+		m, ok := lines[0].Metadata.(loglayer.Metadata)
+		if !ok {
+			t.Fatalf("metadata: got %T, want loglayer.Metadata", lines[0].Metadata)
+		}
+		if m["panic"] != "boom" {
+			t.Errorf("metadata.panic: got %v", m["panic"])
+		}
+		if m["status"] != http.StatusInternalServerError {
+			t.Errorf("metadata.status: got %v, want 500", m["status"])
+		}
+	}()
+
+	runOne(t, handler, httptest.NewRequest(http.MethodGet, "/", nil))
+}

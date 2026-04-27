@@ -21,6 +21,10 @@ type Config struct {
 	// ShipToLogger is invoked for every entry that passes the transport's
 	// level filter. If nil, entries are silently discarded (which makes a
 	// nil-ShipToLogger Transport a useful no-op for tests).
+	//
+	// Panics in ShipToLogger are not recovered by this transport. If your
+	// callback can panic, recover inside it; otherwise the panic
+	// propagates to the dispatching goroutine.
 	ShipToLogger func(params loglayer.TransportParams)
 }
 
