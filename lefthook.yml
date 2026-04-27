@@ -21,6 +21,18 @@ pre-commit:
     vet:
       glob: "*.go"
       run: go vet ./...
+    # Mirror what CI runs so a clean pre-commit means a clean CI run.
+    # Install once: go install honnef.co/go/tools/cmd/staticcheck@latest
+    # If staticcheck isn't on PATH, this hook prints a hint and skips
+    # rather than failing — CI will catch any issue regardless.
+    staticcheck:
+      glob: "*.go"
+      run: |
+        if ! command -v staticcheck >/dev/null 2>&1; then
+          echo "staticcheck not found on PATH; skipping (install: go install honnef.co/go/tools/cmd/staticcheck@latest)"
+          exit 0
+        fi
+        staticcheck ./...
 
 pre-push:
   commands:

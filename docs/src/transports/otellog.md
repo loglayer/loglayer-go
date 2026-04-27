@@ -13,6 +13,10 @@ The package name is `otellog` to avoid colliding with `go.opentelemetry.io/otel`
 go get go.loglayer.dev/transports/otellog
 ```
 
+::: warning Go version
+Requires **Go 1.25+** because that's the floor of the upstream `go.opentelemetry.io/otel/sdk/log` packages this transport binds against. This in turn drives the entire `go.loglayer.dev` module's floor, since transports are sub-packages of the same module.
+:::
+
 ## Basic Usage (Global Provider)
 
 If your app has already registered an OTel `LoggerProvider` globally (the common case when you set up the OTel SDK at startup), pass only an instrumentation scope `Name`:

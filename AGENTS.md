@@ -132,8 +132,14 @@ missing install doesn't break commits).
 What runs:
 
 - **pre-commit** (parallel): `gofmt -l` on staged Go files (fails if anything
-  needs formatting; run `gofmt -w <file>` to fix), then `go vet ./...`.
+  needs formatting; run `gofmt -w <file>` to fix), `go vet ./...`, and
+  `staticcheck ./...` (skipped with a hint if `staticcheck` isn't on PATH;
+  install once with `go install honnef.co/go/tools/cmd/staticcheck@latest`).
 - **pre-push**: `go test -race -timeout 60s ./...`.
+
+The staticcheck step mirrors what CI runs so a clean pre-commit means a
+clean CI run. The hook fails open when the binary isn't installed, so a
+fresh clone won't be blocked while the dev sets up tooling.
 
 Skip a hook for one command with `git commit --no-verify` or
 `git push --no-verify`. Don't make this a habit; the hooks are deliberately

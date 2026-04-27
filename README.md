@@ -68,6 +68,8 @@ log.WithPrefix("[my-app]").
 go get go.loglayer.dev
 ```
 
+Requires **Go 1.25+** (driven by `transports/otellog`'s OpenTelemetry SDK floor; the rest of the library would happily run on older versions). Individual transports/plugins note any stricter requirement on their doc page.
+
 ## Examples
 
 Runnable demos under [`examples/`](./examples):

@@ -850,3 +850,57 @@ func TestPlugin_ShouldSendPanicFailsOpen(t *testing.T) {
 		t.Errorf("ShouldSend panic should not drop the entry; got %d lines", lib.Len())
 	}
 }
+
+// The error passed to OnError is a *RecoveredPanicError that exposes the
+// hook name and the original recovered value, and unwraps to the original
+// error when the panic value implemented error.
+func TestPlugin_RecoveredPanicErrorTypedInspection(t *testing.T) {
+	log, _ := setup(t)
+	originalErr := errors.New("boom")
+	var caught error
+	log.AddPlugin(loglayer.Plugin{
+		ID:              "panicker",
+		OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data { panic(originalErr) },
+		OnError:         func(err error) { caught = err },
+	})
+	log.Info("trigger")
+
+	var rpe *loglayer.RecoveredPanicError
+	if !errors.As(caught, &rpe) {
+		t.Fatalf("caught error should be *RecoveredPanicError, got %T (%v)", caught, caught)
+	}
+	if rpe.Hook != "OnBeforeDataOut" {
+		t.Errorf("Hook: got %q, want %q", rpe.Hook, "OnBeforeDataOut")
+	}
+	if rpe.RecoveredValue() != error(originalErr) {
+		t.Errorf("RecoveredValue: got %v, want %v", rpe.RecoveredValue(), originalErr)
+	}
+	if !errors.Is(caught, originalErr) {
+		t.Errorf("errors.Is should reach the wrapped panic value")
+	}
+}
+
+// When the panic value is a non-error (string, int, custom struct),
+// RecoveredValue exposes it. Unwrap returns nil because there's no
+// error chain to follow.
+func TestPlugin_RecoveredPanicErrorWithNonErrorValue(t *testing.T) {
+	log, _ := setup(t)
+	var caught error
+	log.AddPlugin(loglayer.Plugin{
+		ID:              "panicker",
+		OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data { panic("string-panic") },
+		OnError:         func(err error) { caught = err },
+	})
+	log.Info("trigger")
+
+	var rpe *loglayer.RecoveredPanicError
+	if !errors.As(caught, &rpe) {
+		t.Fatalf("caught error should be *RecoveredPanicError")
+	}
+	if rpe.RecoveredValue() != "string-panic" {
+		t.Errorf("RecoveredValue: got %v, want %q", rpe.RecoveredValue(), "string-panic")
+	}
+	if errors.Unwrap(caught) != nil {
+		t.Errorf("Unwrap should be nil for non-error panic values")
+	}
+}

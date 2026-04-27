@@ -178,14 +178,53 @@ func newPluginSet(plugins []Plugin) *pluginSet {
 	return s
 }
 
-// panicError wraps a recovered panic value in an error tagged with the
-// hook name. Used by recoverHook to give plugin authors context when
-// their OnError fires.
+// RecoveredPanicError is the error type passed to Plugin.OnError when
+// a hook panics. It carries the hook name (so callers can route
+// handling per-hook) and the original recovered value (which may not
+// implement error).
+//
+// When the recovered value implements error, the panic chain is
+// reachable via errors.Unwrap (and therefore errors.Is / errors.As).
+// When it doesn't, the original value is still accessible via
+// RecoveredValue — useful for panics that pass strings, numeric codes,
+// or domain-specific types.
+type RecoveredPanicError struct {
+	// Hook is the name of the hook that panicked (e.g. "OnBeforeDataOut").
+	Hook string
+
+	// Value is the original value passed to panic(). May be an error,
+	// a string, or any other type the plugin chose to panic with.
+	Value any
+
+	// wrapped is set when Value satisfies the error interface. Lets
+	// errors.Unwrap reach the original error chain.
+	wrapped error
+}
+
+func (e *RecoveredPanicError) Error() string {
+	return fmt.Sprintf("loglayer: plugin %s panicked: %v", e.Hook, e.Value)
+}
+
+// Unwrap returns the recovered value when it satisfied the error
+// interface; nil otherwise. Lets callers errors.Is / errors.As against
+// the original error.
+func (e *RecoveredPanicError) Unwrap() error { return e.wrapped }
+
+// RecoveredValue returns the original value passed to panic(). Use this
+// when the panic value isn't an error and you need to inspect its
+// concrete type (e.g. type-switching on a custom panic struct).
+func (e *RecoveredPanicError) RecoveredValue() any { return e.Value }
+
+// panicError wraps a recovered panic value in a *RecoveredPanicError so
+// plugin authors can errors.As / errors.Is against the underlying
+// error (when the panic value was an error) or read the raw value via
+// RecoveredValue (when it wasn't).
 func panicError(r any, hook string) error {
+	pe := &RecoveredPanicError{Hook: hook, Value: r}
 	if e, ok := r.(error); ok {
-		return fmt.Errorf("loglayer: plugin %s panicked: %w", hook, e)
+		pe.wrapped = e
 	}
-	return fmt.Errorf("loglayer: plugin %s panicked: %v", hook, r)
+	return pe
 }
 
 // recoverHook is the canonical deferred recovery for plugin hook calls.

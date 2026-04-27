@@ -5,16 +5,26 @@ import "context"
 // Fields is persistent key/value data included with every log entry from a
 // logger instance. Set via WithFields; surfaced to transports via
 // TransportParams.Fields.
-type Fields = map[string]any
+//
+// Fields, Metadata, and Data are distinct named types over map[string]any
+// so the compiler catches accidental misuse (e.g. passing Metadata where
+// Fields is expected). Each plays a distinct role in the dispatch pipeline:
+// Fields is logger-persistent state, Metadata is per-call payload, Data is
+// the assembled output handed to transports. Map literals (loglayer.Fields{...})
+// and untyped map[string]any values are still assignable to any of them.
+type Fields map[string]any
 
 // Data is the assembled object sent to transports containing the persistent
-// fields and the serialized error.
-type Data = map[string]any
+// fields and the serialized error. Distinct from Fields/Metadata at the type
+// level (see Fields' doc).
+type Data map[string]any
 
-// Metadata is a convenience alias for the most common metadata shape: a string-keyed
-// map of arbitrary values. WithMetadata accepts any value, but when the data is an
-// ad-hoc bag of fields this alias keeps call sites short.
-type Metadata = map[string]any
+// Metadata is the most common shape passed to WithMetadata: a string-keyed
+// map of arbitrary values. WithMetadata accepts any value (struct, scalar,
+// slice, anything), but when the data is an ad-hoc bag this alias keeps
+// call sites short. Distinct from Fields/Data at the type level (see Fields'
+// doc).
+type Metadata map[string]any
 
 // ErrorSerializer converts an error into a structured map for the log output.
 // If not set, the default serializer uses {"message": err.Error()}.

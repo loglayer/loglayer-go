@@ -1,3 +1,7 @@
+::: info Go version
+Plugins inherit the main module's Go floor (currently **1.25+**, driven by the OpenTelemetry SDK in `transports/otellog`). Plugins that ship in their own module (e.g. `plugins/datadogtrace/livetest` for the live integration test) can specify their own floor; per-plugin pages note any additional requirement.
+:::
+
 | Name | Description |
 |------|-------------|
 | [Redact](/plugins/redact) | Replace values for a configured set of keys (and optional regex patterns) before metadata or fields reach a transport. Walks structs, maps, and slices via reflection; preserves the runtime type. |

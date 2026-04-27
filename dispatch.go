@@ -10,7 +10,7 @@ import (
 // logger's bound ctx (when one is provided), otherwise the bound ctx is
 // passed through.
 func (l *LogLayer) formatLog(level LogLevel, messages []any, goCtx context.Context, metadata any, err error) {
-	applyPrefix(l.config.Prefix, messages)
+	applyPrefix(l.prefix, messages)
 	if goCtx == nil {
 		goCtx = l.boundCtx
 	}

@@ -6,7 +6,9 @@
 // the full SDK they need.
 module go.loglayer.dev/plugins/datadogtrace/livetest
 
-go 1.26.2
+go 1.25.0
+
+toolchain go1.26.2
 
 replace go.loglayer.dev => ../../..
 

@@ -128,7 +128,7 @@ func (b *LogBuilder) Fatal(messages ...any) {
 }
 
 func (b *LogBuilder) dispatch(level LogLevel, messages []any) {
-	applyPrefix(b.layer.config.Prefix, messages)
+	applyPrefix(b.layer.prefix, messages)
 	// Hot path: builder has no per-call groups → pass the layer's
 	// assigned groups straight through. mergeGroups is out-of-line and
 	// would be a measurable hit per emission for the dominant case.

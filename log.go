@@ -130,7 +130,7 @@ func (l *LogLayer) Raw(entry RawLogEntry) {
 	if !l.levels.isEnabled(entry.LogLevel) {
 		return
 	}
-	applyPrefix(l.config.Prefix, entry.Messages)
+	applyPrefix(l.prefix, entry.Messages)
 	fields := entry.Fields
 	if fields == nil {
 		fields = l.fields

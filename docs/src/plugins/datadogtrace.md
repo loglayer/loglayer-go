@@ -13,6 +13,10 @@ go get go.loglayer.dev/plugins/datadogtrace
 
 The plugin is **tracer-agnostic**: you wire up a small extractor function that pulls the trace and span IDs from a `context.Context`. This avoids forcing a specific dd-trace-go version (or any tracer dependency at all) on LogLayer's main module — your service already imports the tracer it uses.
 
+::: info Go version
+The plugin itself inherits the main module's Go floor (1.25+). The optional **livetest module** at `plugins/datadogtrace/livetest/` has its own `go.mod` that pins `dd-trace-go/v2`; whatever Go floor that library demands lands there, isolated from the main module.
+:::
+
 ## Basic Usage (dd-trace-go v1)
 
 ```go

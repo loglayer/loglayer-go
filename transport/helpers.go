@@ -54,10 +54,14 @@ func JoinMessages(messages []any) string {
 	return strings.Join(parts, " ")
 }
 
-// MetadataAsMap extracts a map[string]any from any metadata value. Maps pass
-// through directly; other types are converted via a JSON roundtrip so their
-// exported fields land at the root of the log object. Returns nil on failure.
+// MetadataAsMap extracts a map[string]any from any metadata value. Maps
+// (loglayer.Metadata or raw map[string]any) pass through directly; other
+// types are converted via a JSON roundtrip so their exported fields land
+// at the root of the log object. Returns nil on failure.
 func MetadataAsMap(v any) map[string]any {
+	if m, ok := MetadataAsRootMap(v); ok {
+		return m
+	}
 	return maputil.ToMap(v)
 }
 
@@ -109,16 +113,34 @@ func MergeIntoMap(dst map[string]any, data map[string]any, metadata any) map[str
 	for k, v := range data {
 		dst[k] = v
 	}
-	switch m := metadata.(type) {
-	case nil:
-	case map[string]any:
+	if m, ok := MetadataAsRootMap(metadata); ok {
 		for k, v := range m {
 			dst[k] = v
 		}
-	default:
-		dst["metadata"] = m
+	} else if metadata != nil {
+		dst["metadata"] = metadata
 	}
 	return dst
+}
+
+// MetadataAsRootMap returns metadata as a map[string]any if it's a
+// "flatten at root" shape (loglayer.Metadata or raw map[string]any),
+// false otherwise. Use this in transports that need to decide whether
+// metadata flattens to individual attributes/fields (true) or nests
+// under MetadataFieldName (false).
+//
+// Both Metadata and map[string]any have the same underlying type but
+// are distinct after the named-type reshape in types.go. This helper
+// hides the dual-case detection so transports don't need to type-switch
+// on both.
+func MetadataAsRootMap(v any) (map[string]any, bool) {
+	switch m := v.(type) {
+	case loglayer.Metadata:
+		return m, true
+	case map[string]any:
+		return m, true
+	}
+	return nil, false
 }
 
 // FieldEstimate returns the expected number of fields a transport will emit
@@ -126,7 +148,7 @@ func MergeIntoMap(dst map[string]any, data map[string]any, metadata any) map[str
 // that benefit from capacity hints (zap, charmlog).
 func FieldEstimate(p loglayer.TransportParams) int {
 	n := len(p.Data)
-	if m, ok := p.Metadata.(map[string]any); ok {
+	if m, ok := MetadataAsRootMap(p.Metadata); ok {
 		n += len(m)
 	} else if p.Metadata != nil {
 		n++

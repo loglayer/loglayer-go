@@ -79,6 +79,11 @@ type LogLayer struct {
 	// produced this logger; never mutated post-publish, so the dispatch
 	// path can read it without synchronization.
 	boundCtx context.Context
+	// prefix is prepended to the first string message of every emission
+	// from this logger. Initialized from Config.Prefix at build time;
+	// WithPrefix mutates this field on a fresh child only. Same lifecycle
+	// as assignedGroups/boundCtx: never mutated post-publish.
+	prefix string
 	// txMu serializes transport mutators (AddTransport / RemoveTransport /
 	// SetTransports) so two concurrent admin operations on the same
 	// logger don't lose updates. The dispatch path doesn't take this lock;
@@ -128,6 +133,7 @@ func build(config Config) (*LogLayer, error) {
 		config: config,
 		fields: make(Fields),
 		levels: newLevelState(),
+		prefix: config.Prefix,
 	}
 
 	if config.ErrorFieldName == "" {
@@ -196,6 +202,7 @@ func (l *LogLayer) Child() *LogLayer {
 		levels:         l.levels.clone(),
 		assignedGroups: l.assignedGroups,
 		boundCtx:       l.boundCtx,
+		prefix:         l.prefix,
 	}
 	child.muteFields.Store(l.muteFields.Load())
 	child.muteMetadata.Store(l.muteMetadata.Load())
@@ -210,10 +217,11 @@ func (l *LogLayer) Child() *LogLayer {
 	return child
 }
 
-// WithPrefix creates a child logger with the given prefix prepended to every message.
+// WithPrefix creates a child logger with the given prefix prepended to
+// every message. The receiver is unchanged.
 func (l *LogLayer) WithPrefix(prefix string) *LogLayer {
 	child := l.Child()
-	child.config.Prefix = prefix
+	child.prefix = prefix
 	return child
 }
 

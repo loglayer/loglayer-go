@@ -49,6 +49,10 @@ Default to (2) or (3) for new methods. Use (4) only when the operation is genuin
 
 `loglayer.New(Config)` panics on misconfiguration; `loglayer.Build(Config) (*LogLayer, error)` returns an error. Both report `loglayer.ErrNoTransport`. When adding a constructor that can fail at construction time, follow the same pattern: a panicking primary entry point and a `Build`-style sibling, not just one or the other.
 
+**The rule is "Build exists when the constructor can fail."** Wrapper transports that take a pre-built `*zerolog.Logger`/`*zap.Logger`/etc. and have nothing to validate ship only `New`. Network transports (`http`, `datadog`) and SDK-binding transports (`otellog`) that need a URL/API key/instrumentation name have both `New` and `Build`, plus a sentinel error in `errors.go` (e.g. `ErrURLRequired`, `ErrAPIKeyRequired`, `ErrNameRequired`) callers compare with `errors.Is`. Keep these sentinels named `ErrXRequired` for consistency.
+
+When you add a new transport, ask: "can this constructor fail with a runtime-loaded value (env var, config file, secret manager)?" If yes, ship the pair. If no, `New` alone is honest — adding a `Build` that always returns nil error is just noise.
+
 ## Code Reuse
 
 ### Lift duplicated defaulting into `transport/`

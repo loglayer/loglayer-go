@@ -119,6 +119,22 @@ When adding a new transport, update the transport-list partial. Both the homepag
 3. Add a sidebar entry in `docs/.vitepress/config.ts`.
 4. Run `cd docs && bun run docs:build` and confirm clean.
 
+## Go Version Floors
+
+LogLayer is a single Go module, so the **highest** Go floor in any imported sub-package becomes the floor for everyone using `go.loglayer.dev`. Today that's 1.25, driven by the OpenTelemetry SDK that `transports/otellog` binds against.
+
+When adding a transport, plugin, or integration:
+
+1. **If your dep raises the module-wide floor**, update `go.mod`, the matrix in `.github/workflows/ci.yml`, and the version statements in `README.md`, `docs/src/getting-started.md`, the `transport-list` and `plugin-list` partials, and `AGENTS.md`. Mention the bump in `CHANGELOG.md` and `docs/src/whats-new.md`.
+
+2. **If your transport/plugin needs a stricter floor than the module's** (rare today, but plausible for future bindings), call it out with a `::: warning Go version` block at the top of the per-transport/plugin doc page. The reader needs to see the requirement before they `go get` and hit a confusing build error.
+
+3. **If your dep would drag in a much higher floor than what most users want** (the dd-trace-go v2 case), put your code in a separate Go module under the package directory (e.g. `plugins/datadogtrace/livetest/go.mod`) so its dep graph stays isolated from the main module. Document the separate module's floor on its parent page.
+
+4. **Per-transport/plugin pages** should default to "inherits the module's Go floor" without restating the number. Only call it out when the floor differs from the main module — otherwise stating it everywhere creates drift the moment the module floor moves.
+
+The partial-list headers (`transports/_partials/transport-list.md`, `plugins/_partials/plugin-list.md`) carry the canonical statement of the module-wide floor in an `::: info Go version` block. Update those whenever the floor moves so readers see it on the catalog pages.
+
 ## When Adding a New API or Config Field
 
 1. Update `docs/src/configuration.md` (if a Config field) or the relevant `logging-api/` page.

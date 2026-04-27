@@ -167,7 +167,7 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 		for k, v := range params.Data {
 			attrs = append(attrs, otellog.KeyValue{Key: k, Value: toValue(v)})
 		}
-		if m, ok := params.Metadata.(map[string]any); ok {
+		if m, ok := transport.MetadataAsRootMap(params.Metadata); ok {
 			for k, v := range m {
 				attrs = append(attrs, otellog.KeyValue{Key: k, Value: toValue(v)})
 			}

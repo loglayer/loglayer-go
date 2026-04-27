@@ -98,7 +98,7 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 	}
 
 	if params.Metadata != nil {
-		if m, ok := params.Metadata.(map[string]any); ok {
+		if m, ok := transport.MetadataAsRootMap(params.Metadata); ok {
 			for k, v := range m {
 				fields[k] = v
 			}
