@@ -52,7 +52,12 @@ type Config struct {
 	transport.BaseConfig
 
 	// APIKey is the Datadog API key. Required.
-	APIKey string
+	//
+	// Tagged json:"-" so that log.WithMetadata(cfg).Info(...) through
+	// any JSON-emitting transport (structured, zerolog, zap, slog,
+	// etc.) won't ship the key in the rendered log. Direct field
+	// access by the transport's own Build() is unaffected.
+	APIKey string `json:"-"`
 
 	// Site selects the Datadog region. Defaults to SiteUS1. Ignored
 	// when URL is set.
@@ -90,6 +95,13 @@ type Config struct {
 // String returns a redacted form of the config so that an accidental
 // log.Info(cfg) (or fmt.Sprintf("%v", cfg)) can't ship the API key.
 // The key is replaced with a fixed mask regardless of length.
+//
+// Note: Go's fmt verbs %+v and %#v intentionally bypass Stringer and
+// always print struct fields. Code that uses those verbs against
+// Config will see the raw APIKey. Reserve %+v / %#v for debugger-style
+// inspection, never for production logs. The json:"-" tag on APIKey
+// prevents the JSON-via-transport leak path; this method covers the
+// fmt.Sprintf path; %+v / %#v are explicitly out of scope.
 func (c Config) String() string {
 	masked := c
 	if masked.APIKey != "" {

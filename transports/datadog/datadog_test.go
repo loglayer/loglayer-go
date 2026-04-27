@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
@@ -232,6 +233,26 @@ func TestDatadog_ConfigStringRedactsAPIKey(t *testing.T) {
 	v := fmt.Sprintf("%v", cfg)
 	if strings.Contains(v, "deadbeef-secret-keep-me-out-of-logs") {
 		t.Errorf("APIKey leaked through %%v: %s", v)
+	}
+}
+
+// The APIKey field is tagged json:"-" so it's never included in JSON
+// output. Closes the defense-in-depth leak path where a user does
+// log.WithMetadata(cfg).Info(...) through a JSON-emitting transport.
+//
+// Asserted via reflection rather than via json.Marshal because the
+// embedded httptr.Config has function-typed fields (OnError, Encoder,
+// Client) that make json.Marshal of a full datadog.Config fail
+// outright. The function-field marshal failure already keeps the key
+// out of the wire log today; the json:"-" tag is the additional fence
+// in case a future Config change removes those function fields.
+func TestDatadog_ConfigAPIKeyTaggedJSONIgnore(t *testing.T) {
+	field, ok := reflect.TypeOf(datadog.Config{}).FieldByName("APIKey")
+	if !ok {
+		t.Fatal("Config.APIKey field not found")
+	}
+	if got := field.Tag.Get("json"); got != "-" {
+		t.Errorf("APIKey json tag: got %q, want \"-\"", got)
 	}
 }
 

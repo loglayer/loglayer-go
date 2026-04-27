@@ -336,3 +336,53 @@ func TestCloner_DeeplyNested_HitsDepthCap(t *testing.T) {
 	// Must not panic; the depth cap kicks in.
 	_ = c.Clone(root)
 }
+
+// Measures the steady-state per-Clone cost. Each Clone allocates a
+// fresh visited map and walks the input. Compare against the
+// pre-cycle-protection baseline if you want the delta from the security
+// hardening.
+func BenchmarkClone_TypicalStruct(b *testing.B) {
+	type req struct {
+		Method   string `json:"method"`
+		Path     string `json:"path"`
+		User     string `json:"user"`
+		Password string `json:"password"`
+		Headers  map[string]string
+	}
+	in := req{
+		Method:   "POST",
+		Path:     "/api/v1/users",
+		User:     "alice",
+		Password: "shouldnotappear",
+		Headers:  map[string]string{"Content-Type": "application/json", "Accept": "*/*"},
+	}
+	c := &maputil.Cloner{
+		MatchKey: func(k string) bool { return k == "password" },
+		Censor:   "[REDACTED]",
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = c.Clone(in)
+	}
+}
+
+// Maps are the dominant input shape for redact in practice (most users
+// pass loglayer.Metadata{...}). Measures the map-walk path specifically.
+func BenchmarkClone_TypicalMap(b *testing.B) {
+	in := map[string]any{
+		"requestId": "abc-123",
+		"userId":    42,
+		"path":      "/api/v1/users",
+		"password":  "shouldnotappear",
+	}
+	c := &maputil.Cloner{
+		MatchKey: func(k string) bool { return k == "password" },
+		Censor:   "[REDACTED]",
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = c.Clone(in)
+	}
+}

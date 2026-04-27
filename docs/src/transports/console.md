@@ -126,3 +126,9 @@ console.New(console.Config{
 ## Metadata Handling
 
 Map metadata is merged into the same data bag as fields and errors. Struct metadata is JSON-roundtripped into root fields. See [Metadata](/logging-api/metadata) for the design.
+
+## Threat Model: Plaintext, Not for Pipelines
+
+Console's user message string is sanitized for control characters before output (CR, LF, ESC, Unicode bidi controls, zero-width joiners; see `transport.SanitizeMessage`). Field and metadata values, however, are rendered through `fmt`'s `%v` and pass through to the writer in their typed form, including any control characters they happen to contain.
+
+If your service has untrusted input flowing into a logged field and the resulting log lines are read by a viewer or parser that's tricked by control characters, **use [`structured`](/transports/structured) instead**. Structured emits JSON; encoding/json escapes all control characters by default. Console (like pretty) is for the developer's terminal during local dev.
