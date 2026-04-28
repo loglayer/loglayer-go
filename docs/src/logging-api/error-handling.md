@@ -13,7 +13,7 @@ Errors get their own first-class slot on every log entry. Attach one with `WithE
 log.WithError(err).Error("operation failed")
 ```
 
-By default the error is serialized as `{"message": err.Error()}` and placed under the `err` field of the data object:
+By default the error is serialized as `{"message": err.Error()}` and placed under the `err` field of the assembled `Data` map:
 
 ```json
 {

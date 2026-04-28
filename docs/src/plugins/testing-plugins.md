@@ -47,9 +47,9 @@ plugintest.AssertNoMutation[any](t,
 
 ## Verifying panic recovery
 
-The framework recovers hook panics and forwards them to a plugin's `OnError` (when the plugin implements [`loglayer.ErrorReporter`](https://pkg.go.dev/go.loglayer.dev#ErrorReporter)). Use `plugintest.AssertPanicRecovered` to drive a panicking hook and assert the framework forwarded a `*loglayer.RecoveredPanicError`.
+LogLayer recovers hook panics and forwards them to a plugin's `OnError` (when the plugin implements [`loglayer.ErrorReporter`](https://pkg.go.dev/go.loglayer.dev#ErrorReporter)). Use `plugintest.AssertPanicRecovered` to drive a panicking hook and assert that a `*loglayer.RecoveredPanicError` was forwarded.
 
-The helper takes a builder closure that receives a `captureFn`: thread it through to your plugin's `OnError` so the framework's recovery path delivers the panic to the helper's capture.
+The helper takes a builder closure that receives a `captureFn`: thread it through to your plugin's `OnError` so the recovery path delivers the panic to the helper's capture.
 
 ```go
 rpe := plugintest.AssertPanicRecovered(t,

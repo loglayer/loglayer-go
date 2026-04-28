@@ -139,7 +139,7 @@ Baggage values are application-controlled. If your application puts unbounded da
 
 ### `OnError`
 
-Optional handler invoked if the plugin panics during emission. The framework recovers the panic so logging keeps working; `OnError` lets you observe it (log to stderr, increment a counter, send to your error tracker). Defaults to silent.
+Optional handler invoked if the plugin panics during emission. LogLayer recovers the panic so logging keeps working; `OnError` lets you observe it (log to stderr, increment a counter, send to your error tracker). Defaults to silent.
 
 ### `ID`
 

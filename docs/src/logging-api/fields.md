@@ -7,7 +7,7 @@ description: Persistent, keyed data attached to every log entry from a logger.
 
 Fields are data that should appear on every log entry from a logger: request IDs, user info, session data, anything that identifies the unit of work in progress. They are the opposite of [metadata](/logging-api/metadata), which is per-call.
 
-`loglayer.Fields` is a named type over `map[string]any` so the compiler keeps it distinct from `loglayer.Metadata` (per-call) and `loglayer.Data` (the assembled output the framework hands to transports and plugins).
+`loglayer.Fields` is a named type over `map[string]any` so the compiler keeps it distinct from `loglayer.Metadata` (per-call) and `loglayer.Data` (the assembled output handed to transports and plugins).
 
 ## Adding Fields
 
@@ -34,7 +34,7 @@ log.Info("Processing request")
 log.Warn("User quota exceeded")
 ```
 
-Both subsequent calls include `requestId` and `userId`. By default the keys are merged at the root of the data object:
+Both subsequent calls include `requestId` and `userId`. By default the keys are merged at the root of the assembled `Data` map:
 
 ```json
 {

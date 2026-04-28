@@ -149,7 +149,7 @@ See [Error Handling](/logging-api/error-handling) for more options including wri
 
 ## ErrorFieldName
 
-The key used for the serialized error inside the assembled data object. Defaults to `"err"`:
+The key used for the serialized error inside the assembled `Data` map. Defaults to `"err"`:
 
 ```go
 loglayer.New(loglayer.Config{
@@ -164,7 +164,7 @@ When `true`, `log.ErrorOnly(err)` also uses `err.Error()` as the log message. De
 
 ## FieldsKey
 
-By default, fields are merged at the root of the data object. Set this to nest them under a single key:
+By default, fields are merged at the root of the assembled `Data` map. Set this to nest them under a single key:
 
 ```go
 loglayer.New(loglayer.Config{

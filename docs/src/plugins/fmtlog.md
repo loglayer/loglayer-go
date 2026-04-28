@@ -13,7 +13,7 @@ description: "Opt-in fmt.Sprintf semantics for multi-arg log calls."
 go get go.loglayer.dev/fmtlog
 ```
 
-The package is a sub-package of `go.loglayer.dev` (no extra dependencies, ships with the framework core).
+The package is a sub-package of `go.loglayer.dev` (no extra dependencies; ships with the main module).
 
 ## Basic Usage
 
@@ -46,7 +46,7 @@ log.WithMetadata(loglayer.Metadata{"reqId": reqID}).
 
 ## Why a Plugin Instead of `Infof` Methods
 
-The framework deliberately doesn't ship `Infof` / `Warnf` / `Errorf` / etc. on `*LogLayer`. Two reasons:
+LogLayer deliberately doesn't ship `Infof` / `Warnf` / `Errorf` / etc. on `*LogLayer`. Two reasons:
 
 1. **Structured-first.** The message field is a label, not a sentence. Format strings encourage burying values inside the message that would be more queryable as `WithMetadata` keys. The core API stays out of the way.
 2. **Opt-in.** Some teams use `log.Info("got %d users", n)` *intending* a literal message ("`%d`" is in the text on purpose). Adding format-string semantics globally would surprise them. Registering `fmtlog.New()` is an explicit "I want printf semantics."

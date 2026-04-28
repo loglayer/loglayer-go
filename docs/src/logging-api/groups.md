@@ -59,7 +59,7 @@ log := loglayer.New(loglayer.Config{
 
 ## Routing Precedence
 
-For each (entry, transport) pair the framework walks these checks top-to-bottom; the first one that fails drops the entry from that transport.
+For each (entry, transport) pair the dispatch path walks these checks top-to-bottom; the first one that fails drops the entry from that transport.
 
 | # | Check | Drops the entry when |
 |---|---|---|

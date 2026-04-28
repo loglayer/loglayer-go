@@ -58,7 +58,7 @@ A pipeline with three plugins (one `DataHook`, one `LevelHook`, one `SendGate`):
 | LogLayer with no plugins, simple message (no-op transport) | 41 ns | 1 | 16 |
 | LogLayer with three plugins, simple message (no-op transport) | 511 ns | 5 | 688 |
 
-The framework pre-indexes hook membership at registration time, so plugins that don't implement a given hook never run. Read-only plugins don't allocate; mutating ones (the `redact` plugin's deep-clone, for instance) own most of the cost in a real pipeline.
+LogLayer pre-indexes hook membership at registration time, so plugins that don't implement a given hook never run. Read-only plugins don't allocate; mutating ones (the `redact` plugin's deep-clone, for instance) own most of the cost in a real pipeline.
 
 For a heavy redaction pipeline, see [Creating Plugins → Performance: only clone if you mutate](/plugins/creating-plugins#performance-only-clone-if-you-mutate).
 
@@ -113,7 +113,7 @@ The cases where the overhead becomes visible:
 - A tight loop that logs millions of times per second (pre-aggregate, sample, or use a level filter).
 - A latency-sensitive hot path where every nanosecond is budgeted (gate logs behind `IsLevelEnabled` and skip the call entirely).
 
-For typical web services, batch jobs, and CLI tools, the framework cost is in the noise.
+For typical web services, batch jobs, and CLI tools, the dispatch cost is in the noise.
 
 ## Reproducing locally
 
@@ -121,7 +121,7 @@ For typical web services, batch jobs, and CLI tools, the framework cost is in th
 go test -bench=. -benchmem -run=^$ -benchtime=500ms .
 ```
 
-`bench_test.go` covers every wrapper transport plus the framework-internal benchmarks. To compare a single library:
+`bench_test.go` covers every wrapper transport plus the loglayer-internal benchmarks. To compare a single backend:
 
 ```sh
 go test -bench='Zerolog' -benchmem -run=^$ -benchtime=500ms .

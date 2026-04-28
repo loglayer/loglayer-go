@@ -21,7 +21,7 @@ LogLayer is that layer. It sits on top of whichever logging library you already 
 
 If your service is small and you only need "log to stdout in JSON," the stdlib is fine. The friction LogLayer fixes shows up later: when you add a second destination, redact a field across every log site, or want to wire in OpenTelemetry without rewriting how you log everywhere.
 
-The framework adds about 40 ns and one allocation per emission on top of whatever your underlying logger costs. See [Benchmarks](/benchmarks) for the full picture.
+LogLayer adds about 40 ns and one allocation per emission on top of whatever your underlying logger costs. See [Benchmarks](/benchmarks) for the full picture.
 
 ```go
 log.

@@ -386,7 +386,7 @@ In practice most pipelines have zero or one mutating metadata plugin (typically 
 
 ## Panic recovery
 
-Every hook call is wrapped in a deferred recover. If your hook panics, the framework swallows the panic, logging continues, and the entry treats the hook's contribution as if it returned the "no transformation" / "drop input" / "fail open" value for that hook:
+Every hook call is wrapped in a deferred recover. If your hook panics, the dispatch path swallows the panic, logging continues, and the entry treats the hook's contribution as if it returned the "no transformation" / "drop input" / "fail open" value for that hook:
 
 | Hook | Behavior on panic |
 |---|---|
@@ -397,7 +397,7 @@ Every hook call is wrapped in a deferred recover. If your hook panics, the frame
 | `LevelHook` | Level unchanged (`ok=false`) |
 | `SendGate` | Entry sent to the transport (fails open) |
 
-The framework writes a one-line description of the recovered panic to `os.Stderr` so the failure isn't silent. To observe the panic in your own code, implement [`ErrorReporter`](https://pkg.go.dev/go.loglayer.dev#ErrorReporter):
+LogLayer writes a one-line description of the recovered panic to `os.Stderr` so the failure isn't silent. To observe the panic in your own code, implement [`ErrorReporter`](https://pkg.go.dev/go.loglayer.dev#ErrorReporter):
 
 ```go
 type ErrorReporter interface {
@@ -418,7 +418,7 @@ func (p *myPlugin) OnError(err error) {
 }
 ```
 
-When `ErrorReporter` is implemented, the framework calls it instead of writing to stderr. Either way, the panic never propagates to the caller's goroutine.
+When `ErrorReporter` is implemented, the dispatch path calls it instead of writing to stderr. Either way, the panic never propagates to the caller's goroutine.
 
 ## Concurrency and performance
 
