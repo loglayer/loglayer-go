@@ -68,7 +68,10 @@ fluent API for messages, fields, metadata, and errors. v1.0.0 ships:
 - **Test helpers**: `transport/transporttest` exposes `RunContract` for
   the wrapper-transport contract suite; `plugins/plugintest` exposes
   `Install` / `AssertNoMutation` / `AssertPanicRecovered` for plugin
-  authors.
+  authors. `transport/benchtest` exposes shared bench fixtures for
+  per-module benchmarks.
+- **Convenience helpers**: `fmtlog` sub-package for printf-style logging
+  (`fmtlog.Infof(log, "user %d", id)`); core stays structured-first.
 - **Security defaults**: control-character sanitization on
   console/pretty messages and `loghttp` request headers; cycle-safe
   reflection in `maputil.Cloner`; `Datadog.Config` redacts the API key
