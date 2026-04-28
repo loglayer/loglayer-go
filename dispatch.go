@@ -146,10 +146,10 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 	if level == LogLevelFatal && !cfg.DisableFatalExit {
 		// Async transports (HTTP/Datadog) only enqueue in SendToLogger;
 		// without flushing them here the Fatal entry would be lost when
-		// os.Exit terminates the worker goroutines mid-batch.
-		for _, t := range l.loadTransports().list {
-			closeIfCloser(t)
-		}
+		// os.Exit terminates the worker goroutines mid-batch. Bounded
+		// by Config.TransportCloseTimeout so a wedged endpoint can't
+		// hang the process indefinitely.
+		flushTransports(l.loadTransports().list, cfg.TransportCloseTimeout)
 		osExit(1)
 	}
 }

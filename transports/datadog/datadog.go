@@ -152,6 +152,9 @@ func Build(cfg Config) (*Transport, error) {
 	if cfg.APIKey == "" {
 		return nil, ErrAPIKeyRequired
 	}
+	if cfg.HTTP.URL != "" || cfg.HTTP.Encoder != nil {
+		return nil, ErrHTTPOverrideForbidden
+	}
 
 	httpCfg := cfg.HTTP
 	httpCfg.BaseConfig = cfg.BaseConfig

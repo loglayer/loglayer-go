@@ -212,6 +212,29 @@ func TestDatadog_Build_AllowsInsecureURLWithOptIn(t *testing.T) {
 	_ = tr.Close()
 }
 
+func TestDatadog_Build_RejectsHTTPURLOverride(t *testing.T) {
+	_, err := datadog.Build(datadog.Config{
+		APIKey: "k",
+		HTTP:   httptr.Config{URL: "https://my-forwarder.internal/v1/logs"},
+	})
+	if !errors.Is(err, datadog.ErrHTTPOverrideForbidden) {
+		t.Errorf("Build with HTTP.URL set: got %v, want ErrHTTPOverrideForbidden", err)
+	}
+}
+
+func TestDatadog_Build_RejectsHTTPEncoderOverride(t *testing.T) {
+	enc := httptr.EncoderFunc(func(_ []httptr.Entry) ([]byte, string, error) {
+		return nil, "", nil
+	})
+	_, err := datadog.Build(datadog.Config{
+		APIKey: "k",
+		HTTP:   httptr.Config{Encoder: enc},
+	})
+	if !errors.Is(err, datadog.ErrHTTPOverrideForbidden) {
+		t.Errorf("Build with HTTP.Encoder set: got %v, want ErrHTTPOverrideForbidden", err)
+	}
+}
+
 func TestDatadog_SiteIntakeURL(t *testing.T) {
 	cases := []struct {
 		site datadog.Site

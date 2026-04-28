@@ -1,6 +1,17 @@
 package loglayer
 
-import "io"
+import (
+	"io"
+	"sync"
+	"time"
+)
+
+// defaultTransportCloseTimeout is the fallback used when
+// Config.TransportCloseTimeout is zero (its zero value). Caps how long
+// the framework waits for an io.Closer transport to drain on removal
+// or pre-Fatal flush so a wedged endpoint can't hang the process or
+// the mutator goroutine.
+const defaultTransportCloseTimeout = 5 * time.Second
 
 // closeIfCloser closes t if it implements io.Closer. Drains async-transport
 // workers (HTTP/Datadog) when a transport is removed or replaced so they
@@ -8,6 +19,49 @@ import "io"
 func closeIfCloser(t Transport) {
 	if c, ok := t.(io.Closer); ok {
 		_ = c.Close()
+	}
+}
+
+// flushTransports closes every transport that implements io.Closer,
+// blocking up to timeout. Closes are run in parallel so total wall-time
+// is max(per-transport close), not sum.
+//
+// timeout == 0 uses the framework default (5s); a negative value
+// disables the cap and waits as long as Close takes (the historical
+// behavior). When the timeout fires, the goroutines driving any
+// still-running Close calls leak; callers MUST treat this as
+// best-effort drain.
+func flushTransports(transports []Transport, timeout time.Duration) {
+	if len(transports) == 0 {
+		return
+	}
+	if timeout < 0 {
+		for _, t := range transports {
+			closeIfCloser(t)
+		}
+		return
+	}
+	if timeout == 0 {
+		timeout = defaultTransportCloseTimeout
+	}
+	done := make(chan struct{})
+	go func() {
+		var wg sync.WaitGroup
+		for _, t := range transports {
+			wg.Add(1)
+			go func(t Transport) {
+				defer wg.Done()
+				closeIfCloser(t)
+			}(t)
+		}
+		wg.Wait()
+		close(done)
+	}()
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	select {
+	case <-done:
+	case <-timer.C:
 	}
 }
 
@@ -39,15 +93,15 @@ func (l *LogLayer) AddTransport(transports ...Transport) *LogLayer {
 		filtered = append(filtered, t)
 	}
 	l.publishTransports(append(filtered, transports...))
-	for _, t := range displaced {
-		closeIfCloser(t)
-	}
+	flushTransports(displaced, l.config.TransportCloseTimeout)
 	return l
 }
 
 // RemoveTransport removes the transport with the given ID. The removed
 // transport is closed if it implements io.Closer (HTTP/Datadog drain
-// pending entries before returning).
+// pending entries before returning), capped by
+// Config.TransportCloseTimeout so a wedged endpoint can't hang the
+// mutator goroutine.
 // Returns true if found and removed, false otherwise.
 //
 // Safe to call concurrently with log emission.
@@ -67,13 +121,13 @@ func (l *LogLayer) RemoveTransport(id string) bool {
 		}
 	}
 	l.publishTransports(remaining)
-	closeIfCloser(removed)
+	flushTransports([]Transport{removed}, l.config.TransportCloseTimeout)
 	return true
 }
 
 // SetTransports replaces all existing transports. Any previous transport
 // not present in the new set (matched by ID) is closed if it implements
-// io.Closer.
+// io.Closer, capped by Config.TransportCloseTimeout.
 //
 // Safe to call concurrently with log emission.
 func (l *LogLayer) SetTransports(transports ...Transport) *LogLayer {
@@ -86,11 +140,13 @@ func (l *LogLayer) SetTransports(transports ...Transport) *LogLayer {
 		keep[t.ID()] = true
 	}
 	l.publishTransports(transports)
+	var evicted []Transport
 	for _, t := range current {
 		if !keep[t.ID()] {
-			closeIfCloser(t)
+			evicted = append(evicted, t)
 		}
 	}
+	flushTransports(evicted, l.config.TransportCloseTimeout)
 	return l
 }
 

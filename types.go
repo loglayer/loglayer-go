@@ -1,6 +1,9 @@
 package loglayer
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 // Fields is persistent key/value data included with every log entry from a
 // logger instance. Set via WithFields; surfaced to transports via
@@ -76,6 +79,17 @@ type Config struct {
 	// their underlying library's exit before this option takes effect. See
 	// each wrapper's docs for details.
 	DisableFatalExit bool
+
+	// TransportCloseTimeout caps how long the framework waits for an
+	// io.Closer transport to drain when it is removed (RemoveTransport,
+	// SetTransports, AddTransport-by-replace) or flushed before a Fatal
+	// exit. A wedged endpoint (network partition, stalled TLS handshake)
+	// would otherwise hang the process or the mutator goroutine
+	// indefinitely.
+	//
+	// Defaults to 5 seconds when zero. Set to a negative value to wait
+	// without a timeout (the historical behavior).
+	TransportCloseTimeout time.Duration
 
 	// Groups defines named routing rules. Each group lists the transport
 	// IDs it routes to, an optional minimum level, and an optional disabled
