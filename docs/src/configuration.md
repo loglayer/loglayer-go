@@ -257,10 +257,10 @@ log = loglayer.New(loglayer.Config{
 
 Field semantics:
 
-- `Kind` — `loglayer.PanicKindPlugin` or `loglayer.PanicKindTransport`.
-- `ID` — the panicking component's identifier: the plugin ID for plugin panics, the transport ID for transport panics. Always populated.
-- `Plugin` — `*PluginPanicDetails`, non-nil iff `Kind == PanicKindPlugin`. Carries the hook method name (`Plugin.Hook = "OnBeforeDataOut"`, etc.). Nil for transport panics so the absence of the hook dimension is a typed condition rather than an empty-string convention.
-- `Value` — the value originally passed to `panic()`.
+- `Kind`: `loglayer.PanicKindPlugin` or `loglayer.PanicKindTransport`.
+- `ID`: the panicking component's identifier (the plugin ID for plugin panics, the transport ID for transport panics). Always populated.
+- `Plugin`: a `*PluginPanicDetails`, non-nil iff `Kind == PanicKindPlugin`. Carries the hook method name (`Plugin.Hook = "OnBeforeDataOut"`, etc.). Nil for transport panics so the absence of the hook dimension is a typed condition rather than an empty-string convention.
+- `Value`: the value originally passed to `panic()`.
 
 ::: warning Off by default for hot-path reasons
 Wrapping every `SendToLogger` call in a deferred recover costs ~8 ns per emission per transport even when no panic occurs (the open-coded defer still runs). On a sub-50 ns dispatch path that's measurable. The default (nil handler) keeps the hot path a direct call. Opt in when transport stability matters more than the few-nanosecond cost.

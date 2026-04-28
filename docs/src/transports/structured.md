@@ -131,3 +131,8 @@ If `json.Marshal` returns an error (typically because metadata contains an unsup
 ```
 
 Catch these in monitoring, they indicate a code-side bug, not a runtime issue.
+
+## Fatal Behavior
+
+<!--@include: ./_partials/fatal-passthrough.md-->
+

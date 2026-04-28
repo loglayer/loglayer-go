@@ -47,7 +47,7 @@ The last row offers a different choice: LogLayer's own `structured` transport (n
 
 zap's own dispatch is heavier than zerolog's, so the relative cost of wrapping it is smaller (23% vs 60% on the simple-message path). Absolute LogLayer overhead is similar (~85 ns and one alloc); zap's higher floor makes the percentage shrink.
 
-Note the last row: LogLayer's own `structured` transport (332 ns) is faster than wrapping zap (444 ns) on simple messages — the standalone JSON path beats zap once you account for the wrapper overhead. If you wanted zap specifically for its API or its `zapcore` pipeline, the win is in features, not throughput.
+Note the last row: LogLayer's own `structured` transport (332 ns) is faster than wrapping zap (444 ns) on simple messages. The standalone JSON path beats zap once you account for the wrapper overhead. If you wanted zap specifically for its API or its `zapcore` pipeline, the win is in features, not throughput.
 
 ## Plugin pipeline cost
 

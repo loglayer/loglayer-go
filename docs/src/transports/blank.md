@@ -103,3 +103,8 @@ log := loglayer.New(loglayer.Config{
 ## When to Promote
 
 Once you've used the same `blank.Config` in two places, it's time to write a real transport. The [Creating Transports](/transports/creating-transports) page shows the minimal template.
+
+## Fatal Behavior
+
+<!--@include: ./_partials/fatal-passthrough.md-->
+

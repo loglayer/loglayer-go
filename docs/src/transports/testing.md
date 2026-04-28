@@ -77,6 +77,10 @@ lib := log.GetLoggerInstance("test").(*lltest.TestLoggingLibrary)
 lib.ClearLines()
 ```
 
+## Fatal Behavior
+
+<!--@include: ./_partials/fatal-passthrough.md-->
+
 ## See Also
 
 - [Mocking](/logging-api/mocking), examples and patterns for using this transport in your test suite, plus `loglayer.NewMock()` for the silent-mock case.

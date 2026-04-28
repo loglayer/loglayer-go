@@ -1,18 +1,20 @@
 ---
 title: Basic Logging
-description: The five log level methods and how messages are assembled.
+description: The seven log level methods and how messages are assembled.
 ---
 
 # Basic Logging
 
-Once you have a `*loglayer.LogLayer`, the core API is five methods, one per level:
+Once you have a `*loglayer.LogLayer`, the core API is seven methods, one per level:
 
 ```go
+log.Trace("...")
 log.Debug("...")
 log.Info("...")
 log.Warn("...")
 log.Error("...")
 log.Fatal("...")
+log.Panic("...")
 ```
 
 Each method takes `...any` and joins the arguments with a single space when the entry is rendered:

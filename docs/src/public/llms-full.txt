@@ -115,7 +115,7 @@ log.MuteFields().UnmuteFields()                            // suppress in output
 
 `loglayer.Fields` is a type alias for `map[string]any`. Fields are keyed because they support merge, clear-by-key, and copy-on-Child semantics that only make sense over keys.
 
-`WithFields` and `WithoutFields` return a new logger instead of mutating the receiver — matches zerolog/zap/slog/logrus convention. The compiler does not catch a discarded return value, so always assign.
+`WithFields` and `WithoutFields` return a new logger instead of mutating the receiver; this matches zerolog/zap/slog/logrus convention. The compiler does not catch a discarded return value, so always assign.
 
 ### Metadata
 

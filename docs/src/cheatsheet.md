@@ -50,11 +50,13 @@ log.MuteFields()                                    // ✅ in-place mutation; no
 ## Log Levels
 
 ```go
+log.Trace("...")
 log.Debug("...")
 log.Info("...")
 log.Warn("...")
 log.Error("...")
 log.Fatal("...") // calls os.Exit(1) by default; set Config.DisableFatalExit to skip
+log.Panic("...") // calls panic(joined-message) after dispatch; recoverable
 ```
 
 Each method takes `...any`, joined with a space.
