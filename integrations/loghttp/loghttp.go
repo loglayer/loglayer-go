@@ -20,6 +20,7 @@ package loghttp
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"go.loglayer.dev"
@@ -268,10 +269,12 @@ const maxLoggedHeaderLen = 4096
 
 // sanitizeForLog bounds the value's length and strips control characters,
 // so an attacker-controlled HTTP header can't forge log lines or smuggle
-// ANSI escapes.
+// ANSI escapes. Truncation goes through strings.Clone so the resulting
+// string does not pin a megabyte-sized backing array via the slice
+// header for the lifetime of the request-scoped logger.
 func sanitizeForLog(s string) string {
 	if len(s) > maxLoggedHeaderLen {
-		s = s[:maxLoggedHeaderLen]
+		s = strings.Clone(s[:maxLoggedHeaderLen])
 	}
 	return sanitize.Message(s)
 }

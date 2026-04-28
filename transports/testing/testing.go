@@ -66,8 +66,12 @@ func (lib *TestLoggingLibrary) PopLine() *LogLine {
 	if len(lib.lines) == 0 {
 		return nil
 	}
-	l := lib.lines[len(lib.lines)-1]
-	lib.lines = lib.lines[:len(lib.lines)-1]
+	last := len(lib.lines) - 1
+	l := lib.lines[last]
+	// Zero the popped slot before reslicing so the slice header doesn't
+	// retain references to the popped LogLine's Data/Metadata maps.
+	lib.lines[last] = LogLine{}
+	lib.lines = lib.lines[:last]
 	return &l
 }
 
@@ -75,6 +79,7 @@ func (lib *TestLoggingLibrary) PopLine() *LogLine {
 func (lib *TestLoggingLibrary) ClearLines() {
 	lib.mu.Lock()
 	defer lib.mu.Unlock()
+	clear(lib.lines)
 	lib.lines = lib.lines[:0]
 }
 

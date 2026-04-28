@@ -123,11 +123,12 @@ type Config struct {
 // Transport implements loglayer.Transport with batched HTTP delivery.
 type Transport struct {
 	transport.BaseTransport
-	cfg    Config
-	queue  chan Entry
-	done   chan struct{}
-	wg     sync.WaitGroup
-	closed atomic.Bool
+	cfg     Config
+	queue   chan Entry
+	done    chan struct{}
+	wg      sync.WaitGroup
+	closed  atomic.Bool
+	closeMu sync.RWMutex // SendToLogger holds RLock; Close takes Lock to drain in-flight sends.
 }
 
 // New constructs an HTTP Transport and starts its background worker.
@@ -184,13 +185,18 @@ func Build(cfg Config) (*Transport, error) {
 // GetLoggerInstance returns nil; the HTTP transport has no underlying logger.
 func (t *Transport) GetLoggerInstance() any { return nil }
 
-// SendToLogger enqueues the entry. Drops silently if the buffer is full or
-// the transport is closed; both cases invoke OnError with a sentinel error so
-// the caller can observe loss.
+// SendToLogger enqueues the entry. Reports loss via OnError(ErrClosed, ...)
+// when the transport has been closed and OnError(ErrBufferFull, ...) when the
+// buffer is saturated. The closeMu RLock pairs with Close's Lock so an entry
+// either lands in the queue (and is guaranteed to be drained by the worker
+// during Close) or is reported as ErrClosed; an in-flight SendToLogger can't
+// silently land in the queue after the worker has exited.
 func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 	if !t.ShouldProcess(params.LogLevel) {
 		return
 	}
+	t.closeMu.RLock()
+	defer t.closeMu.RUnlock()
 	if t.closed.Load() {
 		t.cfg.OnError(ErrClosed, nil)
 		return
@@ -212,12 +218,19 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 }
 
 // Close drains the queue, flushes any pending entries, and stops the worker.
-// Safe to call multiple times. After Close, SendToLogger drops entries.
+// Safe to call multiple times. After Close, SendToLogger reports ErrClosed.
+//
+// closeMu.Lock waits for in-flight SendToLogger calls (each holding an RLock)
+// to complete; once they have, no new SendToLogger can land an entry in the
+// queue (the closed flag is set under the same lock), so the worker's
+// drainAndFlush sees a stable, finite queue.
 func (t *Transport) Close() error {
 	if !t.closed.CompareAndSwap(false, true) {
 		return nil
 	}
+	t.closeMu.Lock()
 	close(t.done)
+	t.closeMu.Unlock()
 	t.wg.Wait()
 	return nil
 }
@@ -278,6 +291,13 @@ func (t *Transport) drainAndFlush(batch []Entry) {
 }
 
 func (t *Transport) flush(entries []Entry) {
+	// Copy the batch so the caller (worker) can safely re-use its backing
+	// array (batch[:0] then append) while the user-supplied Encoder /
+	// OnError is free to retain entries. Without this copy a later
+	// append by the worker could mutate slice elements still being read
+	// by user code.
+	entries = append([]Entry(nil), entries...)
+
 	body, contentType, err := t.cfg.Encoder.Encode(entries)
 	if err != nil {
 		t.cfg.OnError(fmt.Errorf("loglayer/transports/http: encode: %w", err), entries)
@@ -296,6 +316,11 @@ func (t *Transport) flush(entries []Entry) {
 
 	resp, err := t.cfg.Client.Do(req)
 	if err != nil {
+		// On a CheckRedirect error net/http returns a non-nil response
+		// with the body still open; the caller owns the close.
+		if resp != nil {
+			_ = resp.Body.Close()
+		}
 		t.cfg.OnError(fmt.Errorf("loglayer/transports/http: send: %w", err), entries)
 		return
 	}
