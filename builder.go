@@ -85,7 +85,7 @@ func (b *LogBuilder) Trace(messages ...any) {
 		return
 	}
 	var src *Source
-	if b.layer.config.AddSource {
+	if b.layer.config.Source.Enabled {
 		src = captureSource(1)
 	}
 	b.dispatch(LogLevelTrace, messages, src)
@@ -97,7 +97,7 @@ func (b *LogBuilder) Info(messages ...any) {
 		return
 	}
 	var src *Source
-	if b.layer.config.AddSource {
+	if b.layer.config.Source.Enabled {
 		src = captureSource(1)
 	}
 	b.dispatch(LogLevelInfo, messages, src)
@@ -109,7 +109,7 @@ func (b *LogBuilder) Warn(messages ...any) {
 		return
 	}
 	var src *Source
-	if b.layer.config.AddSource {
+	if b.layer.config.Source.Enabled {
 		src = captureSource(1)
 	}
 	b.dispatch(LogLevelWarn, messages, src)
@@ -121,7 +121,7 @@ func (b *LogBuilder) Error(messages ...any) {
 		return
 	}
 	var src *Source
-	if b.layer.config.AddSource {
+	if b.layer.config.Source.Enabled {
 		src = captureSource(1)
 	}
 	b.dispatch(LogLevelError, messages, src)
@@ -133,7 +133,7 @@ func (b *LogBuilder) Debug(messages ...any) {
 		return
 	}
 	var src *Source
-	if b.layer.config.AddSource {
+	if b.layer.config.Source.Enabled {
 		src = captureSource(1)
 	}
 	b.dispatch(LogLevelDebug, messages, src)
@@ -146,7 +146,7 @@ func (b *LogBuilder) Fatal(messages ...any) {
 		return
 	}
 	var src *Source
-	if b.layer.config.AddSource {
+	if b.layer.config.Source.Enabled {
 		src = captureSource(1)
 	}
 	b.dispatch(LogLevelFatal, messages, src)
@@ -160,7 +160,7 @@ func (b *LogBuilder) Panic(messages ...any) {
 		return
 	}
 	var src *Source
-	if b.layer.config.AddSource {
+	if b.layer.config.Source.Enabled {
 		src = captureSource(1)
 	}
 	b.dispatch(LogLevelPanic, messages, src)

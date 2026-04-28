@@ -244,26 +244,51 @@ const (
 	hookShouldSend     = "ShouldSend"
 )
 
-// RecoveredPanicError is the error type passed to [ErrorReporter.OnError]
-// when a hook panics. Hook is the name of the hook ("OnBeforeDataOut",
-// etc.); Value is the value originally passed to panic(). When Value
-// satisfies the error interface, errors.Unwrap reaches it (and errors.Is /
+// PanicKind values for [RecoveredPanicError.Kind].
+const (
+	// PanicKindPlugin marks a panic recovered from a plugin hook.
+	// ID is the plugin's ID; Hook is the hook method name
+	// (e.g. "OnBeforeDataOut").
+	PanicKindPlugin = "plugin"
+	// PanicKindTransport marks a panic recovered from a transport's
+	// SendToLogger. ID is the transport ID; Hook is empty (transports
+	// have no hook-method dimension).
+	PanicKindTransport = "transport"
+)
+
+// RecoveredPanicError is the error type produced by the framework's
+// centralized panic recovery (plugin hooks via [ErrorReporter.OnError],
+// and transport SendToLogger via [Config.OnTransportPanic]).
+//
+// Kind identifies the category ([PanicKindPlugin] or [PanicKindTransport]).
+// ID is the panicking component's identifier — the plugin ID for plugins,
+// the transport ID for transports. Hook is the hook method name for
+// plugin panics (e.g. "OnBeforeDataOut") and empty for transport panics
+// (transports have no hook-method dimension).
+//
+// Value is the value originally passed to panic(). When Value satisfies
+// the error interface, errors.Unwrap reaches it (and errors.Is /
 // errors.As work transparently); when it doesn't, read Value directly to
 // inspect the concrete type.
 type RecoveredPanicError struct {
+	Kind    string
+	ID      string
 	Hook    string
 	Value   any
 	wrapped error // set when Value implements error
 }
 
 func (e *RecoveredPanicError) Error() string {
-	return fmt.Sprintf("loglayer: plugin %s panicked: %v", e.Hook, e.Value)
+	if e.Hook == "" {
+		return fmt.Sprintf("loglayer: %s %q panicked: %v", e.Kind, e.ID, e.Value)
+	}
+	return fmt.Sprintf("loglayer: %s %q hook %s panicked: %v", e.Kind, e.ID, e.Hook, e.Value)
 }
 
 func (e *RecoveredPanicError) Unwrap() error { return e.wrapped }
 
-func panicError(r any, hook string) error {
-	pe := &RecoveredPanicError{Hook: hook, Value: r}
+func panicError(r any, kind, id, hook string) *RecoveredPanicError {
+	pe := &RecoveredPanicError{Kind: kind, ID: id, Hook: hook, Value: r}
 	if e, ok := r.(error); ok {
 		pe.wrapped = e
 	}
@@ -275,13 +300,13 @@ func panicError(r any, hook string) error {
 // implemented, else writes a one-line description to os.Stderr so the
 // failure isn't silent.
 //
-// Defer it directly: `defer recoverHook(entry.reporter, "HookName")`.
-func recoverHook(reporter ErrorReporter, hook string) {
+// Defer it directly: `defer recoverHook(entry.reporter, entry.id, "HookName")`.
+func recoverHook(reporter ErrorReporter, pluginID, hook string) {
 	r := recover()
 	if r == nil {
 		return
 	}
-	err := panicError(r, hook)
+	err := panicError(r, PanicKindPlugin, pluginID, hook)
 	if reporter != nil {
 		reporter.OnError(err)
 		return
@@ -290,17 +315,17 @@ func recoverHook(reporter ErrorReporter, hook string) {
 }
 
 func callBeforeDataOut(e *pluginEntry, p BeforeDataOutParams) (out Data) {
-	defer recoverHook(e.reporter, hookBeforeDataOut)
+	defer recoverHook(e.reporter, e.id, hookBeforeDataOut)
 	return e.onData.OnBeforeDataOut(p)
 }
 
 func callBeforeMessageOut(e *pluginEntry, p BeforeMessageOutParams) (out []any) {
-	defer recoverHook(e.reporter, hookBeforeMsgOut)
+	defer recoverHook(e.reporter, e.id, hookBeforeMsgOut)
 	return e.onMessage.OnBeforeMessageOut(p)
 }
 
 func callTransformLogLevel(e *pluginEntry, p TransformLogLevelParams) (level LogLevel, ok bool) {
-	defer recoverHook(e.reporter, hookTransformLevel)
+	defer recoverHook(e.reporter, e.id, hookTransformLevel)
 	return e.onLevel.TransformLogLevel(p)
 }
 
@@ -309,17 +334,17 @@ func callTransformLogLevel(e *pluginEntry, p TransformLogLevelParams) (level Log
 // loss; ErrorReporter surfaces the panic for operators to fix.
 func callShouldSend(e *pluginEntry, p ShouldSendParams) (ok bool) {
 	ok = true
-	defer recoverHook(e.reporter, hookShouldSend)
+	defer recoverHook(e.reporter, e.id, hookShouldSend)
 	return e.sendGate.ShouldSend(p)
 }
 
 func callOnMetadataCalled(e *pluginEntry, metadata any) (out any) {
-	defer recoverHook(e.reporter, hookMetadataCalled)
+	defer recoverHook(e.reporter, e.id, hookMetadataCalled)
 	return e.onMetadata.OnMetadataCalled(metadata)
 }
 
 func callOnFieldsCalled(e *pluginEntry, fields Fields) (out Fields) {
-	defer recoverHook(e.reporter, hookFieldsCalled)
+	defer recoverHook(e.reporter, e.id, hookFieldsCalled)
 	return e.onFields.OnFieldsCalled(fields)
 }
 

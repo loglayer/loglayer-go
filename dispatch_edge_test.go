@@ -55,14 +55,16 @@ func TestDispatchEdge_DisabledGroupDoesNotFallThrough(t *testing.T) {
 			lltest.New(lltest.Config{BaseConfig: transport.BaseConfig{ID: "a"}, Library: libs[0]}),
 			lltest.New(lltest.Config{BaseConfig: transport.BaseConfig{ID: "b"}, Library: libs[1]}),
 		},
-		Groups: map[string]loglayer.LogGroup{
-			"silenced": {Transports: []string{"a", "b"}, Disabled: true},
+		Routing: loglayer.RoutingConfig{
+			Groups: map[string]loglayer.LogGroup{
+				"silenced": {Transports: []string{"a", "b"}, Disabled: true},
+			},
+			// Default UngroupedToAll would route untagged entries to both
+			// transports; this test tags the entry, so this only matters
+			// to prove the disabled-group path doesn't accidentally fall
+			// back into the ungrouped routing.
+			Ungrouped: loglayer.UngroupedRouting{Mode: loglayer.UngroupedToAll},
 		},
-		// Default UngroupedToAll would route untagged entries to both
-		// transports; this test tags the entry, so this only matters
-		// to prove the disabled-group path doesn't accidentally fall
-		// back into the ungrouped routing.
-		UngroupedRouting: loglayer.UngroupedRouting{Mode: loglayer.UngroupedToAll},
 		DisableFatalExit: true,
 	})
 
@@ -83,13 +85,15 @@ func TestDispatchEdge_UndefinedGroupFallsThrough(t *testing.T) {
 			lltest.New(lltest.Config{BaseConfig: transport.BaseConfig{ID: "a"}, Library: libs[0]}),
 			lltest.New(lltest.Config{BaseConfig: transport.BaseConfig{ID: "b"}, Library: libs[1]}),
 		},
-		// Note: no group named "ghost" defined.
-		Groups: map[string]loglayer.LogGroup{
-			"defined": {Transports: []string{"a"}},
-		},
-		UngroupedRouting: loglayer.UngroupedRouting{
-			Mode:       loglayer.UngroupedToTransports,
-			Transports: []string{"b"},
+		Routing: loglayer.RoutingConfig{
+			// Note: no group named "ghost" defined.
+			Groups: map[string]loglayer.LogGroup{
+				"defined": {Transports: []string{"a"}},
+			},
+			Ungrouped: loglayer.UngroupedRouting{
+				Mode:       loglayer.UngroupedToTransports,
+				Transports: []string{"b"},
+			},
 		},
 		DisableFatalExit: true,
 	})

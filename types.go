@@ -37,7 +37,7 @@ type M = Metadata
 type ErrorSerializer func(err error) map[string]any
 
 // Source identifies the call site that produced a log entry. Surfaced under
-// Config.SourceFieldName (default "source") when Config.AddSource is true,
+// Config.Source.FieldName (default "source") when Config.Source.Enabled is true,
 // or when an adapter (e.g. the slog handler) supplies it explicitly via
 // RawLogEntry.Source. Field names match the slog convention so structured
 // output is interchangeable.
@@ -106,44 +106,79 @@ type Config struct {
 	// Defaults to 5 seconds when zero or negative.
 	TransportCloseTimeout time.Duration
 
-	// AddSource captures the call site (file/line/function) of every log
-	// emission and includes it in the assembled Data under SourceFieldName.
-	// Off by default; opt in for production-debuggable output. Capture
-	// uses runtime.Caller plus runtime.FuncForPC and costs about 620 ns
-	// and 5 extra allocations per emission on amd64 (see Benchmarks).
-	// Paid only when this is true; the dispatch path is untouched
-	// otherwise.
+	// OnTransportPanic is called when a transport's SendToLogger panics.
+	// The dispatch loop recovers the panic so a buggy transport can't
+	// crash the host application from inside a log call, then continues
+	// to the next transport.
+	//
+	// The argument is a [*RecoveredPanicError] with Kind = PanicKindTransport
+	// and Hook = the panicking transport's ID. This matches the shape
+	// passed to plugin [ErrorReporter.OnError] callbacks so a single
+	// observability handler can absorb panics from either source.
+	//
+	// Default (nil): no recover wrap; a panicking transport propagates
+	// up through the emission call (matching the convention used by
+	// zerolog/zap/log/slog). Set this to plumb panics into your own
+	// observability (a metrics counter, an error tracker, a separate
+	// logger). A panic from inside this callback is itself recovered
+	// (and dropped) so a buggy reporter can't take down the dispatch
+	// loop.
+	OnTransportPanic func(err *RecoveredPanicError)
+
+	// Source configures call-site capture (file/line/function) per emission.
+	// Off by default; see [SourceConfig] for the cost.
+	Source SourceConfig
+
+	// Routing configures group-based dispatch (named routing rules,
+	// active-groups filter, behavior for ungrouped entries). The zero
+	// value disables group routing entirely (every transport receives
+	// every entry).
+	Routing RoutingConfig
+}
+
+// SourceConfig configures Config.Source: capture and render the call
+// site of every emission. Paired so the boolean and the output key live
+// next to each other rather than two unrelated top-level fields.
+type SourceConfig struct {
+	// Enabled captures the call site (file/line/function) of every log
+	// emission via runtime.Caller and includes it in the assembled Data
+	// under FieldName. Off by default; opt in for production-debuggable
+	// output. Costs about 620 ns and 5 extra allocations per emission
+	// on amd64 (see Benchmarks). Paid only when this is true; the
+	// dispatch path is untouched otherwise.
 	//
 	// Adapters that already have source information (notably the slog
 	// handler, which extracts it from slog.Record.PC) can supply it via
-	// RawLogEntry.Source without setting AddSource.
-	AddSource bool
+	// RawLogEntry.Source without setting Enabled.
+	Enabled bool
 
-	// SourceFieldName is the key under which the captured Source is
-	// rendered in the assembled Data. Defaults to "source" to match the
-	// slog convention.
-	SourceFieldName string
+	// FieldName is the key under which the captured Source is rendered
+	// in the assembled Data. Defaults to "source" to match the slog
+	// convention.
+	FieldName string
+}
 
+// RoutingConfig configures Config.Routing: named groups + active-groups
+// filter + behavior for ungrouped entries. The zero value disables
+// group routing entirely (every transport receives every entry).
+type RoutingConfig struct {
 	// Groups defines named routing rules. Each group lists the transport
-	// IDs it routes to, an optional minimum level, and an optional disabled
-	// flag. Tag entries with a group via WithGroup to limit dispatch to
-	// that group's transports.
-	//
-	// When Groups is nil/empty there is no group routing: every transport
-	// receives every entry (existing behavior).
+	// IDs it routes to, an optional minimum level, and an optional
+	// disabled flag. Tag entries with a group via WithGroup to limit
+	// dispatch to that group's transports.
 	Groups map[string]LogGroup
 
-	// ActiveGroups, when non-empty, restricts routing to only these groups.
-	// Logs tagged with groups not in this list are dropped (or fall back to
-	// UngroupedRouting if none of the entry's groups are active).
+	// ActiveGroups, when non-empty, restricts routing to only these
+	// groups. Logs tagged with groups not in this list are dropped (or
+	// fall back to Ungrouped if none of the entry's groups are active).
 	// Nil/empty means "no filter: all defined groups are active".
 	ActiveGroups []string
 
-	// UngroupedRouting controls what happens to entries with no group tag
-	// when Groups is configured. Zero value (Mode: UngroupedToAll) preserves
-	// the no-routing behavior of every transport receiving every ungrouped
-	// entry.
-	UngroupedRouting UngroupedRouting
+	// Ungrouped controls what happens to entries with no group tag
+	// when Groups is configured. Zero value (Mode: UngroupedToAll)
+	// preserves the no-routing behavior of every transport receiving
+	// every ungrouped entry.
+	Ungrouped UngroupedRouting
 }
 
 // LogGroup is a named routing rule.
@@ -245,6 +280,6 @@ type RawLogEntry struct {
 	// Source overrides the captured source info for this entry. Set this
 	// from adapters that already have source info (e.g. the slog handler
 	// extracts it from slog.Record.PC). Nil falls back to runtime capture
-	// when Config.AddSource is true; otherwise no source info is recorded.
+	// when Config.Source.Enabled is true; otherwise no source info is recorded.
 	Source *Source
 }

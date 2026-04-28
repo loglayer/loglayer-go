@@ -15,7 +15,7 @@ func newSourceLogger(t *testing.T, addSource bool) (*loglayer.LogLayer, *lltest.
 	lib := &lltest.TestLoggingLibrary{}
 	log := loglayer.New(loglayer.Config{
 		Transport:        lltest.New(lltest.Config{Library: lib}),
-		AddSource:        addSource,
+		Source:           loglayer.SourceConfig{Enabled: addSource},
 		DisableFatalExit: true,
 	})
 	return log, lib
@@ -202,14 +202,13 @@ func TestSource_CustomFieldName(t *testing.T) {
 	lib := &lltest.TestLoggingLibrary{}
 	log := loglayer.New(loglayer.Config{
 		Transport:        lltest.New(lltest.Config{Library: lib}),
-		AddSource:        true,
-		SourceFieldName:  "caller",
+		Source:           loglayer.SourceConfig{Enabled: true, FieldName: "caller"},
 		DisableFatalExit: true,
 	})
 	log.Info("hi")
 	line := lib.PopLine()
 	if _, ok := line.Data["source"]; ok {
-		t.Errorf("default key 'source' should not be used when SourceFieldName is set: %v", line.Data)
+		t.Errorf("default key 'source' should not be used when Source.FieldName is set: %v", line.Data)
 	}
 	if _, ok := line.Data["caller"]; !ok {
 		t.Errorf("expected source under 'caller', got %v", line.Data)

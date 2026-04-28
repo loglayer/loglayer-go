@@ -36,8 +36,15 @@ log := loglayer.New(loglayer.Config{
     MuteFields:      false,
     MuteMetadata:     false,
     DisableFatalExit: false,                // false = Fatal calls os.Exit(1)
-    AddSource:       false,                 // capture file/line/function of every emission
-    SourceFieldName: "source",              // default; output key for captured source
+    Source: SourceConfig{
+        Enabled:   false,                   // capture file/line/function of every emission
+        FieldName: "source",                // default; output key for captured source
+    },
+    Routing: RoutingConfig{                 // group-based dispatch; zero value = no routing
+        Groups:       map[string]LogGroup{},
+        ActiveGroups: nil,
+        Ungrouped:    UngroupedRouting{},
+    },
 })
 
 // Or:
@@ -270,7 +277,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-- **integrations/sloghandler**: A `log/slog.Handler` whose `Handle` dispatches into a loglayer logger, so every `slog.Info(...)` call participates in the loglayer plugin pipeline, multi-transport fan-out, group routing, and runtime level state. Opposite direction from `transports/slog` (loglayer dispatches through a `*slog.Logger`). Mapping: slog `WithAttrs` accumulates persistent fields; inline record attrs become per-call fields; `WithGroup(name)` opens a nested map; `slog.Group("", ...)` inlines members at the parent (per slog spec); empty groups and empty-key attrs are dropped; `slog.LogValuer` is resolved before encoding; native kinds preserve their typed Go values (int64, time.Time, time.Duration, ...). Levels above `slog.LevelError` pin to `LogLevelError` so a slog emission cannot trigger loglayer's `os.Exit(1)`. Context passed via `slog.InfoContext(ctx, ...)` is forwarded to dispatch-time plugin hooks via `TransportParams.Ctx` so `oteltrace`/`datadogtrace` extract trace IDs the same way they do for native loglayer calls. Persistent fields set on the underlying logger before the handler is installed are preserved on every emission. Source forwarding: `slog.Record.PC` is converted to a `*loglayer.Source` via `loglayer.SourceFromPC` and passed on `RawLogEntry.Source`, so callers using `slog.New(...)` (which always captures PC) get caller info rendered automatically without setting `Config.AddSource`.
+- **integrations/sloghandler**: A `log/slog.Handler` whose `Handle` dispatches into a loglayer logger, so every `slog.Info(...)` call participates in the loglayer plugin pipeline, multi-transport fan-out, group routing, and runtime level state. Opposite direction from `transports/slog` (loglayer dispatches through a `*slog.Logger`). Mapping: slog `WithAttrs` accumulates persistent fields; inline record attrs become per-call fields; `WithGroup(name)` opens a nested map; `slog.Group("", ...)` inlines members at the parent (per slog spec); empty groups and empty-key attrs are dropped; `slog.LogValuer` is resolved before encoding; native kinds preserve their typed Go values (int64, time.Time, time.Duration, ...). Levels above `slog.LevelError` pin to `LogLevelError` so a slog emission cannot trigger loglayer's `os.Exit(1)`. Context passed via `slog.InfoContext(ctx, ...)` is forwarded to dispatch-time plugin hooks via `TransportParams.Ctx` so `oteltrace`/`datadogtrace` extract trace IDs the same way they do for native loglayer calls. Persistent fields set on the underlying logger before the handler is installed are preserved on every emission. Source forwarding: `slog.Record.PC` is converted to a `*loglayer.Source` via `loglayer.SourceFromPC` and passed on `RawLogEntry.Source`, so callers using `slog.New(...)` (which always captures PC) get caller info rendered automatically without setting `Config.Source.Enabled`.
 
 ```go
 log := loglayer.New(loglayer.Config{Transport: structured.New(structured.Config{})})
@@ -348,9 +355,9 @@ Third-party plugin and transport authors can import these directly from `go.logl
 
 ## Groups
 
-Named routing rules port directly from TS loglayer's `withGroup` feature. Define groups in `Config.Groups map[string]LogGroup`; each group lists transport IDs (`Transports []string`), an optional minimum `Level`, and a `Disabled` toggle. Tag entries with one or more groups via `(*LogBuilder).WithGroup(...string)` (per-call) or `(*LogLayer).WithGroup(...string)` (returns a child where every log is tagged). Tags accumulate (deduplicated) across chained calls; multi-group entries route to the union of their groups' transports.
+Named routing rules port directly from TS loglayer's `withGroup` feature. Define groups in `Config.Routing.Groups map[string]LogGroup`; each group lists transport IDs (`Transports []string`), an optional minimum `Level`, and a `Disabled` toggle. Tag entries with one or more groups via `(*LogBuilder).WithGroup(...string)` (per-call) or `(*LogLayer).WithGroup(...string)` (returns a child where every log is tagged). Tags accumulate (deduplicated) across chained calls; multi-group entries route to the union of their groups' transports.
 
-`Config.ActiveGroups []string` restricts routing to a subset (nil/empty = no filter). `Config.UngroupedRouting` is a typed enum struct controlling untagged entries: `UngroupedToAll` (default — backward compatible), `UngroupedToNone` (drop), `UngroupedToTransports` (allowlist). Disabled groups drop their entries (no fall-back); undefined groups in the tag list fall back to ungrouped (graceful for typos and not-yet-registered groups).
+`Config.Routing.ActiveGroups []string` restricts routing to a subset (nil/empty = no filter). `Config.Routing.Ungrouped` is a typed enum struct controlling untagged entries: `UngroupedToAll` (default; backward compatible), `UngroupedToNone` (drop), `UngroupedToTransports` (allowlist). Disabled groups drop their entries (no fall-back); undefined groups in the tag list fall back to ungrouped (graceful for typos and not-yet-registered groups).
 
 Runtime mutators (atomic publish, mutex-serialized): `AddGroup`, `RemoveGroup`, `EnableGroup`, `DisableGroup`, `SetGroupLevel`, `SetActiveGroups`, `ClearActiveGroups`, `GetGroups`. `Raw(RawLogEntry{Groups: ...})` overrides assigned groups for forwarded entries. `loglayer.ActiveGroupsFromEnv("LOGLAYER_GROUPS")` parses a comma-separated env-var list explicitly (we don't read env vars on your behalf).
 

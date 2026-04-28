@@ -14,7 +14,7 @@ var osExit = os.Exit
 // using the logger's persistent fields. Per-call goCtx overrides the
 // logger's bound ctx (when one is provided), otherwise the bound ctx is
 // passed through. source carries pre-captured call-site info from the
-// emission entry point (nil if Config.AddSource is off and no adapter
+// emission entry point (nil if Config.Source.Enabled is off and no adapter
 // supplied one).
 func (l *LogLayer) formatLog(level LogLevel, messages []any, goCtx context.Context, metadata any, err error, source *Source, plugins *pluginSet) {
 	applyPrefix(l.prefix, messages)
@@ -86,7 +86,7 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 	}
 
 	if includeSource {
-		d[cfg.SourceFieldName] = source
+		d[cfg.Source.FieldName] = source
 	}
 
 	var rawMetadata any
@@ -132,6 +132,7 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 	hasShouldSend := plugins.hasSendGate
 	groupsConfig := l.loadGroups()
 	needsRouting := groupsConfig.hasGroups
+	panicHandler := cfg.OnTransportPanic
 	for _, t := range l.loadTransports().list {
 		if !t.IsEnabled() {
 			continue
@@ -151,7 +152,15 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 		}) {
 			continue
 		}
-		t.SendToLogger(params)
+		// Hot path: no panic handler configured, direct call. The
+		// recover-wrap below would be ~8 ns / emission per transport
+		// (an open-coded defer that's never triggered), measurable on
+		// a sub-50 ns dispatch, so the wrap is opt-in via OnTransportPanic.
+		if panicHandler == nil {
+			t.SendToLogger(params)
+			continue
+		}
+		sendWithRecover(t, params, panicHandler)
 	}
 
 	if level == LogLevelFatal && !cfg.DisableFatalExit {
@@ -172,4 +181,23 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 		// gets back something useful.
 		panic(fmt.Sprint(messages...))
 	}
+}
+
+// sendWithRecover dispatches an entry to a transport under a recover
+// wrap, reporting any panic via h. Used only when Config.OnTransportPanic
+// is set; the no-handler fast path inlines a direct SendToLogger call
+// in the dispatch loop. A panic in the handler itself is recovered
+// (and dropped) so a buggy reporter can't take down the dispatch loop.
+func sendWithRecover(t Transport, params TransportParams, h func(*RecoveredPanicError)) {
+	defer func() {
+		rcv := recover()
+		if rcv == nil {
+			return
+		}
+		func() {
+			defer func() { _ = recover() }()
+			h(panicError(rcv, PanicKindTransport, t.ID(), ""))
+		}()
+	}()
+	t.SendToLogger(params)
 }

@@ -26,14 +26,16 @@ log := loglayer.New(loglayer.Config{
         structured.New(structured.Config{BaseConfig: transport.BaseConfig{ID: "console"}}),
         datadog.New(datadog.Config{BaseConfig: transport.BaseConfig{ID: "datadog"}, APIKey: key}),
     },
-    Groups: map[string]loglayer.LogGroup{
-        "database": {
-            Transports: []string{"datadog"},
-            Level:      loglayer.LogLevelError,
-        },
-        "auth": {
-            Transports: []string{"datadog"},
-            Level:      loglayer.LogLevelWarn,
+    Routing: loglayer.RoutingConfig{
+        Groups: map[string]loglayer.LogGroup{
+            "database": {
+                Transports: []string{"datadog"},
+                Level:      loglayer.LogLevelError,
+            },
+            "auth": {
+                Transports: []string{"datadog"},
+                Level:      loglayer.LogLevelWarn,
+            },
         },
     },
 })
@@ -129,27 +131,29 @@ log := loglayer.New(loglayer.Config{
             APIKey:     os.Getenv("DD_API_KEY"),
         }),
     },
-    Groups: map[string]loglayer.LogGroup{
-        // "billing" entries go to all three transports, but Datadog
-        // only receives error+fatal because of the per-group level.
-        "billing": {
-            Transports: []string{"pretty", "structured-file", "datadog"},
-            Level:      loglayer.LogLevelError,
+    Routing: loglayer.RoutingConfig{
+        Groups: map[string]loglayer.LogGroup{
+            // "billing" entries go to all three transports, but Datadog
+            // only receives error+fatal because of the per-group level.
+            "billing": {
+                Transports: []string{"pretty", "structured-file", "datadog"},
+                Level:      loglayer.LogLevelError,
+            },
+            "auth": {
+                Transports: []string{"pretty", "structured-file", "datadog"},
+                Level:      loglayer.LogLevelError,
+            },
+            // Database concern: noisy, never ship to Datadog.
+            "database": {
+                Transports: []string{"pretty", "structured-file"},
+            },
         },
-        "auth": {
-            Transports: []string{"pretty", "structured-file", "datadog"},
-            Level:      loglayer.LogLevelError,
-        },
-        // Database concern: noisy, never ship to Datadog.
-        "database": {
+        // Untagged entries (the dispatcher's own logs, ad-hoc Info calls in
+        // main.go) go to pretty + structured-file but NOT Datadog.
+        Ungrouped: loglayer.UngroupedRouting{
+            Mode:       loglayer.UngroupedToTransports,
             Transports: []string{"pretty", "structured-file"},
         },
-    },
-    // Untagged entries (the dispatcher's own logs, ad-hoc Info calls in
-    // main.go) go to pretty + structured-file but NOT Datadog.
-    UngroupedRouting: loglayer.UngroupedRouting{
-        Mode:       loglayer.UngroupedToTransports,
-        Transports: []string{"pretty", "structured-file"},
     },
 })
 
@@ -173,9 +177,11 @@ Notice the `billingLog.Info(...)` row: the `Level: Error` on the `billing` group
 :::
 
 ```go
-Groups: map[string]loglayer.LogGroup{
-    "billing-all":    {Transports: []string{"pretty", "structured-file"}},
-    "billing-remote": {Transports: []string{"datadog"}, Level: loglayer.LogLevelError},
+Routing: loglayer.RoutingConfig{
+    Groups: map[string]loglayer.LogGroup{
+        "billing-all":    {Transports: []string{"pretty", "structured-file"}},
+        "billing-remote": {Transports: []string{"datadog"}, Level: loglayer.LogLevelError},
+    },
 }
 
 billingLog := log.WithGroup("billing-all", "billing-remote")
@@ -192,8 +198,10 @@ Each group has its own minimum log level; entries below it are dropped for that 
 ```go
 log := loglayer.New(loglayer.Config{
     Transports: []loglayer.Transport{...},
-    Groups: map[string]loglayer.LogGroup{
-        "database": {Transports: []string{"datadog"}, Level: loglayer.LogLevelError},
+    Routing: loglayer.RoutingConfig{
+        Groups: map[string]loglayer.LogGroup{
+            "database": {Transports: []string{"datadog"}, Level: loglayer.LogLevelError},
+        },
     },
 })
 
@@ -205,7 +213,7 @@ This is independent of the logger's overall `SetLevel`. The logger-level filter 
 
 ## Ungrouped Routing
 
-`UngroupedRouting` controls what happens to entries with **no** group tag (or whose tags are all undefined):
+`Routing.Ungrouped` controls what happens to entries with **no** group tag (or whose tags are all undefined):
 
 ```go
 // Default: all transports receive ungrouped entries (backward compatible).
@@ -222,34 +230,38 @@ loglayer.UngroupedRouting{
 ```
 
 ::: tip
-The default `UngroupedToAll` ensures full backward compatibility: adding `Groups` to an existing logger doesn't change anything for un-tagged log calls.
+The default `UngroupedToAll` ensures full backward compatibility: adding `Routing.Groups` to an existing logger doesn't change anything for un-tagged log calls.
 :::
 
 ## Active Groups Filter
 
-`ActiveGroups` restricts routing to only the named groups. Entries tagged with other groups are dropped (unless every tag is undefined, in which case ungrouped rules apply):
+`Routing.ActiveGroups` restricts routing to only the named groups. Entries tagged with other groups are dropped (unless every tag is undefined, in which case ungrouped rules apply):
 
 ```go
 log := loglayer.New(loglayer.Config{
     Transports: []loglayer.Transport{...},
-    Groups: map[string]loglayer.LogGroup{
-        "database": {Transports: []string{"datadog"}},
-        "auth":     {Transports: []string{"sentry"}},
-        "payments": {Transports: []string{"datadog"}},
+    Routing: loglayer.RoutingConfig{
+        Groups: map[string]loglayer.LogGroup{
+            "database": {Transports: []string{"datadog"}},
+            "auth":     {Transports: []string{"sentry"}},
+            "payments": {Transports: []string{"datadog"}},
+        },
+        ActiveGroups: []string{"database"},  // only 'database' is active
     },
-    ActiveGroups: []string{"database"},  // only 'database' is active
 })
 ```
 
 ### Driving from an environment variable
 
-We don't read environment variables on your behalf, but `ActiveGroupsFromEnv` parses the standard comma-separated form for you to feed into `Config.ActiveGroups`:
+We don't read environment variables on your behalf, but `ActiveGroupsFromEnv` parses the standard comma-separated form for you to feed into `Routing.ActiveGroups`:
 
 ```go
 loglayer.New(loglayer.Config{
-    Transports:   ...,
-    Groups:       ...,
-    ActiveGroups: loglayer.ActiveGroupsFromEnv("LOGLAYER_GROUPS"),
+    Transports: ...,
+    Routing: loglayer.RoutingConfig{
+        Groups:       ...,
+        ActiveGroups: loglayer.ActiveGroupsFromEnv("LOGLAYER_GROUPS"),
+    },
 })
 ```
 
@@ -293,7 +305,7 @@ All runtime mutators are safe to call from any goroutine (atomic publish, mutex-
 Two cases that look similar but behave differently:
 
 - **Disabled group**: `LogGroup.Disabled = true` is "explicitly off." Entries tagged only with disabled groups drop. They do **not** fall back to `UngroupedRouting`. Use it to silence a subsystem without removing the group config.
-- **Undefined group**: a group name that isn't in `Config.Groups` (typo, or registered later). Entries tagged only with undefined groups fall back to `UngroupedRouting`, treated as if they had no tags.
+- **Undefined group**: a group name that isn't in `Routing.Groups` (typo, or registered later). Entries tagged only with undefined groups fall back to `Routing.Ungrouped`, treated as if they had no tags.
 
 This mirrors the TypeScript loglayer's behavior. The pragmatic effect: typos in code become harmless (graceful fall-back); explicit operator action stays load-bearing.
 

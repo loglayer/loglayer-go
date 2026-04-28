@@ -13,21 +13,34 @@ Most application setup should stick with `New`: misconfiguration of the logger i
 
 ```go
 type Config struct {
-    Transport          Transport            // single transport (mutually exclusive with Transports)
-    Transports         []Transport          // multiple transports (mutually exclusive with Transport)
-    Plugins            []Plugin             // plugins to register at construction time
-    Groups             map[string]LogGroup  // named routing rules (see Groups)
-    ActiveGroups       []string             // restrict routing to these groups (nil/empty = no filter)
-    UngroupedRouting   UngroupedRouting     // how to route entries with no group tag
-    Prefix             string               // prepended to first string message
-    Disabled           bool                 // suppress all output (default: false)
-    ErrorSerializer    ErrorSerializer      // customize error rendering
-    ErrorFieldName     string               // key for serialized error (default: "err")
-    CopyMsgOnOnlyError bool                 // copy err.Error() into the message in ErrorOnly
-    FieldsKey          string               // nest fields under this key (default: merged at root)
-    MuteFields         bool                 // disable fields in output
-    MuteMetadata       bool                 // disable metadata in output
-    DisableFatalExit   bool                 // skip os.Exit(1) after a Fatal log
+    Transport             Transport       // single transport (mutually exclusive with Transports)
+    Transports            []Transport     // multiple transports (mutually exclusive with Transport)
+    Plugins               []Plugin        // plugins to register at construction time
+    Prefix                string          // prepended to first string message
+    Disabled              bool            // suppress all output (default: false)
+    ErrorSerializer       ErrorSerializer // customize error rendering
+    ErrorFieldName        string          // key for serialized error (default: "err")
+    CopyMsgOnOnlyError    bool            // copy err.Error() into the message in ErrorOnly
+    FieldsKey             string          // nest fields under this key (default: merged at root)
+    MuteFields            bool            // disable fields in output
+    MuteMetadata          bool            // disable metadata in output
+    DisableFatalExit      bool            // skip os.Exit(1) after a Fatal log
+    TransportCloseTimeout time.Duration   // bound for transport drain on Fatal/RemoveTransport (default 5s)
+    OnTransportPanic      func(string, any) // opt-in callback recovering transport SendToLogger panics
+
+    Source  SourceConfig  // call-site capture (file/line/function) per emission
+    Routing RoutingConfig // group-based dispatch (named routing rules + active filter + ungrouped mode)
+}
+
+type SourceConfig struct {
+    Enabled   bool   // capture file/line/function on every emission (default: false)
+    FieldName string // output key (default: "source")
+}
+
+type RoutingConfig struct {
+    Groups       map[string]LogGroup // named routing rules (see Groups)
+    ActiveGroups []string            // restrict routing to these groups (nil/empty = no filter)
+    Ungrouped    UngroupedRouting    // how to route entries with no group tag
 }
 ```
 
@@ -71,21 +84,23 @@ Plugin order matters: hooks run in the order plugins were added, and each plugin
 
 Plugin `ID` is optional; LogLayer auto-generates one when you omit it. Supply your own ID when you intend to call `RemovePlugin` / `GetPlugin` later.
 
-## Groups, ActiveGroups, UngroupedRouting
+## Routing
 
-Named routing rules for sending log entries to specific transports based on tags. When `Groups` is nil/empty there is no routing: every transport receives every entry. Once configured, tag entries via `WithGroup` to opt them into a group's routing.
+`Config.Routing` groups the named-routing knobs. When `Routing.Groups` is nil/empty there is no group routing: every transport receives every entry. Once configured, tag entries via `WithGroup` to opt them into a group's transports.
 
 ```go
 log := loglayer.New(loglayer.Config{
     Transports: []loglayer.Transport{...},
-    Groups: map[string]loglayer.LogGroup{
-        "database": {Transports: []string{"datadog"}, Level: loglayer.LogLevelError},
+    Routing: loglayer.RoutingConfig{
+        Groups: map[string]loglayer.LogGroup{
+            "database": {Transports: []string{"datadog"}, Level: loglayer.LogLevelError},
+        },
+        ActiveGroups: loglayer.ActiveGroupsFromEnv("LOGLAYER_GROUPS"), // optional env-driven filter
     },
-    ActiveGroups: loglayer.ActiveGroupsFromEnv("LOGLAYER_GROUPS"), // optional env-driven filter
 })
 ```
 
-See [Groups](/logging-api/groups) for the full reference: per-group level filters, multi-group routing, ungrouped behavior modes, runtime mutators.
+See [Groups](/logging-api/groups) for the full reference: per-group level filters, multi-group routing, `Ungrouped` behavior modes, runtime mutators.
 
 ## Prefix
 
@@ -190,14 +205,75 @@ loglayer.New(loglayer.Config{
 
 You can flip these at runtime with `log.MuteFields()`, `log.UnmuteFields()`, `log.MuteMetadata()`, `log.UnmuteMetadata()`.
 
-## AddSource / SourceFieldName
+## OnTransportPanic
 
-`AddSource: true` captures the call site (file, line, function) of every log emission and includes it in the assembled `Data` under `SourceFieldName` (default `"source"`). Off by default; opt in for production-debuggable output.
+By default, a panic inside a transport's `SendToLogger` propagates up through your `log.Info(...)` call, matching the convention used by zerolog / zap / `log/slog`. Set `OnTransportPanic` to recover panicking transports and report them out-of-band so a buggy sink can't crash the host application:
+
+```go
+log := loglayer.New(loglayer.Config{
+    Transports: []loglayer.Transport{...},
+    OnTransportPanic: func(err *loglayer.RecoveredPanicError) {
+        // err.Kind is loglayer.PanicKindTransport.
+        // err.ID is the panicking transport's ID.
+        // err.Hook is empty (no hook-method dimension for transports).
+        // err.Value is what was passed to panic().
+        metrics.Inc("loglayer.transport_panic", "id", err.ID)
+    },
+})
+```
+
+When set, the dispatch loop:
+
+- Recovers the panic so the user's emission call returns normally.
+- Calls your handler with a `*loglayer.RecoveredPanicError` describing the failure.
+- Continues dispatch to the remaining transports so one bad sink doesn't suppress the others.
+
+A panic from inside the handler itself is recovered (and dropped) so a buggy reporter can't take down the dispatch loop.
+
+The shape matches the `*RecoveredPanicError` that plugin hooks surface via `ErrorReporter.OnError`, so a single observability function can absorb both:
+
+```go
+func report(err *loglayer.RecoveredPanicError) {
+    metrics.Inc("loglayer.panic",
+        "kind", err.Kind,  // "plugin" or "transport"
+        "id", err.ID,      // plugin ID or transport ID
+        "hook", err.Hook,  // hook method name (plugin) or "" (transport)
+    )
+}
+
+// Wire to plugins:
+log.AddPlugin(loglayer.WithErrorReporter(plugin, func(e error) {
+    if rpe, ok := e.(*loglayer.RecoveredPanicError); ok {
+        report(rpe)
+    }
+}))
+
+// And to transports:
+log = loglayer.New(loglayer.Config{
+    Transports:       transports,
+    OnTransportPanic: report,
+})
+```
+
+Field semantics:
+
+- `Kind` — `loglayer.PanicKindPlugin` or `loglayer.PanicKindTransport`.
+- `ID` — the panicking component's identifier: the plugin ID for plugin panics, the transport ID for transport panics. Always populated.
+- `Hook` — the hook method name (`"OnBeforeDataOut"`, etc.) for plugin panics; empty for transport panics, which have no hook-method dimension.
+- `Value` — the value originally passed to `panic()`.
+
+::: warning Off by default for hot-path reasons
+Wrapping every `SendToLogger` call in a deferred recover costs ~8 ns per emission per transport even when no panic occurs (the open-coded defer still runs). On a sub-50 ns dispatch path that's measurable. The default (nil handler) keeps the hot path a direct call. Opt in when transport stability matters more than the few-nanosecond cost.
+:::
+
+## Source (caller info)
+
+`Config.Source` groups the call-site capture knobs. `Source.Enabled: true` captures the call site (file, line, function) of every log emission and includes it in the assembled `Data` under `Source.FieldName` (default `"source"`). Off by default; opt in for production-debuggable output.
 
 ```go
 log := loglayer.New(loglayer.Config{
     Transport: structured.New(structured.Config{}),
-    AddSource: true,
+    Source:    loglayer.SourceConfig{Enabled: true},
 })
 
 log.Info("served")
@@ -206,17 +282,19 @@ log.Info("served")
 
 The captured `Source` value is a `*loglayer.Source` with `Function`, `File`, `Line`. JSON tags match the [`log/slog`](https://pkg.go.dev/log/slog) source convention so structured output is interchangeable with standard slog setups. The struct also implements `fmt.Stringer` (compact `func file:line` rendering for console / pretty transports) and `slog.LogValuer` (nested group when forwarded to a slog handler).
 
-Override the output key with `SourceFieldName: "caller"` (or any string) when matching an existing log schema.
+Override the output key when matching an existing log schema:
 
 ```go
 loglayer.New(loglayer.Config{
-    Transport:       structured.New(structured.Config{}),
-    AddSource:       true,
-    SourceFieldName: "caller",
+    Transport: structured.New(structured.Config{}),
+    Source: loglayer.SourceConfig{
+        Enabled:   true,
+        FieldName: "caller",
+    },
 })
 ```
 
-Cost: about **620 ns and 5 extra allocations per emission** on amd64 (`BenchmarkLoglayer_SimpleMessage` goes from ~40 ns / 1 alloc to ~660 ns / 6 allocs). The dominant terms are `runtime.Caller`'s frame walk, `runtime.FuncForPC().Name()` materializing the function-name string, and the heap-allocated `*Source`. Paid only when `AddSource` is true; the dispatch path is untouched otherwise. If per-emission cost matters more than caller info, leave it off and rely on transport-level rendering plus inline metadata.
+Cost: about **620 ns and 5 extra allocations per emission** on amd64 (`BenchmarkLoglayer_SimpleMessage` goes from ~40 ns / 1 alloc to ~660 ns / 6 allocs). The dominant terms are `runtime.Caller`'s frame walk, `runtime.FuncForPC().Name()` materializing the function-name string, and the heap-allocated `*Source`. Paid only when `Source.Enabled` is true; the dispatch path is untouched otherwise. If per-emission cost matters more than caller info, leave it off and rely on transport-level rendering plus inline metadata.
 
 ::: tip Adapters can supply Source explicitly
 If you're calling `log.Raw(...)` from an adapter that already has a program counter (the [slog handler](/integrations/sloghandler) extracts it from `slog.Record.PC`), pass `Source: loglayer.SourceFromPC(pc)` on the `RawLogEntry` and skip runtime capture. The slog handler does this automatically.

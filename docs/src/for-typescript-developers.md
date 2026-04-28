@@ -173,8 +173,8 @@ Groups port directly. The TS `string | string[]` argument shape becomes Go varia
 | `log.setActiveGroups(['db'])` | `log.SetActiveGroups("db")` |
 | `log.setActiveGroups(null)` | `log.ClearActiveGroups()` |
 | `log.getGroups()` | `log.GetGroups()` (shallow copy) |
-| `LOGLAYER_GROUPS` env var auto-read | `Config.ActiveGroups: loglayer.ActiveGroupsFromEnv("LOGLAYER_GROUPS")` (explicit) |
-| `ungroupedBehavior: 'all' \| 'none' \| string[]` | `Config.UngroupedRouting: loglayer.UngroupedRouting{Mode, Transports}` (typed enum) |
+| `LOGLAYER_GROUPS` env var auto-read | `Config.Routing.ActiveGroups: loglayer.ActiveGroupsFromEnv("LOGLAYER_GROUPS")` (explicit) |
+| `ungroupedBehavior: 'all' \| 'none' \| string[]` | `Config.Routing.Ungrouped: loglayer.UngroupedRouting{Mode, Transports}` (typed enum) |
 
 The Go port does not auto-read environment variables (libraries shouldn't); `ActiveGroupsFromEnv` is a helper you opt into. See [Groups](/logging-api/groups) for the full reference.
 

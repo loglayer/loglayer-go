@@ -42,8 +42,10 @@ func TestGroups_PerCallTagging_RoutesToGroupTransports(t *testing.T) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
 		Transports:       tr,
-		Groups: map[string]loglayer.LogGroup{
-			"database": {Transports: []string{"datadog"}},
+		Routing: loglayer.RoutingConfig{
+			Groups: map[string]loglayer.LogGroup{
+				"database": {Transports: []string{"datadog"}},
+			},
 		},
 	})
 	log.WithGroup("database").Error("connection lost")
@@ -61,8 +63,10 @@ func TestGroups_PersistentTagging_OnLogger(t *testing.T) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
 		Transports:       tr,
-		Groups: map[string]loglayer.LogGroup{
-			"only-b": {Transports: []string{"b"}},
+		Routing: loglayer.RoutingConfig{
+			Groups: map[string]loglayer.LogGroup{
+				"only-b": {Transports: []string{"b"}},
+			},
 		},
 	})
 	dbLog := log.WithGroup("only-b")
@@ -82,9 +86,11 @@ func TestGroups_MultipleGroups_UnionOfTransports(t *testing.T) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
 		Transports:       tr,
-		Groups: map[string]loglayer.LogGroup{
-			"g1": {Transports: []string{"a"}},
-			"g2": {Transports: []string{"b"}},
+		Routing: loglayer.RoutingConfig{
+			Groups: map[string]loglayer.LogGroup{
+				"g1": {Transports: []string{"a"}},
+				"g2": {Transports: []string{"b"}},
+			},
 		},
 	})
 	log.WithGroup("g1", "g2").Info("both")
@@ -98,8 +104,10 @@ func TestGroups_PerGroupLevelFilter(t *testing.T) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
 		Transports:       tr,
-		Groups: map[string]loglayer.LogGroup{
-			"errors-only": {Transports: []string{"a"}, Level: loglayer.LogLevelError},
+		Routing: loglayer.RoutingConfig{
+			Groups: map[string]loglayer.LogGroup{
+				"errors-only": {Transports: []string{"a"}, Level: loglayer.LogLevelError},
+			},
 		},
 	})
 	log.WithGroup("errors-only").Info("dropped by group level")
@@ -114,8 +122,10 @@ func TestGroups_DisabledGroupOnly_Drops(t *testing.T) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
 		Transports:       tr,
-		Groups: map[string]loglayer.LogGroup{
-			"db": {Transports: []string{"b"}, Disabled: true},
+		Routing: loglayer.RoutingConfig{
+			Groups: map[string]loglayer.LogGroup{
+				"db": {Transports: []string{"b"}, Disabled: true},
+			},
 		},
 	})
 	log.WithGroup("db").Info("disabled group only")
@@ -129,9 +139,11 @@ func TestGroups_MixedDisabledAndEnabled_EnabledRoutes(t *testing.T) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
 		Transports:       tr,
-		Groups: map[string]loglayer.LogGroup{
-			"off": {Transports: []string{"a"}, Disabled: true},
-			"on":  {Transports: []string{"b"}},
+		Routing: loglayer.RoutingConfig{
+			Groups: map[string]loglayer.LogGroup{
+				"off": {Transports: []string{"a"}, Disabled: true},
+				"on":  {Transports: []string{"b"}},
+			},
 		},
 	})
 	log.WithGroup("off", "on").Info("hi")
@@ -148,8 +160,10 @@ func TestGroups_UnknownGroupOnly_FallsBackToUngrouped(t *testing.T) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
 		Transports:       tr,
-		Groups: map[string]loglayer.LogGroup{
-			"defined": {Transports: []string{"a"}},
+		Routing: loglayer.RoutingConfig{
+			Groups: map[string]loglayer.LogGroup{
+				"defined": {Transports: []string{"a"}},
+			},
 		},
 	})
 	log.WithGroup("undefined").Info("hi")
@@ -163,10 +177,12 @@ func TestGroups_UngroupedToNone_DropsUntaggedEntries(t *testing.T) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
 		Transports:       tr,
-		Groups: map[string]loglayer.LogGroup{
-			"defined": {Transports: []string{"a"}},
+		Routing: loglayer.RoutingConfig{
+			Groups: map[string]loglayer.LogGroup{
+				"defined": {Transports: []string{"a"}},
+			},
+			Ungrouped: loglayer.UngroupedRouting{Mode: loglayer.UngroupedToNone},
 		},
-		UngroupedRouting: loglayer.UngroupedRouting{Mode: loglayer.UngroupedToNone},
 	})
 	log.Info("untagged")
 	if libs[0].Len() != 0 {
@@ -183,12 +199,14 @@ func TestGroups_UngroupedToTransports(t *testing.T) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
 		Transports:       tr,
-		Groups: map[string]loglayer.LogGroup{
-			"db": {Transports: []string{"b"}},
-		},
-		UngroupedRouting: loglayer.UngroupedRouting{
-			Mode:       loglayer.UngroupedToTransports,
-			Transports: []string{"a"},
+		Routing: loglayer.RoutingConfig{
+			Groups: map[string]loglayer.LogGroup{
+				"db": {Transports: []string{"b"}},
+			},
+			Ungrouped: loglayer.UngroupedRouting{
+				Mode:       loglayer.UngroupedToTransports,
+				Transports: []string{"a"},
+			},
 		},
 	})
 	log.Info("untagged → only a")
@@ -206,11 +224,13 @@ func TestGroups_ActiveGroupsFilter(t *testing.T) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
 		Transports:       tr,
-		Groups: map[string]loglayer.LogGroup{
-			"db":   {Transports: []string{"a"}},
-			"auth": {Transports: []string{"b"}},
+		Routing: loglayer.RoutingConfig{
+			Groups: map[string]loglayer.LogGroup{
+				"db":   {Transports: []string{"a"}},
+				"auth": {Transports: []string{"b"}},
+			},
+			ActiveGroups: []string{"db"},
 		},
-		ActiveGroups: []string{"db"},
 	})
 	log.WithGroup("db").Info("via db")
 	log.WithGroup("auth").Info("via auth (filtered out)")
@@ -265,11 +285,13 @@ func TestGroups_SetActiveGroupsAndClear(t *testing.T) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
 		Transports:       tr,
-		Groups: map[string]loglayer.LogGroup{
-			"g1": {Transports: []string{"a"}},
-			"g2": {Transports: []string{"a"}},
+		Routing: loglayer.RoutingConfig{
+			Groups: map[string]loglayer.LogGroup{
+				"g1": {Transports: []string{"a"}},
+				"g2": {Transports: []string{"a"}},
+			},
+			Ungrouped: loglayer.UngroupedRouting{Mode: loglayer.UngroupedToNone},
 		},
-		UngroupedRouting: loglayer.UngroupedRouting{Mode: loglayer.UngroupedToNone},
 	})
 
 	log.SetActiveGroups("g1")
@@ -291,9 +313,11 @@ func TestGroups_WithGroupChainsAdditively(t *testing.T) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
 		Transports:       tr,
-		Groups: map[string]loglayer.LogGroup{
-			"g1": {Transports: []string{"a"}},
-			"g2": {Transports: []string{"b"}},
+		Routing: loglayer.RoutingConfig{
+			Groups: map[string]loglayer.LogGroup{
+				"g1": {Transports: []string{"a"}},
+				"g2": {Transports: []string{"b"}},
+			},
 		},
 	})
 	chained := log.WithGroup("g1").WithGroup("g2")
@@ -308,9 +332,11 @@ func TestGroups_BuilderWithGroupMergesWithLoggerGroups(t *testing.T) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
 		Transports:       tr,
-		Groups: map[string]loglayer.LogGroup{
-			"g1": {Transports: []string{"a"}},
-			"g2": {Transports: []string{"b"}},
+		Routing: loglayer.RoutingConfig{
+			Groups: map[string]loglayer.LogGroup{
+				"g1": {Transports: []string{"a"}},
+				"g2": {Transports: []string{"b"}},
+			},
 		},
 	})
 	persistent := log.WithGroup("g1")
@@ -329,8 +355,10 @@ func TestGroups_GetGroups_ReturnsCopy(t *testing.T) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
 		Transports:       tr,
-		Groups: map[string]loglayer.LogGroup{
-			"g": {Transports: []string{"a"}, Level: loglayer.LogLevelInfo},
+		Routing: loglayer.RoutingConfig{
+			Groups: map[string]loglayer.LogGroup{
+				"g": {Transports: []string{"a"}, Level: loglayer.LogLevelInfo},
+			},
 		},
 	})
 
@@ -363,8 +391,10 @@ func TestGroups_RawHonorsEntryGroups(t *testing.T) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
 		Transports:       tr,
-		Groups: map[string]loglayer.LogGroup{
-			"only-b": {Transports: []string{"b"}},
+		Routing: loglayer.RoutingConfig{
+			Groups: map[string]loglayer.LogGroup{
+				"only-b": {Transports: []string{"b"}},
+			},
 		},
 	})
 	log.Raw(loglayer.RawLogEntry{
@@ -382,8 +412,10 @@ func TestGroups_ChildInheritsAssignedGroups(t *testing.T) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
 		Transports:       tr,
-		Groups: map[string]loglayer.LogGroup{
-			"only-b": {Transports: []string{"b"}},
+		Routing: loglayer.RoutingConfig{
+			Groups: map[string]loglayer.LogGroup{
+				"only-b": {Transports: []string{"b"}},
+			},
 		},
 	})
 	tagged := log.WithGroup("only-b")
@@ -419,8 +451,10 @@ func TestGroups_PluginShouldSendStillRuns(t *testing.T) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
 		Transports:       tr,
-		Groups: map[string]loglayer.LogGroup{
-			"both": {Transports: []string{"a", "b"}},
+		Routing: loglayer.RoutingConfig{
+			Groups: map[string]loglayer.LogGroup{
+				"both": {Transports: []string{"a", "b"}},
+			},
 		},
 	})
 	log.AddPlugin(loglayer.NewSendGate("drop-b", func(p loglayer.ShouldSendParams) bool {
@@ -439,7 +473,9 @@ func TestGroups_Build_NoErrors(t *testing.T) {
 	tr, _ := twoTransports("a")
 	if _, err := loglayer.Build(loglayer.Config{
 		Transports: tr,
-		Groups:     map[string]loglayer.LogGroup{"g": {Transports: []string{"a"}}},
+		Routing: loglayer.RoutingConfig{
+			Groups: map[string]loglayer.LogGroup{"g": {Transports: []string{"a"}}},
+		},
 	}); err != nil {
 		t.Errorf("Build with Groups should succeed: %v", err)
 	}
@@ -452,9 +488,11 @@ func TestGroups_UngroupedTransportsWithoutMode_Errors(t *testing.T) {
 	tr, _ := twoTransports("a")
 	_, err := loglayer.Build(loglayer.Config{
 		Transports: tr,
-		UngroupedRouting: loglayer.UngroupedRouting{
-			// Mode left at zero value (UngroupedToAll).
-			Transports: []string{"a"},
+		Routing: loglayer.RoutingConfig{
+			Ungrouped: loglayer.UngroupedRouting{
+				// Mode left at zero value (UngroupedToAll).
+				Transports: []string{"a"},
+			},
 		},
 	})
 	if !errors.Is(err, loglayer.ErrUngroupedTransportsWithoutMode) {
@@ -507,8 +545,10 @@ func TestGroups_WithErrorAndGroupsCompose(t *testing.T) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
 		Transports:       tr,
-		Groups: map[string]loglayer.LogGroup{
-			"g": {Transports: []string{"a"}},
+		Routing: loglayer.RoutingConfig{
+			Groups: map[string]loglayer.LogGroup{
+				"g": {Transports: []string{"a"}},
+			},
 		},
 	})
 	log.WithError(errors.New("boom")).WithGroup("g").Error("explode")

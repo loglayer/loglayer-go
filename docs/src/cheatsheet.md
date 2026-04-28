@@ -201,9 +201,11 @@ log.GetLoggerInstance("id")            // underlying logger from a transport
 // Define routing rules at construction
 log := loglayer.New(loglayer.Config{
     Transports: []loglayer.Transport{...},
-    Groups: map[string]loglayer.LogGroup{
-        "database": {Transports: []string{"datadog"}, Level: loglayer.LogLevelError},
-        "auth":     {Transports: []string{"sentry"}, Level: loglayer.LogLevelWarn},
+    Routing: loglayer.RoutingConfig{
+        Groups: map[string]loglayer.LogGroup{
+            "database": {Transports: []string{"datadog"}, Level: loglayer.LogLevelError},
+            "auth":     {Transports: []string{"sentry"}, Level: loglayer.LogLevelWarn},
+        },
     },
 })
 
@@ -226,7 +228,7 @@ log.ClearActiveGroups()             // remove the filter
 log.GetGroups()                     // shallow copy of current config
 
 // Drive the active filter from an env var
-loglayer.ActiveGroupsFromEnv("LOGLAYER_GROUPS") // returns []string for Config.ActiveGroups
+loglayer.ActiveGroupsFromEnv("LOGLAYER_GROUPS") // returns []string for Routing.ActiveGroups
 ```
 
 See [Groups](/logging-api/groups) for the eight-rule routing precedence (defined-but-disabled vs undefined groups, per-group level filtering, ungrouped fallback) and a worked multi-service example.
@@ -285,8 +287,10 @@ loglayer.LogLevelFatal  // 50
 ```go
 log := loglayer.New(loglayer.Config{
     Transport: structured.New(structured.Config{}),
-    AddSource: true,                 // capture file/line/function
-    SourceFieldName: "source",       // default; override to "caller" etc.
+    Source: loglayer.SourceConfig{
+        Enabled:   true,             // capture file/line/function
+        FieldName: "source",         // default; override to "caller" etc.
+    },
 })
 
 log.Info("served")

@@ -200,7 +200,7 @@ func BenchmarkLoglayer_SimpleMessage_AddSourceOff(b *testing.B) {
 func BenchmarkLoglayer_SimpleMessage_AddSourceOn(b *testing.B) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
-		AddSource:        true,
+		Source:           loglayer.SourceConfig{Enabled: true},
 		Transport:        &noopTransport{},
 	})
 	benchtest.RunSimple(b, log)
@@ -220,7 +220,7 @@ func BenchmarkLoglayer_MapMetadata_AddSourceOff(b *testing.B) {
 func BenchmarkLoglayer_MapMetadata_AddSourceOn(b *testing.B) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
-		AddSource:        true,
+		Source:           loglayer.SourceConfig{Enabled: true},
 		Transport:        &noopTransport{},
 	})
 	benchtest.RunMap(b, log)

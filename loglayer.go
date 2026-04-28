@@ -140,8 +140,8 @@ func build(config Config) (*LogLayer, error) {
 		l.config.ErrorFieldName = "err"
 	}
 
-	if config.SourceFieldName == "" {
-		l.config.SourceFieldName = "source"
+	if config.Source.FieldName == "" {
+		l.config.Source.FieldName = "source"
 	}
 
 	if config.Disabled {
@@ -154,11 +154,11 @@ func build(config Config) (*LogLayer, error) {
 
 	l.plugins.Store(newPluginSet(append([]Plugin(nil), config.Plugins...)))
 
-	ung := config.UngroupedRouting
+	ung := config.Routing.Ungrouped
 	if ung.Mode != UngroupedToTransports && len(ung.Transports) > 0 {
 		return nil, ErrUngroupedTransportsWithoutMode
 	}
-	l.groups.Store(newGroupSet(config.Groups, config.ActiveGroups, ung))
+	l.groups.Store(newGroupSet(config.Routing.Groups, config.Routing.ActiveGroups, ung))
 
 	return l, nil
 }

@@ -37,7 +37,7 @@ func (l *LogLayer) Trace(messages ...any) {
 		return
 	}
 	var src *Source
-	if l.config.AddSource {
+	if l.config.Source.Enabled {
 		src = captureSource(1)
 	}
 	l.formatLog(LogLevelTrace, messages, nil, nil, nil, src, l.loadPlugins())
@@ -49,7 +49,7 @@ func (l *LogLayer) Info(messages ...any) {
 		return
 	}
 	var src *Source
-	if l.config.AddSource {
+	if l.config.Source.Enabled {
 		src = captureSource(1)
 	}
 	l.formatLog(LogLevelInfo, messages, nil, nil, nil, src, l.loadPlugins())
@@ -61,7 +61,7 @@ func (l *LogLayer) Warn(messages ...any) {
 		return
 	}
 	var src *Source
-	if l.config.AddSource {
+	if l.config.Source.Enabled {
 		src = captureSource(1)
 	}
 	l.formatLog(LogLevelWarn, messages, nil, nil, nil, src, l.loadPlugins())
@@ -73,7 +73,7 @@ func (l *LogLayer) Error(messages ...any) {
 		return
 	}
 	var src *Source
-	if l.config.AddSource {
+	if l.config.Source.Enabled {
 		src = captureSource(1)
 	}
 	l.formatLog(LogLevelError, messages, nil, nil, nil, src, l.loadPlugins())
@@ -85,7 +85,7 @@ func (l *LogLayer) Debug(messages ...any) {
 		return
 	}
 	var src *Source
-	if l.config.AddSource {
+	if l.config.Source.Enabled {
 		src = captureSource(1)
 	}
 	l.formatLog(LogLevelDebug, messages, nil, nil, nil, src, l.loadPlugins())
@@ -98,7 +98,7 @@ func (l *LogLayer) Fatal(messages ...any) {
 		return
 	}
 	var src *Source
-	if l.config.AddSource {
+	if l.config.Source.Enabled {
 		src = captureSource(1)
 	}
 	l.formatLog(LogLevelFatal, messages, nil, nil, nil, src, l.loadPlugins())
@@ -114,7 +114,7 @@ func (l *LogLayer) Panic(messages ...any) {
 		return
 	}
 	var src *Source
-	if l.config.AddSource {
+	if l.config.Source.Enabled {
 		src = captureSource(1)
 	}
 	l.formatLog(LogLevelPanic, messages, nil, nil, nil, src, l.loadPlugins())
@@ -148,7 +148,7 @@ func (l *LogLayer) ErrorOnly(err error, opts ...ErrorOnlyOpts) {
 	}
 
 	var src *Source
-	if l.config.AddSource {
+	if l.config.Source.Enabled {
 		src = captureSource(1)
 	}
 	l.formatLog(level, messages, nil, nil, err, src, l.loadPlugins())
@@ -174,7 +174,7 @@ func (l *LogLayer) MetadataOnly(v any, opts ...MetadataOnlyOpts) {
 		return
 	}
 	var src *Source
-	if l.config.AddSource {
+	if l.config.Source.Enabled {
 		src = captureSource(1)
 	}
 	l.formatLog(level, nil, nil, v, nil, src, plugins)
@@ -185,7 +185,7 @@ func (l *LogLayer) MetadataOnly(v any, opts ...MetadataOnlyOpts) {
 //
 // entry.Source takes precedence over runtime capture: if it's non-nil it's
 // passed through as-is (the slog handler uses this to forward source from
-// slog.Record.PC). Otherwise, when Config.AddSource is true, source is
+// slog.Record.PC). Otherwise, when Config.Source.Enabled is true, source is
 // captured at the Raw call site.
 func (l *LogLayer) Raw(entry RawLogEntry) {
 	if !l.levels.isEnabled(entry.LogLevel) {
@@ -205,7 +205,7 @@ func (l *LogLayer) Raw(entry RawLogEntry) {
 		ctx = l.boundCtx
 	}
 	src := entry.Source
-	if src == nil && l.config.AddSource {
+	if src == nil && l.config.Source.Enabled {
 		src = captureSource(1)
 	}
 	l.processLog(entry.LogLevel, entry.Messages, fields, ctx, entry.Metadata, entry.Err, src, groups, l.loadPlugins())

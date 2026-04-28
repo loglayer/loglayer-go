@@ -49,7 +49,7 @@ func (s *Source) LogValue() slog.Value {
 // captureSource walks `skip` frames up the stack to find the caller's
 // location. skip=1 means "the function that called captureSource"; skip=2
 // is its caller, and so on. Used by emission entry points (Info, Warn,
-// builder.Info, ...) to record the user's call site when Config.AddSource
+// builder.Info, ...) to record the user's call site when Config.Source
 // is enabled. Returns nil if the runtime cannot resolve the frame.
 //
 // Cost: ~620 ns and 5 extra allocations per emission on amd64
@@ -57,9 +57,9 @@ func (s *Source) LogValue() slog.Value {
 // ns / 6 allocs). The dominant terms are runtime.Caller's frame walk,
 // runtime.FuncForPC().Name() (which materializes the function-name
 // string), and the heap-allocated *Source itself. Paid only when
-// AddSource is true; the dispatch path is untouched otherwise. If
-// per-emission cost matters more than caller info, leave AddSource
-// off and rely on transport-level rendering plus inline metadata.
+// Config.Source.Enabled is true; the dispatch path is untouched
+// otherwise. If per-emission cost matters more than caller info,
+// leave it off and rely on transport-level rendering plus inline metadata.
 func captureSource(skip int) *Source {
 	pc, file, line, ok := runtime.Caller(skip + 1)
 	if !ok {

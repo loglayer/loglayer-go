@@ -181,7 +181,7 @@ func TestStructuredSourceFieldRendered(t *testing.T) {
 	tr := structured.New(structured.Config{Writer: buf})
 	log := loglayer.New(loglayer.Config{
 		Transport:        tr,
-		AddSource:        true,
+		Source:           loglayer.SourceConfig{Enabled: true},
 		DisableFatalExit: true,
 	})
 
@@ -212,8 +212,7 @@ func TestStructuredSourceFieldNameOverride(t *testing.T) {
 	tr := structured.New(structured.Config{Writer: buf})
 	log := loglayer.New(loglayer.Config{
 		Transport:        tr,
-		AddSource:        true,
-		SourceFieldName:  "caller",
+		Source:           loglayer.SourceConfig{Enabled: true, FieldName: "caller"},
 		DisableFatalExit: true,
 	})
 

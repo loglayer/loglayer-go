@@ -2,6 +2,7 @@ package sloghandler_test
 
 import (
 	"context"
+	"io"
 	"log/slog"
 	"testing"
 
@@ -18,6 +19,18 @@ func (n *noopTransport) IsEnabled() bool                         { return true }
 func (n *noopTransport) SendToLogger(_ loglayer.TransportParams) {}
 func (n *noopTransport) GetLoggerInstance() any                  { return nil }
 
+// noopSlogHandler is the absolute floor: a slog.Handler that does
+// nothing. Benchmarking against it isolates the cost of slog's own
+// Record construction + attr handling, independent of any handler.
+type noopSlogHandler struct{}
+
+func (noopSlogHandler) Enabled(context.Context, slog.Level) bool { return true }
+func (noopSlogHandler) Handle(context.Context, slog.Record) error {
+	return nil
+}
+func (noopSlogHandler) WithAttrs([]slog.Attr) slog.Handler { return noopSlogHandler{} }
+func (noopSlogHandler) WithGroup(string) slog.Handler      { return noopSlogHandler{} }
+
 func newBenchLogger() *slog.Logger {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
@@ -25,6 +38,61 @@ func newBenchLogger() *slog.Logger {
 	})
 	return slog.New(sloghandler.New(log))
 }
+
+// === Baselines ===
+
+// Floor: slog frontend with a no-op Handler. Measures slog's own cost
+// (Record construction, attr accumulation, dispatch into Handler.Handle)
+// independent of any handler implementation. Reading the table: anything
+// above this is "what the handler adds" on top of slog itself.
+func BenchmarkBaseline_SlogFrontend_SimpleMessage(b *testing.B) {
+	l := slog.New(noopSlogHandler{})
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		l.Info("simple")
+	}
+}
+
+func BenchmarkBaseline_SlogFrontend_ThreeAttrs(b *testing.B) {
+	l := slog.New(noopSlogHandler{})
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		l.Info("attrs",
+			slog.String("requestId", "abc"),
+			slog.Int("status", 200),
+			slog.String("path", "/users"),
+		)
+	}
+}
+
+// Realistic alternative: stdlib JSON handler writing to discard. The
+// number people would see if they used slog directly without loglayer.
+// Includes JSON marshalling work that loglayer's noop transport skips.
+func BenchmarkBaseline_SlogJSON_SimpleMessage(b *testing.B) {
+	l := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		l.Info("simple")
+	}
+}
+
+func BenchmarkBaseline_SlogJSON_ThreeAttrs(b *testing.B) {
+	l := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		l.Info("attrs",
+			slog.String("requestId", "abc"),
+			slog.Int("status", 200),
+			slog.String("path", "/users"),
+		)
+	}
+}
+
+// === Handler under test ===
 
 // Bare slog.Info path: no attrs, no groups, no scope. The dominant cost
 // here is the slog → loglayer translation plus the standard dispatch.

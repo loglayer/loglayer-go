@@ -133,7 +133,7 @@ slog.Info("hello")
 // {"level":"info","time":"...","msg":"hello","source":{"function":"main.main","file":"/app/main.go","line":12}}
 ```
 
-No need to set `Config.AddSource` on the loglayer side; the slog frontend already paid the capture cost. (If you call loglayer's own `log.Info(...)` directly and want the same source rendering, see [Configuration → AddSource](/configuration#addsource-sourcefieldname).)
+No need to set `Config.Source.Enabled` on the loglayer side; the slog frontend already paid the capture cost. (If you call loglayer's own `log.Info(...)` directly and want the same source rendering, see [Configuration → Source](/configuration#source-caller-info).)
 
 ## Differences from Other slog Handlers
 

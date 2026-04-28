@@ -56,6 +56,19 @@ fluent API for messages, fields, metadata, and errors. v1.0.0 ships:
   `io.Closer` (HTTP/Datadog drain pending entries). Fatal-level
   emissions flush every transport before `os.Exit` so async logs
   aren't lost.
+- **Transport panic recovery (opt-in)**: `Config.OnTransportPanic`,
+  when set, makes the dispatch loop recover panics from a
+  transport's `SendToLogger`, report them via the callback, and
+  continue dispatch to the remaining transports. Default (nil) is
+  unchanged from prior behavior: a panicking transport propagates
+  up, matching Go logging convention. Off-by-default keeps the hot
+  path a direct call (the recover wrap costs ~8 ns per emission per
+  transport when on). The callback receives a `*RecoveredPanicError`
+  matching the shape plugin hooks already surface via
+  `ErrorReporter.OnError`, so a single observability function can
+  absorb panics from either source. `Kind` (PanicKindPlugin or
+  PanicKindTransport) distinguishes the origin; `Hook` is the
+  specific identifier (hook name or transport ID).
 - **Plugins**: interface-based plugin system. `Plugin` is a one-method
   interface; six narrow hook interfaces (`FieldsHook`, `MetadataHook`,
   `DataHook`, `MessageHook`, `LevelHook`, `SendGate`) plus
@@ -88,11 +101,11 @@ fluent API for messages, fields, metadata, and errors. v1.0.0 ships:
   direction. Levels above `slog.LevelError` pin to `LogLevelError` so
   a slog emission cannot trigger Fatal exit. Source info is forwarded
   automatically: `slog.Record.PC` becomes a `*loglayer.Source` via
-  `RawLogEntry.Source`, no `Config.AddSource` needed.
+  `RawLogEntry.Source`, no `Config.Source.Enabled` needed.
 - **Source / caller info**: opt-in capture of file/line/function for
-  every emission via `Config.AddSource`. Surfaced under
-  `Config.SourceFieldName` (default `"source"`) in the assembled
-  `Data`, with JSON tags matching the slog convention so structured
+  every emission via `Config.Source.Enabled` (paired with
+  `Config.Source.FieldName`, default `"source"`). Surfaced in the
+  assembled `Data`, with JSON tags matching the slog convention so structured
   output is interchangeable. Cost is one `runtime.Caller` per
   emission, paid only when on. The `Source` struct also implements
   `fmt.Stringer` (compact `func file:line`) and `slog.LogValuer`
@@ -100,7 +113,7 @@ fluent API for messages, fields, metadata, and errors. v1.0.0 ships:
   with their own PC can pass it via `RawLogEntry.Source` to skip the
   runtime walk; a `loglayer.SourceFromPC` helper builds a Source
   from a captured PC.
-- **Group routing**: name routing rules in `Config.Groups`, tag entries
+- **Group routing**: name routing rules in `Config.Routing.Groups`, tag entries
   with `WithGroup(...)` to limit dispatch. Per-group level filters,
   active-groups env-var, runtime mutators.
 - **Runtime control**: level mutators backed by atomic state for live

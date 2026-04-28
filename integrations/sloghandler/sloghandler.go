@@ -123,7 +123,7 @@ func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 		// {AddSource: true} (or any handler-aware emitter that filled it).
 		// Forward it as a Source so the loglayer side renders source info
 		// without re-walking the stack. Zero PC produces nil; loglayer's
-		// AddSource still applies as a fallback inside Raw.
+		// Config.Source.Enabled still applies as a fallback inside Raw.
 		Source: loglayer.SourceFromPC(r.PC),
 	})
 	return nil
