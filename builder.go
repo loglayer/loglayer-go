@@ -84,7 +84,11 @@ func (b *LogBuilder) Info(messages ...any) {
 	if !b.layer.levels.isEnabled(LogLevelInfo) {
 		return
 	}
-	b.dispatch(LogLevelInfo, messages)
+	var src *Source
+	if b.layer.config.AddSource {
+		src = captureSource(1)
+	}
+	b.dispatch(LogLevelInfo, messages, src)
 }
 
 // Warn dispatches the accumulated entry at the warn level.
@@ -92,7 +96,11 @@ func (b *LogBuilder) Warn(messages ...any) {
 	if !b.layer.levels.isEnabled(LogLevelWarn) {
 		return
 	}
-	b.dispatch(LogLevelWarn, messages)
+	var src *Source
+	if b.layer.config.AddSource {
+		src = captureSource(1)
+	}
+	b.dispatch(LogLevelWarn, messages, src)
 }
 
 // Error dispatches the accumulated entry at the error level.
@@ -100,7 +108,11 @@ func (b *LogBuilder) Error(messages ...any) {
 	if !b.layer.levels.isEnabled(LogLevelError) {
 		return
 	}
-	b.dispatch(LogLevelError, messages)
+	var src *Source
+	if b.layer.config.AddSource {
+		src = captureSource(1)
+	}
+	b.dispatch(LogLevelError, messages, src)
 }
 
 // Debug dispatches the accumulated entry at the debug level.
@@ -108,7 +120,11 @@ func (b *LogBuilder) Debug(messages ...any) {
 	if !b.layer.levels.isEnabled(LogLevelDebug) {
 		return
 	}
-	b.dispatch(LogLevelDebug, messages)
+	var src *Source
+	if b.layer.config.AddSource {
+		src = captureSource(1)
+	}
+	b.dispatch(LogLevelDebug, messages, src)
 }
 
 // Fatal dispatches the accumulated entry at the fatal level.
@@ -117,12 +133,16 @@ func (b *LogBuilder) Fatal(messages ...any) {
 	if !b.layer.levels.isEnabled(LogLevelFatal) {
 		return
 	}
-	b.dispatch(LogLevelFatal, messages)
+	var src *Source
+	if b.layer.config.AddSource {
+		src = captureSource(1)
+	}
+	b.dispatch(LogLevelFatal, messages, src)
 }
 
-func (b *LogBuilder) dispatch(level LogLevel, messages []any) {
+func (b *LogBuilder) dispatch(level LogLevel, messages []any, source *Source) {
 	applyPrefix(b.layer.prefix, messages)
-	// Hot path: builder has no per-call groups → pass the layer's
+	// Hot path: builder has no per-call groups, so pass the layer's
 	// assigned groups straight through. mergeGroups is out-of-line and
 	// would be a measurable hit per emission for the dominant case.
 	groups := b.layer.assignedGroups
@@ -134,5 +154,5 @@ func (b *LogBuilder) dispatch(level LogLevel, messages []any) {
 	if ctx == nil {
 		ctx = b.layer.boundCtx
 	}
-	b.layer.processLog(level, messages, b.layer.fields, ctx, b.metadata, b.err, groups, b.plugins)
+	b.layer.processLog(level, messages, b.layer.fields, ctx, b.metadata, b.err, source, groups, b.plugins)
 }

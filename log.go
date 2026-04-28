@@ -34,7 +34,11 @@ func (l *LogLayer) Info(messages ...any) {
 	if !l.levels.isEnabled(LogLevelInfo) {
 		return
 	}
-	l.formatLog(LogLevelInfo, messages, nil, nil, nil, l.loadPlugins())
+	var src *Source
+	if l.config.AddSource {
+		src = captureSource(1)
+	}
+	l.formatLog(LogLevelInfo, messages, nil, nil, nil, src, l.loadPlugins())
 }
 
 // Warn logs at the warn level.
@@ -42,7 +46,11 @@ func (l *LogLayer) Warn(messages ...any) {
 	if !l.levels.isEnabled(LogLevelWarn) {
 		return
 	}
-	l.formatLog(LogLevelWarn, messages, nil, nil, nil, l.loadPlugins())
+	var src *Source
+	if l.config.AddSource {
+		src = captureSource(1)
+	}
+	l.formatLog(LogLevelWarn, messages, nil, nil, nil, src, l.loadPlugins())
 }
 
 // Error logs at the error level.
@@ -50,7 +58,11 @@ func (l *LogLayer) Error(messages ...any) {
 	if !l.levels.isEnabled(LogLevelError) {
 		return
 	}
-	l.formatLog(LogLevelError, messages, nil, nil, nil, l.loadPlugins())
+	var src *Source
+	if l.config.AddSource {
+		src = captureSource(1)
+	}
+	l.formatLog(LogLevelError, messages, nil, nil, nil, src, l.loadPlugins())
 }
 
 // Debug logs at the debug level.
@@ -58,7 +70,11 @@ func (l *LogLayer) Debug(messages ...any) {
 	if !l.levels.isEnabled(LogLevelDebug) {
 		return
 	}
-	l.formatLog(LogLevelDebug, messages, nil, nil, nil, l.loadPlugins())
+	var src *Source
+	if l.config.AddSource {
+		src = captureSource(1)
+	}
+	l.formatLog(LogLevelDebug, messages, nil, nil, nil, src, l.loadPlugins())
 }
 
 // Fatal logs at the fatal level. Calls os.Exit(1) after dispatch unless
@@ -67,7 +83,11 @@ func (l *LogLayer) Fatal(messages ...any) {
 	if !l.levels.isEnabled(LogLevelFatal) {
 		return
 	}
-	l.formatLog(LogLevelFatal, messages, nil, nil, nil, l.loadPlugins())
+	var src *Source
+	if l.config.AddSource {
+		src = captureSource(1)
+	}
+	l.formatLog(LogLevelFatal, messages, nil, nil, nil, src, l.loadPlugins())
 }
 
 // ErrorOnly logs an error without a message. The log level defaults to error.
@@ -97,7 +117,11 @@ func (l *LogLayer) ErrorOnly(err error, opts ...ErrorOnlyOpts) {
 		messages = []any{err.Error()}
 	}
 
-	l.formatLog(level, messages, nil, nil, err, l.loadPlugins())
+	var src *Source
+	if l.config.AddSource {
+		src = captureSource(1)
+	}
+	l.formatLog(level, messages, nil, nil, err, src, l.loadPlugins())
 }
 
 // MetadataOnly logs metadata without a message. The log level defaults to info.
@@ -119,11 +143,20 @@ func (l *LogLayer) MetadataOnly(v any, opts ...MetadataOnlyOpts) {
 	if !l.levels.isEnabled(level) || l.config.MuteMetadata || v == nil {
 		return
 	}
-	l.formatLog(level, nil, nil, v, nil, plugins)
+	var src *Source
+	if l.config.AddSource {
+		src = captureSource(1)
+	}
+	l.formatLog(level, nil, nil, v, nil, src, plugins)
 }
 
 // Raw dispatches a fully specified log entry, bypassing the builder API.
 // All normal assembly and transport dispatch still applies.
+//
+// entry.Source takes precedence over runtime capture: if it's non-nil it's
+// passed through as-is (the slog handler uses this to forward source from
+// slog.Record.PC). Otherwise, when Config.AddSource is true, source is
+// captured at the Raw call site.
 func (l *LogLayer) Raw(entry RawLogEntry) {
 	if !l.levels.isEnabled(entry.LogLevel) {
 		return
@@ -141,5 +174,9 @@ func (l *LogLayer) Raw(entry RawLogEntry) {
 	if ctx == nil {
 		ctx = l.boundCtx
 	}
-	l.processLog(entry.LogLevel, entry.Messages, fields, ctx, entry.Metadata, entry.Err, groups, l.loadPlugins())
+	src := entry.Source
+	if src == nil && l.config.AddSource {
+		src = captureSource(1)
+	}
+	l.processLog(entry.LogLevel, entry.Messages, fields, ctx, entry.Metadata, entry.Err, src, groups, l.loadPlugins())
 }

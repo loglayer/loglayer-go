@@ -14,6 +14,7 @@ LogLayer is that layer. It sits on top of whichever logging library you already 
 - **Group routing.** Tag entries by subsystem (`db`, `auth`, ...) and route each tag to specific transports with its own minimum level. Toggle which groups are active at runtime via env var.
 - **Two-way slog interop.** Wrap a `*log/slog.Logger` as a backend ([transports/slog](/transports/slog)), or install a [`slog.Handler`](/integrations/sloghandler) so every `slog.Info(...)` call (yours and your dependencies') flows through the loglayer pipeline.
 - **First-class test capture.** A typed `LogLine` for each emission, so tests assert on level, message, fields, metadata, and context independently. No JSON parsing in tests.
+- **Caller info, opt-in.** `Config.AddSource` captures file/line/function for every emission and surfaces it under a configurable key (default `source`). JSON tags match the `log/slog` convention so structured output is interchangeable. The slog handler forwards `Record.PC` automatically, no toggle required.
 - **Distinct types for persistent fields, per-call metadata, and errors.** The compiler catches misuse; the dispatch path serializes each consistently.
 - **Bring-your-own logger.** Wrap a `*zerolog.Logger`, `*zap.Logger`, `*log/slog.Logger`, `*logrus.Logger`, `*charmbracelet/log.Logger`, or `*phuslu/log.Logger` you've already configured. The API in your call sites becomes uniform without a rewrite.
 - **Runtime control.** Hot-swap transports, add or remove plugins, toggle levels, all live and concurrency-safe.

@@ -123,10 +123,21 @@ If you want loglayer's structured error treatment (`{"err": {"message": ...}}` v
 
 The handler is safe under concurrent emission. `WithAttrs` and `WithGroup` return new handler values without mutating the receiver, so derived `*slog.Logger`s shared across goroutines do not race.
 
+## Source / Caller Info
+
+`slog.New` always captures `slog.Record.PC` for every emission. The handler forwards that PC into loglayer as a `*Source` via `RawLogEntry.Source`, so a structured transport renders it under `SourceFieldName` (default `"source"`) automatically:
+
+```go
+slog.SetDefault(slog.New(sloghandler.New(log)))
+slog.Info("hello")
+// {"level":"info","time":"...","msg":"hello","source":{"function":"main.main","file":"/app/main.go","line":12}}
+```
+
+No need to set `Config.AddSource` on the loglayer side; the slog frontend already paid the capture cost. (If you call loglayer's own `log.Info(...)` directly and want the same source rendering, see [Configuration → AddSource](/configuration#addsource-sourcefieldname).)
+
 ## Differences from Other slog Handlers
 
 - **Levels above slog.Error don't escalate to Fatal.** Other handlers don't have Fatal at all; this one suppresses it deliberately so a custom slog level can't accidentally exit the process.
-- **No source info by default.** loglayer doesn't capture or render `source.file`/`source.line`. If you need that, use a slog handler that supports it (the stdlib `slog.NewJSONHandler` with `AddSource: true`), or attach the info as attrs yourself.
 - **No HandlerOptions on this side.** Filtering by level is done on the loglayer side (`log.SetLevel`, per-group levels, `Config.Level`). The handler's `Enabled` consults the loglayer logger.
 
 ## Related

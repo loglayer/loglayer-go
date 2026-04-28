@@ -69,7 +69,20 @@ fluent API for messages, fields, metadata, and errors. v1.0.0 ships:
   Complements `transports/slog` (which lets loglayer emit through a
   `*slog.Logger` backend); the new handler covers the opposite
   direction. Levels above `slog.LevelError` pin to `LogLevelError` so
-  a slog emission cannot trigger Fatal exit.
+  a slog emission cannot trigger Fatal exit. Source info is forwarded
+  automatically: `slog.Record.PC` becomes a `*loglayer.Source` via
+  `RawLogEntry.Source`, no `Config.AddSource` needed.
+- **Source / caller info**: opt-in capture of file/line/function for
+  every emission via `Config.AddSource`. Surfaced under
+  `Config.SourceFieldName` (default `"source"`) in the assembled
+  `Data`, with JSON tags matching the slog convention so structured
+  output is interchangeable. Cost is one `runtime.Caller` per
+  emission, paid only when on. The `Source` struct also implements
+  `fmt.Stringer` (compact `func file:line`) and `slog.LogValuer`
+  (nested group) so non-JSON transports render readably. Adapters
+  with their own PC can pass it via `RawLogEntry.Source` to skip the
+  runtime walk; a `loglayer.SourceFromPC` helper builds a Source
+  from a captured PC.
 - **Group routing**: name routing rules in `Config.Groups`, tag entries
   with `WithGroup(...)` to limit dispatch. Per-group level filters,
   active-groups env-var, runtime mutators.

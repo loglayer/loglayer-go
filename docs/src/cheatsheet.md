@@ -280,6 +280,21 @@ loglayer.LogLevelError  // 40
 loglayer.LogLevelFatal  // 50
 ```
 
+## Source / Caller info
+
+```go
+log := loglayer.New(loglayer.Config{
+    Transport: structured.New(structured.Config{}),
+    AddSource: true,                 // capture file/line/function
+    SourceFieldName: "source",       // default; override to "caller" etc.
+})
+
+log.Info("served")
+// {"level":"info","time":"...","msg":"served","source":{"function":"main.handler","file":"/app/main.go","line":42}}
+```
+
+Off by default. Costs ~100 ns / one runtime.Caller per emission when on. The slog Handler forwards `slog.Record.PC` automatically (no capture cost on the slog path).
+
 ## slog Interop
 
 ```go

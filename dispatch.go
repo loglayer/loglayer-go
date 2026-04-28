@@ -12,13 +12,15 @@ var osExit = os.Exit
 // formatLog applies the prefix to messages then hands the entry to processLog
 // using the logger's persistent fields. Per-call goCtx overrides the
 // logger's bound ctx (when one is provided), otherwise the bound ctx is
-// passed through.
-func (l *LogLayer) formatLog(level LogLevel, messages []any, goCtx context.Context, metadata any, err error, plugins *pluginSet) {
+// passed through. source carries pre-captured call-site info from the
+// emission entry point (nil if Config.AddSource is off and no adapter
+// supplied one).
+func (l *LogLayer) formatLog(level LogLevel, messages []any, goCtx context.Context, metadata any, err error, source *Source, plugins *pluginSet) {
 	applyPrefix(l.prefix, messages)
 	if goCtx == nil {
 		goCtx = l.boundCtx
 	}
-	l.processLog(level, messages, l.fields, goCtx, metadata, err, l.assignedGroups, plugins)
+	l.processLog(level, messages, l.fields, goCtx, metadata, err, source, l.assignedGroups, plugins)
 }
 
 // processLog assembles Data from fields + error, builds TransportParams, and
@@ -30,12 +32,13 @@ func (l *LogLayer) formatLog(level LogLevel, messages []any, goCtx context.Conte
 // routing decisions (nil when no groups apply). plugins is the snapshot
 // used for all hooks on this entry; callers that already snapshotted
 // (builder, MetadataOnly) pass theirs to keep one entry on one snapshot.
-func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goCtx context.Context, metadata any, err error, entryGroups []string, plugins *pluginSet) {
+func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goCtx context.Context, metadata any, err error, source *Source, entryGroups []string, plugins *pluginSet) {
 	cfg := &l.config
 	includeFields := !l.muteFields.Load() && len(fields) > 0
+	includeSource := source != nil
 
 	var d Data
-	if includeFields || err != nil {
+	if includeFields || err != nil || includeSource {
 		size := 0
 		if includeFields {
 			if cfg.FieldsKey == "" {
@@ -45,6 +48,9 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 			}
 		}
 		if err != nil {
+			size++
+		}
+		if includeSource {
 			size++
 		}
 		d = make(Data, size)
@@ -76,6 +82,10 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 		} else {
 			d[cfg.ErrorFieldName] = map[string]any{"message": err.Error()}
 		}
+	}
+
+	if includeSource {
+		d[cfg.SourceFieldName] = source
 	}
 
 	var rawMetadata any

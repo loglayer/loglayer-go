@@ -2,6 +2,7 @@ package structured_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -169,5 +170,63 @@ func TestStructuredWithFields(t *testing.T) {
 	obj := transporttest.ParseJSONLine(t, buf)
 	if obj["service"] != "api" {
 		t.Errorf("service: got %v", obj["service"])
+	}
+}
+
+// AddSource: the structured transport renders the captured Source under
+// SourceFieldName as a nested {function, file, line} object via the
+// json tags on loglayer.Source.
+func TestStructuredSourceFieldRendered(t *testing.T) {
+	buf := &bytes.Buffer{}
+	tr := structured.New(structured.Config{Writer: buf})
+	log := loglayer.New(loglayer.Config{
+		Transport:        tr,
+		AddSource:        true,
+		DisableFatalExit: true,
+	})
+
+	log.Info("hi") // capture site
+
+	var obj map[string]any
+	if err := json.Unmarshal(buf.Bytes(), &obj); err != nil {
+		t.Fatalf("unmarshal: %v\n%s", err, buf.String())
+	}
+	src, ok := obj["source"].(map[string]any)
+	if !ok {
+		t.Fatalf("source key missing or wrong shape: %v", obj["source"])
+	}
+	if fn, _ := src["function"].(string); !strings.Contains(fn, "TestStructuredSourceFieldRendered") {
+		t.Errorf("function: got %v", src["function"])
+	}
+	if file, _ := src["file"].(string); !strings.HasSuffix(file, "structured_test.go") {
+		t.Errorf("file: got %v", src["file"])
+	}
+	if _, ok := src["line"].(float64); !ok {
+		t.Errorf("line should be a number: got %v (%T)", src["line"], src["line"])
+	}
+}
+
+// SourceFieldName overrides the rendered key.
+func TestStructuredSourceFieldNameOverride(t *testing.T) {
+	buf := &bytes.Buffer{}
+	tr := structured.New(structured.Config{Writer: buf})
+	log := loglayer.New(loglayer.Config{
+		Transport:        tr,
+		AddSource:        true,
+		SourceFieldName:  "caller",
+		DisableFatalExit: true,
+	})
+
+	log.Info("hi")
+
+	var obj map[string]any
+	if err := json.Unmarshal(buf.Bytes(), &obj); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if _, ok := obj["source"]; ok {
+		t.Errorf("default key 'source' should not appear when override set: %v", obj)
+	}
+	if _, ok := obj["caller"]; !ok {
+		t.Errorf("expected source under 'caller': %v", obj)
 	}
 }

@@ -24,7 +24,8 @@ LogLayer for Go gives you one consistent API for messages, persistent fields, pe
 - [Transport Configuration](https://go.loglayer.dev/transports/configuration): Config.Transport / Transports, BaseConfig (ID/Disabled/Level), transport ID semantics.
 - [Transport Management](https://go.loglayer.dev/transports/management): AddTransport, RemoveTransport, SetTransports, GetLoggerInstance.
 - [Groups](https://go.loglayer.dev/logging-api/groups): Named routing rules. Config.Groups + WithGroup(...string) on logger or builder. ActiveGroups filter, UngroupedRouting modes (UngroupedToAll/None/Transports), runtime mutators, ActiveGroupsFromEnv helper.
-- [Raw Logging](https://go.loglayer.dev/logging-api/raw): Raw(RawLogEntry) bypasses the builder.
+- [Raw Logging](https://go.loglayer.dev/logging-api/raw): Raw(RawLogEntry) bypasses the builder. RawLogEntry.Source can carry a pre-captured *loglayer.Source so adapters with their own PC (e.g. the slog handler) skip runtime capture.
+- Source / Caller info (in [Configuration](https://go.loglayer.dev/configuration#addsource-sourcefieldname)): Config.AddSource captures the call site (file/line/function) of every emission via runtime.Caller; surfaced under Config.SourceFieldName (default "source") in the assembled Data. Off by default; ~100 ns when on. *loglayer.Source has json tags matching slog convention, plus String() and slog.LogValuer methods so non-JSON transports render readably. SourceFromPC(pc) builds a Source from a captured PC. The slog handler forwards Record.PC automatically.
 - [Mocking](https://go.loglayer.dev/logging-api/mocking): loglayer.NewMock() for silent mocks; transports/testing for capture.
 
 ## Transports
@@ -59,7 +60,7 @@ LogLayer for Go gives you one consistent API for messages, persistent fields, pe
 ## Integrations
 
 - [HTTP middleware (loghttp)](https://go.loglayer.dev/integrations/loghttp): One-line middleware that derives a per-request logger with requestId/method/path, stores it in the request context, emits a "request completed" log with status, bytes, and duration. Wraps any net/http-compatible router (chi, gorilla, gin, echo, stdlib).
-- [slog Handler](https://go.loglayer.dev/integrations/sloghandler): A `log/slog.Handler` backed by a loglayer logger. `slog.SetDefault(slog.New(sloghandler.New(log)))` makes every `slog.Info(...)` call (yours and your dependencies') flow through loglayer's plugin pipeline, fan-out, and group routing. Opposite direction from `transports/slog` (which lets loglayer emit through slog as a backend). Levels above slog.Error pin to LogLevelError; slog cannot trigger Fatal exit through this handler.
+- [slog Handler](https://go.loglayer.dev/integrations/sloghandler): A `log/slog.Handler` backed by a loglayer logger. `slog.SetDefault(slog.New(sloghandler.New(log)))` makes every `slog.Info(...)` call (yours and your dependencies') flow through loglayer's plugin pipeline, fan-out, and group routing. Opposite direction from `transports/slog` (which lets loglayer emit through slog as a backend). Levels above slog.Error pin to LogLevelError; slog cannot trigger Fatal exit through this handler. Source forwarded automatically: `slog.Record.PC` becomes a `*loglayer.Source` via `RawLogEntry.Source`, no `Config.AddSource` needed on the loglayer side.
 
 ## Plugins
 

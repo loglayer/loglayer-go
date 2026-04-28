@@ -36,6 +36,17 @@ type M = Metadata
 // no err key). Returning an empty map adds an empty err object.
 type ErrorSerializer func(err error) map[string]any
 
+// Source identifies the call site that produced a log entry. Surfaced under
+// Config.SourceFieldName (default "source") when Config.AddSource is true,
+// or when an adapter (e.g. the slog handler) supplies it explicitly via
+// RawLogEntry.Source. Field names match the slog convention so structured
+// output is interchangeable.
+type Source struct {
+	Function string `json:"function,omitempty"`
+	File     string `json:"file,omitempty"`
+	Line     int    `json:"line,omitempty"`
+}
+
 // Config is the initialization configuration for a LogLayer instance.
 type Config struct {
 	// Transport is a convenience for the single-transport case. Mutually
@@ -94,6 +105,22 @@ type Config struct {
 	// wedged endpoint can't hang the process or mutator goroutine.
 	// Defaults to 5 seconds when zero or negative.
 	TransportCloseTimeout time.Duration
+
+	// AddSource captures the call site (file/line/function) of every log
+	// emission and includes it in the assembled Data under SourceFieldName.
+	// Off by default; opt in for production-debuggable output. Capture
+	// uses runtime.Caller and costs ~100 ns per emission, paid only when
+	// this is true.
+	//
+	// Adapters that already have source information (notably the slog
+	// handler, which extracts it from slog.Record.PC) can supply it via
+	// RawLogEntry.Source without setting AddSource.
+	AddSource bool
+
+	// SourceFieldName is the key under which the captured Source is
+	// rendered in the assembled Data. Defaults to "source" to match the
+	// slog convention.
+	SourceFieldName string
 
 	// Groups defines named routing rules. Each group lists the transport
 	// IDs it routes to, an optional minimum level, and an optional disabled
@@ -213,4 +240,9 @@ type RawLogEntry struct {
 	// Groups overrides the logger's assigned group tags for routing. Nil
 	// uses the logger's groups (set via WithGroup).
 	Groups []string
+	// Source overrides the captured source info for this entry. Set this
+	// from adapters that already have source info (e.g. the slog handler
+	// extracts it from slog.Record.PC). Nil falls back to runtime capture
+	// when Config.AddSource is true; otherwise no source info is recorded.
+	Source *Source
 }

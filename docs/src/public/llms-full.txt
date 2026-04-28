@@ -36,6 +36,8 @@ log := loglayer.New(loglayer.Config{
     MuteFields:      false,
     MuteMetadata:     false,
     DisableFatalExit: false,                // false = Fatal calls os.Exit(1)
+    AddSource:       false,                 // capture file/line/function of every emission
+    SourceFieldName: "source",              // default; output key for captured source
 })
 
 // Or:
@@ -268,7 +270,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-- **integrations/sloghandler**: A `log/slog.Handler` whose `Handle` dispatches into a loglayer logger, so every `slog.Info(...)` call participates in the loglayer plugin pipeline, multi-transport fan-out, group routing, and runtime level state. Opposite direction from `transports/slog` (loglayer dispatches through a `*slog.Logger`). Mapping: slog `WithAttrs` accumulates persistent fields; inline record attrs become per-call fields; `WithGroup(name)` opens a nested map; `slog.Group("", ...)` inlines members at the parent (per slog spec); empty groups and empty-key attrs are dropped; `slog.LogValuer` is resolved before encoding; native kinds preserve their typed Go values (int64, time.Time, time.Duration, ...). Levels above `slog.LevelError` pin to `LogLevelError` so a slog emission cannot trigger loglayer's `os.Exit(1)`. Context passed via `slog.InfoContext(ctx, ...)` is forwarded to dispatch-time plugin hooks via `TransportParams.Ctx` so `oteltrace`/`datadogtrace` extract trace IDs the same way they do for native loglayer calls. Persistent fields set on the underlying logger before the handler is installed are preserved on every emission.
+- **integrations/sloghandler**: A `log/slog.Handler` whose `Handle` dispatches into a loglayer logger, so every `slog.Info(...)` call participates in the loglayer plugin pipeline, multi-transport fan-out, group routing, and runtime level state. Opposite direction from `transports/slog` (loglayer dispatches through a `*slog.Logger`). Mapping: slog `WithAttrs` accumulates persistent fields; inline record attrs become per-call fields; `WithGroup(name)` opens a nested map; `slog.Group("", ...)` inlines members at the parent (per slog spec); empty groups and empty-key attrs are dropped; `slog.LogValuer` is resolved before encoding; native kinds preserve their typed Go values (int64, time.Time, time.Duration, ...). Levels above `slog.LevelError` pin to `LogLevelError` so a slog emission cannot trigger loglayer's `os.Exit(1)`. Context passed via `slog.InfoContext(ctx, ...)` is forwarded to dispatch-time plugin hooks via `TransportParams.Ctx` so `oteltrace`/`datadogtrace` extract trace IDs the same way they do for native loglayer calls. Persistent fields set on the underlying logger before the handler is installed are preserved on every emission. Source forwarding: `slog.Record.PC` is converted to a `*loglayer.Source` via `loglayer.SourceFromPC` and passed on `RawLogEntry.Source`, so callers using `slog.New(...)` (which always captures PC) get caller info rendered automatically without setting `Config.AddSource`.
 
 ```go
 log := loglayer.New(loglayer.Config{Transport: structured.New(structured.Config{})})

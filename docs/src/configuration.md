@@ -190,6 +190,38 @@ loglayer.New(loglayer.Config{
 
 You can flip these at runtime with `log.MuteFields()`, `log.UnmuteFields()`, `log.MuteMetadata()`, `log.UnmuteMetadata()`.
 
+## AddSource / SourceFieldName
+
+`AddSource: true` captures the call site (file, line, function) of every log emission and includes it in the assembled `Data` under `SourceFieldName` (default `"source"`). Off by default; opt in for production-debuggable output.
+
+```go
+log := loglayer.New(loglayer.Config{
+    Transport: structured.New(structured.Config{}),
+    AddSource: true,
+})
+
+log.Info("served")
+// {"level":"info","time":"...","msg":"served","source":{"function":"main.handler","file":"/app/main.go","line":42}}
+```
+
+The captured `Source` value is a `*loglayer.Source` with `Function`, `File`, `Line`. JSON tags match the [`log/slog`](https://pkg.go.dev/log/slog) source convention so structured output is interchangeable with standard slog setups. The struct also implements `fmt.Stringer` (compact `func file:line` rendering for console / pretty transports) and `slog.LogValuer` (nested group when forwarded to a slog handler).
+
+Override the output key with `SourceFieldName: "caller"` (or any string) when matching an existing log schema.
+
+```go
+loglayer.New(loglayer.Config{
+    Transport:       structured.New(structured.Config{}),
+    AddSource:       true,
+    SourceFieldName: "caller",
+})
+```
+
+Cost: one `runtime.Caller` per emission, paid only when `AddSource` is true. Roughly ~100 ns on amd64. The dispatch path is untouched when `AddSource` is off.
+
+::: tip Adapters can supply Source explicitly
+If you're calling `log.Raw(...)` from an adapter that already has a program counter (the [slog handler](/integrations/sloghandler) extracts it from `slog.Record.PC`), pass `Source: loglayer.SourceFromPC(pc)` on the `RawLogEntry` and skip runtime capture. The slog handler does this automatically.
+:::
+
 ## Transport BaseConfig
 
 Each transport accepts a `transport.BaseConfig` for transport-level concerns:

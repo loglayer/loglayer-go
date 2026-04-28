@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"regexp"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -391,6 +392,36 @@ func TestErrorAttr_PassesThroughAsField(t *testing.T) {
 	}
 	if got.Error() != "boom" {
 		t.Errorf("unexpected error message: %v", got)
+	}
+}
+
+// slog.Record.PC arrives when the slog frontend was constructed with
+// AddSource: true (which is the typical production setup). The handler
+// should forward it so loglayer renders source under SourceFieldName.
+func TestSourceForwardedFromSlogPC(t *testing.T) {
+	t.Parallel()
+	lib := &lltest.TestLoggingLibrary{}
+	log := loglayer.New(loglayer.Config{
+		Transport:        lltest.New(lltest.Config{Library: lib}),
+		DisableFatalExit: true,
+	})
+
+	// slog.New defaults to PC capture; slog.Logger.log() always populates
+	// Record.PC via runtime.Callers. So Info() through a slog.Logger
+	// backed by our handler should yield a Source that points back here.
+	l := slog.New(sloghandler.New(log))
+	l.Info("hi") // capture
+
+	line := lib.PopLine()
+	src, ok := line.Data["source"].(*loglayer.Source)
+	if !ok || src == nil {
+		t.Fatalf("expected source forwarded from slog Record.PC, got %v (%T)", line.Data["source"], line.Data["source"])
+	}
+	if src.File == "" || src.Line == 0 {
+		t.Errorf("source should carry file+line, got %+v", src)
+	}
+	if !strings.Contains(src.Function, "TestSourceForwardedFromSlogPC") {
+		t.Errorf("function: got %q, want containing TestSourceForwardedFromSlogPC", src.Function)
 	}
 }
 
