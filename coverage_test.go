@@ -307,6 +307,28 @@ func TestLogBuilder_LevelFiltered_NoEntry(t *testing.T) {
 	}
 }
 
+// TestFAndMAliases pins that loglayer.F is interchangeable with
+// loglayer.Fields and loglayer.M with loglayer.Metadata. The aliases
+// exist for shorter call sites; they MUST stay aliases (not distinct
+// types) so existing code that passes loglayer.Fields keeps working.
+func TestFAndMAliases(t *testing.T) {
+	log, lib := setup(t)
+	log = log.WithFields(loglayer.F{"requestId": "abc"})
+	log.WithMetadata(loglayer.M{"duration": 150}).Info("done")
+
+	line := lib.PopLine()
+	if line == nil {
+		t.Fatal("expected a captured line")
+	}
+	if got, _ := line.Data["requestId"].(string); got != "abc" {
+		t.Errorf("F should land in Fields path: got %v", line.Data)
+	}
+	m, _ := line.Metadata.(loglayer.Metadata)
+	if m["duration"] != 150 {
+		t.Errorf("M should land in Metadata path: got %v", line.Metadata)
+	}
+}
+
 func TestLogLevel_String(t *testing.T) {
 	cases := map[loglayer.LogLevel]string{
 		loglayer.LogLevelDebug: "debug",

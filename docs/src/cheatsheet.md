@@ -16,9 +16,10 @@ import (
 log := loglayer.New(loglayer.Config{Transport: structured.New(structured.Config{})})
 
 // The fluent chain: persistent fields → per-call metadata + error → terminal level method.
+// loglayer.F / loglayer.M are aliases for loglayer.Fields / loglayer.Metadata for terser call sites.
 log.
-    WithFields(loglayer.Fields{"requestId": "abc"}). // returns a new logger; assign on a real call site
-    WithMetadata(loglayer.Metadata{"durationMs": 23}).
+    WithFields(loglayer.F{"requestId": "abc"}). // returns a new logger; assign on a real call site
+    WithMetadata(loglayer.M{"durationMs": 23}).
     WithError(err).
     Error("request failed")
 ```
@@ -76,8 +77,9 @@ Without the plugin, multi-arg messages are space-joined.
 ## Metadata
 
 ```go
-// Map (loglayer.Metadata is a type alias for map[string]any)
-log.WithMetadata(loglayer.Metadata{"id": 1}).Info("ok")
+// Map (loglayer.Metadata is a type alias for map[string]any;
+// loglayer.M is a shorter alias for the same type)
+log.WithMetadata(loglayer.M{"id": 1}).Info("ok")
 
 // Struct (transport handles serialization)
 type User struct {
@@ -107,7 +109,8 @@ log.ErrorOnly(err, loglayer.ErrorOnlyOpts{LogLevel: loglayer.LogLevelFatal})
 
 ```go
 // WithFields and WithoutFields return a NEW logger; assign the result.
-log = log.WithFields(loglayer.Fields{"requestId": "123"})
+// loglayer.F is a shorter alias for loglayer.Fields.
+log = log.WithFields(loglayer.F{"requestId": "123"})
 
 // Read it back
 fields := log.GetFields()

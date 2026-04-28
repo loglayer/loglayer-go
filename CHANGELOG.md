@@ -25,8 +25,10 @@ fluent API for messages, fields, metadata, and errors. v1.0.0 ships:
 - **Core**: `*LogLayer` with five log levels and a fluent builder
   (`WithMetadata`, `WithError`, `WithCtx`, `WithFields`, `WithGroup`,
   `WithPrefix`). Distinct `Fields`/`Metadata`/`Data` named types so the
-  compiler catches misuse. Every method is safe to call from any
-  goroutine, including concurrently with emission.
+  compiler catches misuse. `loglayer.F` and `loglayer.M` are short
+  aliases for `Fields` and `Metadata` for terser call sites. Every
+  method is safe to call from any goroutine, including concurrently
+  with emission.
 - **Renderers**: `pretty` (colorized terminal), `structured` (JSON per
   line), `console`, `testing`, `blank`.
 - **Logger wrappers**: `zerolog`, `zap`, `log/slog`, `logrus`,

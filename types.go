@@ -11,6 +11,10 @@ import (
 // (assembled output) at the type level so the compiler catches misuse.
 type Fields map[string]any
 
+// F is a short alias for [Fields] for terser call sites:
+// log.WithFields(loglayer.F{"reqId": "abc"}).Info("done").
+type F = Fields
+
 // Data is the assembled object sent to transports containing the persistent
 // fields and the serialized error.
 type Data map[string]any
@@ -20,6 +24,10 @@ type Data map[string]any
 // slice, anything), but when the data is an ad-hoc bag this named type
 // keeps call sites short.
 type Metadata map[string]any
+
+// M is a short alias for [Metadata] for terser call sites:
+// log.WithMetadata(loglayer.M{"duration": 150}).Info("served").
+type M = Metadata
 
 // ErrorSerializer converts an error into a structured map for the log output.
 // If not set, the default serializer uses {"message": err.Error()}.
