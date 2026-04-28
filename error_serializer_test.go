@@ -147,3 +147,27 @@ func TestUnwrap_PreservesErrorsIs(t *testing.T) {
 		t.Error("serializer must not break errors.Is")
 	}
 }
+
+// A self-referential Unwrap must not infinite-loop. The walk is bounded
+// to a defensive depth; the test proves it terminates and produces a
+// finite causes slice rather than OOMing.
+type selfWrappingErr struct{}
+
+func (e *selfWrappingErr) Error() string { return "loops" }
+func (e *selfWrappingErr) Unwrap() error { return e }
+
+func TestUnwrap_BoundedOnSelfReference(t *testing.T) {
+	t.Parallel()
+	out := loglayer.UnwrappingErrorSerializer(&selfWrappingErr{})
+	causes, ok := out["causes"].([]map[string]any)
+	if !ok {
+		t.Fatalf("causes shape: got %T", out["causes"])
+	}
+	// Implementation caps the walk; we just need finite output.
+	if len(causes) == 0 {
+		t.Errorf("expected at least one cause from self-ref walk, got 0")
+	}
+	if len(causes) > 1000 {
+		t.Errorf("walk should be bounded, got %d causes", len(causes))
+	}
+}

@@ -46,10 +46,17 @@ func UnwrappingErrorSerializer(err error) map[string]any {
 	return out
 }
 
+// maxUnwrapDepth bounds the single-chain Unwrap walk so a pathological
+// self-referential or cyclic Unwrap can't loop forever and exhaust
+// memory. Realistic wrap depths are well under 10; 100 is generous for
+// legitimate use while short-circuiting cycles.
+const maxUnwrapDepth = 100
+
 func unwrapCauses(err error) []map[string]any {
 	// errors.Join: Unwrap returns the joined slice. Don't also walk
 	// errors.Unwrap on the same value, which would yield nil for a
-	// Join (it has no single chain).
+	// Join (it has no single chain). Bounded by len(members), so no
+	// cycle concern.
 	if multi, ok := err.(interface{ Unwrap() []error }); ok {
 		members := multi.Unwrap()
 		causes := make([]map[string]any, 0, len(members))
@@ -63,8 +70,13 @@ func unwrapCauses(err error) []map[string]any {
 	}
 
 	var causes []map[string]any
+	depth := 0
 	for inner := errors.Unwrap(err); inner != nil; inner = errors.Unwrap(inner) {
 		causes = append(causes, map[string]any{"message": inner.Error()})
+		depth++
+		if depth >= maxUnwrapDepth {
+			break
+		}
 	}
 	return causes
 }
