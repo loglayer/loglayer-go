@@ -26,7 +26,7 @@ type Config struct {
     MuteMetadata          bool            // disable metadata in output
     DisableFatalExit      bool            // skip os.Exit(1) after a Fatal log
     TransportCloseTimeout time.Duration   // bound for transport drain on Fatal/RemoveTransport (default 5s)
-    OnTransportPanic      func(string, any) // opt-in callback recovering transport SendToLogger panics
+    OnTransportPanic      func(*RecoveredPanicError) // opt-in callback recovering transport SendToLogger panics
 
     Source  SourceConfig  // call-site capture (file/line/function) per emission
     Routing RoutingConfig // group-based dispatch (named routing rules + active filter + ungrouped mode)
@@ -215,7 +215,7 @@ log := loglayer.New(loglayer.Config{
     OnTransportPanic: func(err *loglayer.RecoveredPanicError) {
         // err.Kind is loglayer.PanicKindTransport.
         // err.ID is the panicking transport's ID.
-        // err.Hook is empty (no hook-method dimension for transports).
+        // err.Plugin is nil (transports have no hook-method dimension).
         // err.Value is what was passed to panic().
         metrics.Inc("loglayer.transport_panic", "id", err.ID)
     },
@@ -234,11 +234,11 @@ The shape matches the `*RecoveredPanicError` that plugin hooks surface via `Erro
 
 ```go
 func report(err *loglayer.RecoveredPanicError) {
-    metrics.Inc("loglayer.panic",
-        "kind", err.Kind,  // "plugin" or "transport"
-        "id", err.ID,      // plugin ID or transport ID
-        "hook", err.Hook,  // hook method name (plugin) or "" (transport)
-    )
+    tags := []string{"kind", err.Kind, "id", err.ID}
+    if err.Plugin != nil {
+        tags = append(tags, "hook", err.Plugin.Hook)
+    }
+    metrics.Inc("loglayer.panic", tags...)
 }
 
 // Wire to plugins:
@@ -259,7 +259,7 @@ Field semantics:
 
 - `Kind` — `loglayer.PanicKindPlugin` or `loglayer.PanicKindTransport`.
 - `ID` — the panicking component's identifier: the plugin ID for plugin panics, the transport ID for transport panics. Always populated.
-- `Hook` — the hook method name (`"OnBeforeDataOut"`, etc.) for plugin panics; empty for transport panics, which have no hook-method dimension.
+- `Plugin` — `*PluginPanicDetails`, non-nil iff `Kind == PanicKindPlugin`. Carries the hook method name (`Plugin.Hook = "OnBeforeDataOut"`, etc.). Nil for transport panics so the absence of the hook dimension is a typed condition rather than an empty-string convention.
 - `Value` — the value originally passed to `panic()`.
 
 ::: warning Off by default for hot-path reasons

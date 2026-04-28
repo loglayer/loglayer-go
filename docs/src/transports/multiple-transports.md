@@ -44,7 +44,7 @@ loglayer.New(loglayer.Config{
     Transports: []loglayer.Transport{
         console.New(console.Config{
             BaseConfig: transport.BaseConfig{ID: "console"},
-            // no Level set → defaults to Debug (everything)
+            // no Level set → defaults to Trace (every level)
         }),
         structured.New(structured.Config{
             BaseConfig: transport.BaseConfig{

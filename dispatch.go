@@ -196,7 +196,7 @@ func sendWithRecover(t Transport, params TransportParams, h func(*RecoveredPanic
 		}
 		func() {
 			defer func() { _ = recover() }()
-			h(panicError(rcv, PanicKindTransport, t.ID(), ""))
+			h(panicError(rcv, PanicKindTransport, t.ID(), nil))
 		}()
 	}()
 	t.SendToLogger(params)

@@ -69,8 +69,11 @@ func TestAssertPanicRecovered_PluginPanics(t *testing.T) {
 	if rpe == nil {
 		t.Fatal("expected RecoveredPanicError, got nil")
 	}
-	if rpe.Hook != "OnBeforeDataOut" {
-		t.Errorf("Hook: got %q, want OnBeforeDataOut", rpe.Hook)
+	if rpe.Plugin == nil {
+		t.Fatal("Plugin should be non-nil for plugin panic")
+	}
+	if rpe.Plugin.Hook != "OnBeforeDataOut" {
+		t.Errorf("Plugin.Hook: got %q, want OnBeforeDataOut", rpe.Plugin.Hook)
 	}
 	if msg, _ := rpe.Value.(string); !strings.Contains(msg, "kaboom") {
 		t.Errorf("Value: got %v, want 'kaboom'", rpe.Value)

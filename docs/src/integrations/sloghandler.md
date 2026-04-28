@@ -139,6 +139,9 @@ No need to set `Config.Source.Enabled` on the loglayer side; the slog frontend a
 
 - **Levels above slog.Error don't escalate to Fatal.** Other handlers don't have Fatal at all; this one suppresses it deliberately so a custom slog level can't accidentally exit the process.
 - **No HandlerOptions on this side.** Filtering by level is done on the loglayer side (`log.SetLevel`, per-group levels, `Config.Level`). The handler's `Enabled` consults the loglayer logger.
+- **`slog.Record.Time` is not forwarded; transports stamp emissions at dispatch.** Each loglayer transport generates its own timestamp when it writes (e.g., the structured transport calls `time.Now()`), so the rendered `time` field reflects when the entry was dispatched, not the `Record.Time` carried by slog. For the dominant `slog.Info(...)` → immediate dispatch path, the drift is microseconds and invisible. Two cases where it matters:
+  - **Replayed records** (an emitter constructs records with explicit older times and calls `Handle` later): the rendered time will be the replay time. Workaround: use a custom transport, or override the structured transport's clock via [`structured.Config.DateFn`](/transports/structured) with a closure that reads from your own context.
+  - **Deterministic timestamps in tests**: same workaround. `DateFn` is the standard knob.
 
 ## Related
 

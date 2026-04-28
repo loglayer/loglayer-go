@@ -53,22 +53,26 @@ log, err := loglayer.Build(loglayer.Config{...})
 
 ### Log Levels
 
-Five levels, integer-typed:
+Seven levels, integer-typed:
 
+- `loglayer.LogLevelTrace` (5)
 - `loglayer.LogLevelDebug` (10)
 - `loglayer.LogLevelInfo` (20)
 - `loglayer.LogLevelWarn` (30)
 - `loglayer.LogLevelError` (40)
 - `loglayer.LogLevelFatal` (50)
+- `loglayer.LogLevelPanic` (60)
 
 Level methods on `*loglayer.LogLayer`:
 
 ```go
+log.Trace(...messages any)
 log.Debug(...messages any)
 log.Info(...messages any)
 log.Warn(...messages any)
 log.Error(...messages any)
 log.Fatal(...messages any)  // dispatches then calls os.Exit(1) unless DisableFatalExit
+log.Panic(...messages any)  // dispatches then panics with the joined message string (recoverable)
 ```
 
 ### Builder Chain

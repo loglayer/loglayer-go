@@ -693,8 +693,11 @@ func TestPlugin_RecoveredPanicErrorTypedInspection(t *testing.T) {
 	if !errors.As(caught, &rpe) {
 		t.Fatalf("caught error should be *RecoveredPanicError, got %T (%v)", caught, caught)
 	}
-	if rpe.Hook != "OnBeforeDataOut" {
-		t.Errorf("Hook: got %q, want %q", rpe.Hook, "OnBeforeDataOut")
+	if rpe.Plugin == nil {
+		t.Fatal("Plugin should be non-nil for plugin panic")
+	}
+	if rpe.Plugin.Hook != "OnBeforeDataOut" {
+		t.Errorf("Plugin.Hook: got %q, want %q", rpe.Plugin.Hook, "OnBeforeDataOut")
 	}
 	if rpe.Value != error(originalErr) {
 		t.Errorf("Value: got %v, want %v", rpe.Value, originalErr)

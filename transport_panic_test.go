@@ -84,8 +84,8 @@ func TestTransportPanic_RecoveredViaCallback(t *testing.T) {
 	if rpe.ID != "boom" {
 		t.Errorf("ID (transport id): got %q, want \"boom\"", rpe.ID)
 	}
-	if rpe.Hook != "" {
-		t.Errorf("Hook should be empty for transport panics, got %q", rpe.Hook)
+	if rpe.Plugin != nil {
+		t.Errorf("Plugin should be nil for transport panics, got %+v", rpe.Plugin)
 	}
 	if rpe.Value != "bad transport" {
 		t.Errorf("Value: got %v, want \"bad transport\"", rpe.Value)
@@ -196,22 +196,26 @@ func TestTransportPanic_UnifiedShapeWithPluginPanic(t *testing.T) {
 		switch e.Kind {
 		case loglayer.PanicKindPlugin:
 			sawPlugin = true
-			// Plugin panics carry both ID (which plugin) and Hook
-			// (which method). Confirm both are populated.
+			// Plugin panics carry both ID (which plugin) and Plugin
+			// details (which hook method). Confirm both are populated.
 			if e.ID != "panicker" {
 				t.Errorf("plugin panic ID: got %q, want \"panicker\"", e.ID)
 			}
-			if e.Hook != "OnBeforeDataOut" {
-				t.Errorf("plugin panic Hook: got %q, want \"OnBeforeDataOut\"", e.Hook)
+			if e.Plugin == nil {
+				t.Error("plugin panic should have non-nil Plugin details")
+			} else if e.Plugin.Hook != "OnBeforeDataOut" {
+				t.Errorf("plugin panic Plugin.Hook: got %q, want \"OnBeforeDataOut\"", e.Plugin.Hook)
 			}
 		case loglayer.PanicKindTransport:
 			sawTransport = true
-			// Transport panics have ID (transport ID) but no Hook.
+			// Transport panics have ID (transport ID) but no Plugin
+			// details (Plugin is nil — typed absence rather than empty
+			// string).
 			if e.ID != "bad" {
 				t.Errorf("transport panic ID: got %q, want \"bad\"", e.ID)
 			}
-			if e.Hook != "" {
-				t.Errorf("transport panic Hook should be empty, got %q", e.Hook)
+			if e.Plugin != nil {
+				t.Errorf("transport panic Plugin should be nil, got %+v", e.Plugin)
 			}
 		default:
 			t.Errorf("unexpected Kind: %q", e.Kind)

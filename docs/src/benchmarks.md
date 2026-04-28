@@ -68,10 +68,10 @@ For a heavy redaction pipeline, see [Creating Plugins → Performance: only clon
 
 | Setup | Time | Allocs | Bytes |
 |---|---:|---:|---:|
-| Simple message, AddSource off | 40 ns | 1 | 16 |
-| Simple message, AddSource on | **660 ns** | **6** | **648** |
-| Map metadata, AddSource off | 252 ns | 4 | 448 |
-| Map metadata, AddSource on | **889 ns** | **9** | **1080** |
+| Simple message, Source off | 40 ns | 1 | 16 |
+| Simple message, Source on | **660 ns** | **6** | **648** |
+| Map metadata, Source off | 252 ns | 4 | 448 |
+| Map metadata, Source on | **889 ns** | **9** | **1080** |
 
 The added cost (~620 ns and 5 allocations) is constant across emission shapes; it's dominated by `runtime.FuncForPC().Name()` materializing the function-name string and the heap-allocated `*Source`. Leave `Source.Enabled` off in throughput-sensitive code and rely on transport-level rendering plus inline metadata.
 

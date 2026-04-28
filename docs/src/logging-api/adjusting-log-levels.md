@@ -74,7 +74,7 @@ Each transport also has a `Level` field on its `BaseConfig`. A transport will sk
 loglayer.New(loglayer.Config{
     Transports: []loglayer.Transport{
         console.New(console.Config{
-            BaseConfig: transport.BaseConfig{ID: "console"}, // defaults to Debug
+            BaseConfig: transport.BaseConfig{ID: "console"}, // defaults to Trace (accepts every level)
         }),
         structured.New(structured.Config{
             BaseConfig: transport.BaseConfig{

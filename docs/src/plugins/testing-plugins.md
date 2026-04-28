@@ -61,7 +61,8 @@ rpe := plugintest.AssertPanicRecovered(t,
     },
     func(log *loglayer.LogLayer) { log.Info("trigger") },
 )
-// rpe.Hook == "OnBeforeDataOut" (or whichever hook panicked)
+// rpe.Plugin.Hook == "OnBeforeDataOut" (or whichever hook panicked)
+// rpe.ID == the plugin's ID
 // rpe.Value contains the original panic value (errors.Is works when it's an error)
 ```
 

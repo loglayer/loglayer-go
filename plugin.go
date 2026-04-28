@@ -247,12 +247,10 @@ const (
 // PanicKind values for [RecoveredPanicError.Kind].
 const (
 	// PanicKindPlugin marks a panic recovered from a plugin hook.
-	// ID is the plugin's ID; Hook is the hook method name
-	// (e.g. "OnBeforeDataOut").
+	// ID is the plugin's ID; Plugin carries the hook method name.
 	PanicKindPlugin = "plugin"
 	// PanicKindTransport marks a panic recovered from a transport's
-	// SendToLogger. ID is the transport ID; Hook is empty (transports
-	// have no hook-method dimension).
+	// SendToLogger. ID is the transport ID; Plugin is nil.
 	PanicKindTransport = "transport"
 )
 
@@ -262,9 +260,10 @@ const (
 //
 // Kind identifies the category ([PanicKindPlugin] or [PanicKindTransport]).
 // ID is the panicking component's identifier — the plugin ID for plugins,
-// the transport ID for transports. Hook is the hook method name for
-// plugin panics (e.g. "OnBeforeDataOut") and empty for transport panics
-// (transports have no hook-method dimension).
+// the transport ID for transports. Plugin carries plugin-specific details
+// (the hook method name) and is non-nil iff Kind == PanicKindPlugin; for
+// transport panics it is nil so the absence of a hook-method dimension
+// is a typed condition rather than an empty-string convention.
 //
 // Value is the value originally passed to panic(). When Value satisfies
 // the error interface, errors.Unwrap reaches it (and errors.Is /
@@ -273,22 +272,29 @@ const (
 type RecoveredPanicError struct {
 	Kind    string
 	ID      string
-	Hook    string
+	Plugin  *PluginPanicDetails
 	Value   any
 	wrapped error // set when Value implements error
 }
 
+// PluginPanicDetails carries plugin-specific information attached to a
+// [RecoveredPanicError]. Non-nil iff Kind == PanicKindPlugin.
+type PluginPanicDetails struct {
+	// Hook is the hook method that panicked, e.g. "OnBeforeDataOut".
+	Hook string
+}
+
 func (e *RecoveredPanicError) Error() string {
-	if e.Hook == "" {
-		return fmt.Sprintf("loglayer: %s %q panicked: %v", e.Kind, e.ID, e.Value)
+	if e.Plugin != nil {
+		return fmt.Sprintf("loglayer: %s %q hook %s panicked: %v", e.Kind, e.ID, e.Plugin.Hook, e.Value)
 	}
-	return fmt.Sprintf("loglayer: %s %q hook %s panicked: %v", e.Kind, e.ID, e.Hook, e.Value)
+	return fmt.Sprintf("loglayer: %s %q panicked: %v", e.Kind, e.ID, e.Value)
 }
 
 func (e *RecoveredPanicError) Unwrap() error { return e.wrapped }
 
-func panicError(r any, kind, id, hook string) *RecoveredPanicError {
-	pe := &RecoveredPanicError{Kind: kind, ID: id, Hook: hook, Value: r}
+func panicError(r any, kind, id string, plugin *PluginPanicDetails) *RecoveredPanicError {
+	pe := &RecoveredPanicError{Kind: kind, ID: id, Plugin: plugin, Value: r}
 	if e, ok := r.(error); ok {
 		pe.wrapped = e
 	}
@@ -306,7 +312,7 @@ func recoverHook(reporter ErrorReporter, pluginID, hook string) {
 	if r == nil {
 		return
 	}
-	err := panicError(r, PanicKindPlugin, pluginID, hook)
+	err := panicError(r, PanicKindPlugin, pluginID, &PluginPanicDetails{Hook: hook})
 	if reporter != nil {
 		reporter.OnError(err)
 		return

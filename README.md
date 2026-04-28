@@ -19,7 +19,7 @@
 - **Group routing.** Tag entries by subsystem (`db`, `auth`, ...) and route each group to specific transports with its own minimum level. Toggle which groups are active at runtime via env var.
 - **Two-way slog interop.** Wrap a `*slog.Logger` as a backend, or install a `slog.Handler` so `slog.Info(...)` calls (yours and your dependencies') flow through your full loglayer pipeline.
 - **First-class test capture.** A typed `LogLine` capture so tests assert on level, message, fields, metadata, and context independently. No JSON parsing in tests.
-- **Caller info opt-in.** `Config.AddSource` captures file/line/function per emission and renders it under a configurable key. JSON tags match the `log/slog` convention so output is interchangeable. The slog handler forwards `Record.PC` for free.
+- **Caller info opt-in.** `Config.Source.Enabled` captures file/line/function per emission and renders it under `Config.Source.FieldName` (default `"source"`). JSON tags match the `log/slog` convention so output is interchangeable. The slog handler forwards `Record.PC` for free.
 
 Application code uses one fluent API for messages, fields, metadata, and errors regardless of which transport(s) are behind it. Full documentation at [go.loglayer.dev](https://go.loglayer.dev).
 
