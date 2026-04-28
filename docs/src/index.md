@@ -54,7 +54,8 @@ func main() {
         Transport: structured.New(structured.Config{}),
     })
 
-    log.WithFields(loglayer.Fields{"service": "api"})
+    // WithFields returns a NEW logger; assign it.
+    log = log.WithFields(loglayer.Fields{"service": "api"})
 
     log.WithMetadata(loglayer.Metadata{"userId": "1234"}).
         WithError(errors.New("something went wrong")).

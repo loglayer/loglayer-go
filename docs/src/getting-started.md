@@ -55,32 +55,27 @@ func main() {
 For local development, the [Pretty Transport](/transports/pretty) gives you colorized, theme-aware output with three view modes. Much easier to scan than raw JSON or the basic [Console Transport](/transports/console).
 :::
 
-## Using a Logger Wrapper
+## Configure an Error Serializer
 
-If you already have an existing logging stack, LogLayer can wrap it so your call sites use the LogLayer API while emission goes through the underlying logger you've already configured. Here it is for `zerolog`:
+The default error format is intentionally minimal: `{"message": err.Error()}`. No chain expansion, no stack trace. **For most production code you'll want richer error output**, and the configuration is one knob away.
+
+**Recommended: `loglayer.UnwrappingErrorSerializer`.** It walks the standard-library error machinery (`errors.Unwrap` chains and `errors.Join`'s `Unwrap() []error`) and surfaces every wrapped cause as a `causes` array. Zero dependencies; works with idiomatic `fmt.Errorf("...: %w", err)` exactly the way you already write it:
 
 ```go
-import (
-    zlog "github.com/rs/zerolog"
-    "os"
-
-    "go.loglayer.dev"
-    llzero "go.loglayer.dev/transports/zerolog"
-)
-
-z := zlog.New(os.Stderr).With().Timestamp().Logger()
 log := loglayer.New(loglayer.Config{
-    Transport: llzero.New(llzero.Config{Logger: &z}),
+    Transport:       structured.New(structured.Config{}),
+    ErrorSerializer: loglayer.UnwrappingErrorSerializer,
 })
 
-log.WithFields(loglayer.Fields{"requestId": "abc"}).Info("served")
+log.WithError(fmt.Errorf("op failed: %w", io.EOF)).Error("oops")
+// {"err":{"message":"op failed: EOF","causes":[{"message":"EOF"}]}}
 ```
 
-The same shape works for `zap`, `log/slog`, `logrus`, `charmbracelet/log`, and `phuslu/log`. See the [Transports overview](/transports/) for the full list and per-wrapper config.
+This is the right default for almost all services. Stack traces aren't free (allocation per error) and the stack you'd get is the construction site, not the failure point — which often duplicates information [`Config.Source`](/configuration#source-caller-info) already provides at zero per-error cost.
 
-## Capturing Stack Traces with eris
+### When you also want stack traces: `eris`
 
-By default LogLayer serializes errors as `{"message": err.Error()}`: no stack trace, no chain. For most projects you'll want richer error output. We recommend [`github.com/rotisserie/eris`](https://github.com/rotisserie/eris): its `ToJSON` function returns `map[string]any`, which slots straight into `ErrorSerializer`.
+Reach for [`rotisserie/eris`](https://github.com/rotisserie/eris) when you specifically need stack capture (debugging unfamiliar code paths, panic-hunting, async work where call-site info is hard to come by). `eris.ToJSON` returns `map[string]any`, which slots straight into `ErrorSerializer`:
 
 ```sh
 go get github.com/rotisserie/eris
@@ -105,7 +100,32 @@ log.WithError(err).Error("db query failed")
 // {"level":"error","msg":"db query failed","err":{"root":{"message":"connection refused","stack":[...]}}}
 ```
 
-See [Error Handling](/logging-api/error-handling) for the full serializer reference, including how to write your own.
+Note that eris captures stacks at construction (`eris.New`, `eris.Wrap`); plain stdlib errors won't get stacks unless you wrap them with `eris.Wrap`.
+
+See [Error Handling](/logging-api/error-handling) for the full serializer reference, including writing your own from scratch.
+
+## Using a Logger Wrapper
+
+If you already have an existing logging stack, LogLayer can wrap it so your call sites use the LogLayer API while emission goes through the underlying logger you've already configured. Here it is for `zerolog`:
+
+```go
+import (
+    zlog "github.com/rs/zerolog"
+    "os"
+
+    "go.loglayer.dev"
+    llzero "go.loglayer.dev/transports/zerolog"
+)
+
+z := zlog.New(os.Stderr).With().Timestamp().Logger()
+log := loglayer.New(loglayer.Config{
+    Transport: llzero.New(llzero.Config{Logger: &z}),
+})
+
+log.WithFields(loglayer.Fields{"requestId": "abc"}).Info("served")
+```
+
+The same shape works for `zap`, `log/slog`, `logrus`, `charmbracelet/log`, and `phuslu/log`. See the [Transports overview](/transports/) for the full list and per-wrapper config.
 
 ## Next Steps
 
