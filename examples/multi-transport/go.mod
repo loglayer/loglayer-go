@@ -1,5 +1,3 @@
-// Multi-transport example. Lives in its own module because
-// transports/pretty is its own module.
 module go.loglayer.dev/examples/multi-transport
 
 go 1.25.0

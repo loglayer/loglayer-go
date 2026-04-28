@@ -1,6 +1,3 @@
-// Separate module so consumers who don't import the zap wrapper
-// don't pull go.uber.org/zap into their go.sum. See AGENTS.md
-// "When to Split a Transport into Its Own Module".
 module go.loglayer.dev/transports/zap
 
 go 1.25.0

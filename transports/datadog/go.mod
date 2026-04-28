@@ -1,6 +1,3 @@
-// Separate module so the network transports can version independently
-// of the framework core. transports/datadog wraps transports/http so it
-// requires both via the standard replace directives during development.
 module go.loglayer.dev/transports/datadog
 
 go 1.25.0

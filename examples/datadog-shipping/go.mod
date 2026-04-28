@@ -1,7 +1,3 @@
-// Datadog shipping example. Lives in its own module because
-// transports/datadog, transports/http, and transports/pretty are each
-// their own modules; pulling them in at example level keeps the main
-// module's dep graph clean.
 module go.loglayer.dev/examples/datadog-shipping
 
 go 1.25.0

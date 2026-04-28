@@ -1,6 +1,3 @@
-// Separate module so the OpenTelemetry API's Go 1.25 floor doesn't
-// drag the main go.loglayer.dev module up. See AGENTS.md "Go Version
-// Floors" for the policy.
 module go.loglayer.dev/plugins/oteltrace
 
 go 1.25.0

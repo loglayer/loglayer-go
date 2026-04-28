@@ -1,8 +1,3 @@
-// Example showing transports/otellog and plugins/oteltrace together,
-// with a real OpenTelemetry SDK wired to a stdout exporter so the
-// example is runnable without an OTel collector. Lives in its own
-// module because both otellog and oteltrace are themselves split out
-// to avoid binding the main loglayer module to the OTel SDK's Go floor.
 module go.loglayer.dev/examples/otel-end-to-end
 
 go 1.25.0

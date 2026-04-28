@@ -1,9 +1,3 @@
-// Separate module for the datadogtrace plugin's live integration test.
-// Lives in its own go.mod so dd-trace-go's transitive closure (datadog-agent
-// internals, otel collector, k8s/apimachinery, sketches-go, msgp, ...)
-// stays out of the main loglayer module's dependency graph. Users of
-// the plugin only see the lean main module; livetest contributors get
-// the full SDK they need.
 module go.loglayer.dev/plugins/datadogtrace/livetest
 
 go 1.25.0

@@ -1,6 +1,3 @@
-// Separate module so consumers who don't import the zerolog wrapper
-// don't pull github.com/rs/zerolog into their go.sum. See AGENTS.md
-// "When to Split a Transport into Its Own Module".
 module go.loglayer.dev/transports/zerolog
 
 go 1.25.0

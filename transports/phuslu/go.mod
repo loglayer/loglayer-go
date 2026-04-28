@@ -1,6 +1,3 @@
-// Separate module so consumers who don't import the phuslu wrapper
-// don't pull github.com/phuslu/log into their go.sum. See AGENTS.md
-// "When to Split a Transport into Its Own Module".
 module go.loglayer.dev/transports/phuslu
 
 go 1.25.0

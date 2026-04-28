@@ -1,6 +1,3 @@
-// Separate module so consumers who don't use the pretty terminal
-// renderer don't pull github.com/fatih/color (and its mattn/go-isatty
-// closure) into their dependency graph.
 module go.loglayer.dev/transports/pretty
 
 go 1.25.0
