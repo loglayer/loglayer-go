@@ -1,26 +1,19 @@
-// Package fmtlog provides format-string convenience helpers for the
-// LogLayer emission API. It exists as an opt-in sub-package so the
-// core stays structured-first (matching log/slog and zap's fast core)
-// while users who want printf-style logging can import what they need.
+// Package fmtlog adds Sprintf-style log messages as a LogLayer plugin.
+// Register it once and every call site that passes a format string
+// followed by arguments gets fmt.Sprintf semantics:
 //
-// The helpers are free functions that take a [*loglayer.LogLayer] and
-// forward to the corresponding level method with [fmt.Sprintf]:
+//	log.AddPlugin(fmtlog.New())
 //
-//	import "go.loglayer.dev/fmtlog"
+//	log.Info("user %d signed in", userID)
+//	log.WithMetadata(loglayer.Metadata{"reqId": id}).
+//	    Error("request %s failed: %v", id, err)
 //
-//	fmtlog.Infof(log, "user %d signed in", userID)
-//	fmtlog.Errorf(log, "request %s failed: %v", requestID, err)
-//
-// For chained metadata, error, or context, the canonical pattern is
-// to format inline:
-//
-//	log.WithMetadata(loglayer.Metadata{"userId": id}).
-//	    Info(fmt.Sprintf("session %s ended", sessionID))
-//
-// fmtlog deliberately avoids wrapping [*loglayer.LogBuilder]. The
-// builder chain is for structured fields and per-call metadata; format
-// strings on top of structured data work against log search and
-// aggregation, so the package doesn't make that path easier.
+// Without the plugin, multi-argument calls are space-joined
+// (`fmt.Sprintf("%v", arg)` per element). Registering [New] opts the
+// logger into format-string semantics: any call where the first
+// message is a string and there are extra arguments is rewritten to
+// fmt.Sprintf(messages[0], messages[1:]...) before downstream
+// MessageHooks run.
 package fmtlog
 
 import (
@@ -29,30 +22,20 @@ import (
 	"go.loglayer.dev"
 )
 
-// Debugf formats according to a format specifier and dispatches at
-// debug level. Equivalent to log.Debug(fmt.Sprintf(format, args...)).
-func Debugf(log *loglayer.LogLayer, format string, args ...any) {
-	log.Debug(fmt.Sprintf(format, args...))
+// New returns a plugin that resolves multi-argument log messages via
+// fmt.Sprintf. The plugin is a single MessageHook: zero hot-path cost
+// when a call has only one message; one Sprintf when there are extras.
+func New() loglayer.Plugin {
+	return loglayer.NewMessageHook("fmtlog", apply)
 }
 
-// Infof formats according to a format specifier and dispatches at info level.
-func Infof(log *loglayer.LogLayer, format string, args ...any) {
-	log.Info(fmt.Sprintf(format, args...))
-}
-
-// Warnf formats according to a format specifier and dispatches at warn level.
-func Warnf(log *loglayer.LogLayer, format string, args ...any) {
-	log.Warn(fmt.Sprintf(format, args...))
-}
-
-// Errorf formats according to a format specifier and dispatches at error level.
-func Errorf(log *loglayer.LogLayer, format string, args ...any) {
-	log.Error(fmt.Sprintf(format, args...))
-}
-
-// Fatalf formats according to a format specifier and dispatches at
-// fatal level. The framework's Fatal contract applies: dispatched
-// before os.Exit(1), unless Config.DisableFatalExit is set.
-func Fatalf(log *loglayer.LogLayer, format string, args ...any) {
-	log.Fatal(fmt.Sprintf(format, args...))
+func apply(p loglayer.BeforeMessageOutParams) []any {
+	if len(p.Messages) < 2 {
+		return p.Messages
+	}
+	format, ok := p.Messages[0].(string)
+	if !ok {
+		return p.Messages
+	}
+	return []any{fmt.Sprintf(format, p.Messages[1:]...)}
 }

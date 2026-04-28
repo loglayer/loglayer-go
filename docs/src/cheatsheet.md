@@ -59,14 +59,19 @@ log.Fatal("...") // calls os.Exit(1) by default; set Config.DisableFatalExit to 
 
 Each method takes `...any`, joined with a space.
 
-For `fmt.Sprintf`-style format strings, import the optional [`fmtlog`](https://pkg.go.dev/go.loglayer.dev/fmtlog) sub-package:
+For `fmt.Sprintf`-style format strings, register the optional [`fmtlog`](https://pkg.go.dev/go.loglayer.dev/fmtlog) plugin:
 
 ```go
 import "go.loglayer.dev/fmtlog"
 
-fmtlog.Infof(log, "user %d signed in", userID)
-fmtlog.Errorf(log, "request %s failed: %v", reqID, err)
+log.AddPlugin(fmtlog.New())
+
+log.Info("user %d signed in", userID)
+log.WithMetadata(loglayer.Metadata{"reqId": reqID}).
+    Error("request %s failed: %v", reqID, err)
 ```
+
+Without the plugin, multi-arg messages are space-joined.
 
 ## Metadata
 

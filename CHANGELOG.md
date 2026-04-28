@@ -70,8 +70,10 @@ fluent API for messages, fields, metadata, and errors. v1.0.0 ships:
   `Install` / `AssertNoMutation` / `AssertPanicRecovered` for plugin
   authors. `transport/benchtest` exposes shared bench fixtures for
   per-module benchmarks.
-- **Convenience helpers**: `fmtlog` sub-package for printf-style logging
-  (`fmtlog.Infof(log, "user %d", id)`); core stays structured-first.
+- **fmtlog plugin**: optional `fmtlog.New()` plugin (in the `fmtlog`
+  sub-package) that opts a logger into Sprintf semantics for
+  multi-arg messages (`log.Info("user %d", id)`). Core stays
+  structured-first; users opt in by registering the plugin.
 - **Security defaults**: control-character sanitization on
   console/pretty messages and `loghttp` request headers; cycle-safe
   reflection in `maputil.Cloner`; `Datadog.Config` redacts the API key
