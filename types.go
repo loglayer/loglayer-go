@@ -89,14 +89,11 @@ type Config struct {
 	DisableFatalExit bool
 
 	// TransportCloseTimeout caps how long the framework waits for an
-	// io.Closer transport to drain when it is removed (RemoveTransport,
-	// SetTransports, AddTransport-by-replace) or flushed before a Fatal
-	// exit. A wedged endpoint (network partition, stalled TLS handshake)
-	// would otherwise hang the process or the mutator goroutine
-	// indefinitely.
-	//
-	// Defaults to 5 seconds when zero. Set to a negative value to wait
-	// without a timeout (the historical behavior).
+	// io.Closer transport to drain on removal (RemoveTransport,
+	// SetTransports, AddTransport-by-replace) or pre-Fatal flush, so a
+	// wedged endpoint can't hang the process or mutator goroutine.
+	// Defaults to 5 seconds when zero; a negative value waits without
+	// a cap.
 	TransportCloseTimeout time.Duration
 
 	// Groups defines named routing rules. Each group lists the transport

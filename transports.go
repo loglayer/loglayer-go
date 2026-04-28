@@ -6,11 +6,7 @@ import (
 	"time"
 )
 
-// defaultTransportCloseTimeout is the fallback used when
-// Config.TransportCloseTimeout is zero (its zero value). Caps how long
-// the framework waits for an io.Closer transport to drain on removal
-// or pre-Fatal flush so a wedged endpoint can't hang the process or
-// the mutator goroutine.
+// defaultTransportCloseTimeout is used when Config.TransportCloseTimeout is zero.
 const defaultTransportCloseTimeout = 5 * time.Second
 
 // closeIfCloser closes t if it implements io.Closer. Drains async-transport
@@ -23,14 +19,11 @@ func closeIfCloser(t Transport) {
 }
 
 // flushTransports closes every transport that implements io.Closer,
-// blocking up to timeout. Closes are run in parallel so total wall-time
-// is max(per-transport close), not sum.
-//
-// timeout == 0 uses the framework default (5s); a negative value
-// disables the cap and waits as long as Close takes (the historical
-// behavior). When the timeout fires, the goroutines driving any
-// still-running Close calls leak; callers MUST treat this as
-// best-effort drain.
+// blocking up to timeout. Closes run in parallel; total wall-time is
+// max(per-transport close), not sum. timeout == 0 uses
+// [defaultTransportCloseTimeout]; a negative value waits without a cap.
+// On timeout, goroutines driving still-running Close calls leak —
+// best-effort drain is the contract.
 func flushTransports(transports []Transport, timeout time.Duration) {
 	if len(transports) == 0 {
 		return
