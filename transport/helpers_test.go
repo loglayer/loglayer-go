@@ -81,9 +81,9 @@ func TestMetadataAsMap(t *testing.T) {
 		}
 	})
 
-	t.Run("struct round-trips via JSON", func(t *testing.T) {
+	t.Run("struct fields walked via reflect", func(t *testing.T) {
 		got := transport.MetadataAsMap(metaUser{ID: 7, Name: "Alice"})
-		if got["id"] != float64(7) || got["name"] != "Alice" {
+		if got["id"] != 7 || got["name"] != "Alice" {
 			t.Errorf("struct fields not extracted: got %v", got)
 		}
 	})

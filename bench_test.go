@@ -283,6 +283,17 @@ func BenchmarkRender_Structured_MapMetadata(b *testing.B) {
 	runMap(b, log)
 }
 
+func BenchmarkRender_Structured_StructMetadata(b *testing.B) {
+	log := loglayer.New(loglayer.Config{
+		DisableFatalExit: true,
+		Transport: structured.New(structured.Config{
+			BaseConfig: transport.BaseConfig{ID: "structured"},
+			Writer:     discard,
+		}),
+	})
+	runStruct(b, log)
+}
+
 func BenchmarkRender_Pretty_SimpleMessage(b *testing.B) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
