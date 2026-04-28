@@ -33,34 +33,39 @@ func TestMyPlugin_AddsField(t *testing.T) {
 
 ## Verifying input-side hooks don't mutate input
 
-`OnFieldsCalled` and `OnMetadataCalled` plugins must not mutate the caller's input. `plugintest.AssertNoMutation` deep-clones the input, runs the hook, and fails the test if the original differs from the snapshot afterward:
+Plugins implementing `FieldsHook` or `MetadataHook` must not mutate the caller's input. `plugintest.AssertNoMutation` deep-clones the input, runs the hook function, and fails the test if the original differs from the snapshot afterward.
+
+If the plugin under test is a defined type, type-assert it to the relevant hook interface to extract the method:
 
 ```go
+p := redact.New(redact.Config{Keys: []string{"password"}})
 plugintest.AssertNoMutation[any](t,
-    redact.New(redact.Config{Keys: []string{"password"}}).OnMetadataCalled,
+    p.(loglayer.MetadataHook).OnMetadataCalled,
     map[string]any{"password": "hunter2", "user": "alice"},
 )
 ```
 
 ## Verifying panic recovery
 
-The framework recovers hook panics and forwards them to `Plugin.OnError` as `*loglayer.RecoveredPanicError`. Use `plugintest.AssertPanicRecovered` to verify both that the framework caught the panic and that your plugin's `Hook` field is set correctly:
+The framework recovers hook panics and forwards them to a plugin's `OnError` (when the plugin implements [`loglayer.ErrorReporter`](https://pkg.go.dev/go.loglayer.dev#ErrorReporter)). Use `plugintest.AssertPanicRecovered` to drive a panicking hook and assert the framework forwarded a `*loglayer.RecoveredPanicError`.
+
+The helper takes a builder closure that receives a `captureFn`: thread it through to your plugin's `OnError` so the framework's recovery path delivers the panic to the helper's capture.
 
 ```go
 rpe := plugintest.AssertPanicRecovered(t,
-    loglayer.Plugin{
-        ID: "boom",
-        OnBeforeDataOut: func(loglayer.BeforeDataOutParams) loglayer.Data {
-            panic("kaboom")
-        },
+    func(captureFn func(error)) loglayer.Plugin {
+        return myplugin.New(myplugin.Config{
+            // ... configure a hook that panics ...
+            OnError: captureFn,
+        })
     },
     func(log *loglayer.LogLayer) { log.Info("trigger") },
 )
-// rpe.Hook == "OnBeforeDataOut"
+// rpe.Hook == "OnBeforeDataOut" (or whichever hook panicked)
 // rpe.Value contains the original panic value (errors.Is works when it's an error)
 ```
 
-`AssertPanicRecovered` overrides `Plugin.OnError` internally to capture, so leave it unset on the plugin you pass in.
+If your plugin doesn't expose an `OnError` config field, build the plugin around a custom type that implements `ErrorReporter` directly and set its capture closure inside the builder.
 
 ## See Also
 

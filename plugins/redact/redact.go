@@ -58,7 +58,8 @@ type Config struct {
 	Censor any
 }
 
-// New constructs a redaction plugin from the config.
+// New constructs a redaction plugin from the config. The returned plugin
+// implements [loglayer.MetadataHook] and [loglayer.FieldsHook].
 func New(cfg Config) loglayer.Plugin {
 	id := cfg.ID
 	if id == "" {
@@ -94,18 +95,24 @@ func New(cfg Config) loglayer.Plugin {
 			return false
 		}
 	}
+	return &plugin{id: id, cloner: cloner}
+}
 
-	return loglayer.Plugin{
-		ID: id,
-		OnMetadataCalled: func(metadata any) any {
-			return cloner.Clone(metadata)
-		},
-		OnFieldsCalled: func(fields loglayer.Fields) loglayer.Fields {
-			cloned := cloner.Clone(map[string]any(fields))
-			if cloned == nil {
-				return nil
-			}
-			return loglayer.Fields(cloned.(map[string]any))
-		},
+type plugin struct {
+	id     string
+	cloner *maputil.Cloner
+}
+
+func (p *plugin) ID() string { return p.id }
+
+func (p *plugin) OnMetadataCalled(metadata any) any {
+	return p.cloner.Clone(metadata)
+}
+
+func (p *plugin) OnFieldsCalled(fields loglayer.Fields) loglayer.Fields {
+	cloned := p.cloner.Clone(map[string]any(fields))
+	if cloned == nil {
+		return nil
 	}
+	return loglayer.Fields(cloned.(map[string]any))
 }

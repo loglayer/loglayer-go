@@ -33,21 +33,15 @@ log.PluginCount()
 log := loglayer.New(loglayer.Config{Transport: structured.New(structured.Config{})})
 
 // Initial registration. The ID "audit" is the handle.
-log.AddPlugin(loglayer.Plugin{
-    ID: "audit",
-    OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data {
-        return loglayer.Data{"audited": true}
-    },
-})
+log.AddPlugin(loglayer.NewDataHook("audit", func(p loglayer.BeforeDataOutParams) loglayer.Data {
+    return loglayer.Data{"audited": true}
+}))
 
 // Hot-swap the plugin: same ID, new behavior. The previous "audit"
 // plugin is discarded.
-log.AddPlugin(loglayer.Plugin{
-    ID: "audit",
-    OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data {
-        return loglayer.Data{"audited": true, "v": 2}
-    },
-})
+log.AddPlugin(loglayer.NewDataHook("audit", func(p loglayer.BeforeDataOutParams) loglayer.Data {
+    return loglayer.Data{"audited": true, "v": 2}
+}))
 
 // Tear it down at shutdown.
 if log.RemovePlugin("audit") {

@@ -285,33 +285,38 @@ Verified by `concurrency_test.go` under `-race`.
 
 ## Plugins
 
-Plugins are function-field structs with one or more lifecycle hooks. Register via `*LogLayer.AddPlugin(loglayer.Plugin{...})`. Hook membership is pre-indexed so the dispatch path only walks plugins that implement the hook. Safe to add/remove from any goroutine. Child loggers inherit plugins.
+`Plugin` is a one-method interface (`ID() string`). Plugins implement zero or more hook interfaces (`FieldsHook`, `MetadataHook`, `DataHook`, `MessageHook`, `LevelHook`, `SendGate`) plus an optional `ErrorReporter` for recovered-panic observation. Register via `*LogLayer.AddPlugin`. Hook membership is pre-indexed at registration time (one type assertion per hook per plugin) so the dispatch path only walks plugins that implement the hook. Safe to add/remove from any goroutine. Child loggers inherit plugins.
 
-Six hooks:
+Six hook interfaces:
 
-- `OnFieldsCalled(fields Fields) Fields` — fires from WithFields. Return new fields or nil to drop.
-- `OnMetadataCalled(metadata any) any` — fires from WithMetadata / MetadataOnly. Return new metadata or nil to drop.
-- `OnBeforeDataOut(BeforeDataOutParams) Data` — per emission, after data assembly. Return a map to merge.
-- `OnBeforeMessageOut(BeforeMessageOutParams) []any` — per emission. Return replacement messages or nil to keep.
-- `TransformLogLevel(TransformLogLevelParams) (LogLevel, bool)` — per emission. Last ok=true wins.
-- `ShouldSend(ShouldSendParams) bool` — per (entry, transport). Any false vetoes that transport.
+- `FieldsHook { OnFieldsCalled(Fields) Fields }`. Fires from WithFields. Return new fields or nil to drop.
+- `MetadataHook { OnMetadataCalled(any) any }`. Fires from WithMetadata / MetadataOnly. Return new metadata or nil to drop.
+- `DataHook { OnBeforeDataOut(BeforeDataOutParams) Data }`. Per emission, after data assembly. Return a map to merge.
+- `MessageHook { OnBeforeMessageOut(BeforeMessageOutParams) []any }`. Per emission. Return replacement messages or nil to keep.
+- `LevelHook { TransformLogLevel(TransformLogLevelParams) (LogLevel, bool) }`. Per emission. Last ok=true wins.
+- `SendGate { ShouldSend(ShouldSendParams) bool }`. Per (entry, transport). Any false vetoes that transport.
 
-All four dispatch-time hook param structs (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`) include a `Ctx context.Context` field populated from `WithCtx`. Use it to read trace IDs, check cancellation, etc. `OnFieldsCalled` and `OnMetadataCalled` do not receive a context (they fire from the builder phase, before the level method).
+All four dispatch-time hook param structs (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`) include a `Ctx context.Context` field populated from `WithCtx`. `FieldsHook` and `MetadataHook` do not receive a context (they fire from the builder phase, before the level method).
 
-Hook panics are recovered centrally by the framework. A buggy plugin can't tear down the calling goroutine: each hook returns its no-op value on panic (nil for the `On*` shapes, level unchanged for `TransformLogLevel`, fail-open for `ShouldSend` so the entry still dispatches). Set `Plugin.OnError func(error)` to observe recovered panics; the framework wraps the recovered value in a hook-named error (`loglayer: plugin OnBeforeDataOut panicked: ...`) using `%w`, so callers can still `errors.Is`/`errors.As` against the original.
+Hook panics are recovered centrally by the framework. A buggy plugin can't tear down the calling goroutine: each hook returns its no-op value on panic (nil for input/output hooks, level unchanged for `LevelHook`, fail-open for `SendGate`). When the plugin implements `ErrorReporter { OnError(err error) }` the framework forwards the recovered panic to it; otherwise the framework writes a one-line description to `os.Stderr`. The recovered value is wrapped in a `*RecoveredPanicError` (hook name + recovered value), with `errors.Unwrap` reaching the original when the panic value implemented `error`.
+
+Adapter constructors for inline single-hook plugins: `NewFieldsHook`, `NewMetadataHook`, `NewDataHook`, `NewMessageHook`, `NewLevelHook`, `NewSendGate`, plus `NewPlugin(id)` for a no-op plugin. Multi-hook plugins (like `plugins/redact`) declare a type implementing `Plugin` plus the relevant hook interfaces.
 
 ```go
-log.AddPlugin(loglayer.Plugin{
-    ID: "redact-password",
-    OnMetadataCalled: func(metadata any) any {
-        if m, ok := metadata.(map[string]any); ok {
-            if _, has := m["password"]; has {
-                m["password"] = "[REDACTED]"
+log.AddPlugin(loglayer.NewMetadataHook("redact-password", func(metadata any) any {
+    if m, ok := metadata.(map[string]any); ok {
+        if _, has := m["password"]; has {
+            // clone before mutating; never edit caller-owned input
+            out := make(map[string]any, len(m))
+            for k, v := range m {
+                out[k] = v
             }
+            out["password"] = "[REDACTED]"
+            return out
         }
-        return metadata
-    },
-})
+    }
+    return metadata
+}))
 ```
 
 Built-in plugins:

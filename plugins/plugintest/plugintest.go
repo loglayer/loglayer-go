@@ -5,11 +5,12 @@
 // against the captured [transports/testing.LogLine] entries.
 //
 // Use [AssertNoMutation] to verify a plugin's input-side hook
-// (OnFieldsCalled / OnMetadataCalled) doesn't mutate caller-owned input,
-// which is the contract the framework expects.
+// (FieldsHook / MetadataHook) doesn't mutate caller-owned input, which is
+// the contract the framework expects.
 //
 // Use [AssertPanicRecovered] to verify the framework recovers a panicking
-// hook and surfaces it via Plugin.OnError as a *loglayer.RecoveredPanicError.
+// hook and surfaces it via the plugin's [loglayer.ErrorReporter] as a
+// *loglayer.RecoveredPanicError.
 package plugintest
 
 import (
@@ -25,8 +26,8 @@ import (
 
 // Install builds a fresh *loglayer.LogLayer with p installed and the
 // in-memory testing transport attached. Returns the logger and the capture
-// library; drive arbitrary scenarios through the logger and pop entries from
-// the library.
+// library; drive arbitrary scenarios through the logger and pop entries
+// from the library.
 //
 //	log, lib := plugintest.Install(t, myplugin.New(...))
 //	log.WithMetadata(loglayer.Metadata{"k": "v"}).Info("event")
@@ -53,11 +54,14 @@ func Install(t testing.TB, p loglayer.Plugin) (*loglayer.LogLayer, *lltest.TestL
 // the caller-owned input. It deep-clones the input, runs the hook, and
 // reports a test failure if the original differs from the clone afterward.
 //
-// Use it for OnFieldsCalled and OnMetadataCalled hooks. The hook function is
-// passed in directly rather than via a Plugin, so the test focuses on hook
-// behavior without needing to install or emit through a logger.
+// Use it for [loglayer.FieldsHook] and [loglayer.MetadataHook]
+// implementations. The hook function is passed in directly rather than via
+// a Plugin, so the test focuses on hook behavior without needing to install
+// or emit through a logger.
 //
-//	plugintest.AssertNoMutation(t, redactPlugin.OnMetadataCalled,
+//	red := redact.New(redact.Config{Keys: []string{"password"}})
+//	plugintest.AssertNoMutation(t,
+//	    red.(loglayer.MetadataHook).OnMetadataCalled,
 //	    map[string]any{"password": "hunter2", "user": "alice"})
 func AssertNoMutation[T any](t testing.TB, hook func(T) T, input T) {
 	t.Helper()
@@ -77,31 +81,36 @@ func AssertNoMutation[T any](t testing.TB, hook func(T) T, input T) {
 	}
 }
 
-// AssertPanicRecovered installs plugin into a fresh logger, drives the
-// supplied emit callback, and asserts the framework caught a hook panic and
-// forwarded a *loglayer.RecoveredPanicError. The plugin's OnError is
-// replaced with a capturing closure for the duration of the call.
+// AssertPanicRecovered drives a panicking hook through a real
+// *loglayer.LogLayer and asserts the framework caught the panic and
+// forwarded a *loglayer.RecoveredPanicError to the plugin's
+// [loglayer.ErrorReporter].
+//
+// build receives a captureFn: thread it through to your plugin's OnError
+// (whether that's a Config field or a method) so the framework's recovery
+// path delivers the panic to it. emit drives the operation that triggers
+// the panicking hook.
 //
 //	rpe := plugintest.AssertPanicRecovered(t,
-//	    loglayer.Plugin{
-//	        ID: "boom",
-//	        OnBeforeDataOut: func(loglayer.BeforeDataOutParams) loglayer.Data {
-//	            panic("boom")
-//	        },
+//	    func(captureFn func(error)) loglayer.Plugin {
+//	        return myplugin.New(myplugin.Config{
+//	            // ... whatever causes a panic in a hook ...
+//	            OnError: captureFn,
+//	        })
 //	    },
 //	    func(log *loglayer.LogLayer) { log.Info("trigger") },
 //	)
 //
-// Returns the captured *RecoveredPanicError so callers can assert on
-// Hook / Value if they want.
+// Returns the captured *RecoveredPanicError so callers can assert on Hook
+// and Value.
 func AssertPanicRecovered(
 	t testing.TB,
-	plugin loglayer.Plugin,
+	build func(captureFn func(error)) loglayer.Plugin,
 	emit func(*loglayer.LogLayer),
 ) *loglayer.RecoveredPanicError {
 	t.Helper()
 	var captured error
-	plugin.OnError = func(err error) { captured = err }
+	plugin := build(func(err error) { captured = err })
 	log, _ := Install(t, plugin)
 	emit(log)
 	if captured == nil {

@@ -322,7 +322,7 @@ func TestRedact_DefaultCensor(t *testing.T) {
 func TestRedact_DefaultID(t *testing.T) {
 	t.Parallel()
 	p := redact.New(redact.Config{Keys: []string{"k"}})
-	if p.ID != "redact" {
-		t.Errorf("default ID: got %q, want \"redact\"", p.ID)
+	if p.ID() != "redact" {
+		t.Errorf("default ID: got %q, want \"redact\"", p.ID())
 	}
 }

@@ -11,12 +11,10 @@ import (
 
 func TestInstall_PluginRunsAndCaptures(t *testing.T) {
 	t.Parallel()
-	log, lib := plugintest.Install(t, loglayer.Plugin{
-		ID: "tag",
-		OnBeforeDataOut: func(_ loglayer.BeforeDataOutParams) loglayer.Data {
+	log, lib := plugintest.Install(t, loglayer.NewDataHook("tag",
+		func(_ loglayer.BeforeDataOutParams) loglayer.Data {
 			return loglayer.Data{"tagged": true}
-		},
-	})
+		}))
 	log.Info("hello")
 	line := lib.PopLine()
 	if line.Data["tagged"] != true {
@@ -59,11 +57,12 @@ func TestAssertNoMutation_FailsForMutatingHook(t *testing.T) {
 func TestAssertPanicRecovered_PluginPanics(t *testing.T) {
 	t.Parallel()
 	rpe := plugintest.AssertPanicRecovered(t,
-		loglayer.Plugin{
-			ID: "boom",
-			OnBeforeDataOut: func(loglayer.BeforeDataOutParams) loglayer.Data {
-				panic("kaboom")
-			},
+		func(captureFn func(error)) loglayer.Plugin {
+			return &panicPlugin{
+				id:      "boom",
+				panicFn: func() { panic("kaboom") },
+				onError: captureFn,
+			}
 		},
 		func(log *loglayer.LogLayer) { log.Info("trigger") },
 	)
@@ -82,9 +81,12 @@ func TestAssertPanicRecovered_PanicWithErrorValue(t *testing.T) {
 	t.Parallel()
 	sentinel := errors.New("sentinel")
 	rpe := plugintest.AssertPanicRecovered(t,
-		loglayer.Plugin{
-			ID:               "panic-err",
-			OnMetadataCalled: func(any) any { panic(sentinel) },
+		func(captureFn func(error)) loglayer.Plugin {
+			return &panicMetadataPlugin{
+				id:      "panic-err",
+				panicFn: func() { panic(sentinel) },
+				onError: captureFn,
+			}
 		},
 		func(log *loglayer.LogLayer) { log.WithMetadata(loglayer.Metadata{"k": "v"}).Info("x") },
 	)
@@ -92,6 +94,36 @@ func TestAssertPanicRecovered_PanicWithErrorValue(t *testing.T) {
 		t.Errorf("errors.Is(rpe, sentinel) should be true; rpe=%v", rpe)
 	}
 }
+
+// panicPlugin implements DataHook + ErrorReporter. Used to drive the
+// AssertPanicRecovered helper: panicFn fires from OnBeforeDataOut, the
+// framework recovers it, and onError captures the wrapped error.
+type panicPlugin struct {
+	id      string
+	panicFn func()
+	onError func(error)
+}
+
+func (p *panicPlugin) ID() string { return p.id }
+func (p *panicPlugin) OnBeforeDataOut(loglayer.BeforeDataOutParams) loglayer.Data {
+	p.panicFn()
+	return nil
+}
+func (p *panicPlugin) OnError(err error) { p.onError(err) }
+
+// panicMetadataPlugin is the same idea but for an OnMetadataCalled panic.
+type panicMetadataPlugin struct {
+	id      string
+	panicFn func()
+	onError func(error)
+}
+
+func (p *panicMetadataPlugin) ID() string { return p.id }
+func (p *panicMetadataPlugin) OnMetadataCalled(any) any {
+	p.panicFn()
+	return nil
+}
+func (p *panicMetadataPlugin) OnError(err error) { p.onError(err) }
 
 // mockT is a minimal testing.TB that records whether Errorf or Fatalf was
 // called, used to verify AssertNoMutation's failure path.

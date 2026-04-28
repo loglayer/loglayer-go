@@ -3,79 +3,92 @@ package loglayer
 import (
 	"context"
 	"fmt"
+	"os"
+
+	"go.loglayer.dev/utils/idgen"
 )
 
-// Plugin is a unit of logic that runs at lifecycle points during emission.
-// Populate the function fields that match the hooks you want to participate
-// in; nil fields are skipped.
+// Plugin is the base contract every plugin satisfies. A plugin participates
+// in zero or more lifecycle hooks by also implementing one or more of the
+// hook interfaces below ([FieldsHook], [MetadataHook], [DataHook],
+// [MessageHook], [LevelHook], [SendGate]).
 //
 // Plugins are added via *LogLayer.AddPlugin and identified by ID. Adding a
 // plugin with an ID that's already registered replaces the previous one
-// (matches the AddTransport convention).
+// (matches the AddTransport convention). When ID returns the empty string,
+// the framework assigns an auto-generated identifier at registration time;
+// supply your own when you intend to call RemovePlugin / GetPlugin or
+// replace the plugin later.
 //
 // Hook ordering: plugins run in the order they were added.
-//
-// The Plugin struct is consumed by-value at registration time. Mutating
-// the function fields after AddPlugin has no effect on registered behavior;
-// to update a plugin, construct a new Plugin and AddPlugin it again.
-type Plugin struct {
-	// ID uniquely identifies the plugin. Required for RemovePlugin and
-	// for replacement-on-readd semantics.
-	ID string
-
-	// OnBeforeDataOut runs after the assembled data map is built (fields +
-	// error). Return the data map to use; nil leaves the assembled data
-	// unchanged. The returned map is shallow-merged into the entry's data:
-	// keys present in the returned map overwrite existing values; keys not
-	// present are left alone.
-	OnBeforeDataOut func(BeforeDataOutParams) Data
-
-	// OnBeforeMessageOut runs after OnBeforeDataOut and before
-	// TransformLogLevel. Return a replacement messages slice; nil leaves
-	// the messages unchanged.
-	OnBeforeMessageOut func(BeforeMessageOutParams) []any
-
-	// TransformLogLevel runs after OnBeforeDataOut and OnBeforeMessageOut
-	// but before per-transport dispatch. Return (level, true) to override
-	// the entry's level; (_, false) to leave it unchanged.
-	//
-	// If multiple plugins return ok=true, the last one wins.
-	TransformLogLevel func(TransformLogLevelParams) (LogLevel, bool)
-
-	// ShouldSend gates per-transport dispatch. Called once per (entry,
-	// transport) pair. Return false to skip dispatching that entry to that
-	// transport; the other transports are unaffected.
-	//
-	// If multiple plugins define ShouldSend, the entry is sent only when
-	// every plugin returns true.
-	ShouldSend func(ShouldSendParams) bool
-
-	// OnMetadataCalled fires from WithMetadata and MetadataOnly. Return the
-	// metadata to use; nil drops metadata entirely for this entry.
-	//
-	// Multiple plugins chain: each receives the previous plugin's output.
-	OnMetadataCalled func(metadata any) any
-
-	// OnFieldsCalled fires from WithFields. Receives the fields about to be
-	// merged. Return the fields to merge; nil drops the WithFields call
-	// entirely (the receiver's existing fields are preserved either way).
-	//
-	// Multiple plugins chain: each receives the previous plugin's output.
-	OnFieldsCalled func(fields Fields) Fields
-
-	// OnError is invoked when one of this plugin's hook functions panics
-	// during emission. The framework always recovers hook panics so a
-	// buggy plugin can't tear down the caller's goroutine; OnError lets
-	// the plugin observe the recovered panic (log it, increment a
-	// counter, etc.). nil means "swallow silently" (the default).
-	//
-	// The error passed to OnError is either the recovered value as-is
-	// (when it implements error) or a fmt-wrapped form of it. The hook
-	// that panicked is identified in the error message.
-	OnError func(err error)
+type Plugin interface {
+	ID() string
 }
 
-// BeforeDataOutParams is the input to OnBeforeDataOut.
+// FieldsHook fires when *LogLayer.WithFields is called. It receives the
+// fields about to be merged onto the derived logger and returns the fields
+// to merge instead. Return nil to drop the WithFields call (the receiver's
+// existing fields are preserved either way). Multiple plugins chain: each
+// receives the previous plugin's output.
+type FieldsHook interface {
+	OnFieldsCalled(fields Fields) Fields
+}
+
+// MetadataHook fires from WithMetadata and MetadataOnly. It receives the
+// metadata value the user passed (which may be a map, struct, scalar, or
+// nil) and returns the metadata to use. Return nil to drop the metadata
+// entirely for this entry.
+type MetadataHook interface {
+	OnMetadataCalled(metadata any) any
+}
+
+// DataHook fires per-emission, after the assembled data map (fields +
+// serialized error) is built but before the entry reaches transports.
+// Return the data to merge in; nil leaves the assembled data unchanged.
+// The returned map is shallow-merged: keys present overwrite existing
+// values; missing keys are left alone.
+type DataHook interface {
+	OnBeforeDataOut(BeforeDataOutParams) Data
+}
+
+// MessageHook fires per-emission, after [DataHook] and before [LevelHook].
+// Return a replacement messages slice; nil leaves the messages unchanged.
+type MessageHook interface {
+	OnBeforeMessageOut(BeforeMessageOutParams) []any
+}
+
+// LevelHook fires per-emission, after [DataHook] and [MessageHook] but
+// before per-transport dispatch. Return (level, true) to override the
+// entry's level; (_, false) to leave it unchanged. If multiple plugins
+// return ok=true, the last one wins.
+type LevelHook interface {
+	TransformLogLevel(TransformLogLevelParams) (LogLevel, bool)
+}
+
+// SendGate gates per-transport dispatch. Called once per (entry, transport)
+// pair. Return false to skip dispatching that entry to that transport; the
+// other transports are unaffected. If multiple plugins implement SendGate,
+// the entry is sent only when every one returns true.
+type SendGate interface {
+	ShouldSend(ShouldSendParams) bool
+}
+
+// ErrorReporter is implemented by plugins that want to observe recovered
+// panics in their own hooks. The framework recovers every hook panic so a
+// buggy plugin can't tear down the calling goroutine; OnError lets the
+// plugin observe the recovery (log it, increment a counter, etc.).
+//
+// If a plugin doesn't implement ErrorReporter, the framework writes a
+// one-line description of the recovered panic to os.Stderr so it isn't
+// silent.
+//
+// The error passed is a *RecoveredPanicError; the panicked hook is named
+// in the error message and accessible via Hook / Value.
+type ErrorReporter interface {
+	OnError(err error)
+}
+
+// BeforeDataOutParams is the input to [DataHook.OnBeforeDataOut].
 type BeforeDataOutParams struct {
 	LogLevel LogLevel
 	// Data is the assembled fields + error map. May be nil if the entry
@@ -93,7 +106,7 @@ type BeforeDataOutParams struct {
 	Ctx context.Context
 }
 
-// BeforeMessageOutParams is the input to OnBeforeMessageOut.
+// BeforeMessageOutParams is the input to [MessageHook.OnBeforeMessageOut].
 type BeforeMessageOutParams struct {
 	LogLevel LogLevel
 	Messages []any
@@ -101,7 +114,7 @@ type BeforeMessageOutParams struct {
 	Ctx context.Context
 }
 
-// TransformLogLevelParams is the input to TransformLogLevel.
+// TransformLogLevelParams is the input to [LevelHook.TransformLogLevel].
 type TransformLogLevelParams struct {
 	LogLevel LogLevel
 	Data     Data
@@ -113,7 +126,7 @@ type TransformLogLevelParams struct {
 	Ctx context.Context
 }
 
-// ShouldSendParams is the input to ShouldSend.
+// ShouldSendParams is the input to [SendGate.ShouldSend].
 type ShouldSendParams struct {
 	// TransportID is the ID of the transport this dispatch would target.
 	// Use it to selectively gate per-transport (e.g. send debug to console
@@ -129,61 +142,114 @@ type ShouldSendParams struct {
 	Ctx context.Context
 }
 
-// pluginSet is an immutable snapshot of the plugins. Hook lists are
-// pre-indexed at construction time so the dispatch path doesn't pay for
-// nil-checks; it just iterates the per-hook slice.
+// inner is a private hook the framework uses to see through a wrapper
+// (e.g. the one [WithErrorReporter] returns) to the underlying plugin.
+// Hook interfaces are asserted against the inner plugin, so a wrapper
+// only contributes the hooks the inner plugin implements; the wrapper's
+// own added behavior (typically [ErrorReporter]) still resolves against
+// the wrapper itself. Lowercase to keep this an internal extension
+// point: only types defined in this package can satisfy it.
+type pluginWithInner interface {
+	inner() Plugin
+}
+
+// pluginEntry caches a registered plugin's resolved ID and the result of
+// each hook-interface assertion, so the dispatch path doesn't re-assert.
+// A nil cached field means the plugin does not implement that hook.
+type pluginEntry struct {
+	plugin     Plugin
+	id         string
+	onFields   FieldsHook
+	onMetadata MetadataHook
+	onData     DataHook
+	onMessage  MessageHook
+	onLevel    LevelHook
+	sendGate   SendGate
+	reporter   ErrorReporter
+}
+
+// pluginSet is an immutable snapshot of the registered plugins.
 type pluginSet struct {
-	all               []Plugin
-	byID              map[string]int // index into all
-	beforeDataOut     []int
-	beforeMessageOut  []int
-	transformLogLevel []int
-	shouldSend        []int
-	onMetadataCalled  []int
-	onFieldsCalled    []int
-	// anyDispatchHook is true when at least one plugin defines a hook that
-	// fires from processLog (OnBeforeDataOut, OnBeforeMessageOut,
-	// TransformLogLevel, or ShouldSend). The dispatch hot path uses this
-	// to skip building hook-param structs when no plugin would consume them.
+	entries []pluginEntry
+	byID    map[string]int
+
+	hasData, hasMessage, hasLevel, hasSendGate bool
+	hasFields, hasMetadata                     bool
+	// anyDispatchHook lets the dispatch hot path skip building
+	// hook-param structs when no plugin would consume them.
 	anyDispatchHook bool
 }
 
 func newPluginSet(plugins []Plugin) *pluginSet {
 	s := &pluginSet{
-		all:  plugins,
-		byID: make(map[string]int, len(plugins)),
+		entries: make([]pluginEntry, len(plugins)),
+		byID:    make(map[string]int, len(plugins)),
 	}
 	for i, p := range plugins {
-		s.byID[p.ID] = i
-		if p.OnBeforeDataOut != nil {
-			s.beforeDataOut = append(s.beforeDataOut, i)
+		id := p.ID()
+		if id == "" {
+			id = idgen.Random(idgen.PluginPrefix)
 		}
-		if p.OnBeforeMessageOut != nil {
-			s.beforeMessageOut = append(s.beforeMessageOut, i)
+		entry := pluginEntry{plugin: p, id: id}
+		// Hook assertions resolve against the inner plugin when present so
+		// a wrapper only contributes hooks the inner actually implements.
+		// ErrorReporter still resolves against the outer wrapper.
+		hookTarget := p
+		if w, ok := p.(pluginWithInner); ok {
+			hookTarget = w.inner()
 		}
-		if p.TransformLogLevel != nil {
-			s.transformLogLevel = append(s.transformLogLevel, i)
+		if h, ok := hookTarget.(FieldsHook); ok {
+			entry.onFields = h
+			s.hasFields = true
 		}
-		if p.ShouldSend != nil {
-			s.shouldSend = append(s.shouldSend, i)
+		if h, ok := hookTarget.(MetadataHook); ok {
+			entry.onMetadata = h
+			s.hasMetadata = true
 		}
-		if p.OnMetadataCalled != nil {
-			s.onMetadataCalled = append(s.onMetadataCalled, i)
+		if h, ok := hookTarget.(DataHook); ok {
+			entry.onData = h
+			s.hasData = true
 		}
-		if p.OnFieldsCalled != nil {
-			s.onFieldsCalled = append(s.onFieldsCalled, i)
+		if h, ok := hookTarget.(MessageHook); ok {
+			entry.onMessage = h
+			s.hasMessage = true
 		}
+		if h, ok := hookTarget.(LevelHook); ok {
+			entry.onLevel = h
+			s.hasLevel = true
+		}
+		if g, ok := hookTarget.(SendGate); ok {
+			entry.sendGate = g
+			s.hasSendGate = true
+		}
+		if r, ok := p.(ErrorReporter); ok {
+			entry.reporter = r
+		}
+		s.entries[i] = entry
+		s.byID[id] = i
 	}
-	s.anyDispatchHook = len(s.beforeDataOut)+len(s.beforeMessageOut)+len(s.transformLogLevel)+len(s.shouldSend) > 0
+	s.anyDispatchHook = s.hasData || s.hasMessage || s.hasLevel || s.hasSendGate
 	return s
 }
 
-// RecoveredPanicError is the error type passed to Plugin.OnError when
-// a hook panics. Hook is the name of the hook ("OnBeforeDataOut",
+// Hook names used in [RecoveredPanicError.Hook] and the framework's
+// stderr fallback message. Use the constants instead of raw strings when
+// adding new dispatch sites.
+const (
+	hookFieldsCalled   = "OnFieldsCalled"
+	hookMetadataCalled = "OnMetadataCalled"
+	hookBeforeDataOut  = "OnBeforeDataOut"
+	hookBeforeMsgOut   = "OnBeforeMessageOut"
+	hookTransformLevel = "TransformLogLevel"
+	hookShouldSend     = "ShouldSend"
+)
+
+// RecoveredPanicError is the error type passed to [ErrorReporter.OnError]
+// when a hook panics. Hook is the name of the hook ("OnBeforeDataOut",
 // etc.); Value is the value originally passed to panic(). When Value
-// satisfies the error interface, errors.Unwrap reaches it (and
-// errors.Is / errors.As work transparently); when it doesn't, read
-// Value directly to inspect the concrete type.
+// satisfies the error interface, errors.Unwrap reaches it (and errors.Is /
+// errors.As work transparently); when it doesn't, read Value directly to
+// inspect the concrete type.
 type RecoveredPanicError struct {
 	Hook    string
 	Value   any
@@ -205,54 +271,69 @@ func panicError(r any, hook string) error {
 }
 
 // recoverHook is the canonical deferred recovery for plugin hook calls.
-// Defer it directly: `defer recoverHook(plugin.OnError, "HookName")`.
-func recoverHook(onErr func(error), hook string) {
-	if r := recover(); r != nil && onErr != nil {
-		onErr(panicError(r, hook))
+// Reports recovered panics via the plugin's [ErrorReporter] when one is
+// implemented, else writes a one-line description to os.Stderr so the
+// failure isn't silent.
+//
+// Defer it directly: `defer recoverHook(entry.reporter, "HookName")`.
+func recoverHook(reporter ErrorReporter, hook string) {
+	r := recover()
+	if r == nil {
+		return
 	}
+	err := panicError(r, hook)
+	if reporter != nil {
+		reporter.OnError(err)
+		return
+	}
+	fmt.Fprintln(os.Stderr, err)
 }
 
-func (s *pluginSet) callBeforeDataOut(i int, p BeforeDataOutParams) (out Data) {
-	defer recoverHook(s.all[i].OnError, "OnBeforeDataOut")
-	return s.all[i].OnBeforeDataOut(p)
+func callBeforeDataOut(e *pluginEntry, p BeforeDataOutParams) (out Data) {
+	defer recoverHook(e.reporter, hookBeforeDataOut)
+	return e.onData.OnBeforeDataOut(p)
 }
 
-func (s *pluginSet) callBeforeMessageOut(i int, p BeforeMessageOutParams) (out []any) {
-	defer recoverHook(s.all[i].OnError, "OnBeforeMessageOut")
-	return s.all[i].OnBeforeMessageOut(p)
+func callBeforeMessageOut(e *pluginEntry, p BeforeMessageOutParams) (out []any) {
+	defer recoverHook(e.reporter, hookBeforeMsgOut)
+	return e.onMessage.OnBeforeMessageOut(p)
 }
 
-func (s *pluginSet) callTransformLogLevel(i int, p TransformLogLevelParams) (level LogLevel, ok bool) {
-	defer recoverHook(s.all[i].OnError, "TransformLogLevel")
-	return s.all[i].TransformLogLevel(p)
+func callTransformLogLevel(e *pluginEntry, p TransformLogLevelParams) (level LogLevel, ok bool) {
+	defer recoverHook(e.reporter, hookTransformLevel)
+	return e.onLevel.TransformLogLevel(p)
 }
 
 // callShouldSend fails open: a panicking ShouldSend returns true so the
 // entry still dispatches. Silent dropping would mask plugin bugs as data
-// loss; OnError surfaces the panic for operators to fix.
-func (s *pluginSet) callShouldSend(i int, p ShouldSendParams) (ok bool) {
+// loss; ErrorReporter surfaces the panic for operators to fix.
+func callShouldSend(e *pluginEntry, p ShouldSendParams) (ok bool) {
 	ok = true
-	defer recoverHook(s.all[i].OnError, "ShouldSend")
-	return s.all[i].ShouldSend(p)
+	defer recoverHook(e.reporter, hookShouldSend)
+	return e.sendGate.ShouldSend(p)
 }
 
-func (s *pluginSet) callOnMetadataCalled(i int, metadata any) (out any) {
-	defer recoverHook(s.all[i].OnError, "OnMetadataCalled")
-	return s.all[i].OnMetadataCalled(metadata)
+func callOnMetadataCalled(e *pluginEntry, metadata any) (out any) {
+	defer recoverHook(e.reporter, hookMetadataCalled)
+	return e.onMetadata.OnMetadataCalled(metadata)
 }
 
-func (s *pluginSet) callOnFieldsCalled(i int, fields Fields) (out Fields) {
-	defer recoverHook(s.all[i].OnError, "OnFieldsCalled")
-	return s.all[i].OnFieldsCalled(fields)
+func callOnFieldsCalled(e *pluginEntry, fields Fields) (out Fields) {
+	defer recoverHook(e.reporter, hookFieldsCalled)
+	return e.onFields.OnFieldsCalled(fields)
 }
 
 func (s *pluginSet) runOnBeforeDataOut(p BeforeDataOutParams) Data {
-	if len(s.beforeDataOut) == 0 {
+	if !s.hasData {
 		return p.Data
 	}
 	out := p.Data
-	for _, i := range s.beforeDataOut {
-		patch := s.callBeforeDataOut(i, BeforeDataOutParams{
+	for i := range s.entries {
+		e := &s.entries[i]
+		if e.onData == nil {
+			continue
+		}
+		patch := callBeforeDataOut(e, BeforeDataOutParams{
 			LogLevel: p.LogLevel,
 			Data:     out,
 			Fields:   p.Fields,
@@ -274,12 +355,16 @@ func (s *pluginSet) runOnBeforeDataOut(p BeforeDataOutParams) Data {
 }
 
 func (s *pluginSet) runOnBeforeMessageOut(p BeforeMessageOutParams) []any {
-	if len(s.beforeMessageOut) == 0 {
+	if !s.hasMessage {
 		return p.Messages
 	}
 	msgs := p.Messages
-	for _, i := range s.beforeMessageOut {
-		next := s.callBeforeMessageOut(i, BeforeMessageOutParams{
+	for i := range s.entries {
+		e := &s.entries[i]
+		if e.onMessage == nil {
+			continue
+		}
+		next := callBeforeMessageOut(e, BeforeMessageOutParams{
 			LogLevel: p.LogLevel,
 			Messages: msgs,
 			Ctx:      p.Ctx,
@@ -292,12 +377,16 @@ func (s *pluginSet) runOnBeforeMessageOut(p BeforeMessageOutParams) []any {
 }
 
 func (s *pluginSet) runTransformLogLevel(p TransformLogLevelParams) LogLevel {
-	if len(s.transformLogLevel) == 0 {
+	if !s.hasLevel {
 		return p.LogLevel
 	}
 	level := p.LogLevel
-	for _, i := range s.transformLogLevel {
-		if next, ok := s.callTransformLogLevel(i, p); ok {
+	for i := range s.entries {
+		e := &s.entries[i]
+		if e.onLevel == nil {
+			continue
+		}
+		if next, ok := callTransformLogLevel(e, p); ok {
 			level = next
 		}
 	}
@@ -305,8 +394,15 @@ func (s *pluginSet) runTransformLogLevel(p TransformLogLevelParams) LogLevel {
 }
 
 func (s *pluginSet) runShouldSend(p ShouldSendParams) bool {
-	for _, i := range s.shouldSend {
-		if !s.callShouldSend(i, p) {
+	if !s.hasSendGate {
+		return true
+	}
+	for i := range s.entries {
+		e := &s.entries[i]
+		if e.sendGate == nil {
+			continue
+		}
+		if !callShouldSend(e, p) {
 			return false
 		}
 	}
@@ -314,12 +410,16 @@ func (s *pluginSet) runShouldSend(p ShouldSendParams) bool {
 }
 
 func (s *pluginSet) runOnMetadataCalled(metadata any) any {
-	if len(s.onMetadataCalled) == 0 {
+	if !s.hasMetadata {
 		return metadata
 	}
 	out := metadata
-	for _, i := range s.onMetadataCalled {
-		out = s.callOnMetadataCalled(i, out)
+	for i := range s.entries {
+		e := &s.entries[i]
+		if e.onMetadata == nil {
+			continue
+		}
+		out = callOnMetadataCalled(e, out)
 		if out == nil {
 			return nil
 		}
@@ -328,15 +428,140 @@ func (s *pluginSet) runOnMetadataCalled(metadata any) any {
 }
 
 func (s *pluginSet) runOnFieldsCalled(fields Fields) Fields {
-	if len(s.onFieldsCalled) == 0 {
+	if !s.hasFields {
 		return fields
 	}
 	out := fields
-	for _, i := range s.onFieldsCalled {
-		out = s.callOnFieldsCalled(i, out)
+	for i := range s.entries {
+		e := &s.entries[i]
+		if e.onFields == nil {
+			continue
+		}
+		out = callOnFieldsCalled(e, out)
 		if out == nil {
 			return nil
 		}
 	}
 	return out
 }
+
+// Adapter constructors for inline single-hook plugins. Use these when you
+// don't want to declare a type for a one-off plugin. For multi-hook plugins,
+// declare your own type implementing [Plugin] plus the relevant hook
+// interfaces.
+//
+// Each constructor returns an unexported type that implements [Plugin]
+// plus the named hook interface. ID auto-generates when empty.
+
+// NewPlugin returns a Plugin that implements no hook interfaces. Useful
+// for tests that exercise registration/replacement/removal semantics
+// without needing actual hook behavior.
+func NewPlugin(id string) Plugin { return &noopPlugin{id: id} }
+
+// WithErrorReporter wraps p with an [ErrorReporter] backed by onError.
+// Hook dispatch goes to p exactly as if it were registered directly; the
+// framework recognises the wrapper internally and resolves hook
+// interfaces against p, not the wrapper. The wrapper only contributes
+// the [ErrorReporter] behavior, so panics in p's hooks reach onError
+// instead of the default stderr path.
+//
+// Returns p unchanged when onError is nil.
+func WithErrorReporter(p Plugin, onError func(error)) Plugin {
+	if onError == nil {
+		return p
+	}
+	return &reporterWrapper{p: p, onError: onError}
+}
+
+type reporterWrapper struct {
+	p       Plugin
+	onError func(error)
+}
+
+func (r *reporterWrapper) ID() string        { return r.p.ID() }
+func (r *reporterWrapper) inner() Plugin     { return r.p }
+func (r *reporterWrapper) OnError(err error) { r.onError(err) }
+
+type noopPlugin struct{ id string }
+
+func (n *noopPlugin) ID() string { return n.id }
+
+// NewFieldsHook returns a Plugin that implements [FieldsHook] only.
+func NewFieldsHook(id string, fn func(Fields) Fields) Plugin {
+	return &fieldsHookFn{id: id, fn: fn}
+}
+
+// NewMetadataHook returns a Plugin that implements [MetadataHook] only.
+func NewMetadataHook(id string, fn func(any) any) Plugin {
+	return &metadataHookFn{id: id, fn: fn}
+}
+
+// NewDataHook returns a Plugin that implements [DataHook] only.
+func NewDataHook(id string, fn func(BeforeDataOutParams) Data) Plugin {
+	return &dataHookFn{id: id, fn: fn}
+}
+
+// NewMessageHook returns a Plugin that implements [MessageHook] only.
+func NewMessageHook(id string, fn func(BeforeMessageOutParams) []any) Plugin {
+	return &messageHookFn{id: id, fn: fn}
+}
+
+// NewLevelHook returns a Plugin that implements [LevelHook] only.
+func NewLevelHook(id string, fn func(TransformLogLevelParams) (LogLevel, bool)) Plugin {
+	return &levelHookFn{id: id, fn: fn}
+}
+
+// NewSendGate returns a Plugin that implements [SendGate] only.
+func NewSendGate(id string, fn func(ShouldSendParams) bool) Plugin {
+	return &sendGateFn{id: id, fn: fn}
+}
+
+type fieldsHookFn struct {
+	id string
+	fn func(Fields) Fields
+}
+
+func (f *fieldsHookFn) ID() string                      { return f.id }
+func (f *fieldsHookFn) OnFieldsCalled(in Fields) Fields { return f.fn(in) }
+
+type metadataHookFn struct {
+	id string
+	fn func(any) any
+}
+
+func (m *metadataHookFn) ID() string                  { return m.id }
+func (m *metadataHookFn) OnMetadataCalled(in any) any { return m.fn(in) }
+
+type dataHookFn struct {
+	id string
+	fn func(BeforeDataOutParams) Data
+}
+
+func (d *dataHookFn) ID() string                                 { return d.id }
+func (d *dataHookFn) OnBeforeDataOut(p BeforeDataOutParams) Data { return d.fn(p) }
+
+type messageHookFn struct {
+	id string
+	fn func(BeforeMessageOutParams) []any
+}
+
+func (m *messageHookFn) ID() string                                        { return m.id }
+func (m *messageHookFn) OnBeforeMessageOut(p BeforeMessageOutParams) []any { return m.fn(p) }
+
+type levelHookFn struct {
+	id string
+	fn func(TransformLogLevelParams) (LogLevel, bool)
+}
+
+func (l *levelHookFn) ID() string { return l.id }
+func (l *levelHookFn) TransformLogLevel(p TransformLogLevelParams) (LogLevel, bool) {
+	return l.fn(p)
+}
+
+type sendGateFn struct {
+	id string
+	fn func(ShouldSendParams) bool
+}
+
+func (s *sendGateFn) ID() string                         { return s.id }
+func (s *sendGateFn) ShouldSend(p ShouldSendParams) bool { return s.fn(p) }

@@ -423,12 +423,9 @@ func TestGroups_PluginShouldSendStillRuns(t *testing.T) {
 			"both": {Transports: []string{"a", "b"}},
 		},
 	})
-	log.AddPlugin(loglayer.Plugin{
-		ID: "drop-b",
-		ShouldSend: func(p loglayer.ShouldSendParams) bool {
-			return p.TransportID != "b"
-		},
-	})
+	log.AddPlugin(loglayer.NewSendGate("drop-b", func(p loglayer.ShouldSendParams) bool {
+		return p.TransportID != "b"
+	}))
 	log.WithGroup("both").Info("hi")
 	if libs[0].Len() != 1 {
 		t.Errorf("a should receive (group + ShouldSend allow): got %d", libs[0].Len())

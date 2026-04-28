@@ -125,33 +125,26 @@ You install once (`go get go.loglayer.dev`) and import the sub-packages you need
 
 ## Plugins
 
-The TypeScript plugin system maps directly. Where TS has a class implementing optional methods on the `LogLayerPlugin` interface, Go has a `loglayer.Plugin` struct with optional function fields. nil fields are skipped.
+The TypeScript plugin system maps directly, but the Go API is interface-based instead of object-with-methods. `loglayer.Plugin` is a one-method interface (`ID() string`); each lifecycle hook is its own optional interface that you implement on the same type.
 
-| TypeScript hook | Go field on `loglayer.Plugin` |
+| TypeScript hook (on `LogLayerPlugin`) | Go interface |
 |---|---|
-| `onContextCalled` | `OnFieldsCalled` |
-| `onMetadataCalled` | `OnMetadataCalled` |
-| `onBeforeDataOut` | `OnBeforeDataOut` |
-| `onBeforeMessageOut` | `OnBeforeMessageOut` |
-| `shouldSendToLogger` | `ShouldSend` |
-| (no equivalent) | `TransformLogLevel` |
+| `onContextCalled` | `loglayer.FieldsHook` |
+| `onMetadataCalled` | `loglayer.MetadataHook` |
+| `onBeforeDataOut` | `loglayer.DataHook` |
+| `onBeforeMessageOut` | `loglayer.MessageHook` |
+| `shouldSendToLogger` | `loglayer.SendGate` |
+| (no equivalent) | `loglayer.LevelHook` |
+
+For one-off single-hook plugins, use the adapter constructors:
 
 ```go
-log.AddPlugin(loglayer.Plugin{
-    ID: "tag-service",
-    OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data {
-        return loglayer.Data{"service": "checkout"}
-    },
-})
+log.AddPlugin(loglayer.NewDataHook("tag-service", func(p loglayer.BeforeDataOutParams) loglayer.Data {
+    return loglayer.Data{"service": "checkout"}
+}))
 ```
 
-Three convenience constructors for the common single-hook cases:
-
-```go
-log.AddPlugin(loglayer.MetadataPlugin("upper", fn))
-log.AddPlugin(loglayer.FieldsPlugin("rename", fn))
-log.AddPlugin(loglayer.LevelPlugin("promote", fn))
-```
+The full set: `NewFieldsHook`, `NewMetadataHook`, `NewDataHook`, `NewMessageHook`, `NewLevelHook`, `NewSendGate`. For multi-hook plugins, declare a type implementing `Plugin` plus the relevant hook interfaces (the `plugins/redact` source is the canonical reference).
 
 `plugins/redact` mirrors `@loglayer/plugin-redaction`. It supports key matching, regex value patterns, and json-tag-aware struct walking, all type-preserving:
 

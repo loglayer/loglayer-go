@@ -213,13 +213,12 @@ See [Groups](/logging-api/groups) for the eight-rule routing precedence (defined
 ```go
 import "go.loglayer.dev/plugins/redact"
 
-// Inline construction
-log.AddPlugin(loglayer.Plugin{
-    ID:               "tag",
-    OnBeforeDataOut:  func(p loglayer.BeforeDataOutParams) loglayer.Data {
-        return loglayer.Data{"service": "checkout"}
-    },
-})
+// Inline single-hook plugin via an adapter constructor
+log.AddPlugin(loglayer.NewDataHook("tag", func(p loglayer.BeforeDataOutParams) loglayer.Data {
+    return loglayer.Data{"service": "checkout"}
+}))
+// Other adapters: NewFieldsHook, NewMetadataHook, NewMessageHook, NewLevelHook, NewSendGate, NewPlugin (no hooks).
+// Multi-hook plugins: declare a type implementing Plugin + the hook interfaces.
 
 // Redact plugin (key + regex matching, walks structs/maps/slices)
 log.AddPlugin(redact.New(redact.Config{

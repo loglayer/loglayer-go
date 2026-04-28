@@ -202,7 +202,7 @@ log.WithMetadata(loglayer.Metadata{"k": "v"}).Info("hello")
 log.Info("hello", loglayer.Metadata{"k": "v"})
 ```
 
-The `BaseConfig.ID` field on a transport (and `Plugin.ID`) is optional and auto-generated when omitted. Include it in an example **only** when the example specifically demonstrates management (`RemoveTransport`, `GetLoggerInstance`, `RemovePlugin`, `GetPlugin`, replace-by-ID). Bare construction examples should leave it off.
+The `BaseConfig.ID` field on a transport, and the `id` argument to a plugin's `New*Hook` constructor (or whatever the plugin's `ID()` returns), is optional and auto-generated when empty. Include it in an example **only** when the example specifically demonstrates management (`RemoveTransport`, `GetLoggerInstance`, `RemovePlugin`, `GetPlugin`, replace-by-ID). Bare construction examples should leave it off.
 
 ## Configuration Tables
 

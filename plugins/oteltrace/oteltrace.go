@@ -83,7 +83,10 @@ type Config struct {
 	OnError func(err error)
 }
 
-// New constructs the plugin.
+// New constructs the plugin. The returned plugin implements
+// [loglayer.DataHook]; when cfg.OnError is set it's wrapped via
+// [loglayer.WithErrorReporter] so recovered hook panics reach the
+// caller-supplied callback instead of the framework's stderr default.
 func New(cfg Config) loglayer.Plugin {
 	if cfg.ID == "" {
 		cfg.ID = "otel-trace-injector"
@@ -94,40 +97,43 @@ func New(cfg Config) loglayer.Plugin {
 	if cfg.SpanIDKey == "" {
 		cfg.SpanIDKey = "span_id"
 	}
+	return loglayer.WithErrorReporter(&plugin{cfg: cfg}, cfg.OnError)
+}
 
-	return loglayer.Plugin{
-		ID:      cfg.ID,
-		OnError: cfg.OnError,
-		OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data {
-			if p.Ctx == nil {
-				return nil
-			}
-			var data loglayer.Data
-			if sc := trace.SpanContextFromContext(p.Ctx); sc.IsValid() {
-				data = loglayer.Data{
-					cfg.TraceIDKey: sc.TraceID().String(),
-					cfg.SpanIDKey:  sc.SpanID().String(),
-				}
-				if cfg.TraceFlagsKey != "" {
-					data[cfg.TraceFlagsKey] = int(sc.TraceFlags())
-				}
-				if cfg.TraceStateKey != "" {
-					if ts := sc.TraceState(); ts.Len() > 0 {
-						data[cfg.TraceStateKey] = ts.String()
-					}
-				}
-			}
-			if cfg.BaggageKeyPrefix != "" {
-				if bag := baggage.FromContext(p.Ctx); bag.Len() > 0 {
-					if data == nil {
-						data = make(loglayer.Data, bag.Len())
-					}
-					for _, m := range bag.Members() {
-						data[cfg.BaggageKeyPrefix+m.Key()] = m.Value()
-					}
-				}
-			}
-			return data
-		},
+type plugin struct {
+	cfg Config
+}
+
+func (p *plugin) ID() string { return p.cfg.ID }
+
+func (p *plugin) OnBeforeDataOut(bp loglayer.BeforeDataOutParams) loglayer.Data {
+	if bp.Ctx == nil {
+		return nil
 	}
+	var data loglayer.Data
+	if sc := trace.SpanContextFromContext(bp.Ctx); sc.IsValid() {
+		data = loglayer.Data{
+			p.cfg.TraceIDKey: sc.TraceID().String(),
+			p.cfg.SpanIDKey:  sc.SpanID().String(),
+		}
+		if p.cfg.TraceFlagsKey != "" {
+			data[p.cfg.TraceFlagsKey] = int(sc.TraceFlags())
+		}
+		if p.cfg.TraceStateKey != "" {
+			if ts := sc.TraceState(); ts.Len() > 0 {
+				data[p.cfg.TraceStateKey] = ts.String()
+			}
+		}
+	}
+	if p.cfg.BaggageKeyPrefix != "" {
+		if bag := baggage.FromContext(bp.Ctx); bag.Len() > 0 {
+			if data == nil {
+				data = make(loglayer.Data, bag.Len())
+			}
+			for _, m := range bag.Members() {
+				data[p.cfg.BaggageKeyPrefix+m.Key()] = m.Value()
+			}
+		}
+	}
+	return data
 }

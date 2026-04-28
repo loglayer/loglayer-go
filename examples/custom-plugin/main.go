@@ -41,20 +41,29 @@ func hostInfoPlugin(hostKey, pidKey string, counter *atomic.Uint64) loglayer.Plu
 		host = "unknown"
 	}
 	pid := os.Getpid()
+	return &hostInfo{hostKey: hostKey, pidKey: pidKey, host: host, pid: pid, counter: counter}
+}
 
-	return loglayer.Plugin{
-		ID: "host-info",
-		OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data {
-			counter.Add(1)
-			return loglayer.Data{
-				hostKey: host,
-				pidKey:  pid,
-			}
-		},
-		OnError: func(err error) {
-			fmt.Fprintf(os.Stderr, "host-info plugin error: %v\n", err)
-		},
+// hostInfo implements DataHook + ErrorReporter.
+type hostInfo struct {
+	hostKey, pidKey string
+	host            string
+	pid             int
+	counter         *atomic.Uint64
+}
+
+func (h *hostInfo) ID() string { return "host-info" }
+
+func (h *hostInfo) OnBeforeDataOut(loglayer.BeforeDataOutParams) loglayer.Data {
+	h.counter.Add(1)
+	return loglayer.Data{
+		h.hostKey: h.host,
+		h.pidKey:  h.pid,
 	}
+}
+
+func (h *hostInfo) OnError(err error) {
+	fmt.Fprintf(os.Stderr, "host-info plugin error: %v\n", err)
 }
 
 // scrubPasswordPlugin strips any "password" key from metadata maps
@@ -66,24 +75,21 @@ func hostInfoPlugin(hostKey, pidKey string, counter *atomic.Uint64) loglayer.Plu
 // This implementation exists only to demonstrate the OnMetadataCalled
 // hook on a flat top-level map.
 func scrubPasswordPlugin() loglayer.Plugin {
-	return loglayer.Plugin{
-		ID: "scrub-password",
-		OnMetadataCalled: func(metadata any) any {
-			m, ok := transport.MetadataAsRootMap(metadata)
-			if !ok {
-				return metadata
+	return loglayer.NewMetadataHook("scrub-password", func(metadata any) any {
+		m, ok := transport.MetadataAsRootMap(metadata)
+		if !ok {
+			return metadata
+		}
+		cleaned := make(loglayer.Metadata, len(m))
+		for k, v := range m {
+			if strings.EqualFold(k, "password") {
+				cleaned[k] = "[REDACTED]"
+				continue
 			}
-			cleaned := make(loglayer.Metadata, len(m))
-			for k, v := range m {
-				if strings.EqualFold(k, "password") {
-					cleaned[k] = "[REDACTED]"
-					continue
-				}
-				cleaned[k] = v
-			}
-			return cleaned
-		},
-	}
+			cleaned[k] = v
+		}
+		return cleaned
+	})
 }
 
 // dropDebugFromTransport returns a plugin that vetoes Debug-level
@@ -92,15 +98,12 @@ func scrubPasswordPlugin() loglayer.Plugin {
 // a global filter. Useful when you want one transport to be quieter
 // than the rest.
 func dropDebugFromTransport(transportID string) loglayer.Plugin {
-	return loglayer.Plugin{
-		ID: "drop-debug-on-" + transportID,
-		ShouldSend: func(p loglayer.ShouldSendParams) bool {
-			if p.TransportID == transportID && p.LogLevel == loglayer.LogLevelDebug {
-				return false
-			}
-			return true
-		},
-	}
+	return loglayer.NewSendGate("drop-debug-on-"+transportID, func(p loglayer.ShouldSendParams) bool {
+		if p.TransportID == transportID && p.LogLevel == loglayer.LogLevelDebug {
+			return false
+		}
+		return true
+	})
 }
 
 func main() {

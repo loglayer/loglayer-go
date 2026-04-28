@@ -20,18 +20,17 @@ Plugin order matters: hooks run in the order plugins were added, and each plugin
 
 ## Plugin IDs
 
-`Plugin.ID` is optional. When omitted, LogLayer assigns an auto-generated identifier so multiple no-ID plugins never collide. **Supply your own ID** when you intend to call `RemovePlugin` / `GetPlugin` later, or want a readable identifier in logs and tooling: those operations key off the string.
+A plugin's `ID()` method may return the empty string; LogLayer assigns an auto-generated identifier at registration time so multiple no-ID plugins never collide. **Supply your own ID** when you intend to call `RemovePlugin` / `GetPlugin` later, or want a readable identifier in logs and tooling: those operations key off the string.
+
+For inline plugins via the adapter constructors, the first argument is the ID:
 
 ```go
-log.AddPlugin(loglayer.Plugin{
-    ID: "audit",
-    OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data {
-        return loglayer.Data{"audited": true}
-    },
-})
+log.AddPlugin(loglayer.NewDataHook("audit", func(p loglayer.BeforeDataOutParams) loglayer.Data {
+    return loglayer.Data{"audited": true}
+}))
 ```
 
-For plugins you set up once and never touch (the common case), leaving `ID` empty is fine. The auto-generated ID is still unique within the logger; you just won't have a stable handle for management calls.
+For plugins you set up once and never touch (the common case), leaving the ID empty is fine. The auto-generated ID is still unique within the logger; you just won't have a stable handle for management calls.
 
 ## See Also
 

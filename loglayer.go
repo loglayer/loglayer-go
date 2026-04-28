@@ -148,9 +148,7 @@ func build(config Config) (*LogLayer, error) {
 	l.muteMetadata.Store(config.MuteMetadata)
 	l.transports.Store(newTransportSet(all))
 
-	pluginsCopy := append([]Plugin(nil), config.Plugins...)
-	assignAutoPluginIDs(pluginsCopy)
-	l.plugins.Store(newPluginSet(pluginsCopy))
+	l.plugins.Store(newPluginSet(append([]Plugin(nil), config.Plugins...)))
 
 	ung := config.UngroupedRouting
 	if ung.Mode != UngroupedToTransports && len(ung.Transports) > 0 {

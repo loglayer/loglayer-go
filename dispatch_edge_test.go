@@ -34,10 +34,7 @@ func twoTransport(t *testing.T) (*loglayer.LogLayer, []*lltest.TestLoggingLibrar
 // must not silently leak entries into a default sink.
 func TestDispatchEdge_AllShouldSendFalse_DropsEverywhere(t *testing.T) {
 	log, libs := twoTransport(t)
-	log.AddPlugin(loglayer.Plugin{
-		ID:         "deny-all",
-		ShouldSend: func(p loglayer.ShouldSendParams) bool { return false },
-	})
+	log.AddPlugin(loglayer.NewSendGate("deny-all", func(p loglayer.ShouldSendParams) bool { return false }))
 
 	log.Info("dropped")
 
@@ -164,24 +161,15 @@ func TestDispatchEdge_TransformLogLevel_LastTrueWins(t *testing.T) {
 	//  - A always returns Warn (ok=true).
 	//  - B returns Error (ok=true). Should override A.
 	//  - C returns nothing (ok=false). Leaves Error in place.
-	log.AddPlugin(loglayer.Plugin{
-		ID: "first-warn",
-		TransformLogLevel: func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) {
-			return loglayer.LogLevelWarn, true
-		},
-	})
-	log.AddPlugin(loglayer.Plugin{
-		ID: "second-error",
-		TransformLogLevel: func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) {
-			return loglayer.LogLevelError, true
-		},
-	})
-	log.AddPlugin(loglayer.Plugin{
-		ID: "third-passthrough",
-		TransformLogLevel: func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) {
-			return 0, false
-		},
-	})
+	log.AddPlugin(loglayer.NewLevelHook("first-warn", func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) {
+		return loglayer.LogLevelWarn, true
+	}))
+	log.AddPlugin(loglayer.NewLevelHook("second-error", func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) {
+		return loglayer.LogLevelError, true
+	}))
+	log.AddPlugin(loglayer.NewLevelHook("third-passthrough", func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) {
+		return 0, false
+	}))
 
 	log.Info("input-info")
 

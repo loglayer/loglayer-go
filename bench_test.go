@@ -413,22 +413,13 @@ func BenchmarkLoglayer_PluginPipeline(b *testing.B) {
 		DisableFatalExit: true,
 		Transport:        &noopTransport{},
 		Plugins: []loglayer.Plugin{
-			{
-				ID: "tag",
-				OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data {
-					return loglayer.Data{"tagged": true}
-				},
-			},
-			{
-				ID: "level-passthrough",
-				TransformLogLevel: func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) {
-					return 0, false
-				},
-			},
-			{
-				ID:         "send-all",
-				ShouldSend: func(p loglayer.ShouldSendParams) bool { return true },
-			},
+			loglayer.NewDataHook("tag", func(p loglayer.BeforeDataOutParams) loglayer.Data {
+				return loglayer.Data{"tagged": true}
+			}),
+			loglayer.NewLevelHook("level-passthrough", func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) {
+				return 0, false
+			}),
+			loglayer.NewSendGate("send-all", func(p loglayer.ShouldSendParams) bool { return true }),
 		},
 	})
 	b.ReportAllocs()

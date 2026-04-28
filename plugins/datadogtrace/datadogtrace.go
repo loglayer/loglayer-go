@@ -85,7 +85,11 @@ type Config struct {
 	OnError func(err error)
 }
 
-// New constructs the plugin. Panics if cfg.Extract is nil.
+// New constructs the plugin. Panics if cfg.Extract is nil. The returned
+// plugin implements [loglayer.DataHook]; when cfg.OnError is set it's
+// wrapped via [loglayer.WithErrorReporter] so recovered hook panics
+// reach the caller-supplied callback instead of the framework's stderr
+// default.
 func New(cfg Config) loglayer.Plugin {
 	if cfg.Extract == nil {
 		panic("loglayer/plugins/datadogtrace: Config.Extract is required")
@@ -93,34 +97,36 @@ func New(cfg Config) loglayer.Plugin {
 	if cfg.ID == "" {
 		cfg.ID = "datadog-trace-injector"
 	}
-	extract := cfg.Extract
+	return loglayer.WithErrorReporter(&plugin{cfg: cfg}, cfg.OnError)
+}
 
-	return loglayer.Plugin{
-		ID:      cfg.ID,
-		OnError: cfg.OnError,
-		OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data {
-			if p.Ctx == nil {
-				return nil
-			}
-			traceID, spanID, ok := extract(p.Ctx)
-			if !ok {
-				return nil
-			}
-			// Datadog log/trace correlation expects decimal-string IDs.
-			data := loglayer.Data{
-				"dd.trace_id": strconv.FormatUint(traceID, 10),
-				"dd.span_id":  strconv.FormatUint(spanID, 10),
-			}
-			if cfg.Service != "" {
-				data["dd.service"] = cfg.Service
-			}
-			if cfg.Env != "" {
-				data["dd.env"] = cfg.Env
-			}
-			if cfg.Version != "" {
-				data["dd.version"] = cfg.Version
-			}
-			return data
-		},
+type plugin struct {
+	cfg Config
+}
+
+func (p *plugin) ID() string { return p.cfg.ID }
+
+func (p *plugin) OnBeforeDataOut(bp loglayer.BeforeDataOutParams) loglayer.Data {
+	if bp.Ctx == nil {
+		return nil
 	}
+	traceID, spanID, ok := p.cfg.Extract(bp.Ctx)
+	if !ok {
+		return nil
+	}
+	// Datadog log/trace correlation expects decimal-string IDs.
+	data := loglayer.Data{
+		"dd.trace_id": strconv.FormatUint(traceID, 10),
+		"dd.span_id":  strconv.FormatUint(spanID, 10),
+	}
+	if p.cfg.Service != "" {
+		data["dd.service"] = p.cfg.Service
+	}
+	if p.cfg.Env != "" {
+		data["dd.env"] = p.cfg.Env
+	}
+	if p.cfg.Version != "" {
+		data["dd.version"] = p.cfg.Version
+	}
+	return data
 }

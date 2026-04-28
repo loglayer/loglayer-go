@@ -209,12 +209,9 @@ func TestConcurrentPluginMutation(t *testing.T) {
 	base := lltest.New(lltest.Config{BaseConfig: transport.BaseConfig{ID: "base"}, Library: libBase})
 	log := loglayer.New(loglayer.Config{Transport: base, DisableFatalExit: true})
 
-	tagger := loglayer.Plugin{
-		ID: "tag",
-		OnBeforeDataOut: func(p loglayer.BeforeDataOutParams) loglayer.Data {
-			return loglayer.Data{"tagged": true}
-		},
-	}
+	tagger := loglayer.NewDataHook("tag", func(p loglayer.BeforeDataOutParams) loglayer.Data {
+		return loglayer.Data{"tagged": true}
+	})
 
 	const emitters = 16
 	const mutators = 4

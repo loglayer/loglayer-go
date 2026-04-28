@@ -161,16 +161,16 @@ func TestPreservesUserData(t *testing.T) {
 func TestDefaultID(t *testing.T) {
 	t.Parallel()
 	p := oteltrace.New(oteltrace.Config{})
-	if p.ID != "otel-trace-injector" {
-		t.Errorf("default ID: got %q, want %q", p.ID, "otel-trace-injector")
+	if p.ID() != "otel-trace-injector" {
+		t.Errorf("default ID: got %q, want %q", p.ID(), "otel-trace-injector")
 	}
 }
 
 func TestCustomID(t *testing.T) {
 	t.Parallel()
 	p := oteltrace.New(oteltrace.Config{ID: "my-injector"})
-	if p.ID != "my-injector" {
-		t.Errorf("custom ID: got %q", p.ID)
+	if p.ID() != "my-injector" {
+		t.Errorf("custom ID: got %q", p.ID())
 	}
 }
 

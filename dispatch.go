@@ -113,7 +113,7 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 		Ctx:      goCtx,
 	}
 
-	hasShouldSend := len(plugins.shouldSend) > 0
+	hasShouldSend := plugins.hasSendGate
 	groupsConfig := l.loadGroups()
 	needsRouting := groupsConfig.hasGroups
 	for _, t := range l.loadTransports().list {

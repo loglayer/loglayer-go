@@ -178,8 +178,8 @@ func TestDatadogTrace_PanicsWithoutExtract(t *testing.T) {
 func TestDatadogTrace_DefaultID(t *testing.T) {
 	t.Parallel()
 	p := datadogtrace.New(datadogtrace.Config{Extract: fakeExtract(1, 1, true)})
-	if p.ID != "datadog-trace-injector" {
-		t.Errorf("default ID: got %q, want %q", p.ID, "datadog-trace-injector")
+	if p.ID() != "datadog-trace-injector" {
+		t.Errorf("default ID: got %q, want %q", p.ID(), "datadog-trace-injector")
 	}
 }
 
@@ -189,7 +189,7 @@ func TestDatadogTrace_CustomID(t *testing.T) {
 		ID:      "my-injector",
 		Extract: fakeExtract(1, 1, true),
 	})
-	if p.ID != "my-injector" {
-		t.Errorf("custom ID: got %q", p.ID)
+	if p.ID() != "my-injector" {
+		t.Errorf("custom ID: got %q", p.ID())
 	}
 }
