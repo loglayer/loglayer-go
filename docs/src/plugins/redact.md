@@ -126,12 +126,18 @@ log.AddPlugin(redact.New(redact.Config{
 
 ## Where it Fires
 
-The plugin implements two hooks:
+The plugin implements three hooks:
 
 - **`OnMetadataCalled`**: rewrites metadata when `WithMetadata` or `MetadataOnly` is called.
 - **`OnFieldsCalled`**: rewrites fields when `WithFields` is called.
+- **`OnBeforeDataOut`**: re-walks the assembled `Data` map (fields + framework-built error subtree) right before dispatch.
 
-Both run before the value is stored on the logger or builder, so by the time the entry reaches a transport the secrets are already gone.
+The first two scrub data the caller passes in. `OnBeforeDataOut` exists so a `Patterns`-style redactor also catches secrets that only surface in `err.Error()` (the framework places `WithError` errors into `Data` as `{"err": {"message": err.Error()}}`). Without the third hook a credit-card-shaped string baked into an error message would slip past redaction.
+
+```go
+log.WithError(errors.New("auth failed for card 4111111111111111")).Error("oops")
+// {"err":{"message":"[REDACTED]"}, ...}
+```
 
 ## Caller Input Preservation
 

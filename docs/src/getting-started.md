@@ -40,9 +40,9 @@ func main() {
     log.WithMetadata(loglayer.Metadata{"user": "alice"}).Info("User logged in")
     // {"level":"info","time":"...","msg":"User logged in","user":"alice"}
 
-    // With persistent fields
-    log.WithFields(loglayer.Fields{"requestId": "123"})
-    log.Info("Processing request")
+    // With persistent fields (WithFields returns a NEW logger; assign it)
+    reqLog := log.WithFields(loglayer.Fields{"requestId": "123"})
+    reqLog.Info("Processing request")
     // {"level":"info","time":"...","msg":"Processing request","requestId":"123"}
 
     // With an error

@@ -443,3 +443,139 @@ func TestHTTP_Build_ReturnsErrURLRequired(t *testing.T) {
 		t.Errorf("Build with missing URL: got %v, want ErrURLRequired", err)
 	}
 }
+
+// A panicking user Encoder must not kill the worker. The panic is surfaced
+// via OnError, and a subsequent log call still drains through a working
+// (non-panicking) Encoder.
+func TestHTTP_PanickingEncoder_RecoveredAndReportedViaOnError(t *testing.T) {
+	cap := newCaptureServer()
+	srv := httptest.NewServer(http.HandlerFunc(cap.handler))
+	defer srv.Close()
+
+	var encodeCalls atomic.Int32
+	errs := make(chan error, 4)
+
+	encoder := httptr.EncoderFunc(func(entries []httptr.Entry) ([]byte, string, error) {
+		n := encodeCalls.Add(1)
+		if n == 1 {
+			panic("encoder boom")
+		}
+		return httptr.JSONArrayEncoder.Encode(entries)
+	})
+
+	log, tr := newLogger(t, httptr.Config{
+		Encoder:       encoder,
+		BatchSize:     1,
+		BatchInterval: 50 * time.Millisecond,
+		OnError: func(err error, _ []httptr.Entry) {
+			errs <- err
+		},
+	}, srv)
+
+	log.Info("first")  // panics inside Encoder
+	log.Info("second") // worker still alive, succeeds
+
+	select {
+	case err := <-errs:
+		if !strings.Contains(err.Error(), "panic during flush") {
+			t.Errorf("expected panic-recovery error, got: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("OnError was not invoked within 2s")
+	}
+
+	if err := tr.Close(); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+	if got := len(cap.batches()); got != 1 {
+		t.Errorf("expected exactly 1 successful batch (the second log) after recovered panic, got %d", got)
+	}
+}
+
+// A panicking user OnError must not kill the worker either. We trigger an
+// HTTP error (status 500), the user OnError handler panics, and a follow-up
+// successful entry must still be delivered.
+func TestHTTP_PanickingOnError_DoesNotKillWorker(t *testing.T) {
+	cap := newCaptureServer()
+	cap.respCode = http.StatusInternalServerError
+	srv := httptest.NewServer(http.HandlerFunc(cap.handler))
+	defer srv.Close()
+
+	var onErrCalls atomic.Int32
+	log, tr := newLogger(t, httptr.Config{
+		BatchSize:     1,
+		BatchInterval: 50 * time.Millisecond,
+		OnError: func(err error, _ []httptr.Entry) {
+			onErrCalls.Add(1)
+			panic("onError boom")
+		},
+	}, srv)
+
+	log.Info("first")  // server 500 → OnError → panics → recovered
+	log.Info("second") // worker still alive, server still 500, OnError panics again
+
+	if err := tr.Close(); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+
+	// Worker should have processed both entries (so OnError was invoked
+	// twice). Without panic recovery, the worker would have died after
+	// the first call and the second batch would never reach the server.
+	if got := cap.hits.Load(); got < 2 {
+		t.Errorf("expected at least 2 server hits after recovered OnError panics, got %d", got)
+	}
+}
+
+// The default Client refuses cross-host redirects so configured credentials
+// (Authorization, X-API-Key, etc.) cannot be forwarded to a redirected host.
+// Two servers run on different ports; the first 302s to the second. A header
+// the user supplied for the original host must surface as an OnError
+// (cross-host redirect refused), and the second host must never see it.
+func TestHTTP_DefaultClient_RefusesCrossHostRedirect(t *testing.T) {
+	receivedAuth := make(chan string, 1)
+	target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case receivedAuth <- r.Header.Get("X-API-Key"):
+		default:
+		}
+		w.WriteHeader(http.StatusAccepted)
+	}))
+	defer target.Close()
+
+	redirector := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, target.URL, http.StatusFound)
+	}))
+	defer redirector.Close()
+
+	errs := make(chan error, 2)
+	tr := httptr.New(httptr.Config{
+		URL:           redirector.URL,
+		Headers:       map[string]string{"X-API-Key": "secret-token"},
+		BatchSize:     1,
+		BatchInterval: 50 * time.Millisecond,
+		OnError: func(err error, _ []httptr.Entry) {
+			errs <- err
+		},
+	})
+	log := loglayer.New(loglayer.Config{Transport: tr, DisableFatalExit: true})
+	log.Info("trigger send")
+
+	select {
+	case err := <-errs:
+		if !strings.Contains(err.Error(), "cross-host redirect") {
+			t.Errorf("expected cross-host redirect error, got: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("OnError was not invoked within 2s")
+	}
+
+	_ = tr.Close()
+
+	// If the redirect had been followed, target's handler would have
+	// captured the X-API-Key. It must not have been called at all.
+	select {
+	case got := <-receivedAuth:
+		t.Errorf("X-API-Key leaked to redirected host: %q", got)
+	default:
+	}
+}

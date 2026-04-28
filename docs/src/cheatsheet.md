@@ -76,15 +76,15 @@ Without the plugin, multi-arg messages are space-joined.
 ## Metadata
 
 ```go
-// Map (loglayer.Metadata is a type alias for map[string]any)
-log.WithMetadata(loglayer.Metadata{"id": 1}).Info("ok")
-
-// Struct (transport handles serialization)
+// Struct (preferred when the shape is fixed; cheaper, type-checked)
 type User struct {
     ID   int    `json:"id"`
     Name string `json:"name"`
 }
 log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
+
+// Map (use when keys vary at runtime; loglayer.Metadata is map[string]any)
+log.WithMetadata(loglayer.Metadata{"id": 1}).Info("ok")
 
 // No message, log just the metadata
 log.MetadataOnly(loglayer.Metadata{"status": "healthy"})
@@ -279,3 +279,17 @@ loglayer.LogLevelWarn   // 30
 loglayer.LogLevelError  // 40
 loglayer.LogLevelFatal  // 50
 ```
+
+## slog Interop
+
+```go
+import "go.loglayer.dev/integrations/sloghandler"
+
+// Make every slog.Info(...) flow through your loglayer pipeline (plugins,
+// fan-out, groups, level state). slog.With / WithAttrs become persistent
+// fields; WithGroup nests; LogValuer is resolved.
+slog.SetDefault(slog.New(sloghandler.New(log)))
+slog.Info("served", "userId", 42)
+```
+
+The opposite direction (loglayer emitting through a `*slog.Logger` backend) is the [slog Transport](/transports/slog).

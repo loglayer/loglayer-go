@@ -268,6 +268,16 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
+- **integrations/sloghandler**: A `log/slog.Handler` whose `Handle` dispatches into a loglayer logger, so every `slog.Info(...)` call participates in the loglayer plugin pipeline, multi-transport fan-out, group routing, and runtime level state. Opposite direction from `transports/slog` (loglayer dispatches through a `*slog.Logger`). Mapping: slog `WithAttrs` accumulates persistent fields; inline record attrs become per-call fields; `WithGroup(name)` opens a nested map; `slog.Group("", ...)` inlines members at the parent (per slog spec); empty groups and empty-key attrs are dropped; `slog.LogValuer` is resolved before encoding; native kinds preserve their typed Go values (int64, time.Time, time.Duration, ...). Levels above `slog.LevelError` pin to `LogLevelError` so a slog emission cannot trigger loglayer's `os.Exit(1)`. Context passed via `slog.InfoContext(ctx, ...)` is forwarded to dispatch-time plugin hooks via `TransportParams.Ctx` so `oteltrace`/`datadogtrace` extract trace IDs the same way they do for native loglayer calls. Persistent fields set on the underlying logger before the handler is installed are preserved on every emission.
+
+```go
+log := loglayer.New(loglayer.Config{Transport: structured.New(structured.Config{})})
+log.AddPlugin(redact.New(redact.Config{Keys: []string{"password"}}))
+slog.SetDefault(slog.New(sloghandler.New(log)))
+slog.Info("user signed in", "userId", 42, "password", "hunter2")
+// → flows through loglayer; redact replaces password with [REDACTED].
+```
+
 ## Thread Safety
 
 Every method on `*LogLayer` is safe to call from any goroutine, including concurrently with emission. There is no setup-only category.

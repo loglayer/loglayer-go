@@ -12,9 +12,15 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
 </p>
 
-`loglayer-go` is a structured logging library for Go. Use it standalone with the built-in JSON, pretty terminal, HTTP, or cloud-service transports (Datadog, etc.) — or wrap an existing logger like zerolog, zap, slog, or logrus when you've already invested in one. Either way, application code uses one fluent API for messages, fields, metadata, and errors.
+`loglayer-go` is a structured logging facade for Go that sits in front of whatever logger you already use (zerolog, zap, log/slog, logrus, charmbracelet/log, phuslu) or one of the built-in transports (pretty terminal, structured JSON, HTTP, Datadog, OpenTelemetry). The pieces that aren't already trivial in slog or zerolog:
 
-For full documentation, read the [docs](https://go.loglayer.dev).
+- **Reflective redaction.** A built-in plugin walks structs, maps, slices, and pointers at any depth and replaces matched keys or value patterns before any transport sees the value. Honors `json` tags; preserves runtime types.
+- **Multi-transport fan-out with per-transport level filters.** Pretty in dev plus structured to a file plus batched HTTP to Datadog, all from one logger.
+- **Group routing.** Tag entries by subsystem (`db`, `auth`, ...) and route each group to specific transports with its own minimum level. Toggle which groups are active at runtime via env var.
+- **Two-way slog interop.** Wrap a `*slog.Logger` as a backend, or install a `slog.Handler` so `slog.Info(...)` calls (yours and your dependencies') flow through your full loglayer pipeline.
+- **First-class test capture.** A typed `LogLine` capture so tests assert on level, message, fields, metadata, and context independently. No JSON parsing in tests.
+
+Application code uses one fluent API for messages, fields, metadata, and errors regardless of which transport(s) are behind it. Full documentation at [go.loglayer.dev](https://go.loglayer.dev).
 
 ```go
 // Example using the Pretty terminal transport.
@@ -74,13 +80,13 @@ Requires **Go 1.25+** for the main module. The OpenTelemetry transport (`go.logl
 
 Runnable demos under [`examples/`](./examples):
 
-- [`http-server`](./examples/http-server) — `loghttp` middleware in an HTTP handler
-- [`multi-transport`](./examples/multi-transport) — pretty in dev + structured to file with per-transport level filtering
-- [`custom-transport`](./examples/custom-transport) — implementing the Transport interface from scratch (renderer / "flatten" policy)
-- [`custom-transport-attribute`](./examples/custom-transport-attribute) — Transport that forwards to an attribute-style backend (wrapper policy)
-- [`custom-plugin`](./examples/custom-plugin) — writing a plugin from scratch (`OnBeforeDataOut`, `OnMetadataCalled`, `ShouldSend`)
-- [`datadog-shipping`](./examples/datadog-shipping) — Datadog Logs intake with tuned batching
-- [`otel-end-to-end`](./examples/otel-end-to-end) — `transports/otellog` + `plugins/oteltrace` against a real OTel SDK (own module; `cd examples/otel-end-to-end && go run .`)
+- [`http-server`](./examples/http-server): `loghttp` middleware in an HTTP handler
+- [`multi-transport`](./examples/multi-transport): pretty in dev + structured to file with per-transport level filtering
+- [`custom-transport`](./examples/custom-transport): implementing the Transport interface from scratch (renderer / "flatten" policy)
+- [`custom-transport-attribute`](./examples/custom-transport-attribute): Transport that forwards to an attribute-style backend (wrapper policy)
+- [`custom-plugin`](./examples/custom-plugin): writing a plugin from scratch (`OnBeforeDataOut`, `OnMetadataCalled`, `ShouldSend`)
+- [`datadog-shipping`](./examples/datadog-shipping): Datadog Logs intake with tuned batching
+- [`otel-end-to-end`](./examples/otel-end-to-end): `transports/otellog` + `plugins/oteltrace` against a real OTel SDK (own module; `cd examples/otel-end-to-end && go run .`)
 
 Run any of the main-module ones with `go run ./examples/<name>`.
 
@@ -95,9 +101,9 @@ Writing your own transport is [a single interface](https://go.loglayer.dev/trans
 Full docs at **[go.loglayer.dev](https://go.loglayer.dev)**:
 
 - [Getting Started](https://go.loglayer.dev/getting-started)
-- [Configuration](https://go.loglayer.dev/configuration) — every Config field
-- [Cheat Sheet](https://go.loglayer.dev/cheatsheet) — one-page API reference
-- [Logging API](https://go.loglayer.dev/logging-api/basic-logging) — per-method guides
+- [Configuration](https://go.loglayer.dev/configuration): every Config field
+- [Cheat Sheet](https://go.loglayer.dev/cheatsheet): one-page API reference
+- [Logging API](https://go.loglayer.dev/logging-api/basic-logging): per-method guides
 
 ## TypeScript counterpart
 

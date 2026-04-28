@@ -156,7 +156,10 @@ func Build(cfg Config) (*Transport, error) {
 		cfg.Encoder = JSONArrayEncoder
 	}
 	if cfg.Client == nil {
-		cfg.Client = &http.Client{Timeout: defaultClientTimeout}
+		cfg.Client = &http.Client{
+			Timeout:       defaultClientTimeout,
+			CheckRedirect: defaultCheckRedirect,
+		}
 	}
 	if cfg.BatchSize <= 0 {
 		cfg.BatchSize = defaultBatchSize
@@ -298,6 +301,22 @@ func (t *Transport) flush(entries []Entry) {
 	// by user code.
 	entries = append([]Entry(nil), entries...)
 
+	// Recover panics from user-supplied Encoder / OnError so a buggy
+	// callback can't tear down the worker goroutine and silently halt
+	// log delivery for the rest of the process. Any panic is surfaced
+	// via OnError; if OnError itself panics, the inner recover swallows
+	// it so the worker stays up.
+	defer func() {
+		rcv := recover()
+		if rcv == nil {
+			return
+		}
+		func() {
+			defer func() { _ = recover() }()
+			t.cfg.OnError(fmt.Errorf("loglayer/transports/http: panic during flush: %v", rcv), entries)
+		}()
+	}()
+
 	body, contentType, err := t.cfg.Encoder.Encode(entries)
 	if err != nil {
 		t.cfg.OnError(fmt.Errorf("loglayer/transports/http: encode: %w", err), entries)
@@ -335,6 +354,25 @@ func (t *Transport) flush(entries []Entry) {
 
 func defaultOnError(err error, entries []Entry) {
 	fmt.Fprintf(os.Stderr, "loglayer/transports/http: send failed (%d entries): %v\n", len(entries), err)
+}
+
+// defaultCheckRedirect refuses redirects to a different host so credential
+// headers (Authorization, X-API-Key, vendor keys like DD-API-KEY) configured
+// for the original host are never forwarded to a redirected one. Same-host
+// redirects are allowed up to 10 hops, matching net/http's default cap.
+//
+// Callers who supply a custom Config.Client own their own redirect policy.
+func defaultCheckRedirect(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return fmt.Errorf("loglayer/transports/http: stopped after 10 redirects")
+	}
+	if len(via) == 0 {
+		return nil
+	}
+	if req.URL.Host != via[0].URL.Host {
+		return fmt.Errorf("loglayer/transports/http: refusing cross-host redirect from %q to %q", via[0].URL.Host, req.URL.Host)
+	}
+	return nil
 }
 
 // JSONArrayEncoder serializes the batch as a JSON array of one object per

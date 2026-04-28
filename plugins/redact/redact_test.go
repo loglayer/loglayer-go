@@ -1,6 +1,7 @@
 package redact_test
 
 import (
+	"errors"
 	"regexp"
 	"testing"
 
@@ -324,5 +325,44 @@ func TestRedact_DefaultID(t *testing.T) {
 	p := redact.New(redact.Config{Keys: []string{"k"}})
 	if p.ID() != "redact" {
 		t.Errorf("default ID: got %q, want \"redact\"", p.ID())
+	}
+}
+
+// errors come into the assembled Data as `{"err": {"message": err.Error()}}`
+// after fields/metadata redaction has already run. The DataHook re-walks the
+// final map so a Pattern-style redactor catches secrets that only appear in
+// the error's Error() string.
+func TestRedact_RedactsErrorMessageByPattern(t *testing.T) {
+	t.Parallel()
+	cc := regexp.MustCompile(`\d{16}`)
+	log, lib := plugintest.Install(t, redact.New(redact.Config{
+		Patterns: []*regexp.Regexp{cc},
+	}))
+
+	log.WithError(errors.New("auth failed for card 4111111111111111")).Error("oops")
+
+	line := lib.PopLine()
+	errMap, ok := line.Data["err"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected err subtree in Data, got %T: %v", line.Data["err"], line.Data["err"])
+	}
+	if errMap["message"] != "[REDACTED]" {
+		t.Errorf("error message containing card number should be redacted: got %v", errMap["message"])
+	}
+}
+
+// the err key itself is a Keys match: redacting the whole subtree replaces
+// {"message": "..."} with the censor string.
+func TestRedact_RedactsErrorSubtreeByKey(t *testing.T) {
+	t.Parallel()
+	log, lib := plugintest.Install(t, redact.New(redact.Config{
+		Keys: []string{"err"},
+	}))
+
+	log.WithError(errors.New("internal: secret-token-xyz leaked")).Error("oops")
+
+	line := lib.PopLine()
+	if line.Data["err"] != "[REDACTED]" {
+		t.Errorf("err key should be redacted to censor string: got %v", line.Data["err"])
 	}
 }

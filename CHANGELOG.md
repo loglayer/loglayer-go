@@ -61,6 +61,15 @@ fluent API for messages, fields, metadata, and errors. v1.0.0 ships:
 - **HTTP middleware**: `integrations/loghttp` derives a per-request
   logger, binds `r.Context()`, emits request-completed (or
   request-panicked) lines with status/duration/bytes.
+- **slog interop**: `integrations/sloghandler` exposes a
+  `log/slog.Handler` backed by a loglayer logger, so
+  `slog.SetDefault(slog.New(sloghandler.New(log)))` makes every
+  `slog.Info(...)` (yours and your dependencies') flow through
+  loglayer's plugin pipeline, fan-out, groups, and level state.
+  Complements `transports/slog` (which lets loglayer emit through a
+  `*slog.Logger` backend); the new handler covers the opposite
+  direction. Levels above `slog.LevelError` pin to `LogLevelError` so
+  a slog emission cannot trigger Fatal exit.
 - **Group routing**: name routing rules in `Config.Groups`, tag entries
   with `WithGroup(...)` to limit dispatch. Per-group level filters,
   active-groups env-var, runtime mutators.
@@ -79,7 +88,14 @@ fluent API for messages, fields, metadata, and errors. v1.0.0 ships:
 - **Security defaults**: control-character sanitization on
   console/pretty messages and `loghttp` request headers; cycle-safe
   reflection in `maputil.Cloner`; `Datadog.Config` redacts the API key
-  via `String()` and a `json:"-"` tag.
+  via `String()` and a `json:"-"` tag. The `redact` plugin now also
+  walks the framework-built error subtree via `OnBeforeDataOut` so
+  pattern-style redactors catch secrets baked into `err.Error()`. The
+  `http` transport's default Client refuses cross-host redirects so
+  credential headers (Authorization, X-API-Key, DD-API-KEY) cannot be
+  forwarded to a redirected host. The HTTP worker recovers panics from
+  user-supplied `Encoder` and `OnError` callbacks so a buggy callback
+  cannot silently halt log delivery for the rest of the process.
 
 Full API documented at <https://go.loglayer.dev>.
 

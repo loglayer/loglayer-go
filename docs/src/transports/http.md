@@ -120,7 +120,11 @@ Map metadata merges at the root; non-map metadata (struct, scalar, slice) lands 
 
 ### `Client`
 
-The `*http.Client` used to send requests. Defaults to a fresh client with a 30-second timeout. Override to plug in retries, custom transports (proxies, mTLS, OpenTelemetry instrumentation), or shorter timeouts.
+The `*http.Client` used to send requests. Defaults to a fresh client with a 30-second timeout and a `CheckRedirect` policy that **refuses cross-host redirects** so credential headers (Authorization, X-API-Key, vendor keys like DD-API-KEY) are never forwarded to a redirected host. Same-host redirects are still followed up to 10 hops, matching Go's default cap.
+
+If you supply your own `*http.Client`, you own the redirect policy. Set `Client.CheckRedirect` yourself if you want the same protection.
+
+Override the default to plug in retries, custom transports (proxies, mTLS, OpenTelemetry instrumentation), or shorter timeouts.
 
 ### `BatchSize` and `BatchInterval`
 
@@ -149,6 +153,9 @@ Called when something goes wrong:
 | `*HTTPError`         | Server returned status >= 400           |
 | Wrapped encode error | The encoder returned an error           |
 | Wrapped send error   | `client.Do` returned an error           |
+| Wrapped panic value  | `Encoder` or `OnError` itself panicked  |
+
+A panic in your `Encoder` or `OnError` callback is recovered so the worker stays alive; the recovered value is reported back through `OnError` (with the message `panic during flush`). If `OnError` itself panics, that panic is silently swallowed to keep the worker running.
 
 The default writes a one-line message to `os.Stderr`. Override to plumb errors into a separate logger, a metrics counter, or a dead-letter queue:
 

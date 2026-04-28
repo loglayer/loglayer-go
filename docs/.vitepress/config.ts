@@ -178,6 +178,7 @@ export default defineConfig({
         text: 'Integrations',
         items: [
           { text: 'HTTP Middleware (loghttp)', link: '/integrations/loghttp' },
+          { text: 'slog Handler', link: '/integrations/sloghandler' },
         ],
       },
     ],

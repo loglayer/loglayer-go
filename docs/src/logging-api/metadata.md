@@ -7,34 +7,62 @@ description: "Per-log structured data: maps, structs, or any value."
 
 Metadata attaches structured data to a single log entry. Unlike [fields](/logging-api/fields), it does not persist. Once the entry is emitted, the metadata is discarded.
 
-## `loglayer.Metadata`: the canonical map shape
+`WithMetadata` accepts **any** value. The core logger does no conversion; the transport decides how to serialize.
 
-The most common payload is a string-keyed bag of values, so `loglayer` exports a named type `Metadata` for `map[string]any`. Map literals (`loglayer.Metadata{...}`) work like the underlying map for indexing, range, `len`, etc.; the named type lets the compiler distinguish `Metadata` from `Fields` (the persistent-on-logger shape) and `Data` (the assembled output transports see).
+## Struct vs Map: pick the right shape
 
-```go
-// Idiomatic
-log.WithMetadata(loglayer.Metadata{"userId": 42, "action": "login"}).Info("user")
+Two shapes are common. Use the one that matches your call site.
 
-// Identical at runtime
-log.WithMetadata(map[string]any{"userId": 42, "action": "login"}).Info("user")
-```
+### Use a struct when the shape is fixed
 
-Use `loglayer.Metadata` throughout your code unless you have a reason not to.
-
-## The `any` Design
-
-Although `Metadata` is the most common shape, `WithMetadata` accepts `any`. The transport decides how to serialize the value, so you can pass a struct, a slice, or anything else, and each transport renders it idiomatically.
+If the same set of keys appears at this call site every time, declare a struct. The transport's encoder walks it directly, types are checked at compile time, and there's no map allocation per call.
 
 ```go
-type User struct {
-    ID    int    `json:"id"`
-    Email string `json:"email"`
+type RequestInfo struct {
+    Method     string `json:"method"`
+    Path       string `json:"path"`
+    DurationMs int    `json:"duration_ms"`
 }
 
-log.WithMetadata(User{ID: 7, Email: "alice@example.com"}).Info("user")
+log.WithMetadata(RequestInfo{
+    Method:     "POST",
+    Path:       "/users",
+    DurationMs: 45,
+}).Info("request handled")
 ```
 
-The core logger does **zero conversion**: your value is handed to the transport as-is. The transport decides how to render it. See each transport's page for exact shape.
+```json
+{"msg":"request handled","method":"POST","path":"/users","duration_ms":45}
+```
+
+This is the cheaper path on hot code: see [Benchmarks](/benchmarks) for the numbers (struct metadata is ~3 fewer allocations per emission than the map literal below).
+
+### Use `loglayer.Metadata` when the shape varies
+
+When you don't know which keys you'll have until runtime (conditional adds, varying domain values, ad-hoc bags), use `loglayer.Metadata` (a named alias for `map[string]any`):
+
+```go
+md := loglayer.Metadata{"userId": 42, "action": "login"}
+if r.Header.Get("X-Debug") == "1" {
+    md["browser"] = r.Header.Get("User-Agent")
+}
+log.WithMetadata(md).Info("user logged in")
+```
+
+The `loglayer.Metadata` named type lets the compiler distinguish it from `Fields` (persistent on the logger) and `Data` (the assembled output transports see). At runtime it is `map[string]any`; both these calls are identical:
+
+```go
+log.WithMetadata(loglayer.Metadata{"userId": 42}).Info("user")
+log.WithMetadata(map[string]any{"userId": 42}).Info("user")
+```
+
+Prefer `loglayer.Metadata` throughout your code so the compiler can flag mix-ups with `Fields`.
+
+::: warning The map is not deep-copied
+LogLayer doesn't clone the map you pass to `WithMetadata`. Mutating it after the call (e.g. reusing the same map for the next emission with a tweak) can bleed into the previous log when a transport retains the value. Build a fresh map per call, or treat the value as read-only once handed off. Structs sidestep this entirely.
+:::
+
+`MetadataFieldName` (set on a wrapper transport's config) only affects **non-map** metadata; map metadata flattens to root attributes. The exact shape (struct flattens at the root vs. nests under a key) depends on the transport. See each transport's page for its rendering rules, or [Creating Transports → Handling `any` Metadata](/transports/creating-transports#handling-any-metadata) for the placement policies.
 
 ## Building the Value First
 
@@ -57,64 +85,6 @@ log.WithMetadata(&evt).Info("user logged in")
 This is useful when the payload is computed across several lines, populated conditionally, or reused across multiple log calls. The runtime behavior is identical to passing the literal inline.
 
 The core never dereferences or copies the value: it stores `any` and hands it to the transport. Pointer-vs-value behavior is therefore a transport concern. Transports that use `encoding/json` (structured, http, datadog) and the wrappers that hand off to a JSON-aware logger (zap, zerolog, slog, logrus, charmlog, phuslu) all dereference pointers via the standard library or their own marshaler.
-
-## Map Metadata
-
-The common case. Keys are merged at the root by default:
-
-```go
-log.WithMetadata(loglayer.Metadata{
-    "userId":  "123",
-    "action":  "login",
-    "browser": "Chrome",
-}).Info("User logged in")
-```
-
-```json
-{
-  "msg": "User logged in",
-  "userId": "123",
-  "action": "login",
-  "browser": "Chrome"
-}
-```
-
-::: warning The map is not deep-copied
-LogLayer doesn't clone the `Metadata` map you pass in. Mutating it after the call (e.g. reusing the same map for the next emission with a tweak) can bleed into the previous log when a transport retains the value. Build a fresh map per call, or treat the value as read-only once handed off.
-:::
-
-`MetadataFieldName` (set on a wrapper transport's config) only affects **non-map** metadata. Map metadata always flattens to root attributes; that's the whole point of using `loglayer.Metadata` for ad-hoc bags. For keyed data that should always nest under a fixed name, use the `Fields` API.
-
-## Struct Metadata
-
-Pass a struct directly. The transport handles serialization:
-
-```go
-type RequestInfo struct {
-    Method   string `json:"method"`
-    Path     string `json:"path"`
-    Duration int    `json:"duration_ms"`
-}
-
-log.WithMetadata(RequestInfo{
-    Method:   "POST",
-    Path:     "/users",
-    Duration: 45,
-}).Info("request handled")
-```
-
-A typical JSON output:
-
-```json
-{
-  "msg": "request handled",
-  "method": "POST",
-  "path": "/users",
-  "duration_ms": 45
-}
-```
-
-The exact shape (whether the struct flattens at the root or nests under a key) depends on the transport. See each transport's page for its rendering rules, or [Creating Transports: Handling `any` Metadata](/transports/creating-transports#handling-any-metadata) for the underlying placement policies and the helpers that implement them.
 
 ## Replacing, Not Merging
 

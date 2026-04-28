@@ -59,7 +59,12 @@ type Config struct {
 }
 
 // New constructs a redaction plugin from the config. The returned plugin
-// implements [loglayer.MetadataHook] and [loglayer.FieldsHook].
+// implements [loglayer.MetadataHook], [loglayer.FieldsHook], and
+// [loglayer.DataHook]. The DataHook re-walks the assembled Data map so
+// the framework-built error subtree (`{"message": err.Error()}` from
+// WithError) is also redacted; without it a Pattern-style redactor
+// would catch secrets in metadata/fields but miss the same secrets
+// rendered by an error's Error() string.
 func New(cfg Config) loglayer.Plugin {
 	id := cfg.ID
 	if id == "" {
@@ -115,4 +120,15 @@ func (p *plugin) OnFieldsCalled(fields loglayer.Fields) loglayer.Fields {
 		return nil
 	}
 	return loglayer.Fields(cloned.(map[string]any))
+}
+
+func (p *plugin) OnBeforeDataOut(params loglayer.BeforeDataOutParams) loglayer.Data {
+	if params.Data == nil {
+		return nil
+	}
+	cloned := p.cloner.Clone(map[string]any(params.Data))
+	if cloned == nil {
+		return params.Data
+	}
+	return loglayer.Data(cloned.(map[string]any))
 }
