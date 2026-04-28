@@ -22,13 +22,20 @@ Initial release. Stable API; SemVer applies from this point forward.
 LogLayer for Go is a transport-agnostic structured logging facade with a
 fluent API for messages, fields, metadata, and errors. v1.0.0 ships:
 
-- **Core**: `*LogLayer` with five log levels and a fluent builder
-  (`WithMetadata`, `WithError`, `WithCtx`, `WithFields`, `WithGroup`,
-  `WithPrefix`). Distinct `Fields`/`Metadata`/`Data` named types so the
-  compiler catches misuse. `loglayer.F` and `loglayer.M` are short
-  aliases for `Fields` and `Metadata` for terser call sites. Every
-  method is safe to call from any goroutine, including concurrently
-  with emission.
+- **Core**: `*LogLayer` with seven log levels (Trace, Debug, Info, Warn,
+  Error, Fatal, Panic) and a fluent builder (`WithMetadata`, `WithError`,
+  `WithCtx`, `WithFields`, `WithGroup`, `WithPrefix`). Trace sits below
+  Debug for fine-grained diagnostic; Panic dispatches and then panics
+  with the joined message string (recoverable, matching zerolog/zap/
+  logrus convention). Distinct `Fields`/`Metadata`/`Data` named types
+  so the compiler catches misuse. `loglayer.F` and `loglayer.M` are
+  short aliases for `Fields` and `Metadata` for terser call sites.
+  Every method is safe to call from any goroutine, including
+  concurrently with emission. The level set is fixed at this release;
+  the per-level bitmap is a `uint32` with headroom for ~24 more, and
+  the three extension points (`levelIndex`, `LogLevel.String`,
+  `ParseLogLevel`) are switches that can be replaced with a registry
+  lookup later if user-registered custom levels become a need.
 - **Renderers**: `pretty` (colorized terminal), `structured` (JSON per
   line), `console`, `testing`, `blank`.
 - **Logger wrappers**: `zerolog`, `zap`, `log/slog`, `logrus`,
@@ -57,10 +64,20 @@ fluent API for messages, fields, metadata, and errors. v1.0.0 ships:
   observation to any plugin. Centralized panic recovery via
   `RecoveredPanicError`; default falls back to stderr when no
   `ErrorReporter` is implemented. Built-in plugins: `redact`,
+  `sampling` (`FixedRate`, `FixedRatePerLevel`, `Burst`),
   `datadogtrace`, `oteltrace`.
 - **HTTP middleware**: `integrations/loghttp` derives a per-request
   logger, binds `r.Context()`, emits request-completed (or
   request-panicked) lines with status/duration/bytes.
+- **stdlib log bridge**: `*LogLayer.Writer(level)` returns an `io.Writer`
+  and `*LogLayer.NewLogLogger(level)` returns a `*log.Logger`, both
+  emitting one entry per Write through the full pipeline. Drop into
+  `http.Server.ErrorLog`, gorm, database/sql tracing, or anything that
+  takes a `*log.Logger` or an `io.Writer`. Mirrors `slog.NewLogLogger`.
+- **Error chain expansion**: opt-in `loglayer.UnwrappingErrorSerializer`
+  walks `errors.Unwrap` and `errors.Join`'s `Unwrap() []error` to surface
+  every wrapped cause as a `causes` array on the serialized error. The
+  default serializer is unchanged.
 - **slog interop**: `integrations/sloghandler` exposes a
   `log/slog.Handler` backed by a loglayer logger, so
   `slog.SetDefault(slog.New(sloghandler.New(log)))` makes every

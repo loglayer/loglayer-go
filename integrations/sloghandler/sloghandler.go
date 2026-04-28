@@ -161,12 +161,20 @@ func (h *Handler) WithGroup(name string) slog.Handler {
 	}
 }
 
-// slogToLoglayerLevel maps slog levels to loglayer levels. Custom levels
-// between the named ones map by range; values at or above slog.LevelError
-// pin to LogLevelError so a slog emission can never trip loglayer's Fatal
-// exit.
+// slogTraceLevel is the slog level at which we map back to LogLevelTrace.
+// slog has no Trace, so the slog transport's toSlogLevel synthesizes one
+// at LevelDebug-4 and this constant mirrors that choice so the round-trip
+// (loglayer.Trace → slog.Level → loglayer.Trace) stays stable.
+const slogTraceLevel = slog.LevelDebug - 4
+
+// slogToLoglayerLevel maps slog levels to loglayer levels. slog levels
+// are arbitrary ints, so we partition by named-neighbour ranges. Values
+// at or above LevelError pin to LogLevelError so a regular
+// slog.Error(...) emission can never trip loglayer's Fatal exit.
 func slogToLoglayerLevel(l slog.Level) loglayer.LogLevel {
 	switch {
+	case l <= slogTraceLevel:
+		return loglayer.LogLevelTrace
 	case l <= slog.LevelDebug:
 		return loglayer.LogLevelDebug
 	case l < slog.LevelWarn:

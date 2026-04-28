@@ -79,6 +79,18 @@ func (b *LogBuilder) WithGroup(groups ...string) *LogBuilder {
 	return b
 }
 
+// Trace dispatches the accumulated entry at the trace level.
+func (b *LogBuilder) Trace(messages ...any) {
+	if !b.layer.levels.isEnabled(LogLevelTrace) {
+		return
+	}
+	var src *Source
+	if b.layer.config.AddSource {
+		src = captureSource(1)
+	}
+	b.dispatch(LogLevelTrace, messages, src)
+}
+
 // Info dispatches the accumulated entry at the info level.
 func (b *LogBuilder) Info(messages ...any) {
 	if !b.layer.levels.isEnabled(LogLevelInfo) {
@@ -138,6 +150,20 @@ func (b *LogBuilder) Fatal(messages ...any) {
 		src = captureSource(1)
 	}
 	b.dispatch(LogLevelFatal, messages, src)
+}
+
+// Panic dispatches the accumulated entry at the panic level then panics
+// with the joined message string. The panic is recoverable; see
+// LogLayer.Panic for the contract.
+func (b *LogBuilder) Panic(messages ...any) {
+	if !b.layer.levels.isEnabled(LogLevelPanic) {
+		return
+	}
+	var src *Source
+	if b.layer.config.AddSource {
+		src = captureSource(1)
+	}
+	b.dispatch(LogLevelPanic, messages, src)
 }
 
 func (b *LogBuilder) dispatch(level LogLevel, messages []any, source *Source) {

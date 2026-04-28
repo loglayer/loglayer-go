@@ -102,6 +102,9 @@ func (noopFatalHook) OnWrite(*zapcore.CheckedEntry, []zapcore.Field) {}
 // toZapLevel maps loglayer levels to zapcore.Level.
 func toZapLevel(l loglayer.LogLevel) zapcore.Level {
 	switch l {
+	case loglayer.LogLevelTrace:
+		// zap has no Trace level; map to its lowest.
+		return zapcore.DebugLevel
 	case loglayer.LogLevelDebug:
 		return zapcore.DebugLevel
 	case loglayer.LogLevelInfo:
@@ -112,6 +115,8 @@ func toZapLevel(l loglayer.LogLevel) zapcore.Level {
 		return zapcore.ErrorLevel
 	case loglayer.LogLevelFatal:
 		return zapcore.FatalLevel
+	case loglayer.LogLevelPanic:
+		return zapcore.PanicLevel
 	default:
 		return zapcore.InfoLevel
 	}

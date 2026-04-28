@@ -216,7 +216,7 @@ loglayer.New(loglayer.Config{
 })
 ```
 
-Cost: one `runtime.Caller` per emission, paid only when `AddSource` is true. Roughly ~100 ns on amd64. The dispatch path is untouched when `AddSource` is off.
+Cost: about **620 ns and 5 extra allocations per emission** on amd64 (`BenchmarkLoglayer_SimpleMessage` goes from ~40 ns / 1 alloc to ~660 ns / 6 allocs). The dominant terms are `runtime.Caller`'s frame walk, `runtime.FuncForPC().Name()` materializing the function-name string, and the heap-allocated `*Source`. Paid only when `AddSource` is true; the dispatch path is untouched otherwise. If per-emission cost matters more than caller info, leave it off and rely on transport-level rendering plus inline metadata.
 
 ::: tip Adapters can supply Source explicitly
 If you're calling `log.Raw(...)` from an adapter that already has a program counter (the [slog handler](/integrations/sloghandler) extracts it from `slog.Record.PC`), pass `Source: loglayer.SourceFromPC(pc)` on the `RawLogEntry` and skip runtime capture. The slog handler does this automatically.

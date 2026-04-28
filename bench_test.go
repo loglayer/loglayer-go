@@ -185,6 +185,47 @@ func BenchmarkLoglayer_PluginPipeline(b *testing.B) {
 	}
 }
 
+// AddSource off vs on: measures the cost of runtime.Caller capture.
+// The "off" variant should match BenchmarkLoglayer_SimpleMessage; the
+// "on" variant adds one runtime.Caller + FuncForPC + a heap-allocated
+// *Source per emission.
+func BenchmarkLoglayer_SimpleMessage_AddSourceOff(b *testing.B) {
+	log := loglayer.New(loglayer.Config{
+		DisableFatalExit: true,
+		Transport:        &noopTransport{},
+	})
+	benchtest.RunSimple(b, log)
+}
+
+func BenchmarkLoglayer_SimpleMessage_AddSourceOn(b *testing.B) {
+	log := loglayer.New(loglayer.Config{
+		DisableFatalExit: true,
+		AddSource:        true,
+		Transport:        &noopTransport{},
+	})
+	benchtest.RunSimple(b, log)
+}
+
+// Same pair on the metadata path so the relative cost is clear (the
+// metadata path already allocates more, so AddSource's overhead should
+// be a smaller fraction of the total).
+func BenchmarkLoglayer_MapMetadata_AddSourceOff(b *testing.B) {
+	log := loglayer.New(loglayer.Config{
+		DisableFatalExit: true,
+		Transport:        &noopTransport{},
+	})
+	benchtest.RunMap(b, log)
+}
+
+func BenchmarkLoglayer_MapMetadata_AddSourceOn(b *testing.B) {
+	log := loglayer.New(loglayer.Config{
+		DisableFatalExit: true,
+		AddSource:        true,
+		Transport:        &noopTransport{},
+	})
+	benchtest.RunMap(b, log)
+}
+
 type benchErr string
 
 func (e benchErr) Error() string { return string(e) }

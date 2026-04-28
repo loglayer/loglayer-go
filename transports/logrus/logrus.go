@@ -114,6 +114,8 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 // toLogrusLevel maps loglayer levels to logrus levels.
 func toLogrusLevel(l loglayer.LogLevel) logrus.Level {
 	switch l {
+	case loglayer.LogLevelTrace:
+		return logrus.TraceLevel
 	case loglayer.LogLevelDebug:
 		return logrus.DebugLevel
 	case loglayer.LogLevelInfo:
@@ -124,6 +126,8 @@ func toLogrusLevel(l loglayer.LogLevel) logrus.Level {
 		return logrus.ErrorLevel
 	case loglayer.LogLevelFatal:
 		return logrus.FatalLevel
+	case loglayer.LogLevelPanic:
+		return logrus.PanicLevel
 	default:
 		return logrus.InfoLevel
 	}

@@ -109,8 +109,10 @@ type Config struct {
 	// AddSource captures the call site (file/line/function) of every log
 	// emission and includes it in the assembled Data under SourceFieldName.
 	// Off by default; opt in for production-debuggable output. Capture
-	// uses runtime.Caller and costs ~100 ns per emission, paid only when
-	// this is true.
+	// uses runtime.Caller plus runtime.FuncForPC and costs about 620 ns
+	// and 5 extra allocations per emission on amd64 (see Benchmarks).
+	// Paid only when this is true; the dispatch path is untouched
+	// otherwise.
 	//
 	// Adapters that already have source information (notably the slog
 	// handler, which extracts it from slog.Record.PC) can supply it via

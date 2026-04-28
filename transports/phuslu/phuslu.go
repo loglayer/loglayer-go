@@ -98,6 +98,8 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 // toPhusluLevel maps loglayer levels to phuslu levels.
 func toPhusluLevel(l loglayer.LogLevel) plog.Level {
 	switch l {
+	case loglayer.LogLevelTrace:
+		return plog.TraceLevel
 	case loglayer.LogLevelDebug:
 		return plog.DebugLevel
 	case loglayer.LogLevelInfo:
@@ -108,6 +110,8 @@ func toPhusluLevel(l loglayer.LogLevel) plog.Level {
 		return plog.ErrorLevel
 	case loglayer.LogLevelFatal:
 		return plog.FatalLevel
+	case loglayer.LogLevelPanic:
+		return plog.PanicLevel
 	default:
 		return plog.InfoLevel
 	}

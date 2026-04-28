@@ -29,6 +29,20 @@ func (l *LogLayer) WithCtx(ctx context.Context) *LogLayer {
 	return child
 }
 
+// Trace logs at the trace level. Trace sits below Debug; use it for
+// extremely fine-grained diagnostic output that you'd typically want
+// disabled in production.
+func (l *LogLayer) Trace(messages ...any) {
+	if !l.levels.isEnabled(LogLevelTrace) {
+		return
+	}
+	var src *Source
+	if l.config.AddSource {
+		src = captureSource(1)
+	}
+	l.formatLog(LogLevelTrace, messages, nil, nil, nil, src, l.loadPlugins())
+}
+
 // Info logs at the info level.
 func (l *LogLayer) Info(messages ...any) {
 	if !l.levels.isEnabled(LogLevelInfo) {
@@ -88,6 +102,22 @@ func (l *LogLayer) Fatal(messages ...any) {
 		src = captureSource(1)
 	}
 	l.formatLog(LogLevelFatal, messages, nil, nil, nil, src, l.loadPlugins())
+}
+
+// Panic logs at the panic level then panics with the joined message string.
+// Unlike Fatal, the panic is recoverable, so async transports are not
+// pre-flushed (closing them would break callers that recover and keep
+// emitting). To suppress the panic in tests, recover in the calling
+// goroutine.
+func (l *LogLayer) Panic(messages ...any) {
+	if !l.levels.isEnabled(LogLevelPanic) {
+		return
+	}
+	var src *Source
+	if l.config.AddSource {
+		src = captureSource(1)
+	}
+	l.formatLog(LogLevelPanic, messages, nil, nil, nil, src, l.loadPlugins())
 }
 
 // ErrorOnly logs an error without a message. The log level defaults to error.

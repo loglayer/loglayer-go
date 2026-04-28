@@ -52,9 +52,14 @@ func (s *Source) LogValue() slog.Value {
 // builder.Info, ...) to record the user's call site when Config.AddSource
 // is enabled. Returns nil if the runtime cannot resolve the frame.
 //
-// Cost: roughly 100ns on amd64 for one frame (one runtime.Caller +
-// FuncForPC). Paid only when AddSource is true; the dispatch path is
-// untouched otherwise.
+// Cost: ~620 ns and 5 extra allocations per emission on amd64
+// (BenchmarkLoglayer_SimpleMessage goes from ~40 ns / 1 alloc to ~660
+// ns / 6 allocs). The dominant terms are runtime.Caller's frame walk,
+// runtime.FuncForPC().Name() (which materializes the function-name
+// string), and the heap-allocated *Source itself. Paid only when
+// AddSource is true; the dispatch path is untouched otherwise. If
+// per-emission cost matters more than caller info, leave AddSource
+// off and rely on transport-level rendering plus inline metadata.
 func captureSource(skip int) *Source {
 	pc, file, line, ok := runtime.Caller(skip + 1)
 	if !ok {

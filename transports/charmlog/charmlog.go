@@ -88,6 +88,9 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 // toCharmLevel maps loglayer levels to charmbracelet/log levels.
 func toCharmLevel(l loglayer.LogLevel) clog.Level {
 	switch l {
+	case loglayer.LogLevelTrace:
+		// charmbracelet/log has no Trace; map to its lowest level.
+		return clog.DebugLevel
 	case loglayer.LogLevelDebug:
 		return clog.DebugLevel
 	case loglayer.LogLevelInfo:
@@ -97,6 +100,11 @@ func toCharmLevel(l loglayer.LogLevel) clog.Level {
 	case loglayer.LogLevelError:
 		return clog.ErrorLevel
 	case loglayer.LogLevelFatal:
+		return clog.FatalLevel
+	case loglayer.LogLevelPanic:
+		// No Panic level in charmbracelet/log; surface as Fatal so the
+		// rendering at least signals "highest severity". The actual
+		// panic() is triggered by loglayer's dispatch path regardless.
 		return clog.FatalLevel
 	default:
 		return clog.InfoLevel

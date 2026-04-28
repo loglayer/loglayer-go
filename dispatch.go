@@ -2,6 +2,7 @@ package loglayer
 
 import (
 	"context"
+	"fmt"
 	"os"
 )
 
@@ -161,5 +162,14 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 		// hang the process indefinitely.
 		flushTransports(l.loadTransports().list, cfg.TransportCloseTimeout)
 		osExit(1)
+	}
+
+	if level == LogLevelPanic {
+		// Panic is recoverable, so we don't pre-flush async transports
+		// (closing them would break callers that recover and keep
+		// emitting). The panic value is the joined message string,
+		// matching zerolog / zap / logrus convention so a recover()
+		// gets back something useful.
+		panic(fmt.Sprint(messages...))
 	}
 }

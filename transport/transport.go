@@ -32,14 +32,18 @@ type BaseConfig struct {
 	// SetEnabled(false) after construction.
 	Disabled bool
 
-	// Level sets the minimum log level this transport will process. Defaults to LogLevelDebug.
+	// Level sets the minimum log level this transport will process.
+	// Defaults to LogLevelTrace so a transport accepts every level by
+	// default (the logger's own level state is the primary filter).
+	// Set this when you want a transport to receive only entries at or
+	// above a specific level, e.g. an error-only sink in a fan-out.
 	Level loglayer.LogLevel
 }
 
 // NewBaseTransport creates a BaseTransport from a BaseConfig. An empty
 // cfg.ID is replaced with an auto-generated identifier.
 func NewBaseTransport(cfg BaseConfig) BaseTransport {
-	level := loglayer.LogLevelDebug
+	level := loglayer.LogLevelTrace
 	if cfg.Level != 0 {
 		level = cfg.Level
 	}

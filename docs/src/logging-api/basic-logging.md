@@ -26,15 +26,17 @@ Non-string arguments are formatted with `fmt.Sprintf("%v", arg)`.
 
 ## Log Levels
 
-LogLayer defines five numeric levels:
+LogLayer defines seven numeric levels:
 
-| Constant                  | Value |
-|---------------------------|-------|
-| `loglayer.LogLevelDebug`  | 10    |
-| `loglayer.LogLevelInfo`   | 20    |
-| `loglayer.LogLevelWarn`   | 30    |
-| `loglayer.LogLevelError`  | 40    |
-| `loglayer.LogLevelFatal`  | 50    |
+| Constant                  | Value | Method      | Notes                              |
+|---------------------------|-------|-------------|------------------------------------|
+| `loglayer.LogLevelTrace`  | 5     | `Trace(...)` | Below Debug; very fine-grained diagnostic |
+| `loglayer.LogLevelDebug`  | 10    | `Debug(...)` |                                    |
+| `loglayer.LogLevelInfo`   | 20    | `Info(...)`  |                                    |
+| `loglayer.LogLevelWarn`   | 30    | `Warn(...)`  |                                    |
+| `loglayer.LogLevelError`  | 40    | `Error(...)` |                                    |
+| `loglayer.LogLevelFatal`  | 50    | `Fatal(...)` | Calls `os.Exit(1)` after dispatch  |
+| `loglayer.LogLevelPanic`  | 60    | `Panic(...)` | Calls `panic(msg)` after dispatch  |
 
 Numeric ordering matters for `SetLevel`. See [Adjusting Log Levels](/logging-api/adjusting-log-levels).
 
@@ -54,6 +56,22 @@ log.Fatal("logged but no exit") // entry written, process continues
 ```
 
 `loglayer.NewMock()` enables this automatically. See [Mocking](/logging-api/mocking).
+
+## Panic Panics the Goroutine
+
+`log.Panic(...)` dispatches the entry, then calls `panic(<joined message>)`. Unlike Fatal, the panic is recoverable: a `defer recover()` higher up the call stack can catch it and continue. Use Panic when you want a logged unrecoverable error that a caller (or framework, like `chi.Recoverer`) can intercept.
+
+```go
+defer func() {
+    if r := recover(); r != nil {
+        log.WithMetadata(loglayer.M{"panic": r}).Error("recovered")
+    }
+}()
+
+log.Panic("invariant violated") // entry written, then panics with "invariant violated"
+```
+
+There is no `DisablePanicExit` knob: Panic always panics, matching zerolog / zap / logrus convention. To suppress in tests, recover in the calling goroutine. Async transports are NOT pre-flushed (closing them would break callers that recover and keep emitting); only Fatal pays that cost.
 
 ## Prefixes
 
@@ -91,3 +109,34 @@ log.WithMetadata(...).WithError(err).Error("...")
 ```
 
 For data that should appear on **every** log from a logger, use `WithFields`. See [Fields](/logging-api/fields).
+
+## stdlib `log` and `io.Writer` Bridges
+
+Third-party libraries often accept a `*log.Logger` or an `io.Writer` and emit one line per call. To plug them into your loglayer pipeline use either `log.Writer(level)` or `log.NewLogLogger(level)`.
+
+```go
+import (
+    "net/http"
+
+    "go.loglayer.dev"
+)
+
+srv := &http.Server{
+    Addr:     ":8080",
+    Handler:  mux,
+    ErrorLog: log.NewLogLogger(loglayer.LogLevelError),
+}
+```
+
+Each line written through the bridge becomes one entry through the full pipeline (plugins, fan-out, group routing, level state). Trailing newlines are stripped so loglayer's own delimiters aren't doubled.
+
+`Writer(level)` returns a plain `io.Writer` for the same use case when the consumer wants a writer rather than a `*log.Logger`:
+
+```go
+w := log.Writer(loglayer.LogLevelInfo)
+fmt.Fprintln(w, "from a third-party library")
+```
+
+The bridge is per-emission-cost; each Write does a full dispatch. For high-volume sources (a busy HTTP server's error log under attack), pair with the [sampling plugin](/plugins/sampling) to cap volume.
+
+Mirrors `slog.NewLogLogger` from the stdlib; the API shape is intentionally similar.

@@ -98,6 +98,31 @@ log.WithError(err).Error("db query failed")
 
 `eris` also supports wrapping (`eris.Wrap(err, "context")`), which renders as a chain of root + wrap entries: handy for tracing how an error propagated.
 
+### Built-in: `UnwrappingErrorSerializer`
+
+If you want chain expansion without the dependency on `eris`, the built-in `loglayer.UnwrappingErrorSerializer` walks `errors.Unwrap` and `errors.Join` and emits a `causes` array:
+
+```go
+log := loglayer.New(loglayer.Config{
+    Transport:       structured.New(structured.Config{}),
+    ErrorSerializer: loglayer.UnwrappingErrorSerializer,
+})
+
+log.WithError(fmt.Errorf("op failed: %w", io.EOF)).Error("oops")
+// {"err":{"message":"op failed: EOF","causes":[{"message":"EOF"}]}}
+
+log.WithError(errors.Join(errA, errB)).Error("combined")
+// {"err":{"message":"errA\nerrB","causes":[{"message":"errA"},{"message":"errB"}]}}
+```
+
+Behavior:
+
+- For a `%w` chain, each unwrap step appends one `{"message": ...}` to `causes`.
+- For `errors.Join`, each member appears as one `{"message": ...}` in `causes` (the walk does not recurse into nested chains within members; if you need that, write a custom serializer).
+- When there's nothing below the top frame, `causes` is omitted entirely so the shape matches the default serializer for unwrapped errors.
+
+For stack traces, `eris` is still the right pick.
+
 ### Rolling your own
 
 If you have specific shaping needs (different field names, redaction, library-specific fields), write the serializer yourself:

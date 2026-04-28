@@ -62,6 +62,38 @@ The framework pre-indexes hook membership at registration time, so plugins that 
 
 For a heavy redaction pipeline, see [Creating Plugins → Performance: only clone if you mutate](/plugins/creating-plugins#performance-only-clone-if-you-mutate).
 
+## Caller info (`Config.AddSource`)
+
+`Config.AddSource: true` captures file/line/function at every emission via `runtime.Caller` plus `runtime.FuncForPC`. The cost is real and not negligible on hot paths.
+
+| Setup | Time | Allocs | Bytes |
+|---|---:|---:|---:|
+| Simple message, AddSource off | 40 ns | 1 | 16 |
+| Simple message, AddSource on | **660 ns** | **6** | **648** |
+| Map metadata, AddSource off | 252 ns | 4 | 448 |
+| Map metadata, AddSource on | **889 ns** | **9** | **1080** |
+
+The added cost (~620 ns and 5 allocations) is constant across emission shapes; it's dominated by `runtime.FuncForPC().Name()` materializing the function-name string and the heap-allocated `*Source`. Leave `AddSource` off in throughput-sensitive code and rely on transport-level rendering plus inline metadata.
+
+The slog Handler ([integrations/sloghandler](/integrations/sloghandler)) forwards `slog.Record.PC` for free, since slog itself captures the PC regardless. The handler's hot path is comparable to the AddSource-on path above.
+
+## slog Handler hot path
+
+`integrations/sloghandler` translates a `*slog.Logger` call into a loglayer dispatch.
+
+| Setup | Time | Allocs | Bytes |
+|---|---:|---:|---:|
+| `slog.Info("msg")` via handler | 720 ns | 7 | 664 |
+| `slog.Info("msg", "k1", v1, "k2", v2, "k3", v3)` | 1310 ns | 15 | 1224 |
+| Persistent attrs via `slog.With(...)` | 1110 ns | 12 | 1080 |
+| `slog.WithGroup("http").Info(...)` | 1290 ns | 14 | 1416 |
+| LogValuer attr | 1070 ns | 10 | 1048 |
+| `slog.InfoContext(ctx, ...)` (no plugins) | 730 ns | 7 | 664 |
+
+For comparison, native `log.Info("msg")` through loglayer is ~40 ns / 1 alloc. The slog frontend adds a fixed ~680 ns: it always captures `Record.PC`, builds a record, and routes through `Handler.Handle`. With attrs the cost grows linearly per attr (record construction + map fold-in).
+
+This is competitive with other slog handlers (the stdlib `slog.NewJSONHandler` is ~480-600 ns per emission depending on writer); you pay the loglayer pipeline's plugin/fan-out tax on top.
+
 ## When the overhead matters (and when it doesn't)
 
 LogLayer's overhead is **per-call cost**, not per-byte. If your service does I/O between log calls (a single HTTP request, a database query, a goroutine wakeup), the budget you spend on logging is dominated by what you serialize, not by the dispatch overhead. The wrapper overhead is invisible.
