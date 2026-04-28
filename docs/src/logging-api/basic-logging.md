@@ -114,7 +114,12 @@ For data that should appear on **every** log from a logger, use `WithFields`. Se
 
 ## stdlib `log` and `io.Writer` Bridges
 
-Third-party libraries often accept a `*log.Logger` or an `io.Writer` and emit one line per call. To plug them into your loglayer pipeline use either `log.Writer(level)` or `log.NewLogLogger(level)`.
+Third-party libraries often accept a `*log.Logger` or an `io.Writer` and emit one line per call. Two adapter methods on `*LogLayer` turn each line into a loglayer emission so you can plug those libraries straight into your pipeline:
+
+- `log.Writer(level) io.Writer`
+- `log.NewLogLogger(level) *log.Logger` (mirrors `slog.NewLogLogger`)
+
+Drop the result into anything that takes the corresponding type:
 
 ```go
 import (
@@ -130,15 +135,11 @@ srv := &http.Server{
 }
 ```
 
-Each line written through the bridge becomes one entry through the full pipeline (plugins, fan-out, group routing, level state). Trailing newlines are stripped so loglayer's own delimiters aren't doubled.
-
-`Writer(level)` returns a plain `io.Writer` for the same use case when the consumer wants a writer rather than a `*log.Logger`:
+Or for a plain `io.Writer`:
 
 ```go
 w := log.Writer(loglayer.LogLevelInfo)
 fmt.Fprintln(w, "from a third-party library")
 ```
 
-The bridge is per-emission-cost; each Write does a full dispatch. For high-volume sources (a busy HTTP server's error log under attack), pair with the [sampling plugin](/plugins/sampling) to cap volume.
-
-Mirrors `slog.NewLogLogger` from the stdlib; the API shape is intentionally similar.
+Each line becomes one entry through the full pipeline (plugins, fan-out, group routing, level state). Trailing newlines are stripped so loglayer's own delimiters aren't doubled. Cost is one full dispatch per line, so for high-volume sources (a busy HTTP server's error log under attack) pair with the [sampling plugin](/plugins/sampling) to cap volume.

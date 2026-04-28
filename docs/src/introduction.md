@@ -9,19 +9,17 @@ Most Go projects already have structured logging working. What they don't have, 
 
 LogLayer is that layer. It sits on top of whichever logging library you already use (or one of its built-in transports) and gives you:
 
-- **A plugin pipeline.** Rewrite, filter, or enrich entries globally, before any transport sees them. The built-in [`redact`](/plugins/redact) plugin walks structs, maps, slices, and pointers via reflection and replaces matched keys (json-tag aware) or value patterns at any depth, with the runtime type preserved. [`oteltrace`](/plugins/oteltrace) and [`datadogtrace`](/plugins/datadogtrace) inject trace IDs from the bound context. Six narrow hook interfaces if you need your own.
-- **Multi-destination fan-out with per-transport level filters.** Send the same emission to several transports at once, each with its own minimum level: pretty in dev plus structured to a file plus batched HTTP to Datadog, from one logger.
-- **Group routing.** Tag entries by subsystem (`db`, `auth`, ...) and route each tag to specific transports with its own minimum level. Toggle which groups are active at runtime via env var.
-- **Two-way slog interop.** Wrap a `*log/slog.Logger` as a backend ([transports/slog](/transports/slog)), or install a [`slog.Handler`](/integrations/sloghandler) so every `slog.Info(...)` call (yours and your dependencies') flows through the loglayer pipeline.
-- **First-class test capture.** A typed `LogLine` for each emission, so tests assert on level, message, fields, metadata, and context independently. No JSON parsing in tests.
-- **Caller info, opt-in.** `Config.Source.Enabled` captures file/line/function for every emission and surfaces it under a configurable key (default `source`). JSON tags match the `log/slog` convention so structured output is interchangeable. The slog handler forwards `Record.PC` automatically, no toggle required.
-- **Distinct types for persistent fields, per-call metadata, and errors.** The compiler catches misuse; the dispatch path serializes each consistently.
-- **Bring-your-own logger.** Wrap a `*zerolog.Logger`, `*zap.Logger`, `*log/slog.Logger`, `*logrus.Logger`, `*charmbracelet/log.Logger`, or `*phuslu/log.Logger` you've already configured. The API in your call sites becomes uniform without a rewrite.
-- **Runtime control.** Hot-swap transports, add or remove plugins, toggle levels, all live and concurrency-safe.
+- **Plugin pipeline.** Rewrite, filter, or enrich entries before any transport sees them. Built-in: [`redact`](/plugins/redact) (deep, reflective, type-preserving), [`oteltrace`](/plugins/oteltrace) and [`datadogtrace`](/plugins/datadogtrace) for trace-ID injection. Six hook interfaces if you need your own.
+- **Multi-transport fan-out.** Send the same entry to several transports, each with its own minimum level. Pretty in dev, structured to a file, batched HTTP to Datadog, from one logger.
+- **Group routing.** Tag entries by subsystem (`db`, `auth`, ...) and route each group to its own transports. Toggle active groups at runtime via env var.
+- **Two-way slog interop.** Wrap a `*slog.Logger` as a backend, or install a [`slog.Handler`](/integrations/sloghandler) so every `slog.Info(...)` call flows through the loglayer pipeline.
+- **First-class test capture.** Capture every log entry as a typed value in tests. Assert on level, message, fields, metadata, and context directly; no JSON parsing.
+- **Opt-in caller info.** Capture file/line/function on every emission and render it under a configurable key. The slog handler forwards it for free.
+- **Distinct types for fields, metadata, and errors.** The compiler catches misuse.
+- **Bring your own logger.** Wrap zerolog, zap, slog, logrus, charmbracelet/log, or phuslu without rewriting call sites.
+- **Runtime control.** Hot-swap transports, add or remove plugins, toggle levels. Live and concurrency-safe.
 
 If your service is small and you only need "log to stdout in JSON," the stdlib is fine. The friction LogLayer fixes shows up later: when you add a second destination, redact a field across every log site, or want to wire in OpenTelemetry without rewriting how you log everywhere.
-
-LogLayer adds about 40 ns and one allocation per emission on top of whatever your underlying logger costs. See [Benchmarks](/benchmarks) for the full picture.
 
 ```go
 log.

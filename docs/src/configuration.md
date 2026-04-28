@@ -149,7 +149,7 @@ See [Error Handling](/logging-api/error-handling) for more options including wri
 
 ## ErrorFieldName
 
-The key used for the serialized error inside the assembled `Data` map. Defaults to `"err"`:
+The key used for the serialized error inside the log output. Defaults to `"err"`:
 
 ```go
 loglayer.New(loglayer.Config{
@@ -164,7 +164,7 @@ When `true`, `log.ErrorOnly(err)` also uses `err.Error()` as the log message. De
 
 ## FieldsKey
 
-By default, fields are merged at the root of the assembled `Data` map. Set this to nest them under a single key:
+By default, fields are merged at the root of the log output. Set this to nest them under a single key:
 
 ```go
 loglayer.New(loglayer.Config{
@@ -241,7 +241,8 @@ func report(err *loglayer.RecoveredPanicError) {
     metrics.Inc("loglayer.panic", tags...)
 }
 
-// Wire to plugins:
+// Wire to plugins via WithErrorReporter, a helper that attaches an
+// error observer to any plugin (the plugin sees recovered panics).
 log.AddPlugin(loglayer.WithErrorReporter(plugin, func(e error) {
     if rpe, ok := e.(*loglayer.RecoveredPanicError); ok {
         report(rpe)
@@ -268,7 +269,7 @@ Wrapping every `SendToLogger` call in a deferred recover costs ~8 ns per emissio
 
 ## Source (caller info)
 
-`Config.Source` groups the call-site capture knobs. `Source.Enabled: true` captures the call site (file, line, function) of every log emission and includes it in the assembled `Data` under `Source.FieldName` (default `"source"`). Off by default; opt in for production-debuggable output.
+`Config.Source` groups the call-site capture knobs. `Source.Enabled: true` captures the call site (file, line, function) of every log emission and includes it in the log output under `Source.FieldName` (default `"source"`). Off by default; opt in for production-debuggable output.
 
 ```go
 log := loglayer.New(loglayer.Config{

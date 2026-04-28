@@ -57,9 +57,7 @@ For local development, the [Pretty Transport](/transports/pretty) gives you colo
 
 ## Configure an Error Serializer
 
-The default error format is intentionally minimal: `{"message": err.Error()}`. No chain expansion, no stack trace. **For most production code you'll want richer error output**, and the configuration is one knob away.
-
-**Recommended: `loglayer.UnwrappingErrorSerializer`.** It walks the standard-library error machinery (`errors.Unwrap` chains and `errors.Join`'s `Unwrap() []error`) and surfaces every wrapped cause as a `causes` array. Zero dependencies; works with idiomatic `fmt.Errorf("...: %w", err)` exactly the way you already write it:
+The default error format is `{"message": err.Error()}`. To expand `fmt.Errorf("...: %w", err)` chains and `errors.Join` lists into a `causes` array, use `loglayer.UnwrappingErrorSerializer`:
 
 ```go
 log := loglayer.New(loglayer.Config{
@@ -71,38 +69,7 @@ log.WithError(fmt.Errorf("op failed: %w", io.EOF)).Error("oops")
 // {"err":{"message":"op failed: EOF","causes":[{"message":"EOF"}]}}
 ```
 
-This is the right default for almost all services. Stack traces aren't free (allocation per error) and the stack you'd get is the construction site, not the failure point — which often duplicates information [`Config.Source`](/configuration#source-caller-info) already provides at zero per-error cost.
-
-### When you also want stack traces: `eris`
-
-Reach for [`rotisserie/eris`](https://github.com/rotisserie/eris) when you specifically need stack capture (debugging unfamiliar code paths, panic-hunting, async work where call-site info is hard to come by). `eris.ToJSON` returns `map[string]any`, which slots straight into `ErrorSerializer`:
-
-```sh
-go get github.com/rotisserie/eris
-```
-
-```go
-import (
-    "github.com/rotisserie/eris"
-    "go.loglayer.dev"
-    "go.loglayer.dev/transports/structured"
-)
-
-log := loglayer.New(loglayer.Config{
-    Transport: structured.New(structured.Config{}),
-    ErrorSerializer: func(err error) map[string]any {
-        return eris.ToJSON(err, true) // true = include stack trace
-    },
-})
-
-err := eris.New("connection refused")
-log.WithError(err).Error("db query failed")
-// {"level":"error","msg":"db query failed","err":{"root":{"message":"connection refused","stack":[...]}}}
-```
-
-Note that eris captures stacks at construction (`eris.New`, `eris.Wrap`); plain stdlib errors won't get stacks unless you wrap them with `eris.Wrap`.
-
-See [Error Handling](/logging-api/error-handling) for the full serializer reference, including writing your own from scratch.
+For stack traces, custom shapes, or other options, see [Error Handling](/logging-api/error-handling).
 
 ## Using a Logger Wrapper
 
