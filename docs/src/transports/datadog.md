@@ -208,7 +208,7 @@ Indexing latency in Datadog is typically 5-60 seconds. Without `DD_API_KEY` the 
 
 | Env var       | Required | Default                  | Purpose                        |
 |---------------|----------|--------------------------|--------------------------------|
-| `DD_API_KEY`  | Yes      | —                        | Datadog API key                |
+| `DD_API_KEY`  | Yes      | (none)                   | Datadog API key                |
 | `DD_SITE`     | No       | `us1`                    | Datadog region                 |
 | `DD_SOURCE`   | No       | `go-loglayer-livetest`   | `ddsource` field               |
 | `DD_SERVICE`  | No       | `loglayer-go-livetest`   | `service` field                |

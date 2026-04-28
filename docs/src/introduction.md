@@ -30,7 +30,7 @@ This is the Go port of [`loglayer`](https://loglayer.dev) for TypeScript. The me
 
 ## Bring Your Own Logger
 
-LogLayer is designed to sit on top of your logging library of choice — `zerolog`, `zap`, `slog`, `logrus`, `charmbracelet/log`, `phuslu/log` — or to run standalone with one of the built-in transports (pretty terminal, structured JSON, HTTP, console).
+LogLayer is designed to sit on top of your logging library of choice (`zerolog`, `zap`, `slog`, `logrus`, `charmbracelet/log`, `phuslu/log`) or to run standalone with one of the built-in transports (pretty terminal, structured JSON, HTTP, console).
 
 Start with the built-in pretty transport during development, then switch to the zerolog or zap transport later when you have a real production setup, without changing a single log call.
 

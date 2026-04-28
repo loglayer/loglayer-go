@@ -61,6 +61,67 @@ console.New(console.Config{
 
 For transports you set up once and never touch (a single console renderer, a one-shot test transport), leaving `ID` empty is fine: the auto-generated ID still works for routing, you just won't have a stable handle for management calls.
 
+## Enabling and disabling per environment
+
+When you wire several transports into one logger, the same code typically runs in dev, CI, and production but you don't want every transport active in every environment. Common patterns:
+
+- **Local dev**: pretty terminal, no shipping. You don't want CI runs or laptop runs hitting the production Datadog account.
+- **CI**: structured JSON to stdout (so the test runner captures it), no shipping.
+- **Staging / production**: structured to a file plus the network shipper (Datadog, Loki, OTel).
+
+Two ways to wire that:
+
+### Build the slice from environment
+
+The most common pattern: include or exclude each transport at construction time based on env. Cheap, explicit, no runtime mutation needed.
+
+```go
+transports := []loglayer.Transport{
+    pretty.New(pretty.Config{
+        BaseConfig: transport.BaseConfig{ID: "pretty", Level: loglayer.LogLevelDebug},
+    }),
+}
+if os.Getenv("APP_ENV") == "production" {
+    transports = append(transports, datadog.New(datadog.Config{
+        BaseConfig: transport.BaseConfig{ID: "datadog", Level: loglayer.LogLevelInfo},
+        APIKey:     os.Getenv("DATADOG_API_KEY"),
+    }))
+}
+log := loglayer.New(loglayer.Config{Transports: transports})
+```
+
+### Construct everything, disable per env via `BaseConfig.Disabled`
+
+If your code reads cleaner with a fixed transport list, set `Disabled: true` on the ones that shouldn't run in this environment. The transport is still constructed (so its config is validated) but `SendToLogger` is a no-op.
+
+```go
+isProd := os.Getenv("APP_ENV") == "production"
+
+log := loglayer.New(loglayer.Config{
+    Transports: []loglayer.Transport{
+        pretty.New(pretty.Config{
+            BaseConfig: transport.BaseConfig{ID: "pretty", Disabled: isProd},
+        }),
+        datadog.New(datadog.Config{
+            BaseConfig: transport.BaseConfig{ID: "datadog", Disabled: !isProd},
+            APIKey:     os.Getenv("DATADOG_API_KEY"),
+        }),
+    },
+})
+```
+
+### Toggling at runtime
+
+Cast the transport's exported `SetEnabled(bool)` method (inherited from `BaseTransport`) to flip without rebuilding. Useful for admin endpoints or feature-flag-driven rollouts:
+
+```go
+if t, ok := tr.(interface{ SetEnabled(bool) }); ok {
+    t.SetEnabled(false)
+}
+```
+
+For routing rules beyond on/off (e.g. only ship `audit.*` entries to Datadog), see [Groups](/logging-api/groups).
+
 ## See Also
 
 - [Transport Management](/transports/management), runtime mutation of the transport list.

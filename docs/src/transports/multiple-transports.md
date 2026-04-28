@@ -78,3 +78,46 @@ For one transport, set `Transport` (singular). For more than one, use `Transport
 loglayer.New(loglayer.Config{Transport: t})                                // single
 loglayer.New(loglayer.Config{Transports: []loglayer.Transport{t1, t2}})   // multiple
 ```
+
+## Recipe: pretty in dev, structured to a file, ship to Datadog
+
+A realistic production setup. Pretty is colorized terminal output for the developer attached to the process; structured writes JSON-per-line to a rolling file for local correlation; Datadog ships everything to the Logs HTTP intake. Each transport has its own minimum level so the noisy `Debug` lines stay local.
+
+```go
+import (
+    "os"
+
+    "go.loglayer.dev"
+    "go.loglayer.dev/transport"
+    "go.loglayer.dev/transports/datadog"
+    "go.loglayer.dev/transports/pretty"
+    "go.loglayer.dev/transports/structured"
+)
+
+logFile, err := os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+if err != nil {
+    panic(err)
+}
+
+log := loglayer.New(loglayer.Config{
+    Transports: []loglayer.Transport{
+        pretty.New(pretty.Config{
+            BaseConfig: transport.BaseConfig{ID: "pretty", Level: loglayer.LogLevelDebug},
+        }),
+        structured.New(structured.Config{
+            BaseConfig: transport.BaseConfig{ID: "file", Level: loglayer.LogLevelInfo},
+            Writer:     logFile,
+        }),
+        datadog.New(datadog.Config{
+            BaseConfig: transport.BaseConfig{ID: "datadog", Level: loglayer.LogLevelWarn},
+            APIKey:     os.Getenv("DATADOG_API_KEY"),
+            Site:       datadog.SiteUS1,
+            Service:    "checkout-api",
+        }),
+    },
+})
+```
+
+Every emission fans out to all three transports in registration order. Each transport's own minimum level filters independently: `log.Debug(...)` reaches pretty only; `log.Info(...)` reaches pretty and the file; `log.Warn(...)` and above reach all three.
+
+For routing rules beyond level filters (e.g. send `audit.*` only to the file, never to Datadog), see [Groups](/logging-api/groups).

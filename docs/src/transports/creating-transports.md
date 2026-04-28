@@ -153,7 +153,7 @@ func (t *Transport) SendToLogger(p loglayer.TransportParams) {
 Two patterns built-in transports follow:
 
 - **Wrapper transports forward the context** so the underlying library sees the same `context.Context` the caller bound. The slog wrapper passes `params.Ctx` to `slog.Logger.LogAttrs`; the OpenTelemetry transport hands it to the OTel logs SDK so the active span's trace/span IDs land on the record automatically. Any wrapper around a context-aware backend should do this.
-- **Self-contained renderers usually ignore it.** Pretty, structured, and console don't read context values themselves — that's a [plugin's](/plugins/creating-plugins) job. If you find yourself extracting trace IDs in a transport, prefer writing a plugin and pairing it with the transport: the plugin runs once per entry and feeds every transport, while transport-side extraction repeats per transport and bypasses the dispatch-time hook ordering.
+- **Self-contained renderers usually ignore it.** Pretty, structured, and console don't read context values themselves; that's a [plugin's](/plugins/creating-plugins) job. If you find yourself extracting trace IDs in a transport, prefer writing a plugin and pairing it with the transport: the plugin runs once per entry and feeds every transport, while transport-side extraction repeats per transport and bypasses the dispatch-time hook ordering.
 
 If your transport extracts values from the context (rather than just forwarding it), test that path with a context that carries a sentinel value and assert the transport surfaced it.
 

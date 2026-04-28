@@ -16,7 +16,7 @@ Methods are PascalCase in Go (per language convention) and camelCase in TypeScri
 | TypeScript                            | Go                                                | Notes                                |
 |---------------------------------------|---------------------------------------------------|--------------------------------------|
 | `new LogLayer({ ... })`               | `loglayer.New(loglayer.Config{ ... })`            | Function, not a class                |
-| `log.withContext({ ... })`            | `log.WithFields(loglayer.Fields{ ... })`          | **Renamed** — see below              |
+| `log.withContext({ ... })`            | `log.WithFields(loglayer.Fields{ ... })`          | **Renamed** (see below)              |
 | `log.withMetadata({ ... })`           | `log.WithMetadata(loglayer.Metadata{ ... })`      | Same shape                           |
 | `log.withError(err)`                  | `log.WithError(err)`                              | Same shape                           |
 | `log.withPrefix(s)`                   | `log.WithPrefix(s)`                               | Same shape; returns a new logger     |
@@ -64,7 +64,7 @@ Go has two constructors. The `New`/`Build` pair is the same pattern Go uses else
 
 ## Errors
 
-TypeScript errors carry a stack trace by default (the `Error` constructor in V8/JS engines). Go's `error` interface is just `interface { Error() string }` — no stack trace and no chain unless the error implementation provides one.
+TypeScript errors carry a stack trace by default (the `Error` constructor in V8/JS engines). Go's `error` interface is just `interface { Error() string }`: no stack trace and no chain unless the error implementation provides one.
 
 We recommend [`github.com/rotisserie/eris`](https://github.com/rotisserie/eris) for stack-trace-bearing errors. Its `ToJSON` plugs straight into LogLayer's `ErrorSerializer`:
 
@@ -189,9 +189,9 @@ The Go port does not auto-read environment variables (libraries shouldn't); `Act
 
 These exist in TypeScript loglayer but are not yet implemented in the Go port:
 
-- **Mixins** — the `useLogLayerMixin` augmentation pattern
-- **Context managers** — `LinkedContextManager`, `IsolatedContextManager`. Go's flat fields-as-map model covers most use cases.
-- **Lazy evaluation** — `withMetadataLazy`, `withContextLazy`. Possible to add but the ergonomic story is weaker in Go.
+- **Mixins**: the `useLogLayerMixin` augmentation pattern.
+- **Context managers**: `LinkedContextManager`, `IsolatedContextManager`. Go's flat fields-as-map model covers most use cases.
+- **Lazy evaluation**: `withMetadataLazy`, `withContextLazy`. Possible to add but the ergonomic story is weaker in Go.
 
 If any of these are blockers for your use case, open an issue at [github.com/loglayer/loglayer-go](https://github.com/loglayer/loglayer-go).
 

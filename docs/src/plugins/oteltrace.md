@@ -16,7 +16,7 @@ go get go.loglayer.dev/plugins/oteltrace
 :::
 
 ::: info When to use this vs `transports/otellog`
-- **Shipping logs through the OTel pipeline?** Use [`transports/otellog`](/transports/otellog). The OTel SDK reads the active span from each emission's context and embeds the trace IDs on the exported `log.Record` automatically — you don't need this plugin.
+- **Shipping logs through the OTel pipeline?** Use [`transports/otellog`](/transports/otellog). The OTel SDK reads the active span from each emission's context and embeds the trace IDs on the exported `log.Record` automatically. You don't need this plugin.
 - **Shipping to a non-OTel destination?** Use this plugin. It surfaces `trace_id` / `span_id` as flat fields so any backend can index them.
 - **Doing both?** Use both. The plugin makes the IDs visible on every record regardless of destination.
 :::
@@ -55,7 +55,7 @@ A request with an active span produces:
 }
 ```
 
-When no span is attached (the context is nil, or it carries no valid span), the plugin emits nothing — the log entry goes through unchanged.
+When no span is attached (the context is nil, or it carries no valid span), the plugin emits nothing. The log entry goes through unchanged.
 
 ::: tip Using loghttp middleware?
 The [`loghttp`](/integrations/loghttp) middleware automatically binds `r.Context()` to the per-request logger, so handlers don't need the `log.WithCtx(r.Context())` step:

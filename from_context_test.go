@@ -24,7 +24,7 @@ func TestFromContext_NilWhenNotAttached(t *testing.T) {
 }
 
 func TestFromContext_NilContextIsNil(t *testing.T) {
-	//nolint:staticcheck // intentional nil to exercise the guard.
+	//lint:ignore SA1012 intentional nil to exercise the guard.
 	if got := loglayer.FromContext(nil); got != nil {
 		t.Errorf("expected nil from nil context, got %v", got)
 	}

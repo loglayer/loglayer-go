@@ -30,7 +30,7 @@ func New(prefix string) loglayer.Plugin {
 ```
 
 ::: warning Plugin is consumed by value
-The `Plugin` struct is copied at `AddPlugin` time. Mutating its function fields *after* registration has no effect on the registered behavior — to update a plugin, build a new `Plugin` and `AddPlugin` it again (the existing one is replaced because IDs match).
+The `Plugin` struct is copied at `AddPlugin` time. Mutating its function fields *after* registration has no effect on the registered behavior. To update a plugin, build a new `Plugin` and `AddPlugin` it again (the existing one is replaced because IDs match).
 :::
 
 For the registration API (`AddPlugin`, `RemovePlugin`, etc.) see [Plugin Management](/plugins/#plugin-management) on the overview page.
@@ -70,7 +70,7 @@ Plugins run in the order they were added. `OnFieldsCalled` and `OnMetadataCalled
 
 ### Child loggers inherit plugins
 
-`Child()` (and `WithFields`, `WithPrefix`) clones the plugin set by reference. Once either side mutates, the snapshots fork — copy-on-write. Adding a plugin to the child does not affect the parent.
+`Child()` (and `WithFields`, `WithPrefix`) clones the plugin set by reference. Once either side mutates, the snapshots fork (copy-on-write). Adding a plugin to the child does not affect the parent.
 
 ## Hook reference
 
@@ -84,7 +84,7 @@ The two **input-side** hooks treat a nil return as "drop the input." The four **
 | `OnBeforeDataOut` | Leave the assembled data unchanged |
 | `OnBeforeMessageOut` | Leave the messages unchanged |
 | `TransformLogLevel` | (Returns `(_, false)` instead of nil) Leave the level unchanged |
-| `ShouldSend` | (Not applicable — returns `bool`) |
+| `ShouldSend` | (Not applicable: returns `bool`) |
 
 The split: **input-side hooks** fire from `WithFields` / `WithMetadata`, where the user explicitly attached a value. Returning nil there is a meaningful "drop." **Output-side hooks** fire during dispatch, often from plugins that only want to transform sometimes. Returning nil there means "I don't have an opinion about this entry" rather than "drop everything."
 :::
@@ -118,7 +118,7 @@ loglayer.Plugin{
         if !ok {
             return metadata
         }
-        // Clone before mutating — m is the caller's map.
+        // Clone before mutating: m is the caller's map.
         out := make(map[string]any, len(m))
         for k, v := range m {
             out[k] = v
@@ -134,7 +134,7 @@ loglayer.Plugin{
 Return `nil` to drop the metadata for that entry.
 
 ::: warning Don't mutate caller inputs
-The `metadata` you receive is the value the user passed to `WithMetadata`. If you mutate it in place, the user's variable changes too — they may pass the same map into multiple log calls and be surprised when the second call already has redacted values. Clone before you mutate. The same applies to `OnFieldsCalled`.
+The `metadata` you receive is the value the user passed to `WithMetadata`. If you mutate it in place, the user's variable changes too. They may pass the same map into multiple log calls and be surprised when the second call already has redacted values. Clone before you mutate. The same applies to `OnFieldsCalled`.
 :::
 
 If your plugin needs to walk **structs and nested values** (not just top-level maps), see [Walking arbitrary inputs](#walking-arbitrary-inputs) below.
@@ -350,7 +350,7 @@ Every hook call is wrapped in a deferred recover. If your hook panics, the frame
 | `TransformLogLevel` | Level unchanged (`ok=false`) |
 | `ShouldSend` | Entry sent to the transport (fails open) |
 
-Set `Plugin.OnError` to observe recovered panics — log them to stderr, increment a counter, send to your error tracker:
+Set `Plugin.OnError` to observe recovered panics: log them to stderr, increment a counter, send to your error tracker:
 
 ```go
 loglayer.Plugin{
@@ -367,7 +367,7 @@ When `OnError` is nil, panics are silently swallowed. Logging never breaks becau
 
 ## Concurrency and performance
 
-Hooks run on the dispatching goroutine. They may be called from any goroutine concurrently — the same plugin instance can fire on many emissions in parallel. Make any state your hook touches safe for concurrent reads/writes (use a mutex, atomics, or build the plugin from immutable config).
+Hooks run on the dispatching goroutine. They may be called from any goroutine concurrently; the same plugin instance can fire on many emissions in parallel. Make any state your hook touches safe for concurrent reads/writes (use a mutex, atomics, or build the plugin from immutable config).
 
 **Don't block in a hook**: it stalls the log call.
 
@@ -397,5 +397,5 @@ For testing a custom plugin, see [Testing Plugins](/plugins/testing-plugins). It
 
 ## See also
 
-- [Plugins overview](/plugins/) — what hooks exist, when each fires, lifecycle and thread-safety semantics.
-- [`plugins/redact`](/plugins/redact) — built-in reference plugin built on `maputil.Cloner`.
+- [Plugins overview](/plugins/): what hooks exist, when each fires, lifecycle and thread-safety semantics.
+- [`plugins/redact`](/plugins/redact): built-in reference plugin built on `maputil.Cloner`.

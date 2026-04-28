@@ -57,7 +57,26 @@ For local development, the [Pretty Transport](/transports/pretty) gives you colo
 
 ## Using a Logger Wrapper
 
-If you already have an existing logging stack, LogLayer can wrap it so your call sites use the LogLayer API while emission goes through the underlying logger you've already configured. See the [Transports overview](/transports/) for the full list of supported loggers and their setup.
+If you already have an existing logging stack, LogLayer can wrap it so your call sites use the LogLayer API while emission goes through the underlying logger you've already configured. Here it is for `zerolog`:
+
+```go
+import (
+    zlog "github.com/rs/zerolog"
+    "os"
+
+    "go.loglayer.dev"
+    llzero "go.loglayer.dev/transports/zerolog"
+)
+
+z := zlog.New(os.Stderr).With().Timestamp().Logger()
+log := loglayer.New(loglayer.Config{
+    Transport: llzero.New(llzero.Config{Logger: &z}),
+})
+
+log.WithFields(loglayer.Fields{"requestId": "abc"}).Info("served")
+```
+
+The same shape works for `zap`, `log/slog`, `logrus`, `charmbracelet/log`, and `phuslu/log`. See the [Transports overview](/transports/) for the full list and per-wrapper config.
 
 ## Capturing Stack Traces with eris
 

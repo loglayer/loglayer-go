@@ -11,7 +11,7 @@ description: "Inject Datadog APM trace and span IDs into log entries for log/tra
 go get go.loglayer.dev/plugins/datadogtrace
 ```
 
-The plugin is **tracer-agnostic**: you wire up a small extractor function that pulls the trace and span IDs from a `context.Context`. This avoids forcing a specific dd-trace-go version (or any tracer dependency at all) on LogLayer's main module — your service already imports the tracer it uses.
+The plugin is **tracer-agnostic**: you wire up a small extractor function that pulls the trace and span IDs from a `context.Context`. This avoids forcing a specific dd-trace-go version (or any tracer dependency at all) on LogLayer's main module; your service already imports the tracer it uses.
 
 ::: info Go version
 The plugin itself inherits the main module's Go floor (1.25+). The optional **livetest module** at `plugins/datadogtrace/livetest/` has its own `go.mod` that pins `dd-trace-go/v2`; whatever Go floor that library demands lands there, isolated from the main module.
@@ -56,7 +56,7 @@ func main() {
     handlerLog := log.WithCtx(r.Context())
     handlerLog.Info("request served")
     handlerLog.Info("downstream call done")
-    // every emission carries r.Context() — the plugin reads it from
+    // every emission carries r.Context(); the plugin reads it from
     // each entry's params.Ctx and emits dd.trace_id / dd.span_id.
 }
 ```
@@ -87,7 +87,7 @@ A request with an active span produces:
 }
 ```
 
-When no span is attached (the context is nil, or it carries no span), the plugin emits nothing — the log entry goes through unchanged.
+When no span is attached (the context is nil, or it carries no span), the plugin emits nothing. The log entry goes through unchanged.
 
 ## Config
 
@@ -135,7 +135,7 @@ Extract: func(ctx context.Context) (uint64, uint64, bool) {
 
 The v2 extractor pattern is verified end-to-end against the real dd-trace-go v2 tracer (via its `mocktracer`) in `plugins/datadogtrace/livetest`, a separate test module that keeps Datadog's heavy dep tree out of the main loglayer module.
 
-For OpenTelemetry tracers bridged to Datadog, parse the trace ID from the span context (it's a hex string in OTel) — see the Datadog OTel docs.
+For OpenTelemetry tracers bridged to Datadog, parse the trace ID from the span context (it's a hex string in OTel). See the Datadog OTel docs.
 
 The function may return `ok=false` to skip injection for any reason (no active span, sampling decision not yet made, etc.). The plugin emits nothing in that case.
 
@@ -166,7 +166,7 @@ The plugin implements `OnBeforeDataOut`, which runs once per emission after fiel
 
 ## Performance
 
-The extractor runs on the dispatching goroutine for every log entry that has a context attached. dd-trace-go's `SpanFromContext` is a constant-time map lookup — fast enough for hot paths. No allocations beyond the `loglayer.Data` map the plugin returns.
+The extractor runs on the dispatching goroutine for every log entry that has a context attached. dd-trace-go's `SpanFromContext` is a constant-time map lookup, fast enough for hot paths. No allocations beyond the `loglayer.Data` map the plugin returns.
 
 The plugin is a no-op for log calls without `WithCtx`, so untraced logs pay zero cost.
 

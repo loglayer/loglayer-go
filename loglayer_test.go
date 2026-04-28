@@ -137,7 +137,7 @@ func TestChildFieldsIsolated(t *testing.T) {
 	log, lib := setup(t)
 	log = log.WithFields(loglayer.Fields{"shared": "v"})
 	child := log.Child()
-	child = child.WithFields(loglayer.Fields{"child_only": "x"})
+	_ = child.WithFields(loglayer.Fields{"child_only": "x"}) // discarded: testing isolation, not the result
 
 	log.Info("parent log")
 	line := lib.PopLine()

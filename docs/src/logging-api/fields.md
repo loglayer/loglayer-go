@@ -47,7 +47,7 @@ Both subsequent calls include `requestId` and `userId`. By default the keys are 
 `loglayer.Fields` is a type alias for `map[string]any`.
 
 ::: warning The map is not deep-copied
-LogLayer doesn't clone the `Fields` map you pass in. If you mutate it after `WithFields` returns, transports that retain the map (the testing transport, some async transports) will see the mutation. Treat the map as read-only after handing it off, or build a fresh one per call.
+LogLayer doesn't clone the `Fields` map you pass in. If you mutate it after `WithFields` returns, transports that retain the map (the testing transport, some async transports) will see the mutation. Treat the map as read-only after handing it off, or build a fresh one per call. See [Thread Safety](/logging-api/thread-safety) for the full per-method contract.
 :::
 
 ## Per-Request Loggers

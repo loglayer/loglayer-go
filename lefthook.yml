@@ -9,15 +9,10 @@ pre-commit:
   commands:
     fmt:
       glob: "*.go"
-      run: |
-        unformatted="$(gofmt -l {staged_files})"
-        if [ -n "$unformatted" ]; then
-          echo "These files are not gofmt-clean:"
-          echo "$unformatted"
-          echo
-          echo "Run: gofmt -w <file>  (or 'goimports -w' if you have it)"
-          exit 1
-        fi
+      # Format in place and re-stage any fixes so the commit picks them up.
+      # Lefthook re-adds modified files to the index when stage_fixed: true.
+      run: gofmt -w {staged_files}
+      stage_fixed: true
     vet:
       glob: "*.go"
       run: go vet ./...

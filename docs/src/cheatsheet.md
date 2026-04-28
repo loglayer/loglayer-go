@@ -140,8 +140,8 @@ log := loglayer.MustFromContext(ctx)     // panics if not attached
 
 The "At a Glance" example shows the typical chain. Two things to know:
 
-- `WithFields`, `WithCtx`, `WithGroup` (when called on `*LogLayer`) and `WithPrefix`, `Child`, `WithoutFields` all return a **new logger** — assign them: `log = log.WithCtx(ctx)`.
-- `WithMetadata`, `WithError`, and the same `WithCtx` / `WithGroup` when called on a `*LogBuilder` return a **`*LogBuilder`** — single-use, terminated by a level method (`Info`, `Warn`, ...). Don't assign the builder.
+- `WithFields`, `WithCtx`, `WithGroup` (when called on `*LogLayer`) and `WithPrefix`, `Child`, `WithoutFields` all return a **new logger**. Assign them: `log = log.WithCtx(ctx)`.
+- `WithMetadata`, `WithError`, and the same `WithCtx` / `WithGroup` when called on a `*LogBuilder` return a **`*LogBuilder`**: single-use, terminated by a level method (`Info`, `Warn`, ...). Don't assign the builder.
 
 ## Child Loggers
 

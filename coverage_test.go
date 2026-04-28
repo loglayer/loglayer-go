@@ -256,6 +256,7 @@ func TestWithCtx_ChildInheritsAndIsolates(t *testing.T) {
 func TestWithCtx_NilClears(t *testing.T) {
 	log, lib := setup(t)
 	bound := log.WithCtx(context.Background())
+	//lint:ignore SA1012 nil is intentional: test the clears-binding path.
 	cleared := bound.WithCtx(nil)
 
 	cleared.Info("no ctx")

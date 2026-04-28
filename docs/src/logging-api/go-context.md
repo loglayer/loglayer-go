@@ -102,7 +102,7 @@ LogLayer also supports the inverse pattern: store the logger *inside* a `context
 ```go
 ctx = loglayer.NewContext(ctx, reqLog) // middleware
 
-log := loglayer.FromContext(ctx)        // handler — returns nil if absent
+log := loglayer.FromContext(ctx)        // handler: returns nil if absent
 log := loglayer.MustFromContext(ctx)    // panics if absent
 ```
 

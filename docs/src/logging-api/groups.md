@@ -52,7 +52,7 @@ log := loglayer.New(loglayer.Config{
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `Groups` | `map[string]LogGroup` | nil | Named routing rules. When nil, every transport receives every entry (no routing). |
-| `ActiveGroups` | `[]string` | nil | When non-empty, only the named groups are active. Nil/empty means "no filter — all defined groups active." |
+| `ActiveGroups` | `[]string` | nil | When non-empty, only the named groups are active. Nil/empty means "no filter; all defined groups active." |
 | `UngroupedRouting` | `UngroupedRouting` | `{Mode: UngroupedToAll}` | Routes for entries with no group tag. |
 
 ## Routing Precedence

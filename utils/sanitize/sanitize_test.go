@@ -53,10 +53,10 @@ func TestMessage(t *testing.T) {
 		// "Trojan Source" CVE-2021-42574: U+202E flips text direction and can
 		// make a viewer see code/log lines that don't match the underlying
 		// bytes.
-		{"trojan source bidi (U+202E)", "user‮evil", "userevil"},
+		{"trojan source bidi (U+202E)", "user\u202eevil", "userevil"},
 		// Zero-width joiner can hide content boundaries (e.g. abc<ZWJ>def
 		// renders as 'abcdef' but contains a separator).
-		{"zero-width joiner (U+200D)", "abc‍def", "abcdef"},
+		{"zero-width joiner (U+200D)", "abc\u200ddef", "abcdef"},
 		// C1 control characters (0x80-0x9F) are non-ASCII control codes some
 		// terminals interpret as ANSI commands.
 		{"c1 control (U+0085)", "beforeafter", "beforeafter"},
