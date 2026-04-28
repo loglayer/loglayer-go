@@ -5,6 +5,8 @@ description: "Replace values for sensitive keys, value patterns, or struct field
 
 # Redact Plugin
 
+[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/plugins/redact.svg)](https://pkg.go.dev/go.loglayer.dev/plugins/redact) [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=v*&label=go.loglayer.dev)](https://github.com/loglayer/loglayer-go/releases) [![Source](https://img.shields.io/badge/source-github-181717?logo=github)](https://github.com/loglayer/loglayer-go/tree/main/plugins/redact) [![Changelog](https://img.shields.io/badge/changelog-md-blue)](https://github.com/loglayer/loglayer-go/blob/main/CHANGELOG.md)
+
 `plugins/redact` replaces sensitive values in metadata and persistent fields before any transport sees them. Useful for keeping secrets, PII, and credentials out of log output without rewriting every call site.
 
 ```sh

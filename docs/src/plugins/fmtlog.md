@@ -5,6 +5,8 @@ description: "Opt-in fmt.Sprintf semantics for multi-arg log calls."
 
 # Format Strings
 
+[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/fmtlog.svg)](https://pkg.go.dev/go.loglayer.dev/fmtlog) [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=v*&label=go.loglayer.dev)](https://github.com/loglayer/loglayer-go/releases) [![Source](https://img.shields.io/badge/source-github-181717?logo=github)](https://github.com/loglayer/loglayer-go/tree/main/fmtlog) [![Changelog](https://img.shields.io/badge/changelog-md-blue)](https://github.com/loglayer/loglayer-go/blob/main/CHANGELOG.md)
+
 `fmtlog` is a one-line plugin that opts a logger into `fmt.Sprintf`-style format strings. After registration, every call where the first message is a string and there are extra arguments is rewritten via `fmt.Sprintf(messages[0], messages[1:]...)` before downstream `MessageHook`s run.
 
 ```sh

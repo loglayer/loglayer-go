@@ -5,6 +5,8 @@ description: "Inject Datadog APM trace and span IDs into log entries for log/tra
 
 # Datadog APM Trace Injector Plugin
 
+[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/plugins/datadogtrace.svg)](https://pkg.go.dev/go.loglayer.dev/plugins/datadogtrace) [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=v*&label=go.loglayer.dev)](https://github.com/loglayer/loglayer-go/releases) [![Source](https://img.shields.io/badge/source-github-181717?logo=github)](https://github.com/loglayer/loglayer-go/tree/main/plugins/datadogtrace) [![Changelog](https://img.shields.io/badge/changelog-md-blue)](https://github.com/loglayer/loglayer-go/blob/main/CHANGELOG.md)
+
 `plugins/datadogtrace` adds Datadog's [log/trace correlation](https://docs.datadoghq.com/tracing/other_telemetry/connect_logs_and_traces/) fields to every log entry that carries an active span via `WithCtx`. Once your logs ship to Datadog, the UI will link each log line to the trace it originated in.
 
 ```sh

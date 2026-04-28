@@ -5,6 +5,8 @@ description: Human-readable log output to stdout/stderr.
 
 # Console Transport
 
+[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/console.svg)](https://pkg.go.dev/go.loglayer.dev/transports/console) [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=v*&label=go.loglayer.dev)](https://github.com/loglayer/loglayer-go/releases) [![Source](https://img.shields.io/badge/source-github-181717?logo=github)](https://github.com/loglayer/loglayer-go/tree/main/transports/console) [![Changelog](https://img.shields.io/badge/changelog-md-blue)](https://github.com/loglayer/loglayer-go/blob/main/CHANGELOG.md)
+
 The `console` transport writes log entries to `os.Stdout` (info, debug, trace) or `os.Stderr` (warn, error, fatal). Output is formatted with `fmt.Println`-style printing: one line per entry, with structured data appended or prepended as a Go map (e.g. `map[k:v]`).
 
 ::: tip For human-readable dev output, prefer Pretty

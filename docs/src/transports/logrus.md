@@ -5,6 +5,8 @@ description: Wrap a github.com/sirupsen/logrus logger with LogLayer.
 
 # logrus Transport
 
+[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/logrus.svg)](https://pkg.go.dev/go.loglayer.dev/transports/logrus) [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/logrus/v*&label=version)](https://github.com/loglayer/loglayer-go/releases) [![Source](https://img.shields.io/badge/source-github-181717?logo=github)](https://github.com/loglayer/loglayer-go/tree/main/transports/logrus) [![Changelog](https://img.shields.io/badge/changelog-md-blue)](https://github.com/loglayer/loglayer-go/blob/main/transports/logrus/CHANGELOG.md)
+
 Wraps an existing `*logrus.Logger`. Map metadata flattens via `Entry.WithFields`; struct metadata lands under a configurable key.
 
 ```sh

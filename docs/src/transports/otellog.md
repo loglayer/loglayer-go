@@ -5,6 +5,8 @@ description: Emit LogLayer entries to an OpenTelemetry log.Logger.
 
 # OpenTelemetry Logs Transport
 
+[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/otellog.svg)](https://pkg.go.dev/go.loglayer.dev/transports/otellog) [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/otellog/v*&label=version)](https://github.com/loglayer/loglayer-go/releases) [![Source](https://img.shields.io/badge/source-github-181717?logo=github)](https://github.com/loglayer/loglayer-go/tree/main/transports/otellog) [![Changelog](https://img.shields.io/badge/changelog-md-blue)](https://github.com/loglayer/loglayer-go/blob/main/transports/otellog/CHANGELOG.md)
+
 Emits each entry as an OpenTelemetry [`log.Record`](https://pkg.go.dev/go.opentelemetry.io/otel/log#Record) on a `log.Logger`. Use this when your service is wired against the OpenTelemetry SDK and you want LogLayer entries to flow through the same pipeline (OTLP exporter, Collector, observability backend) as your traces and metrics.
 
 The package name is `otellog` to avoid colliding with `go.opentelemetry.io/otel`. Import path: `go.loglayer.dev/transports/otellog`.

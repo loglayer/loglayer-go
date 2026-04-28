@@ -5,6 +5,8 @@ description: Wrap a github.com/rs/zerolog logger with LogLayer.
 
 # Zerolog Transport
 
+[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/zerolog.svg)](https://pkg.go.dev/go.loglayer.dev/transports/zerolog) [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/zerolog/v*&label=version)](https://github.com/loglayer/loglayer-go/releases) [![Source](https://img.shields.io/badge/source-github-181717?logo=github)](https://github.com/loglayer/loglayer-go/tree/main/transports/zerolog) [![Changelog](https://img.shields.io/badge/changelog-md-blue)](https://github.com/loglayer/loglayer-go/blob/main/transports/zerolog/CHANGELOG.md)
+
 Wraps an existing `*zerolog.Logger`. Map metadata merges as fields; struct metadata lands under a configurable key. Fatal-level entries are written via `WithLevel` so the process is **not** terminated, regardless of zerolog's defaults.
 
 ```sh

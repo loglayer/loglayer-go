@@ -5,6 +5,8 @@ description: Wrap a *slog.Logger with LogLayer.
 
 # log/slog Transport
 
+[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/slog.svg)](https://pkg.go.dev/go.loglayer.dev/transports/slog) [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=v*&label=go.loglayer.dev)](https://github.com/loglayer/loglayer-go/releases) [![Source](https://img.shields.io/badge/source-github-181717?logo=github)](https://github.com/loglayer/loglayer-go/tree/main/transports/slog) [![Changelog](https://img.shields.io/badge/changelog-md-blue)](https://github.com/loglayer/loglayer-go/blob/main/CHANGELOG.md)
+
 Wraps a stdlib `*log/slog.Logger`. Map metadata flattens to `slog.Attr`s; struct metadata lands under a configurable key. Per-call `context.Context` attached via `WithCtx` is passed through to `slog.Logger.LogAttrs` so handlers downstream (OpenTelemetry, structured shippers) can extract trace context.
 
 ```sh

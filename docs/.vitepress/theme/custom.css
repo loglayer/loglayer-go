@@ -1,0 +1,16 @@
+/* VitePress base.css resets all images to display: block (a Tailwind-
+   style reset). That stacks badge rows vertically. Restore inline flow
+   for the badge paragraph immediately after each page's H1, where every
+   per-module doc page emits a row of pkg.go.dev / version / source /
+   changelog badges. */
+.vp-doc h1 + p img {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.vp-doc h1 + p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}

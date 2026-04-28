@@ -5,6 +5,8 @@ description: Wrap a github.com/phuslu/log logger with LogLayer.
 
 # phuslu/log Transport
 
+[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/phuslu.svg)](https://pkg.go.dev/go.loglayer.dev/transports/phuslu) [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/phuslu/v*&label=version)](https://github.com/loglayer/loglayer-go/releases) [![Source](https://img.shields.io/badge/source-github-181717?logo=github)](https://github.com/loglayer/loglayer-go/tree/main/transports/phuslu) [![Changelog](https://img.shields.io/badge/changelog-md-blue)](https://github.com/loglayer/loglayer-go/blob/main/transports/phuslu/CHANGELOG.md)
+
 Wraps an existing `*phuslu/log.Logger`. Map metadata flattens to fields via `Entry.Any(k, v)`; struct metadata lands under a configurable key.
 
 ```sh

@@ -5,6 +5,8 @@ description: Wrap a go.uber.org/zap logger with LogLayer.
 
 # Zap Transport
 
+[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/zap.svg)](https://pkg.go.dev/go.loglayer.dev/transports/zap) [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/zap/v*&label=version)](https://github.com/loglayer/loglayer-go/releases) [![Source](https://img.shields.io/badge/source-github-181717?logo=github)](https://github.com/loglayer/loglayer-go/tree/main/transports/zap) [![Changelog](https://img.shields.io/badge/changelog-md-blue)](https://github.com/loglayer/loglayer-go/blob/main/transports/zap/CHANGELOG.md)
+
 Wraps a `*zap.Logger`. Map metadata becomes individual zap fields; struct metadata lands under a configurable key. Fatal-level entries are written via a custom `CheckWriteHook` so the process is **not** terminated, regardless of zap's defaults.
 
 ```sh
