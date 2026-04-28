@@ -5,7 +5,7 @@ description: One JSON object per log entry. The default for production logging.
 
 # Structured Transport
 
-[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/structured.svg)](https://pkg.go.dev/go.loglayer.dev/transports/structured) [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=v*&label=go.loglayer.dev)](https://github.com/loglayer/loglayer-go/releases) [![Source](https://img.shields.io/badge/source-github-181717?logo=github)](https://github.com/loglayer/loglayer-go/tree/main/transports/structured) [![Changelog](https://img.shields.io/badge/changelog-md-blue)](https://github.com/loglayer/loglayer-go/blob/main/CHANGELOG.md)
+<ModuleBadges path="transports/structured" bundled />
 
 The `structured` transport always writes one JSON object per log entry. By default each entry has `level`, `time`, and `msg` fields, with fields and metadata merged at the root.
 

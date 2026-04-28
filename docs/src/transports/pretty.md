@@ -5,7 +5,7 @@ description: Color-coded, theme-aware terminal output with three view modes.
 
 # Pretty Transport
 
-[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/pretty.svg)](https://pkg.go.dev/go.loglayer.dev/transports/pretty) [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/pretty/v*&label=version)](https://github.com/loglayer/loglayer-go/releases) [![Source](https://img.shields.io/badge/source-github-181717?logo=github)](https://github.com/loglayer/loglayer-go/tree/main/transports/pretty) [![Changelog](https://img.shields.io/badge/changelog-md-blue)](https://github.com/loglayer/loglayer-go/blob/main/transports/pretty/CHANGELOG.md)
+<ModuleBadges path="transports/pretty" />
 
 The `pretty` transport renders log entries with ANSI color, theme support, and three view modes (inline, message-only, expanded). Inspired by loglayer's [simple-pretty-terminal](https://loglayer.dev/transports/simple-pretty-terminal).
 

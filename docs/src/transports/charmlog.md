@@ -5,7 +5,7 @@ description: Wrap a github.com/charmbracelet/log logger with LogLayer.
 
 # charmbracelet/log Transport
 
-[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/charmlog.svg)](https://pkg.go.dev/go.loglayer.dev/transports/charmlog) [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/charmlog/v*&label=version)](https://github.com/loglayer/loglayer-go/releases) [![Source](https://img.shields.io/badge/source-github-181717?logo=github)](https://github.com/loglayer/loglayer-go/tree/main/transports/charmlog) [![Changelog](https://img.shields.io/badge/changelog-md-blue)](https://github.com/loglayer/loglayer-go/blob/main/transports/charmlog/CHANGELOG.md)
+<ModuleBadges path="transports/charmlog" />
 
 Wraps an existing `*charmbracelet/log.Logger`. Map metadata flattens to alternating key/value pairs; struct metadata lands under a configurable key.
 

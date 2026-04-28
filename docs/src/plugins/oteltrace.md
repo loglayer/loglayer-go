@@ -5,7 +5,7 @@ description: "Inject OpenTelemetry trace_id and span_id into log entries for log
 
 # OpenTelemetry Trace Injector Plugin
 
-[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/plugins/oteltrace.svg)](https://pkg.go.dev/go.loglayer.dev/plugins/oteltrace) [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=plugins/oteltrace/v*&label=version)](https://github.com/loglayer/loglayer-go/releases) [![Source](https://img.shields.io/badge/source-github-181717?logo=github)](https://github.com/loglayer/loglayer-go/tree/main/plugins/oteltrace) [![Changelog](https://img.shields.io/badge/changelog-md-blue)](https://github.com/loglayer/loglayer-go/blob/main/plugins/oteltrace/CHANGELOG.md)
+<ModuleBadges path="plugins/oteltrace" />
 
 `plugins/oteltrace` adds the active OpenTelemetry span's `trace_id` and `span_id` to every log entry that carries a `context.Context`. Use it when your service runs OpenTelemetry tracing but ships logs to a destination other than the OTel logs pipeline (structured JSON to stdout, Datadog HTTP intake, Loki, custom transports).
 

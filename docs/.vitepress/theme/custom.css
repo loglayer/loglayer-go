@@ -1,22 +1,3 @@
-/* Per-module doc pages emit a row of pkg.go.dev / version / source /
-   changelog badges as the first paragraph after the H1. VitePress's
-   base.css resets all <img> to display: block (Tailwind-style), which
-   stacks the badges vertically. Override that for the badge row. */
-
-.vp-doc h1 + p {
-  display: flex !important;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  align-items: center;
-  margin-top: 0.75rem;
-}
-
-.vp-doc h1 + p a {
-  display: inline-flex;
-  align-items: center;
-}
-
-.vp-doc h1 + p img {
-  display: inline-block !important;
-  vertical-align: middle;
-}
+/* Reserved for future site-wide style overrides. Per-module badge layout
+   lives in components/ModuleBadges.vue with inline styles to bypass
+   VitePress's base img reset. */

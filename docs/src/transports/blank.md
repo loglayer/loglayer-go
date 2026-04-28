@@ -5,7 +5,7 @@ description: A bring-your-own-function Transport for prototyping or one-off inte
 
 # Blank Transport
 
-[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/blank.svg)](https://pkg.go.dev/go.loglayer.dev/transports/blank) [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=v*&label=go.loglayer.dev)](https://github.com/loglayer/loglayer-go/releases) [![Source](https://img.shields.io/badge/source-github-181717?logo=github)](https://github.com/loglayer/loglayer-go/tree/main/transports/blank) [![Changelog](https://img.shields.io/badge/changelog-md-blue)](https://github.com/loglayer/loglayer-go/blob/main/CHANGELOG.md)
+<ModuleBadges path="transports/blank" bundled />
 
 The `blank` transport delegates `SendToLogger` to a function you supply inline. Use it for:
 

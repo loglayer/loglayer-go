@@ -5,7 +5,7 @@ description: Capture log entries in memory for assertions in tests.
 
 # Testing Transport
 
-[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/testing.svg)](https://pkg.go.dev/go.loglayer.dev/transports/testing) [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=v*&label=go.loglayer.dev)](https://github.com/loglayer/loglayer-go/releases) [![Source](https://img.shields.io/badge/source-github-181717?logo=github)](https://github.com/loglayer/loglayer-go/tree/main/transports/testing) [![Changelog](https://img.shields.io/badge/changelog-md-blue)](https://github.com/loglayer/loglayer-go/blob/main/CHANGELOG.md)
+<ModuleBadges path="transports/testing" bundled />
 
 The `transports/testing` package is the transport you want in test code: it captures every log entry into a mutex-safe in-memory library, exposing `Messages`, `Data`, and `Metadata` as typed fields on each captured `LogLine`.
 

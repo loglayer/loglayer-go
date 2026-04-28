@@ -5,7 +5,7 @@ description: Ship logs to the Datadog Logs HTTP intake API.
 
 # Datadog Transport
 
-[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/datadog.svg)](https://pkg.go.dev/go.loglayer.dev/transports/datadog) [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/datadog/v*&label=version)](https://github.com/loglayer/loglayer-go/releases) [![Source](https://img.shields.io/badge/source-github-181717?logo=github)](https://github.com/loglayer/loglayer-go/tree/main/transports/datadog) [![Changelog](https://img.shields.io/badge/changelog-md-blue)](https://github.com/loglayer/loglayer-go/blob/main/transports/datadog/CHANGELOG.md)
+<ModuleBadges path="transports/datadog" />
 
 Sends log entries to Datadog's [Logs HTTP intake API](https://docs.datadoghq.com/api/latest/logs/#send-logs). Built on the [HTTP transport](/transports/http) with a Datadog-specific encoder, site-aware URL, and `DD-API-KEY` header.
 

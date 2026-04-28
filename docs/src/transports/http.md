@@ -5,7 +5,7 @@ description: Generic batched HTTP POST transport with a pluggable encoder.
 
 # HTTP Transport
 
-[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/http.svg)](https://pkg.go.dev/go.loglayer.dev/transports/http) [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/http/v*&label=version)](https://github.com/loglayer/loglayer-go/releases) [![Source](https://img.shields.io/badge/source-github-181717?logo=github)](https://github.com/loglayer/loglayer-go/tree/main/transports/http) [![Changelog](https://img.shields.io/badge/changelog-md-blue)](https://github.com/loglayer/loglayer-go/blob/main/transports/http/CHANGELOG.md)
+<ModuleBadges path="transports/http" />
 
 The `http` transport ships log entries to an HTTP endpoint as JSON in async batches. Use it directly to talk to any log-ingestion API, or as the foundation for a service-specific wrapper (the [Datadog transport](/transports/datadog) is built on it).
 
