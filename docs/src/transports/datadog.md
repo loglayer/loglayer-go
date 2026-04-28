@@ -142,7 +142,6 @@ Datadog uses a `status` string per entry. The transport maps loglayer levels:
 
 | LogLayer Level   | Datadog status |
 |------------------|----------------|
-| `LogLevelTrace`  | `debug`        |
 | `LogLevelDebug`  | `debug`        |
 | `LogLevelInfo`   | `info`         |
 | `LogLevelWarn`   | `warning`      |

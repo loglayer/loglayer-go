@@ -38,7 +38,7 @@ Every built-in transport embeds `transport.BaseConfig`, which carries three fiel
 |-------|------|---------|---------|
 | `ID` | `string` | auto-generated | Stable handle for runtime management calls (`RemoveTransport(id)`, `GetLoggerInstance(id)`). |
 | `Disabled` | `bool` | `false` | Suppress this transport's emissions without removing it. Equivalent to calling `SetEnabled(false)` after construction. |
-| `Level` | `loglayer.LogLevel` | `LogLevelTrace` | Per-transport minimum level. Stacks on top of the logger's own level state. |
+| `Level` | `loglayer.LogLevel` | `LogLevelDebug` | Per-transport minimum level. Stacks on top of the logger's own level state. |
 
 ```go
 console.New(console.Config{

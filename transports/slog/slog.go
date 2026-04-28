@@ -94,14 +94,12 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 
 // toSlogLevel maps loglayer levels to slog levels.
 //
-// Trace and Fatal don't have direct slog equivalents:
-//   - Trace collapses to Debug (slog has no level below Debug).
-//   - Fatal maps to slog.LevelError + 4 to keep it above Error in any
-//     downstream handler. The actual os.Exit decision is made by the core's
-//     Config.DisableFatalExit; slog itself never exits.
+// Fatal maps to slog.LevelError + 4 to keep it above Error in any downstream
+// handler. The actual os.Exit decision is made by the core's
+// Config.DisableFatalExit; slog itself never exits.
 func toSlogLevel(l loglayer.LogLevel) slog.Level {
 	switch l {
-	case loglayer.LogLevelTrace, loglayer.LogLevelDebug:
+	case loglayer.LogLevelDebug:
 		return slog.LevelDebug
 	case loglayer.LogLevelInfo:
 		return slog.LevelInfo

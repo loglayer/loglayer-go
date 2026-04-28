@@ -42,7 +42,7 @@ map[k:v] with data
 
 By default:
 
-- `Trace`, `Debug`, `Info` → `os.Stdout`
+- `Debug`, `Info` → `os.Stdout`
 - `Warn`, `Error`, `Fatal` → `os.Stderr`
 
 Set `Writer` to override and send everything to a single writer (useful in tests or when redirecting output):

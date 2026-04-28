@@ -120,7 +120,6 @@ func testLevels(t *testing.T, c ContractCase) {
 		level loglayer.LogLevel
 		emit  func(*loglayer.LogLayer)
 	}{
-		{loglayer.LogLevelTrace, func(l *loglayer.LogLayer) { l.Trace("x") }},
 		{loglayer.LogLevelDebug, func(l *loglayer.LogLayer) { l.Debug("x") }},
 		{loglayer.LogLevelInfo, func(l *loglayer.LogLayer) { l.Info("x") }},
 		{loglayer.LogLevelWarn, func(l *loglayer.LogLayer) { l.Warn("x") }},

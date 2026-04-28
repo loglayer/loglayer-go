@@ -5,6 +5,7 @@ go 1.25.0
 require (
 	github.com/charmbracelet/log v1.0.0
 	github.com/fatih/color v1.19.0
+	github.com/goccy/go-json v0.10.6
 	github.com/phuslu/log v1.0.124
 	github.com/rs/zerolog v1.35.1
 	github.com/sirupsen/logrus v1.9.4

@@ -272,7 +272,6 @@ func TestLogBuilder_AllTerminals(t *testing.T) {
 		fn    func(*loglayer.LogLayer)
 		level loglayer.LogLevel
 	}{
-		{"Trace", func(l *loglayer.LogLayer) { l.WithMetadata(loglayer.Metadata{"k": "v"}).Trace("msg") }, loglayer.LogLevelTrace},
 		{"Debug", func(l *loglayer.LogLayer) { l.WithMetadata(loglayer.Metadata{"k": "v"}).Debug("msg") }, loglayer.LogLevelDebug},
 		{"Info", func(l *loglayer.LogLayer) { l.WithMetadata(loglayer.Metadata{"k": "v"}).Info("msg") }, loglayer.LogLevelInfo},
 		{"Warn", func(l *loglayer.LogLayer) { l.WithMetadata(loglayer.Metadata{"k": "v"}).Warn("msg") }, loglayer.LogLevelWarn},
@@ -310,7 +309,6 @@ func TestLogBuilder_LevelFiltered_NoEntry(t *testing.T) {
 
 func TestLogLevel_String(t *testing.T) {
 	cases := map[loglayer.LogLevel]string{
-		loglayer.LogLevelTrace: "trace",
 		loglayer.LogLevelDebug: "debug",
 		loglayer.LogLevelInfo:  "info",
 		loglayer.LogLevelWarn:  "warn",
@@ -331,7 +329,6 @@ func TestParseLogLevel(t *testing.T) {
 		want loglayer.LogLevel
 		ok   bool
 	}{
-		{"trace", loglayer.LogLevelTrace, true},
 		{"debug", loglayer.LogLevelDebug, true},
 		{"info", loglayer.LogLevelInfo, true},
 		{"warn", loglayer.LogLevelWarn, true},

@@ -99,11 +99,10 @@ type noopFatalHook struct{}
 
 func (noopFatalHook) OnWrite(*zapcore.CheckedEntry, []zapcore.Field) {}
 
-// toZapLevel maps loglayer levels to zapcore.Level. Trace collapses to Debug
-// because zap has no Trace level.
+// toZapLevel maps loglayer levels to zapcore.Level.
 func toZapLevel(l loglayer.LogLevel) zapcore.Level {
 	switch l {
-	case loglayer.LogLevelTrace, loglayer.LogLevelDebug:
+	case loglayer.LogLevelDebug:
 		return zapcore.DebugLevel
 	case loglayer.LogLevelInfo:
 		return zapcore.InfoLevel

@@ -3,11 +3,12 @@
 package structured
 
 import (
-	"encoding/json"
-	"fmt"
+	"bytes"
 	"io"
-	"os"
+	"sync"
 	"time"
+
+	"github.com/goccy/go-json"
 
 	"go.loglayer.dev"
 	"go.loglayer.dev/transport"
@@ -39,11 +40,47 @@ type Config struct {
 	Writer io.Writer
 }
 
+// maxPooledBufCap caps the buffer capacity returned to bufPool so a single
+// oversized log entry can't pin its capacity in the pool indefinitely.
+const maxPooledBufCap = 64 << 10
+
+// rfc3339NanoMaxLen bounds time.RFC3339Nano output (30 bytes + headroom).
+const rfc3339NanoMaxLen = 32
+
+var bufPool = sync.Pool{
+	New: func() any { return new(bytes.Buffer) },
+}
+
+func putBuffer(buf *bytes.Buffer) {
+	if buf.Cap() > maxPooledBufCap {
+		return
+	}
+	bufPool.Put(buf)
+}
+
+// Pre-quoted level names. writeLevel writes one of these directly when
+// LevelFn is nil, keeping json.Marshal off the simple-message hot path.
+var (
+	jsonDebug = []byte(`"debug"`)
+	jsonInfo  = []byte(`"info"`)
+	jsonWarn  = []byte(`"warn"`)
+	jsonError = []byte(`"error"`)
+	jsonFatal = []byte(`"fatal"`)
+)
+
 // Transport always outputs one JSON object per log entry.
 // All messages are joined with a space and placed under MessageField.
 type Transport struct {
 	transport.BaseTransport
-	cfg Config
+	cfg    Config
+	writer io.Writer
+
+	// Pre-quoted JSON header fragments. Each carries its own delimiter
+	// (open-brace or comma) and the field's key + colon, so the hot path
+	// is a sequence of `buf.Write(prefix); writeValue(...)`.
+	levelOpen []byte // {"level":
+	dateOpen  []byte // ,"time":
+	msgOpen   []byte // ,"msg":
 }
 
 // New creates a Transport from the given Config.
@@ -60,13 +97,28 @@ func New(cfg Config) *Transport {
 	return &Transport{
 		BaseTransport: transport.NewBaseTransport(cfg.BaseConfig),
 		cfg:           cfg,
+		writer:        transport.WriterOrStdout(cfg.Writer),
+		levelOpen:     append(append([]byte{'{'}, jsonKey(cfg.LevelField)...), ':'),
+		dateOpen:      append(append([]byte{','}, jsonKey(cfg.DateField)...), ':'),
+		msgOpen:       append(append([]byte{','}, jsonKey(cfg.MessageField)...), ':'),
 	}
+}
+
+// jsonKey returns the JSON-encoded form of s. json.Marshal on a string never
+// fails; error dropped.
+func jsonKey(s string) []byte {
+	b, _ := json.Marshal(s)
+	return b
 }
 
 // GetLoggerInstance returns nil; structured transport has no underlying logger library.
 func (s *Transport) GetLoggerInstance() any { return nil }
 
-// SendToLogger implements loglayer.Transport.
+// SendToLogger writes one JSON object per entry: the configured level, date,
+// and message fields first (in that order), followed by Data and Metadata
+// entries in iteration order. Per-value marshaling uses goccy/go-json so
+// structs, slices, and json.Marshaler types render exactly as encoding/json
+// would.
 func (s *Transport) SendToLogger(params loglayer.TransportParams) {
 	if !s.ShouldProcess(params.LogLevel) {
 		return
@@ -76,49 +128,100 @@ func (s *Transport) SendToLogger(params loglayer.TransportParams) {
 		messages = []any{s.cfg.MessageFn(params)}
 	}
 
-	obj := make(map[string]any)
+	buf := bufPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	defer putBuffer(buf)
 
-	obj[s.cfg.LevelField] = s.levelValue(params.LogLevel)
-	obj[s.cfg.DateField] = s.dateValue()
-	obj[s.cfg.MessageField] = transport.JoinMessages(messages)
+	buf.Write(s.levelOpen)
+	s.writeLevel(buf, params.LogLevel)
+	buf.Write(s.dateOpen)
+	s.writeDate(buf)
+	buf.Write(s.msgOpen)
+	writeJSONString(buf, transport.JoinMessages(messages))
 
-	if len(params.Data) > 0 {
-		for k, v := range params.Data {
-			obj[k] = v
+	for k, v := range params.Data {
+		buf.WriteByte(',')
+		if err := writeKeyValue(buf, k, v); err != nil {
+			s.writeMarshalError(err)
+			return
 		}
 	}
-
 	if params.Metadata != nil {
 		for k, v := range transport.MetadataAsMap(params.Metadata) {
-			obj[k] = v
+			buf.WriteByte(',')
+			if err := writeKeyValue(buf, k, v); err != nil {
+				s.writeMarshalError(err)
+				return
+			}
 		}
 	}
+	buf.WriteString("}\n")
+	_, _ = s.writer.Write(buf.Bytes())
+}
 
-	b, err := json.Marshal(obj)
-	if err != nil {
-		fmt.Fprintf(s.writer(), `{"level":"error","msg":"loglayer: failed to marshal log entry","error":%q}`+"\n", err.Error())
+func (s *Transport) writeLevel(buf *bytes.Buffer, l loglayer.LogLevel) {
+	if s.cfg.LevelFn != nil {
+		writeJSONString(buf, s.cfg.LevelFn(l))
 		return
 	}
-	fmt.Fprintln(s.writer(), string(b))
-}
-
-func (s *Transport) writer() io.Writer {
-	if s.cfg.Writer != nil {
-		return s.cfg.Writer
+	switch l {
+	case loglayer.LogLevelDebug:
+		buf.Write(jsonDebug)
+	case loglayer.LogLevelInfo:
+		buf.Write(jsonInfo)
+	case loglayer.LogLevelWarn:
+		buf.Write(jsonWarn)
+	case loglayer.LogLevelError:
+		buf.Write(jsonError)
+	case loglayer.LogLevelFatal:
+		buf.Write(jsonFatal)
+	default:
+		writeJSONString(buf, l.String())
 	}
-	return os.Stdout
 }
 
-func (s *Transport) dateValue() string {
+// writeDate appends the timestamp as a JSON string into buf.
+func (s *Transport) writeDate(buf *bytes.Buffer) {
 	if s.cfg.DateFn != nil {
-		return s.cfg.DateFn()
+		writeJSONString(buf, s.cfg.DateFn())
+		return
 	}
-	return time.Now().UTC().Format(time.RFC3339Nano)
+	var stamp [rfc3339NanoMaxLen]byte
+	formatted := time.Now().UTC().AppendFormat(stamp[:0], time.RFC3339Nano)
+	buf.WriteByte('"')
+	buf.Write(formatted)
+	buf.WriteByte('"')
 }
 
-func (s *Transport) levelValue(level loglayer.LogLevel) string {
-	if s.cfg.LevelFn != nil {
-		return s.cfg.LevelFn(level)
+// writeJSONString writes s as a JSON string into buf.
+// json.Marshal on a string cannot fail; error dropped.
+func writeJSONString(buf *bytes.Buffer, s string) {
+	b, _ := json.Marshal(s)
+	buf.Write(b)
+}
+
+func writeKeyValue(buf *bytes.Buffer, key string, value any) error {
+	writeJSONString(buf, key)
+	buf.WriteByte(':')
+	b, err := json.Marshal(value)
+	if err != nil {
+		return err
 	}
-	return level.String()
+	buf.Write(b)
+	return nil
+}
+
+func (s *Transport) writeMarshalError(err error) {
+	buf := bufPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	defer putBuffer(buf)
+
+	buf.Write(s.levelOpen)
+	buf.Write(jsonError)
+	buf.Write(s.msgOpen)
+	writeJSONString(buf, "loglayer: failed to marshal log entry")
+	buf.WriteString(`,"error":`)
+	writeJSONString(buf, err.Error())
+	buf.WriteString("}\n")
+	_, _ = s.writer.Write(buf.Bytes())
 }

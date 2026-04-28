@@ -111,7 +111,6 @@ p.SetLevel(plog.DebugLevel)
 
 | LogLayer Level   | phuslu Level   |
 |------------------|----------------|
-| `LogLevelTrace`  | `TraceLevel`   |
 | `LogLevelDebug`  | `DebugLevel`   |
 | `LogLevelInfo`   | `InfoLevel`    |
 | `LogLevelWarn`   | `WarnLevel`    |

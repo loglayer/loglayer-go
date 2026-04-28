@@ -107,7 +107,6 @@ A `*pretty.Theme` is just a struct of `Style` functions (`func(string) string`).
 import "github.com/fatih/color"
 
 theme := &pretty.Theme{
-    Trace:     color.New(color.FgHiBlack).SprintFunc(),
     Debug:     color.New(color.FgCyan).SprintFunc(),
     Info:      color.New(color.FgGreen).SprintFunc(),
     Warn:      color.New(color.FgYellow).SprintFunc(),

@@ -7,19 +7,18 @@ import "sync/atomic"
 type LogLevel int
 
 const (
-	LogLevelTrace LogLevel = 10
-	LogLevelDebug LogLevel = 20
-	LogLevelInfo  LogLevel = 30
-	LogLevelWarn  LogLevel = 40
-	LogLevelError LogLevel = 50
-	LogLevelFatal LogLevel = 60
+	LogLevelDebug LogLevel = 10
+	LogLevelInfo  LogLevel = 20
+	LogLevelWarn  LogLevel = 30
+	LogLevelError LogLevel = 40
+	LogLevelFatal LogLevel = 50
 )
 
 const (
-	// numLevels is the count of distinct levels (Trace through Fatal).
-	numLevels = 6
-	// levelStep is the numeric spacing between adjacent levels (Trace=10,
-	// Debug=20, ..., Fatal=60). levelIndex relies on this contract.
+	// numLevels is the count of distinct levels (Debug through Fatal).
+	numLevels = 5
+	// levelStep is the numeric spacing between adjacent levels (Debug=10,
+	// Info=20, ..., Fatal=50). levelIndex relies on this contract.
 	levelStep = 10
 	// allLevelsBits is bits 0..numLevels-1 set: every level enabled.
 	allLevelsBits uint32 = 1<<numLevels - 1
@@ -43,8 +42,6 @@ func levelIndex(l LogLevel) int {
 // String returns the lowercase string name of a log level.
 func (l LogLevel) String() string {
 	switch l {
-	case LogLevelTrace:
-		return "trace"
 	case LogLevelDebug:
 		return "debug"
 	case LogLevelInfo:
@@ -64,8 +61,6 @@ func (l LogLevel) String() string {
 // Returns LogLevelInfo and false if the name is not recognized.
 func ParseLogLevel(s string) (LogLevel, bool) {
 	switch s {
-	case "trace":
-		return LogLevelTrace, true
 	case "debug":
 		return LogLevelDebug, true
 	case "info":
@@ -83,8 +78,8 @@ func ParseLogLevel(s string) (LogLevel, bool) {
 
 // levelState tracks which levels are enabled plus the master logging switch.
 //
-// Stored as a single atomic.Uint32 bitmap (bits 0..5 = per-level enabled, bit
-// 6 = master) so emission and runtime reconfiguration (e.g. SIGUSR1-driven
+// Stored as a single atomic.Uint32 bitmap (bits 0..4 = per-level enabled, bit
+// 5 = master) so emission and runtime reconfiguration (e.g. SIGUSR1-driven
 // level toggles, admin endpoints flipping debug logging) compose without
 // locks. Mirrors zap.AtomicLevel.
 type levelState struct {

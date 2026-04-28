@@ -11,8 +11,9 @@
 package datadog
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"github.com/goccy/go-json"
 
 	"go.loglayer.dev"
 	"go.loglayer.dev/transport"
@@ -201,7 +202,7 @@ func newEncoder(cfg Config) httptr.Encoder {
 // See https://docs.datadoghq.com/logs/log_collection/#reserved-attributes.
 func statusFor(l loglayer.LogLevel) string {
 	switch l {
-	case loglayer.LogLevelTrace, loglayer.LogLevelDebug:
+	case loglayer.LogLevelDebug:
 		return "debug"
 	case loglayer.LogLevelInfo:
 		return "info"

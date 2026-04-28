@@ -13,7 +13,6 @@ func TestNewMockReturnsUsableLogger(t *testing.T) {
 		t.Fatal("NewMock returned nil")
 	}
 	// All level methods should be safe to call.
-	log.Trace("trace")
 	log.Debug("debug")
 	log.Info("info")
 	log.Warn("warn")

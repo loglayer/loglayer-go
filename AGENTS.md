@@ -152,15 +152,17 @@ Conventional commits on `main` drive an always-open "release-please" PR
 that proposes the next version + changelog entries; merging that PR
 creates the tag(s) and the GitHub Release(s). Don't `git tag` manually.
 
-- **Main module** tags as `v0.X.Y`. Sub-modules tag as
-  `transports/otellog/v0.X.Y`, `plugins/oteltrace/v0.X.Y` (Go module
+- **Main module** tags as `v1.X.Y`. Sub-modules tag as
+  `transports/otellog/v1.X.Y`, `plugins/oteltrace/v1.X.Y` (Go module
   convention). Configured in `.release-please-config.json` and
   `.release-please-manifest.json`.
-- Pre-1.0 (current state): minor bumps for `feat:`, patch for `fix:`,
-  per the `bump-minor-pre-major` config setting.
+- Standard SemVer applies from v1.0.0 forward: `feat:` → minor, `fix:` →
+  patch, `feat!:` or any commit body containing `BREAKING CHANGE:` →
+  major.
 - `CHANGELOG.md` at repo root is **maintained by Release Please** from
-  this point forward. The pre-Release-Please content (the v0.1.0 [Unreleased]
-  section) stays as historical context.
+  v1.0.0 forward. The hand-written `[Unreleased]` section describes the
+  initial release at a high level; later sections come from the
+  conventional commits Release Please reads.
 - User-facing release notes also land in `docs/src/whats-new.md` for
   the docs site. Currently maintained manually; follow the Keep a
   Changelog shape.
@@ -266,7 +268,7 @@ concurrently with emission. There is no setup-only category.
 
 How each class achieves safety:
 
-- **Emission methods** (`Info`, `Warn`, `Error`, `Debug`, `Trace`, `Fatal`,
+- **Emission methods** (`Info`, `Warn`, `Error`, `Debug`, `Fatal`,
   `WithMetadata`, `WithError`, `WithCtx`, `Raw`, `MetadataOnly`, `ErrorOnly`):
   read-only on logger state.
 - **Returns-new** (`WithFields`, `WithoutFields`, `Child`, `WithPrefix`,

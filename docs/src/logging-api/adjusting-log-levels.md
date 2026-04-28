@@ -20,7 +20,7 @@ log.Warn("kept")       // emitted
 log.Error("kept")      // emitted
 ```
 
-Level ordering is `Trace < Debug < Info < Warn < Error < Fatal`.
+Level ordering is `Debug < Info < Warn < Error < Fatal`.
 
 ## Enabling / Disabling Individual Levels
 
@@ -68,13 +68,13 @@ This is useful when assembling the metadata is itself expensive.
 
 ## Transport-Level Filtering
 
-Each transport also has a `Level` field on its `BaseConfig`. A transport will skip entries below its own minimum, regardless of the logger's level state. This lets you have one transport recording at `Trace` for local debugging and another at `Warn` for shipping:
+Each transport also has a `Level` field on its `BaseConfig`. A transport will skip entries below its own minimum, regardless of the logger's level state. This lets you have one transport recording at `Debug` for local debugging and another at `Warn` for shipping:
 
 ```go
 loglayer.New(loglayer.Config{
     Transports: []loglayer.Transport{
         console.New(console.Config{
-            BaseConfig: transport.BaseConfig{ID: "console"}, // defaults to Trace
+            BaseConfig: transport.BaseConfig{ID: "console"}, // defaults to Debug
         }),
         structured.New(structured.Config{
             BaseConfig: transport.BaseConfig{

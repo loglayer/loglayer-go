@@ -218,7 +218,6 @@ The `level` field in the default encoder uses the standard loglayer names:
 
 | LogLayer Level   | level string |
 |------------------|--------------|
-| `LogLevelTrace`  | `trace`      |
 | `LogLevelDebug`  | `debug`      |
 | `LogLevelInfo`   | `info`       |
 | `LogLevelWarn`   | `warn`       |

@@ -110,7 +110,6 @@ This is the wrapped instance, not the original you passed in. For most operation
 
 | LogLayer Level   | zap Level       | Note                        |
 |------------------|-----------------|-----------------------------|
-| `LogLevelTrace`  | `DebugLevel`    | zap has no Trace level       |
 | `LogLevelDebug`  | `DebugLevel`    |                             |
 | `LogLevelInfo`   | `InfoLevel`     |                             |
 | `LogLevelWarn`   | `WarnLevel`     |                             |

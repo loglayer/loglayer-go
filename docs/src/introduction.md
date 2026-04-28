@@ -5,9 +5,21 @@ description: Learn more about LogLayer for Go and how it unifies your logging ex
 
 # Introduction
 
-Go has plenty of capable logging libraries: `zerolog`, `zap`, `slog`, `logrus`. They all offer the usual methods like `Info`, `Warn`, and `Error`, but vary significantly in how they handle structured fields, metadata, and `error` values. This inconsistency leads to ad-hoc patterns and code that's tightly coupled to a specific logger.
+Most Go projects already have structured logging working. What they don't have, out of the box, is a layer above it: where do logs go, what do they get rewritten to first, and how do you split traffic by subsystem.
 
-LogLayer solves this with a fluent, expressive API that routes logs to any logging library, plain JSON, the terminal, HTTP endpoints, or cloud services through its transport system.
+LogLayer is that layer. It sits on top of whichever logging library you already use (or one of its built-in transports) and gives you:
+
+- **Multi-destination fan-out.** Send the same emission to several transports with per-transport level filters: pretty in dev, structured to a file, batched HTTP to Datadog or Loki, all from one logger.
+- **A plugin pipeline.** Redact secrets, inject trace IDs, rewrite levels, gate per-transport dispatch, all globally, before entries reach a transport. Built-in plugins for redaction, Datadog APM, and OpenTelemetry; write your own against six narrow hook interfaces.
+- **Group routing.** Tag entries by subsystem (`db`, `auth`, ...) and route each tag to specific transports with its own minimum level. Toggle which groups are active at runtime via env var.
+- **Distinct types for persistent fields, per-call metadata, and errors.** The compiler catches misuse; the dispatch path serializes each consistently.
+- **Bring-your-own logger.** Wrap a `*zerolog.Logger`, `*zap.Logger`, `*log/slog.Logger`, `*logrus.Logger`, `*charmbracelet/log.Logger`, or `*phuslu/log.Logger` you've already configured. The API in your call sites becomes uniform without a rewrite.
+- **Runtime control.** Hot-swap transports, add or remove plugins, toggle levels, all live and concurrency-safe.
+- **First-class testing.** A capturing transport plus dedicated test helpers for transport and plugin authors.
+
+If your service is small and you only need "log to stdout in JSON," the stdlib is fine. The friction LogLayer fixes shows up later: when you add a second destination, redact a field across every log site, or want to wire in OpenTelemetry without rewriting how you log everywhere.
+
+The framework adds about 40 ns and one allocation per emission on top of whatever your underlying logger costs. See [Benchmarks](/benchmarks) for the full picture.
 
 ```go
 log.

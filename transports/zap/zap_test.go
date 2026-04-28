@@ -34,7 +34,6 @@ func TestZapContract(t *testing.T) {
 			MessageKey: "msg",
 			LevelKey:   "level",
 			Levels: map[loglayer.LogLevel]string{
-				// Trace omitted: zap maps Trace to Debug; tested separately.
 				loglayer.LogLevelDebug: "debug",
 				loglayer.LogLevelInfo:  "info",
 				loglayer.LogLevelWarn:  "warn",
@@ -43,15 +42,6 @@ func TestZapContract(t *testing.T) {
 			},
 		},
 	})
-}
-
-func TestZapTraceMapsToDebug(t *testing.T) {
-	log, buf := factory(transporttest.FactoryOpts{})
-	log.Trace("trace msg")
-	obj := transporttest.ParseJSONLine(t, buf)
-	if obj["level"] != "debug" {
-		t.Errorf("trace should map to debug in zap, got %v", obj["level"])
-	}
 }
 
 func TestZapGetLoggerInstance(t *testing.T) {

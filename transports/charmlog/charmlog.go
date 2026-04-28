@@ -85,11 +85,10 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 	t.logger.Log(toCharmLevel(params.LogLevel), transport.JoinMessages(params.Messages), keyvals...)
 }
 
-// toCharmLevel maps loglayer levels to charmbracelet/log levels. Trace
-// collapses to Debug because charmbracelet/log has no Trace level.
+// toCharmLevel maps loglayer levels to charmbracelet/log levels.
 func toCharmLevel(l loglayer.LogLevel) clog.Level {
 	switch l {
-	case loglayer.LogLevelTrace, loglayer.LogLevelDebug:
+	case loglayer.LogLevelDebug:
 		return clog.DebugLevel
 	case loglayer.LogLevelInfo:
 		return clog.InfoLevel

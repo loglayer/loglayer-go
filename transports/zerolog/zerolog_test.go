@@ -32,7 +32,6 @@ func TestZerologContract(t *testing.T) {
 			MessageKey: "message",
 			LevelKey:   "level",
 			Levels: map[loglayer.LogLevel]string{
-				loglayer.LogLevelTrace: "trace",
 				loglayer.LogLevelDebug: "debug",
 				loglayer.LogLevelInfo:  "info",
 				loglayer.LogLevelWarn:  "warn",

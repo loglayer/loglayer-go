@@ -6,8 +6,10 @@ package loglayer_test
 // hover popups via the gopls "View Examples" affordance.
 //
 // All examples use the structured transport with a fixed DateFn so the
-// output is deterministic. JSON map keys are alphabetically sorted by
-// encoding/json, which makes the `// Output:` matching reliable.
+// output is deterministic. The transport writes a fixed `level, time, msg`
+// header followed by user-supplied keys; Go map iteration is randomized,
+// so examples keep at most one user key per logger to make the output
+// reproducible.
 
 import (
 	"context"
@@ -37,7 +39,7 @@ func exampleLogger() *loglayer.LogLayer {
 func Example() {
 	log := exampleLogger()
 	log.Info("hello world")
-	// Output: {"level":"info","msg":"hello world","time":"2026-04-26T12:00:00Z"}
+	// Output: {"level":"info","time":"2026-04-26T12:00:00Z","msg":"hello world"}
 }
 
 func ExampleNew() {
@@ -48,7 +50,7 @@ func ExampleNew() {
 		}),
 	})
 	log.Info("hello")
-	// Output: {"level":"info","msg":"hello","time":"2026-04-26T12:00:00Z"}
+	// Output: {"level":"info","time":"2026-04-26T12:00:00Z","msg":"hello"}
 }
 
 // Build returns an error instead of panicking on misconfiguration.
@@ -75,7 +77,7 @@ func ExampleLogLayer_WithFields() {
 	log := exampleLogger()
 	log = log.WithFields(loglayer.Fields{"requestId": "abc-123"})
 	log.Info("processing")
-	// Output: {"level":"info","msg":"processing","requestId":"abc-123","time":"2026-04-26T12:00:00Z"}
+	// Output: {"level":"info","time":"2026-04-26T12:00:00Z","msg":"processing","requestId":"abc-123"}
 }
 
 // WithoutFields removes specific keys (or all keys when called with no args).
@@ -84,14 +86,14 @@ func ExampleLogLayer_WithoutFields() {
 	log = log.WithFields(loglayer.Fields{"keep": "yes", "drop": "no"})
 	log = log.WithoutFields("drop")
 	log.Info("partial")
-	// Output: {"keep":"yes","level":"info","msg":"partial","time":"2026-04-26T12:00:00Z"}
+	// Output: {"level":"info","time":"2026-04-26T12:00:00Z","msg":"partial","keep":"yes"}
 }
 
 // WithMetadata accepts any value for one log entry only. Maps merge at root.
 func ExampleLogLayer_WithMetadata() {
 	log := exampleLogger()
 	log.WithMetadata(loglayer.Metadata{"durationMs": 42}).Info("served")
-	// Output: {"durationMs":42,"level":"info","msg":"served","time":"2026-04-26T12:00:00Z"}
+	// Output: {"level":"info","time":"2026-04-26T12:00:00Z","msg":"served","durationMs":42}
 }
 
 // WithError attaches an error to one log entry. The default serializer
@@ -99,7 +101,7 @@ func ExampleLogLayer_WithMetadata() {
 func ExampleLogLayer_WithError() {
 	log := exampleLogger()
 	log.WithError(errors.New("connection refused")).Error("query failed")
-	// Output: {"err":{"message":"connection refused"},"level":"error","msg":"query failed","time":"2026-04-26T12:00:00Z"}
+	// Output: {"level":"error","time":"2026-04-26T12:00:00Z","msg":"query failed","err":{"message":"connection refused"}}
 }
 
 // WithCtx attaches a context.Context to one log call. Transports can read
@@ -108,27 +110,26 @@ func ExampleLogLayer_WithCtx() {
 	log := exampleLogger()
 	ctx := context.Background()
 	log.WithCtx(ctx).Info("request received")
-	// Output: {"level":"info","msg":"request received","time":"2026-04-26T12:00:00Z"}
+	// Output: {"level":"info","time":"2026-04-26T12:00:00Z","msg":"request received"}
 }
 
 // Child returns an independent clone. Mutations on the child don't bleed
 // back to the parent.
 func ExampleLogLayer_Child() {
-	parent := exampleLogger()
-	parent = parent.WithFields(loglayer.Fields{"shared": "v"})
-	child := parent.WithFields(loglayer.Fields{"only_on_child": "x"})
+	parent := exampleLogger().WithFields(loglayer.Fields{"who": "parent"})
+	child := parent.WithFields(loglayer.Fields{"who": "child"})
 
-	child.Info("from child")
-	parent.Info("from parent")
-	// Output: {"level":"info","msg":"from child","only_on_child":"x","shared":"v","time":"2026-04-26T12:00:00Z"}
-	// {"level":"info","msg":"from parent","shared":"v","time":"2026-04-26T12:00:00Z"}
+	child.Info("hi")
+	parent.Info("hi")
+	// Output: {"level":"info","time":"2026-04-26T12:00:00Z","msg":"hi","who":"child"}
+	// {"level":"info","time":"2026-04-26T12:00:00Z","msg":"hi","who":"parent"}
 }
 
 // WithPrefix returns a new logger with a string prepended to every message.
 func ExampleLogLayer_WithPrefix() {
 	log := exampleLogger().WithPrefix("[auth]")
 	log.Info("login attempt")
-	// Output: {"level":"info","msg":"[auth] login attempt","time":"2026-04-26T12:00:00Z"}
+	// Output: {"level":"info","time":"2026-04-26T12:00:00Z","msg":"[auth] login attempt"}
 }
 
 // MetadataOnly logs just the metadata, with no message text. Useful for
@@ -136,14 +137,14 @@ func ExampleLogLayer_WithPrefix() {
 func ExampleLogLayer_MetadataOnly() {
 	log := exampleLogger()
 	log.MetadataOnly(loglayer.Metadata{"queueDepth": 17})
-	// Output: {"level":"info","msg":"","queueDepth":17,"time":"2026-04-26T12:00:00Z"}
+	// Output: {"level":"info","time":"2026-04-26T12:00:00Z","msg":"","queueDepth":17}
 }
 
 // ErrorOnly logs just an error. Override the level via opts.
 func ExampleLogLayer_ErrorOnly() {
 	log := exampleLogger()
 	log.ErrorOnly(errors.New("disk full"))
-	// Output: {"err":{"message":"disk full"},"level":"error","msg":"","time":"2026-04-26T12:00:00Z"}
+	// Output: {"level":"error","time":"2026-04-26T12:00:00Z","msg":"","err":{"message":"disk full"}}
 }
 
 // Raw bypasses the builder and dispatches a fully-specified entry. Useful
@@ -155,7 +156,7 @@ func ExampleLogLayer_Raw() {
 		Messages: []any{"upstream timeout"},
 		Metadata: loglayer.Metadata{"retries": 3},
 	})
-	// Output: {"level":"warn","msg":"upstream timeout","retries":3,"time":"2026-04-26T12:00:00Z"}
+	// Output: {"level":"warn","time":"2026-04-26T12:00:00Z","msg":"upstream timeout","retries":3}
 }
 
 // SetLevel raises the threshold so entries below the given level are
@@ -166,5 +167,5 @@ func ExampleLogLayer_SetLevel() {
 	log.SetLevel(loglayer.LogLevelWarn)
 	log.Info("dropped")
 	log.Warn("emitted")
-	// Output: {"level":"warn","msg":"emitted","time":"2026-04-26T12:00:00Z"}
+	// Output: {"level":"warn","time":"2026-04-26T12:00:00Z","msg":"emitted"}
 }

@@ -35,7 +35,6 @@ func TestLogrusContract(t *testing.T) {
 			MessageKey: "msg",
 			LevelKey:   "level",
 			Levels: map[loglayer.LogLevel]string{
-				loglayer.LogLevelTrace: "trace",
 				loglayer.LogLevelDebug: "debug",
 				loglayer.LogLevelInfo:  "info",
 				loglayer.LogLevelWarn:  "warning", // logrus uses "warning" not "warn"

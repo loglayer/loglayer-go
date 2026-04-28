@@ -107,11 +107,10 @@ cl.SetLevel(clog.DebugLevel)
 
 ## Level Mapping
 
-| LogLayer Level   | charmbracelet Level | Note                       |
-|------------------|---------------------|----------------------------|
-| `LogLevelTrace`  | `DebugLevel`        | charmbracelet has no Trace |
-| `LogLevelDebug`  | `DebugLevel`        |                            |
-| `LogLevelInfo`   | `InfoLevel`         |                            |
-| `LogLevelWarn`   | `WarnLevel`         |                            |
-| `LogLevelError`  | `ErrorLevel`        |                            |
-| `LogLevelFatal`  | `FatalLevel`        |                            |
+| LogLayer Level   | charmbracelet Level |
+|------------------|---------------------|
+| `LogLevelDebug`  | `DebugLevel`        |
+| `LogLevelInfo`   | `InfoLevel`         |
+| `LogLevelWarn`   | `WarnLevel`         |
+| `LogLevelError`  | `ErrorLevel`        |
+| `LogLevelFatal`  | `FatalLevel`        |

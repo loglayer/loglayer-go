@@ -61,14 +61,6 @@ func (l *LogLayer) Debug(messages ...any) {
 	l.formatLog(LogLevelDebug, messages, nil, nil, nil)
 }
 
-// Trace logs at the trace level.
-func (l *LogLayer) Trace(messages ...any) {
-	if !l.levels.isEnabled(LogLevelTrace) {
-		return
-	}
-	l.formatLog(LogLevelTrace, messages, nil, nil, nil)
-}
-
 // Fatal logs at the fatal level. Calls os.Exit(1) after dispatch unless
 // Config.DisableFatalExit is set.
 func (l *LogLayer) Fatal(messages ...any) {

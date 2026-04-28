@@ -1,11 +1,12 @@
 package pretty
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"sort"
 	"strings"
+
+	"github.com/goccy/go-json"
 
 	"go.loglayer.dev"
 )

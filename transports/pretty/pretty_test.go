@@ -138,7 +138,6 @@ func TestLevels(t *testing.T) {
 		fn    func(*loglayer.LogLayer)
 		level string
 	}{
-		{func(l *loglayer.LogLayer) { l.Trace("x") }, "TRACE"},
 		{func(l *loglayer.LogLayer) { l.Debug("x") }, "DEBUG"},
 		{func(l *loglayer.LogLayer) { l.Info("x") }, "INFO"},
 		{func(l *loglayer.LogLayer) { l.Warn("x") }, "WARN"},

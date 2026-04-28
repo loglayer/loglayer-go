@@ -171,8 +171,6 @@ func (t *Transport) formatChevron(level loglayer.LogLevel) string {
 
 func (t *Transport) styleForLevel(level loglayer.LogLevel) Style {
 	switch level {
-	case loglayer.LogLevelTrace:
-		return t.theme.Trace
 	case loglayer.LogLevelDebug:
 		return t.theme.Debug
 	case loglayer.LogLevelInfo:

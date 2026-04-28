@@ -198,7 +198,6 @@ func TestLive_AllSeverities(t *testing.T) {
 		fn  func(*loglayer.LogLayer)
 		sev otelapi.Severity
 	}{
-		{func(l *loglayer.LogLayer) { l.Trace("x") }, otelapi.SeverityTrace},
 		{func(l *loglayer.LogLayer) { l.Debug("x") }, otelapi.SeverityDebug},
 		{func(l *loglayer.LogLayer) { l.Info("x") }, otelapi.SeverityInfo},
 		{func(l *loglayer.LogLayer) { l.Warn("x") }, otelapi.SeverityWarn},

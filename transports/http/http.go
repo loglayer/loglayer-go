@@ -10,7 +10,6 @@ package httptransport
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,6 +17,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/goccy/go-json"
 
 	"go.loglayer.dev"
 	"go.loglayer.dev/transport"

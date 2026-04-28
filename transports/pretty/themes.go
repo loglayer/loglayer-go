@@ -10,7 +10,6 @@ type Style func(string) string
 // Theme holds the styles applied to each log level and to structured data
 // rendered alongside the log line.
 type Theme struct {
-	Trace     Style
 	Debug     Style
 	Info      Style
 	Warn      Style
@@ -41,7 +40,6 @@ func noStyle(s string) string { return s }
 // dark terminal.
 func Moonlight() *Theme {
 	return &Theme{
-		Trace:     rgb(114, 135, 153),
 		Debug:     rgb(130, 170, 255),
 		Info:      rgb(195, 232, 141),
 		Warn:      rgb(255, 203, 107),
@@ -57,7 +55,6 @@ func Moonlight() *Theme {
 // Sunlight is a light-terminal theme with deep, rich colors.
 func Sunlight() *Theme {
 	return &Theme{
-		Trace:     rgb(110, 110, 110),
 		Debug:     rgb(32, 96, 159),
 		Info:      rgb(35, 134, 54),
 		Warn:      rgb(176, 95, 0),
@@ -73,7 +70,6 @@ func Sunlight() *Theme {
 // Neon is a dark cyberpunk theme with vivid colors.
 func Neon() *Theme {
 	return &Theme{
-		Trace:     rgb(108, 108, 255),
 		Debug:     rgb(255, 82, 246),
 		Info:      rgb(0, 255, 163),
 		Warn:      rgb(255, 231, 46),
@@ -89,7 +85,6 @@ func Neon() *Theme {
 // Nature is a light-terminal theme with earthy greens and browns.
 func Nature() *Theme {
 	return &Theme{
-		Trace:     rgb(101, 115, 126),
 		Debug:     rgb(34, 139, 34),
 		Info:      rgb(46, 139, 87),
 		Warn:      rgb(218, 165, 32),
@@ -105,7 +100,6 @@ func Nature() *Theme {
 // Pastel is a soft theme with gentle, muted colors.
 func Pastel() *Theme {
 	return &Theme{
-		Trace:     rgb(200, 200, 200),
 		Debug:     rgb(173, 216, 230),
 		Info:      rgb(144, 238, 144),
 		Warn:      rgb(255, 218, 185),
@@ -122,7 +116,6 @@ func Pastel() *Theme {
 // transport is configured with NoColor: true.
 func noColorTheme() *Theme {
 	return &Theme{
-		Trace:     noStyle,
 		Debug:     noStyle,
 		Info:      noStyle,
 		Warn:      noStyle,

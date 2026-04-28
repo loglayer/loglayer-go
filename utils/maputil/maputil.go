@@ -12,7 +12,7 @@
 // Both are safe to use from any goroutine.
 package maputil
 
-import "encoding/json"
+import "github.com/goccy/go-json"
 
 // ToMap returns v as a map[string]any. Nil and existing maps pass through;
 // other values (structs, pointers, ...) are converted via a JSON roundtrip

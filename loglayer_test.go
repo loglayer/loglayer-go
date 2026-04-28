@@ -85,9 +85,6 @@ func TestBasicLogLevels(t *testing.T) {
 	log.Debug("hello debug")
 	assertLine(t, lib, loglayer.LogLevelDebug, "hello debug")
 
-	log.Trace("hello trace")
-	assertLine(t, lib, loglayer.LogLevelTrace, "hello trace")
-
 	log.Fatal("hello fatal")
 	assertLine(t, lib, loglayer.LogLevelFatal, "hello fatal")
 }

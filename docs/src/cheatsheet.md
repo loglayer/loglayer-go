@@ -50,7 +50,6 @@ log.MuteFields()                                    // ✅ in-place mutation; no
 ## Log Levels
 
 ```go
-log.Trace("...")
 log.Debug("...")
 log.Info("...")
 log.Warn("...")
@@ -250,10 +249,9 @@ log.Raw(loglayer.RawLogEntry{
 ## Levels
 
 ```go
-loglayer.LogLevelTrace  // 10
-loglayer.LogLevelDebug  // 20
-loglayer.LogLevelInfo   // 30
-loglayer.LogLevelWarn   // 40
-loglayer.LogLevelError  // 50
-loglayer.LogLevelFatal  // 60
+loglayer.LogLevelDebug  // 10
+loglayer.LogLevelInfo   // 20
+loglayer.LogLevelWarn   // 30
+loglayer.LogLevelError  // 40
+loglayer.LogLevelFatal  // 50
 ```

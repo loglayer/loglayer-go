@@ -1,14 +1,13 @@
 ---
 title: Basic Logging
-description: The six log level methods and how messages are assembled.
+description: The five log level methods and how messages are assembled.
 ---
 
 # Basic Logging
 
-Once you have a `*loglayer.LogLayer`, the core API is six methods, one per level:
+Once you have a `*loglayer.LogLayer`, the core API is five methods, one per level:
 
 ```go
-log.Trace("...")
 log.Debug("...")
 log.Info("...")
 log.Warn("...")
@@ -27,16 +26,15 @@ Non-string arguments are formatted with `fmt.Sprintf("%v", arg)`.
 
 ## Log Levels
 
-LogLayer defines six numeric levels:
+LogLayer defines five numeric levels:
 
 | Constant                  | Value |
 |---------------------------|-------|
-| `loglayer.LogLevelTrace`  | 10    |
-| `loglayer.LogLevelDebug`  | 20    |
-| `loglayer.LogLevelInfo`   | 30    |
-| `loglayer.LogLevelWarn`   | 40    |
-| `loglayer.LogLevelError`  | 50    |
-| `loglayer.LogLevelFatal`  | 60    |
+| `loglayer.LogLevelDebug`  | 10    |
+| `loglayer.LogLevelInfo`   | 20    |
+| `loglayer.LogLevelWarn`   | 30    |
+| `loglayer.LogLevelError`  | 40    |
+| `loglayer.LogLevelFatal`  | 50    |
 
 Numeric ordering matters for `SetLevel`. See [Adjusting Log Levels](/logging-api/adjusting-log-levels).
 

@@ -106,9 +106,9 @@ type LogGroup struct {
 	Transports []string
 
 	// Level is the minimum log level for this group. Entries below this
-	// level are dropped for this group's transports. Zero value
-	// (LogLevelTrace=0 indirectly via the levelIndex check) means "no
-	// per-group filter: all levels pass".
+	// level are dropped for this group's transports. Zero value means "no
+	// per-group filter: all levels pass" (the levelIndex check rejects 0
+	// as an unknown level).
 	Level LogLevel
 
 	// Disabled suppresses this group's routing when true. Entries tagged

@@ -234,10 +234,10 @@ func TestGroups_RuntimeMutators(t *testing.T) {
 		t.Errorf("Info under Warn-min group should drop: got %d", libs[0].Len())
 	}
 
-	log.SetGroupLevel("dynamic", loglayer.LogLevelTrace)
+	log.SetGroupLevel("dynamic", loglayer.LogLevelDebug)
 	log.WithGroup("dynamic").Info("kept after relaxing")
 	if libs[0].Len() != 1 {
-		t.Errorf("after SetGroupLevel(Trace): got %d", libs[0].Len())
+		t.Errorf("after SetGroupLevel(Debug): got %d", libs[0].Len())
 	}
 
 	log.DisableGroup("dynamic")

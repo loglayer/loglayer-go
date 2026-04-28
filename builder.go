@@ -110,14 +110,6 @@ func (b *LogBuilder) Debug(messages ...any) {
 	b.dispatch(LogLevelDebug, messages)
 }
 
-// Trace dispatches the accumulated entry at the trace level.
-func (b *LogBuilder) Trace(messages ...any) {
-	if !b.layer.levels.isEnabled(LogLevelTrace) {
-		return
-	}
-	b.dispatch(LogLevelTrace, messages)
-}
-
 // Fatal dispatches the accumulated entry at the fatal level.
 // Calls os.Exit(1) after dispatch unless Config.DisableFatalExit is set.
 func (b *LogBuilder) Fatal(messages ...any) {

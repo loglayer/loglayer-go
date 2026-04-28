@@ -2,11 +2,12 @@
 package console
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"time"
+
+	"github.com/goccy/go-json"
 
 	"go.loglayer.dev"
 	"go.loglayer.dev/transport"
@@ -53,7 +54,7 @@ type Config struct {
 	Writer io.Writer
 }
 
-// Transport writes log entries to stdout (info/debug/trace) or stderr (warn/error/fatal).
+// Transport writes log entries to stdout (info/debug) or stderr (warn/error/fatal).
 type Transport struct {
 	transport.BaseTransport
 	cfg Config

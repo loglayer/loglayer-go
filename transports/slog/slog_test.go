@@ -34,9 +34,8 @@ func TestSlogContract(t *testing.T) {
 			MessageKey: "msg",
 			LevelKey:   "level",
 			Levels: map[loglayer.LogLevel]string{
-				// Trace omitted: slog has no native Trace; tested separately
-				// (maps to DEBUG). Fatal omitted: slog renders custom levels
-				// as "ERROR+N"; covered by TestSlogFatalAboveError.
+				// Fatal omitted: slog renders custom levels as "ERROR+N";
+				// covered by TestSlogFatalAboveError.
 				loglayer.LogLevelDebug: "DEBUG",
 				loglayer.LogLevelInfo:  "INFO",
 				loglayer.LogLevelWarn:  "WARN",
@@ -44,15 +43,6 @@ func TestSlogContract(t *testing.T) {
 			},
 		},
 	})
-}
-
-func TestSlogTraceMapsToDebug(t *testing.T) {
-	log, buf := factory(transporttest.FactoryOpts{})
-	log.Trace("trace msg")
-	obj := transporttest.ParseJSONLine(t, buf)
-	if obj["level"] != "DEBUG" {
-		t.Errorf("trace should map to DEBUG in slog, got %v", obj["level"])
-	}
 }
 
 func TestSlogFatalAboveError(t *testing.T) {

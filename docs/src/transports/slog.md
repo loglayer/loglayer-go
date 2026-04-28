@@ -102,7 +102,6 @@ sl.With("global", "field").Info("...")
 
 | LogLayer Level   | slog Level         | Note                                              |
 |------------------|--------------------|---------------------------------------------------|
-| `LogLevelTrace`  | `LevelDebug`       | slog has no Trace level                           |
 | `LogLevelDebug`  | `LevelDebug`       |                                                   |
 | `LogLevelInfo`   | `LevelInfo`        |                                                   |
 | `LogLevelWarn`   | `LevelWarn`        |                                                   |

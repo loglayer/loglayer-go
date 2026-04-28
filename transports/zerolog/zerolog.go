@@ -95,8 +95,6 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 // never terminates the process.
 func toZerologLevel(l loglayer.LogLevel) zlog.Level {
 	switch l {
-	case loglayer.LogLevelTrace:
-		return zlog.TraceLevel
 	case loglayer.LogLevelDebug:
 		return zlog.DebugLevel
 	case loglayer.LogLevelInfo:

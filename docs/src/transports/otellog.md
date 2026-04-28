@@ -95,11 +95,10 @@ Fatal entries are emitted at `SeverityFatal` (the OTel severity numeric `21`) on
 
 ## Severity Mapping
 
-OTel defines four sub-levels per severity bucket (`SeverityTrace1`-`Trace4`, `Debug1`-`Debug4`, etc., numeric 1-24). LogLayer has a single level per bucket, so we use the first of each:
+OTel defines four sub-levels per severity bucket (`SeverityDebug1`-`Debug4`, `Info1`-`Info4`, etc., numeric 1-24). LogLayer has a single level per bucket, so we use the first of each:
 
 | LogLayer Level   | OTel Severity      | Numeric |
 |------------------|--------------------|---------|
-| `LogLevelTrace`  | `SeverityTrace`    | 1       |
 | `LogLevelDebug`  | `SeverityDebug`    | 5       |
 | `LogLevelInfo`   | `SeverityInfo`     | 9       |
 | `LogLevelWarn`   | `SeverityWarn`     | 13      |

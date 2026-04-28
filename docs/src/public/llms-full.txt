@@ -44,19 +44,17 @@ log, err := loglayer.Build(loglayer.Config{...})
 
 ### Log Levels
 
-Six levels, integer-typed:
+Five levels, integer-typed:
 
-- `loglayer.LogLevelTrace` (10)
-- `loglayer.LogLevelDebug` (20)
-- `loglayer.LogLevelInfo` (30)
-- `loglayer.LogLevelWarn` (40)
-- `loglayer.LogLevelError` (50)
-- `loglayer.LogLevelFatal` (60)
+- `loglayer.LogLevelDebug` (10)
+- `loglayer.LogLevelInfo` (20)
+- `loglayer.LogLevelWarn` (30)
+- `loglayer.LogLevelError` (40)
+- `loglayer.LogLevelFatal` (50)
 
 Level methods on `*loglayer.LogLayer`:
 
 ```go
-log.Trace(...messages any)
 log.Debug(...messages any)
 log.Info(...messages any)
 log.Warn(...messages any)
@@ -220,7 +218,7 @@ Transports that hand the entry to an existing logger.
 - **phuslu**: wraps `github.com/phuslu/log`. **Always exits on Fatal** regardless of `DisableFatalExit`. phuslu calls `os.Exit` from every fatal dispatch path.
 - **logrus**: wraps `github.com/sirupsen/logrus`. Builds a fresh `*logrus.Logger` copying the user's settings with `ExitFunc` neutralized so the user's original logger is never mutated.
 - **charmlog**: wraps `github.com/charmbracelet/log` (package named `charmlog` to avoid stdlib `log` collision). Uses `Log(level, ...)` which doesn't exit on Fatal.
-- **otellog**: emits each entry as an OpenTelemetry `log.Record` on a `log.Logger` (`go.opentelemetry.io/otel/log`; package named `otellog` to avoid colliding with the OTel root package). `Config.Name` is required when `Logger` is nil (instrumentation scope name). `Config.LoggerProvider` defaults to `global.GetLoggerProvider`. `Config.Logger` is an escape hatch for tests/advanced wiring. Severity maps `Trace/Debug/Info/Warn/Error/Fatal` to OTel `SeverityTrace/Debug/Info/Warn/Error/Fatal` (numeric 1/5/9/13/17/21); `SeverityText` carries the original LogLayer level name. `WithCtx` is forwarded to `Logger.Emit` so SDK processors can correlate the record with the active span. Fatal exit is the LogLayer core's decision via `Config.DisableFatalExit`.
+- **otellog**: emits each entry as an OpenTelemetry `log.Record` on a `log.Logger` (`go.opentelemetry.io/otel/log`; package named `otellog` to avoid colliding with the OTel root package). `Config.Name` is required when `Logger` is nil (instrumentation scope name). `Config.LoggerProvider` defaults to `global.GetLoggerProvider`. `Config.Logger` is an escape hatch for tests/advanced wiring. Severity maps `Debug/Info/Warn/Error/Fatal` to OTel `SeverityDebug/Info/Warn/Error/Fatal` (numeric 5/9/13/17/21); `SeverityText` carries the original LogLayer level name. `WithCtx` is forwarded to `Logger.Emit` so SDK processors can correlate the record with the active span. Fatal exit is the LogLayer core's decision via `Config.DisableFatalExit`.
 
 ### TransportParams Shape
 
