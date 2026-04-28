@@ -112,16 +112,16 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 ## Module layout
 
-TypeScript's `@loglayer/transport-pino`, `@loglayer/plugin-redaction`, etc. are separate npm packages. The Go port is a single Go module with sub-packages:
+TypeScript's `@loglayer/transport-pino`, `@loglayer/plugin-redaction`, etc. are separate npm packages. The Go port follows the same model: the core is one module, and any transport/plugin with a third-party dep is its own module so consumers only pay for what they import.
 
 | TypeScript                       | Go                                            |
 |----------------------------------|-----------------------------------------------|
-| `loglayer`                       | `go.loglayer.dev` (the core)                  |
+| `loglayer`                       | `go.loglayer.dev` (core + stdlib renderers)   |
 | `@loglayer/transport-zerolog`    | `go.loglayer.dev/transports/zerolog`          |
 | `@loglayer/transport-datadog`    | `go.loglayer.dev/transports/datadog`          |
 | `@loglayer/integration-elysia`   | `go.loglayer.dev/integrations/loghttp` (etc.) |
 
-You install once (`go get go.loglayer.dev`) and import the sub-packages you need. Go's [lazy module loading](https://go.dev/ref/mod#lazy-loading) means transports you don't import don't add to your binary or `go.sum`.
+`go get` each module you actually need; the dependency graph stays focused on whatever you imported.
 
 ## Plugins
 

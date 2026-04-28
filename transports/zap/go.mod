@@ -14,5 +14,5 @@ require (
 
 require (
 	github.com/goccy/go-json v0.10.6 // indirect
-	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/multierr v1.11.0 // indirect
 )

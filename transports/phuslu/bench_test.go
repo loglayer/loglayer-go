@@ -7,57 +7,14 @@ import (
 
 	"go.loglayer.dev"
 	"go.loglayer.dev/transport"
+	"go.loglayer.dev/transport/benchtest"
 	llphuslu "go.loglayer.dev/transports/phuslu"
 )
-
-const benchMsg = "user logged in"
-
-type benchUser struct {
-	ID    int    `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-}
-
-var benchTestUser = benchUser{ID: 42, Name: "Alice", Email: "alice@example.com"}
-
-func benchMetadata() loglayer.Metadata {
-	return loglayer.Metadata{"id": 42, "name": "Alice", "email": "alice@example.com"}
-}
-
-type discardWriter struct{}
-
-func (discardWriter) Write(p []byte) (int, error) { return len(p), nil }
-
-var discard discardWriter
-
-func runSimple(b *testing.B, log *loglayer.LogLayer) {
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		log.Info(benchMsg)
-	}
-}
-
-func runMap(b *testing.B, log *loglayer.LogLayer) {
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		log.WithMetadata(benchMetadata()).Info(benchMsg)
-	}
-}
-
-func runStruct(b *testing.B, log *loglayer.LogLayer) {
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		log.WithMetadata(benchTestUser).Info(benchMsg)
-	}
-}
 
 func newDirect() *plog.Logger {
 	return &plog.Logger{
 		Level:  plog.InfoLevel,
-		Writer: &plog.IOWriter{Writer: discard},
+		Writer: &plog.IOWriter{Writer: benchtest.Discard},
 	}
 }
 
@@ -76,7 +33,7 @@ func BenchmarkDirect_Phuslu_SimpleMessage(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		log.Info().Msg(benchMsg)
+		log.Info().Msg(benchtest.Msg)
 	}
 }
 
@@ -89,10 +46,10 @@ func BenchmarkDirect_Phuslu_MapFields(b *testing.B) {
 			Int("id", 42).
 			Str("name", "Alice").
 			Str("email", "alice@example.com").
-			Msg(benchMsg)
+			Msg(benchtest.Msg)
 	}
 }
 
-func BenchmarkWrapped_Phuslu_SimpleMessage(b *testing.B)  { runSimple(b, newWrapped()) }
-func BenchmarkWrapped_Phuslu_MapMetadata(b *testing.B)    { runMap(b, newWrapped()) }
-func BenchmarkWrapped_Phuslu_StructMetadata(b *testing.B) { runStruct(b, newWrapped()) }
+func BenchmarkWrapped_Phuslu_SimpleMessage(b *testing.B)  { benchtest.RunSimple(b, newWrapped()) }
+func BenchmarkWrapped_Phuslu_MapMetadata(b *testing.B)    { benchtest.RunMap(b, newWrapped()) }
+func BenchmarkWrapped_Phuslu_StructMetadata(b *testing.B) { benchtest.RunStruct(b, newWrapped()) }

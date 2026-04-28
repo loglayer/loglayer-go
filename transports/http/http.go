@@ -64,6 +64,12 @@ type Config struct {
 	transport.BaseConfig
 
 	// URL is the endpoint logs are POSTed to. Required.
+	//
+	// The transport accepts any scheme; an http:// URL is allowed because
+	// fluentd-over-loopback, Loki on a private network, and TLS-terminating
+	// proxies are legitimate setups. Wrappers that ship a known credential
+	// (transports/datadog ships DD-API-KEY) layer their own https-by-default
+	// enforcement on top.
 	URL string
 
 	// Method is the HTTP method. Defaults to "POST".

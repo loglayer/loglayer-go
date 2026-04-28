@@ -8,47 +8,20 @@ package loglayer_test
 // pull every vendor SDK into its dependency graph. Render_Pretty
 // benchmarks live in transports/pretty for the same reason.
 //
-// Run with:
-//   go test -bench=. -benchmem -run=^$ -benchtime=1s .
-//
-// Note on the writer: we use a custom discardWriter rather than io.Discard
-// because charmbracelet/log detects io.Discard and skips its formatting
-// pipeline entirely, which would understate its real cost. discardWriter
-// looks like any other writer so every library exercises its full write path.
+// Shared fixtures (discard writer, struct/map data, runner shapes)
+// live in transport/benchtest so every module's numbers are directly
+// comparable.
 
 import (
 	"testing"
 
 	"go.loglayer.dev"
 	"go.loglayer.dev/transport"
+	"go.loglayer.dev/transport/benchtest"
 	"go.loglayer.dev/transports/console"
 	"go.loglayer.dev/transports/structured"
 	lltest "go.loglayer.dev/transports/testing"
 )
-
-type benchUser struct {
-	ID    int    `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-}
-
-var benchTestUser = benchUser{ID: 42, Name: "Alice", Email: "alice@example.com"}
-
-const benchMsg = "user logged in"
-
-type discardWriter struct{}
-
-func (discardWriter) Write(p []byte) (int, error) { return len(p), nil }
-
-var discard discardWriter
-
-func benchMetadata() loglayer.Metadata {
-	return loglayer.Metadata{
-		"id":    42,
-		"name":  "Alice",
-		"email": "alice@example.com",
-	}
-}
 
 type noopTransport struct{}
 
@@ -57,39 +30,15 @@ func (n *noopTransport) IsEnabled() bool                         { return true }
 func (n *noopTransport) SendToLogger(_ loglayer.TransportParams) {}
 func (n *noopTransport) GetLoggerInstance() any                  { return nil }
 
-func runSimple(b *testing.B, log *loglayer.LogLayer) {
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		log.Info(benchMsg)
-	}
-}
-
-func runMap(b *testing.B, log *loglayer.LogLayer) {
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		log.WithMetadata(benchMetadata()).Info(benchMsg)
-	}
-}
-
-func runStruct(b *testing.B, log *loglayer.LogLayer) {
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		log.WithMetadata(benchTestUser).Info(benchMsg)
-	}
-}
-
 func BenchmarkRender_Structured_SimpleMessage(b *testing.B) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
 		Transport: structured.New(structured.Config{
 			BaseConfig: transport.BaseConfig{ID: "structured"},
-			Writer:     discard,
+			Writer:     benchtest.Discard,
 		}),
 	})
-	runSimple(b, log)
+	benchtest.RunSimple(b, log)
 }
 
 func BenchmarkRender_Structured_MapMetadata(b *testing.B) {
@@ -97,10 +46,10 @@ func BenchmarkRender_Structured_MapMetadata(b *testing.B) {
 		DisableFatalExit: true,
 		Transport: structured.New(structured.Config{
 			BaseConfig: transport.BaseConfig{ID: "structured"},
-			Writer:     discard,
+			Writer:     benchtest.Discard,
 		}),
 	})
-	runMap(b, log)
+	benchtest.RunMap(b, log)
 }
 
 func BenchmarkRender_Structured_StructMetadata(b *testing.B) {
@@ -108,10 +57,10 @@ func BenchmarkRender_Structured_StructMetadata(b *testing.B) {
 		DisableFatalExit: true,
 		Transport: structured.New(structured.Config{
 			BaseConfig: transport.BaseConfig{ID: "structured"},
-			Writer:     discard,
+			Writer:     benchtest.Discard,
 		}),
 	})
-	runStruct(b, log)
+	benchtest.RunStruct(b, log)
 }
 
 func BenchmarkRender_Console_SimpleMessage(b *testing.B) {
@@ -119,10 +68,10 @@ func BenchmarkRender_Console_SimpleMessage(b *testing.B) {
 		DisableFatalExit: true,
 		Transport: console.New(console.Config{
 			BaseConfig: transport.BaseConfig{ID: "console"},
-			Writer:     discard,
+			Writer:     benchtest.Discard,
 		}),
 	})
-	runSimple(b, log)
+	benchtest.RunSimple(b, log)
 }
 
 func BenchmarkRender_Console_MapMetadata(b *testing.B) {
@@ -130,10 +79,10 @@ func BenchmarkRender_Console_MapMetadata(b *testing.B) {
 		DisableFatalExit: true,
 		Transport: console.New(console.Config{
 			BaseConfig: transport.BaseConfig{ID: "console"},
-			Writer:     discard,
+			Writer:     benchtest.Discard,
 		}),
 	})
-	runMap(b, log)
+	benchtest.RunMap(b, log)
 }
 
 func BenchmarkRender_Testing_SimpleMessage(b *testing.B) {
@@ -143,7 +92,7 @@ func BenchmarkRender_Testing_SimpleMessage(b *testing.B) {
 			BaseConfig: transport.BaseConfig{ID: "test"},
 		}),
 	})
-	runSimple(b, log)
+	benchtest.RunSimple(b, log)
 }
 
 func BenchmarkRender_Testing_MapMetadata(b *testing.B) {
@@ -153,22 +102,22 @@ func BenchmarkRender_Testing_MapMetadata(b *testing.B) {
 			BaseConfig: transport.BaseConfig{ID: "test"},
 		}),
 	})
-	runMap(b, log)
+	benchtest.RunMap(b, log)
 }
 
 func BenchmarkLoglayer_SimpleMessage(b *testing.B) {
 	log := loglayer.New(loglayer.Config{DisableFatalExit: true, Transport: &noopTransport{}})
-	runSimple(b, log)
+	benchtest.RunSimple(b, log)
 }
 
 func BenchmarkLoglayer_MapMetadata(b *testing.B) {
 	log := loglayer.New(loglayer.Config{DisableFatalExit: true, Transport: &noopTransport{}})
-	runMap(b, log)
+	benchtest.RunMap(b, log)
 }
 
 func BenchmarkLoglayer_StructMetadata(b *testing.B) {
 	log := loglayer.New(loglayer.Config{DisableFatalExit: true, Transport: &noopTransport{}})
-	runStruct(b, log)
+	benchtest.RunStruct(b, log)
 }
 
 func BenchmarkLoglayer_WithFields(b *testing.B) {

@@ -7,56 +7,13 @@ import (
 
 	"go.loglayer.dev"
 	"go.loglayer.dev/transport"
+	"go.loglayer.dev/transport/benchtest"
 	lllogrus "go.loglayer.dev/transports/logrus"
 )
 
-const benchMsg = "user logged in"
-
-type benchUser struct {
-	ID    int    `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-}
-
-var benchTestUser = benchUser{ID: 42, Name: "Alice", Email: "alice@example.com"}
-
-func benchMetadata() loglayer.Metadata {
-	return loglayer.Metadata{"id": 42, "name": "Alice", "email": "alice@example.com"}
-}
-
-type discardWriter struct{}
-
-func (discardWriter) Write(p []byte) (int, error) { return len(p), nil }
-
-var discard discardWriter
-
-func runSimple(b *testing.B, log *loglayer.LogLayer) {
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		log.Info(benchMsg)
-	}
-}
-
-func runMap(b *testing.B, log *loglayer.LogLayer) {
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		log.WithMetadata(benchMetadata()).Info(benchMsg)
-	}
-}
-
-func runStruct(b *testing.B, log *loglayer.LogLayer) {
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		log.WithMetadata(benchTestUser).Info(benchMsg)
-	}
-}
-
 func newDirect() *logrusbase.Logger {
 	l := logrusbase.New()
-	l.Out = discard
+	l.Out = benchtest.Discard
 	l.Formatter = &logrusbase.JSONFormatter{}
 	l.Level = logrusbase.InfoLevel
 	return l
@@ -77,7 +34,7 @@ func BenchmarkDirect_Logrus_SimpleMessage(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		log.Info(benchMsg)
+		log.Info(benchtest.Msg)
 	}
 }
 
@@ -90,10 +47,10 @@ func BenchmarkDirect_Logrus_MapFields(b *testing.B) {
 			"id":    42,
 			"name":  "Alice",
 			"email": "alice@example.com",
-		}).Info(benchMsg)
+		}).Info(benchtest.Msg)
 	}
 }
 
-func BenchmarkWrapped_Logrus_SimpleMessage(b *testing.B)  { runSimple(b, newWrapped()) }
-func BenchmarkWrapped_Logrus_MapMetadata(b *testing.B)    { runMap(b, newWrapped()) }
-func BenchmarkWrapped_Logrus_StructMetadata(b *testing.B) { runStruct(b, newWrapped()) }
+func BenchmarkWrapped_Logrus_SimpleMessage(b *testing.B)  { benchtest.RunSimple(b, newWrapped()) }
+func BenchmarkWrapped_Logrus_MapMetadata(b *testing.B)    { benchtest.RunMap(b, newWrapped()) }
+func BenchmarkWrapped_Logrus_StructMetadata(b *testing.B) { benchtest.RunStruct(b, newWrapped()) }

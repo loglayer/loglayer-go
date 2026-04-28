@@ -8,57 +8,13 @@ import (
 
 	"go.loglayer.dev"
 	"go.loglayer.dev/transport"
+	"go.loglayer.dev/transport/benchtest"
 	llzap "go.loglayer.dev/transports/zap"
 )
 
-const benchMsg = "user logged in"
-
-type benchUser struct {
-	ID    int    `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-}
-
-var benchTestUser = benchUser{ID: 42, Name: "Alice", Email: "alice@example.com"}
-
-func benchMetadata() loglayer.Metadata {
-	return loglayer.Metadata{"id": 42, "name": "Alice", "email": "alice@example.com"}
-}
-
-type discardWriter struct{}
-
-func (discardWriter) Write(p []byte) (int, error) { return len(p), nil }
-func (discardWriter) Sync() error                 { return nil }
-
-var discard discardWriter
-
-func runSimple(b *testing.B, log *loglayer.LogLayer) {
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		log.Info(benchMsg)
-	}
-}
-
-func runMap(b *testing.B, log *loglayer.LogLayer) {
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		log.WithMetadata(benchMetadata()).Info(benchMsg)
-	}
-}
-
-func runStruct(b *testing.B, log *loglayer.LogLayer) {
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		log.WithMetadata(benchTestUser).Info(benchMsg)
-	}
-}
-
 func newDirect() *zap.Logger {
 	enc := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
-	core := zapcore.NewCore(enc, zapcore.AddSync(discard), zapcore.InfoLevel)
+	core := zapcore.NewCore(enc, zapcore.AddSync(benchtest.Discard), zapcore.InfoLevel)
 	return zap.New(core)
 }
 
@@ -77,7 +33,7 @@ func BenchmarkDirect_Zap_SimpleMessage(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		log.Info(benchMsg)
+		log.Info(benchtest.Msg)
 	}
 }
 
@@ -86,7 +42,7 @@ func BenchmarkDirect_Zap_MapFields(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		log.Info(benchMsg,
+		log.Info(benchtest.Msg,
 			zap.Int("id", 42),
 			zap.String("name", "Alice"),
 			zap.String("email", "alice@example.com"),
@@ -94,6 +50,6 @@ func BenchmarkDirect_Zap_MapFields(b *testing.B) {
 	}
 }
 
-func BenchmarkWrapped_Zap_SimpleMessage(b *testing.B)  { runSimple(b, newWrapped()) }
-func BenchmarkWrapped_Zap_MapMetadata(b *testing.B)    { runMap(b, newWrapped()) }
-func BenchmarkWrapped_Zap_StructMetadata(b *testing.B) { runStruct(b, newWrapped()) }
+func BenchmarkWrapped_Zap_SimpleMessage(b *testing.B)  { benchtest.RunSimple(b, newWrapped()) }
+func BenchmarkWrapped_Zap_MapMetadata(b *testing.B)    { benchtest.RunMap(b, newWrapped()) }
+func BenchmarkWrapped_Zap_StructMetadata(b *testing.B) { benchtest.RunStruct(b, newWrapped()) }

@@ -55,7 +55,14 @@ loglayer-golang/
 - **No `Logger` interface in core**: Go convention is "consumer defines the interface."
   Application code accepts the concrete `*loglayer.LogLayer`; `loglayer.NewMock()` returns
   the same type for test injection.
-- **Multi-module layout**: the main `go.loglayer.dev` module hosts the framework core, renderer transports (blank/console/pretty/structured/testing), the slog wrapper (stdlib only), the network transports (http/datadog), `integrations/loghttp`, and the utility/plugin packages with stdlib-only or goccy/go-json-only deps. Heavy or floor-bumping wrapper transports live in their own sub-modules so consumers don't drag every vendor SDK into their dependency graph: `transports/zerolog`, `transports/zap`, `transports/logrus`, `transports/phuslu`, `transports/charmlog`, `transports/otellog`, plus the standalone `plugins/oteltrace` and the test-only `plugins/datadogtrace/livetest`. Each sub-module has its own `go.mod` with a `replace go.loglayer.dev => ../..` directive for development.
+- **Multi-module layout**: the main `go.loglayer.dev` module hosts the framework core (loglayer/builder/dispatch/plugin/level/etc.), the `transport/` package (BaseTransport, helpers, transporttest, benchtest), the in-stdlib renderer transports (blank/console/structured/testing), the slog wrapper (stdlib only), `integrations/loghttp`, plugins/{redact,datadogtrace,plugintest}, and utils/{maputil,sanitize,idgen}. Every other transport and plugin lives in its own Go module so consumers only pay for the SDKs they actually import:
+  - `transports/pretty` (fatih/color)
+  - `transports/http`, `transports/datadog` (network shippers; datadog wraps http)
+  - `transports/zerolog`, `transports/zap`, `transports/logrus`, `transports/phuslu`, `transports/charmlog` (vendor wrappers)
+  - `transports/otellog`, `plugins/oteltrace` (OTel SDK; Go 1.25 floor)
+  - `plugins/datadogtrace/livetest` (test-only, dd-trace-go v2)
+
+  Each sub-module has its own `go.mod` with a `replace go.loglayer.dev => ../..` (and any relevant sibling) directive for development. A `go.work` at the repo root lets `gopls` and `go test all` see every module from a single root; CI uses `scripts/foreach-module.sh` which runs each module in isolation and is unaffected.
 
 ## Verification
 
