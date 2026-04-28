@@ -1,5 +1,10 @@
 {
   ".": "0.0.0",
+  "transports/charmlog": "0.0.0",
+  "transports/logrus": "0.0.0",
   "transports/otellog": "0.0.0",
+  "transports/phuslu": "0.0.0",
+  "transports/zap": "0.0.0",
+  "transports/zerolog": "0.0.0",
   "plugins/oteltrace": "0.0.0"
 }

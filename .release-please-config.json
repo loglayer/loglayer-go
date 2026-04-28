@@ -12,10 +12,45 @@
       "include-component-in-tag": false,
       "changelog-path": "CHANGELOG.md"
     },
+    "transports/charmlog": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/transports/charmlog",
+      "component": "transports/charmlog",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "transports/logrus": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/transports/logrus",
+      "component": "transports/logrus",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
     "transports/otellog": {
       "release-type": "go",
       "package-name": "go.loglayer.dev/transports/otellog",
       "component": "transports/otellog",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "transports/phuslu": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/transports/phuslu",
+      "component": "transports/phuslu",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "transports/zap": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/transports/zap",
+      "component": "transports/zap",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "transports/zerolog": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/transports/zerolog",
+      "component": "transports/zerolog",
       "include-component-in-tag": true,
       "changelog-path": "CHANGELOG.md"
     },

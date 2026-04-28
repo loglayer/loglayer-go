@@ -31,13 +31,22 @@ fluent API for messages, fields, metadata, and errors. v1.0.0 ships:
   line), `console`, `testing`, `blank`.
 - **Logger wrappers**: `zerolog`, `zap`, `log/slog`, `logrus`,
   `charmbracelet/log`, `phuslu/log`. Each forwards `WithCtx` so
-  context-aware downstream handlers (OTel, etc.) keep working.
+  context-aware downstream handlers (OTel, etc.) keep working. Each
+  vendor wrapper (zerolog/zap/logrus/phuslu/charmlog/otellog) ships
+  as its own Go module so consumers only pay for the SDKs they
+  actually import.
 - **Network**: `http` (generic batched POST with pluggable Encoder),
-  `datadog` (Logs HTTP intake with on-prem URL override).
+  `datadog` (Logs HTTP intake with on-prem URL override; rejects
+  non-https URLs by default, opt-in via `Config.AllowInsecureURL`).
 - **OpenTelemetry**: `transports/otellog` (logs SDK) and
   `plugins/oteltrace` (trace_id/span_id injection on any transport).
   Both ship as separate Go modules so the OTel dep graph stays off
   users who don't import them.
+- **Lifecycle**: `RemoveTransport` / `SetTransports` / `AddTransport`
+  by-replace close the displaced transport if it implements
+  `io.Closer` (HTTP/Datadog drain pending entries). Fatal-level
+  emissions flush every transport before `os.Exit` so async logs
+  aren't lost.
 - **Plugins**: interface-based plugin system. `Plugin` is a one-method
   interface; six narrow hook interfaces (`FieldsHook`, `MetadataHook`,
   `DataHook`, `MessageHook`, `LevelHook`, `SendGate`) plus

@@ -15,7 +15,12 @@ set -euo pipefail
 # sub-modules. Don't reorder without a reason.
 ALL_MODULES=(
   .
+  transports/charmlog
+  transports/logrus
   transports/otellog
+  transports/phuslu
+  transports/zap
+  transports/zerolog
   plugins/oteltrace
   plugins/datadogtrace/livetest
   examples/otel-end-to-end
@@ -26,7 +31,12 @@ ALL_MODULES=(
 # of example code shouldn't gate the build.
 SHIPPED_MODULES=(
   .
+  transports/charmlog
+  transports/logrus
   transports/otellog
+  transports/phuslu
+  transports/zap
+  transports/zerolog
   plugins/oteltrace
 )
 
@@ -81,7 +91,16 @@ case "$op" in
   test)
     # examples/otel-end-to-end has no tests; skip to avoid the
     # confusing "[no test files]" output. Other modules all have tests.
-    for mod in . transports/otellog plugins/oteltrace plugins/datadogtrace/livetest; do
+    for mod in \
+      . \
+      transports/charmlog \
+      transports/logrus \
+      transports/otellog \
+      transports/phuslu \
+      transports/zap \
+      transports/zerolog \
+      plugins/oteltrace \
+      plugins/datadogtrace/livetest; do
       echo "==> $mod (test)"
       (cd "$mod" && go test -race -count=1 ./...)
     done

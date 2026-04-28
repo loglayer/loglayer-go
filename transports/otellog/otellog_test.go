@@ -131,8 +131,7 @@ func TestStructMetadataNested(t *testing.T) {
 		t.Fatalf("metadata should be Map, got %v", meta.Kind())
 	}
 	got := kvMap(meta.AsMap())
-	// JSON roundtrip turns Go ints into float64.
-	if got["id"].AsFloat64() != 7 || got["name"].AsString() != "Alice" {
+	if got["id"].AsInt64() != 7 || got["name"].AsString() != "Alice" {
 		t.Errorf("nested fields: got %v", got)
 	}
 }

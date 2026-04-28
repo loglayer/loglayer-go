@@ -5,6 +5,10 @@ description: Wrap a github.com/phuslu/log logger with LogLayer.
 
 # phuslu/log Transport
 
+::: info Separate module
+`transports/phuslu` ships as its own Go module (`go.loglayer.dev/transports/phuslu`) so consumers who don't use the phuslu wrapper never pull `github.com/phuslu/log` into their dependency graph.
+:::
+
 Wraps an existing `*phuslu/log.Logger`. Map metadata flattens to fields via `Entry.Any(k, v)`; struct metadata lands under a configurable key.
 
 ```sh
