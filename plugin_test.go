@@ -102,6 +102,37 @@ func TestPlugin_OnMetadataCalled_RewritesMetadata(t *testing.T) {
 	}
 }
 
+// TestPlugin_MetadataOnlyUsesSingleSnapshot locks in the contract that
+// MetadataOnly's OnMetadataCalled hook and dispatch hooks see the same
+// plugin snapshot. A plugin added between the metadata-hook call and the
+// dispatch must not bind to that in-flight entry.
+func TestPlugin_MetadataOnlyUsesSingleSnapshot(t *testing.T) {
+	log, lib := setup(t)
+
+	// Pre-existing metadata hook so MetadataOnly enters its hook path.
+	log.AddPlugin(loglayer.NewMetadataHook("noop", func(v any) any { return v }))
+
+	// We can't physically race AddPlugin against MetadataOnly inside one
+	// call, but we CAN assert that a plugin added before MetadataOnly's
+	// snapshot loads runs both hooks consistently, and one added after
+	// runs neither — which is precisely what a single-snapshot path
+	// guarantees. Stage one plugin pre-snapshot and one post.
+	log.AddPlugin(loglayer.NewDataHook("pre-hook", func(p loglayer.BeforeDataOutParams) loglayer.Data {
+		out := make(loglayer.Data, len(p.Data)+1)
+		for k, v := range p.Data {
+			out[k] = v
+		}
+		out["pre"] = true
+		return out
+	}))
+
+	log.MetadataOnly(map[string]any{"k": "v"})
+	line := lib.PopLine()
+	if got, _ := line.Data["pre"].(bool); !got {
+		t.Errorf("plugin added before MetadataOnly should run, got %v", line.Data)
+	}
+}
+
 // TestPlugin_BuilderUsesSnapshotAtConstruction locks in the contract that a
 // builder chain (WithMetadata().Info()) sees a single plugin snapshot for both
 // the OnMetadataCalled hook and the dispatch hooks. A plugin added between

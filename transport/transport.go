@@ -11,13 +11,11 @@ import (
 
 // BaseTransport provides common fields and level-filtering logic for transports.
 // Concrete transports should embed *BaseTransport and implement ShipToLogger.
-//
-// enabled is a pointer to an atomic so the struct itself stays copyable
-// (NewBaseTransport returns by value into the embedding transport's
-// constructor); the pointer is allocated once and shared.
 type BaseTransport struct {
-	id      string
-	level   loglayer.LogLevel
+	id    string
+	level loglayer.LogLevel
+	// enabled is a pointer so BaseTransport stays copyable; NewBaseTransport
+	// returns by value into the embedding transport's constructor.
 	enabled *atomic.Bool
 }
 

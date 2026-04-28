@@ -24,9 +24,7 @@ import (
 
 var jsonMarshalerType = reflect.TypeOf((*json.Marshaler)(nil)).Elem()
 
-// maxWalkDepth bounds recursion in walkStruct/fieldValue so a self-referencing
-// struct (a.next = &a) can't infinite-loop. Real metadata shapes never come
-// close.
+// maxWalkDepth bounds walkStruct/fieldValue recursion to terminate cycles.
 const maxWalkDepth = 32
 
 // ToMap returns v as a map[string]any. Nil and existing maps pass through;

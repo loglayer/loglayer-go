@@ -15,11 +15,11 @@ import "context"
 // stack-allocation benefit.
 type LogBuilder struct {
 	layer    *LogLayer
-	plugins  *pluginSet // snapshot at construction; same set used for hooks and dispatch
+	plugins  *pluginSet
 	metadata any
 	err      error
 	ctx      context.Context
-	groups   []string // per-call group tags from WithGroup
+	groups   []string
 }
 
 func newLogBuilder(l *LogLayer) *LogBuilder {

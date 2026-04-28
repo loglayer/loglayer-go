@@ -9,12 +9,12 @@ import (
 // using the logger's persistent fields. Per-call goCtx overrides the
 // logger's bound ctx (when one is provided), otherwise the bound ctx is
 // passed through.
-func (l *LogLayer) formatLog(level LogLevel, messages []any, goCtx context.Context, metadata any, err error) {
+func (l *LogLayer) formatLog(level LogLevel, messages []any, goCtx context.Context, metadata any, err error, plugins *pluginSet) {
 	applyPrefix(l.prefix, messages)
 	if goCtx == nil {
 		goCtx = l.boundCtx
 	}
-	l.processLog(level, messages, l.fields, goCtx, metadata, err, l.assignedGroups, l.loadPlugins())
+	l.processLog(level, messages, l.fields, goCtx, metadata, err, l.assignedGroups, plugins)
 }
 
 // processLog assembles Data from fields + error, builds TransportParams, and
@@ -23,9 +23,9 @@ func (l *LogLayer) formatLog(level LogLevel, messages []any, goCtx context.Conte
 //
 // goCtx is the optional per-call Go context.Context attached via WithCtx.
 // entryGroups is the merged set of persistent + per-call group tags for
-// routing decisions (nil when no groups apply). plugins is the plugin
-// snapshot to dispatch through; builder paths cache one at construction so
-// the same set drives WithMetadata's hook and the eventual dispatch.
+// routing decisions (nil when no groups apply). plugins is the snapshot
+// used for all hooks on this entry; callers that already snapshotted
+// (builder, MetadataOnly) pass theirs to keep one entry on one snapshot.
 func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goCtx context.Context, metadata any, err error, entryGroups []string, plugins *pluginSet) {
 	cfg := &l.config
 	includeFields := !l.muteFields.Load() && len(fields) > 0
