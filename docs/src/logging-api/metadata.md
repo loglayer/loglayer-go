@@ -58,6 +58,14 @@ log.WithMetadata(map[string]any{"userId": 42}).Info("user")
 
 Prefer `loglayer.Metadata` throughout your code so the compiler can flag mix-ups with `Fields`.
 
+`loglayer.M` is a shorter alias for the same type, for dense call sites:
+
+```go
+log.WithMetadata(loglayer.M{"durationMs": 23}).Info("served") // same as loglayer.Metadata{...}
+```
+
+Use whichever you prefer; both compile to the same `map[string]any`.
+
 ::: warning The map is not deep-copied
 LogLayer doesn't clone the map you pass to `WithMetadata`. Mutating it after the call (e.g. reusing the same map for the next emission with a tweak) can bleed into the previous log when a transport retains the value. Build a fresh map per call, or treat the value as read-only once handed off. Structs sidestep this entirely.
 :::

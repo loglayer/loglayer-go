@@ -44,7 +44,13 @@ Both subsequent calls include `requestId` and `userId`. By default the keys are 
 }
 ```
 
-`loglayer.Fields` is a type alias for `map[string]any`.
+`loglayer.Fields` is a type alias for `map[string]any`. `loglayer.F` is a shorter alias for the same type, for dense call sites:
+
+```go
+log = log.WithFields(loglayer.F{"requestId": "abc"}) // same as loglayer.Fields{...}
+```
+
+Use whichever you prefer; both compile to the same `map[string]any`.
 
 ::: warning The map is not deep-copied
 LogLayer doesn't clone the `Fields` map you pass in. If you mutate it after `WithFields` returns, transports that retain the map (the testing transport, some async transports) will see the mutation. Treat the map as read-only after handing it off, or build a fresh one per call. See [Thread Safety](/logging-api/thread-safety) for the full per-method contract.
