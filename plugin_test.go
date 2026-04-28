@@ -102,6 +102,43 @@ func TestPlugin_OnMetadataCalled_RewritesMetadata(t *testing.T) {
 	}
 }
 
+// TestPlugin_BuilderUsesSnapshotAtConstruction locks in the contract that a
+// builder chain (WithMetadata().Info()) sees a single plugin snapshot for both
+// the OnMetadataCalled hook and the dispatch hooks. A plugin added between
+// WithMetadata and Info does not bind to that in-flight entry. This avoids
+// the inconsistency where one entry would have OnMetadataCalled run by N
+// plugins and OnBeforeDataOut run by N+1.
+func TestPlugin_BuilderUsesSnapshotAtConstruction(t *testing.T) {
+	log, lib := setup(t)
+
+	b := log.WithMetadata(map[string]any{"k": "v"})
+
+	// Add a DataHook AFTER the builder is constructed. The builder
+	// snapshotted plugins at construction time, so this hook must NOT run
+	// for the in-flight entry.
+	log.AddPlugin(loglayer.NewDataHook("late-hook", func(p loglayer.BeforeDataOutParams) loglayer.Data {
+		out := make(loglayer.Data, len(p.Data)+1)
+		for k, v := range p.Data {
+			out[k] = v
+		}
+		out["late"] = true
+		return out
+	}))
+
+	b.Info("emit")
+	line := lib.PopLine()
+	if _, has := line.Data["late"]; has {
+		t.Errorf("plugin added after builder construction should not bind to the in-flight entry, got %v", line.Data)
+	}
+
+	// A subsequent fresh emission must see the new plugin.
+	log.Info("emit2")
+	line = lib.PopLine()
+	if got, _ := line.Data["late"].(bool); !got {
+		t.Errorf("plugin added before fresh emission must run, got %v", line.Data)
+	}
+}
+
 func TestPlugin_OnMetadataCalled_NilDropsMetadata(t *testing.T) {
 	log, lib := setup(t)
 	log.AddPlugin(loglayer.NewMetadataHook("drop-all", func(metadata any) any {

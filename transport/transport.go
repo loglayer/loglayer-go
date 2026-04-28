@@ -3,16 +3,22 @@
 package transport
 
 import (
+	"sync/atomic"
+
 	"go.loglayer.dev"
 	"go.loglayer.dev/utils/idgen"
 )
 
 // BaseTransport provides common fields and level-filtering logic for transports.
 // Concrete transports should embed *BaseTransport and implement ShipToLogger.
+//
+// enabled is a pointer to an atomic so the struct itself stays copyable
+// (NewBaseTransport returns by value into the embedding transport's
+// constructor); the pointer is allocated once and shared.
 type BaseTransport struct {
 	id      string
-	enabled bool
 	level   loglayer.LogLevel
+	enabled *atomic.Bool
 }
 
 // BaseConfig holds the common configuration fields shared by all transports.
@@ -43,21 +49,25 @@ func NewBaseTransport(cfg BaseConfig) BaseTransport {
 	if id == "" {
 		id = idgen.Random(idgen.TransportPrefix)
 	}
+	enabled := &atomic.Bool{}
+	enabled.Store(!cfg.Disabled)
 	return BaseTransport{
 		id:      id,
-		enabled: !cfg.Disabled,
 		level:   level,
+		enabled: enabled,
 	}
 }
 
 // ID returns the transport's unique identifier.
 func (b *BaseTransport) ID() string { return b.id }
 
-// IsEnabled returns whether the transport is currently enabled.
-func (b *BaseTransport) IsEnabled() bool { return b.enabled }
+// IsEnabled returns whether the transport is currently enabled. Safe to call
+// concurrently with SetEnabled.
+func (b *BaseTransport) IsEnabled() bool { return b.enabled.Load() }
 
-// SetEnabled enables or disables the transport.
-func (b *BaseTransport) SetEnabled(v bool) { b.enabled = v }
+// SetEnabled enables or disables the transport. Safe to call concurrently
+// with emission and IsEnabled.
+func (b *BaseTransport) SetEnabled(v bool) { b.enabled.Store(v) }
 
 // MinLevel returns the minimum log level this transport will process.
 func (b *BaseTransport) MinLevel() loglayer.LogLevel { return b.level }
@@ -65,5 +75,5 @@ func (b *BaseTransport) MinLevel() loglayer.LogLevel { return b.level }
 // ShouldProcess returns true if the transport is enabled and the log level
 // meets the minimum level threshold.
 func (b *BaseTransport) ShouldProcess(level loglayer.LogLevel) bool {
-	return b.enabled && level >= b.level
+	return b.enabled.Load() && level >= b.level
 }

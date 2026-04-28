@@ -209,3 +209,70 @@ func TestToMap_UnexportedSkipped(t *testing.T) {
 		t.Errorf("unexported should be skipped: got %v", got)
 	}
 }
+
+type withZeroTime struct {
+	When time.Time `json:"when,omitempty"`
+}
+
+type withEmptyMap struct {
+	Tags map[string]string `json:"tags,omitempty"`
+}
+
+type withEmptySlice struct {
+	Items []int `json:"items,omitempty"`
+}
+
+// TestToMap_OmitEmptyMatchesEncodingJSON locks in the encoding/json contract
+// for omitempty: zero-value structs (e.g. time.Time{}) are NOT considered
+// empty (encoding/json keeps them); empty non-nil maps and slices ARE empty
+// (encoding/json drops them).
+func TestToMap_OmitEmptyMatchesEncodingJSON(t *testing.T) {
+	got := ToMap(withZeroTime{})
+	if _, ok := got["when"]; !ok {
+		t.Errorf("zero time.Time with omitempty should be kept (encoding/json semantics): got %v", got)
+	}
+	got = ToMap(withEmptyMap{Tags: map[string]string{}})
+	if _, ok := got["tags"]; ok {
+		t.Errorf("empty non-nil map with omitempty should be dropped: got %v", got)
+	}
+	got = ToMap(withEmptySlice{Items: []int{}})
+	if _, ok := got["items"]; ok {
+		t.Errorf("empty non-nil slice with omitempty should be dropped: got %v", got)
+	}
+}
+
+type embPtr struct {
+	X int `json:"x"`
+}
+
+type wrapWithEmbPtr struct {
+	*embPtr
+	Other string `json:"other"`
+}
+
+// TestToMap_EmbeddedNilPointerOmitted ensures we don't leak the unexported
+// anonymous-field type name as a key when the embedded pointer is nil.
+func TestToMap_EmbeddedNilPointerOmitted(t *testing.T) {
+	got := ToMap(wrapWithEmbPtr{Other: "o"})
+	want := map[string]any{"other": "o"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("nil embedded pointer should be omitted (no Go-private type name leak): got %v, want %v", got, want)
+	}
+}
+
+type cyclic struct {
+	Name string   `json:"name"`
+	Self *cyclic  `json:"self,omitempty"`
+	Kids []cyclic `json:"kids,omitempty"`
+}
+
+// TestToMap_CycleTerminates guarantees a self-referencing struct doesn't
+// infinite-loop the walker; the depth limit kicks in.
+func TestToMap_CycleTerminates(t *testing.T) {
+	a := &cyclic{Name: "a"}
+	a.Self = a
+	got := ToMap(a)
+	if got["name"] != "a" {
+		t.Errorf("cyclic struct should terminate with at least one level: got %v", got)
+	}
+}

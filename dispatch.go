@@ -14,7 +14,7 @@ func (l *LogLayer) formatLog(level LogLevel, messages []any, goCtx context.Conte
 	if goCtx == nil {
 		goCtx = l.boundCtx
 	}
-	l.processLog(level, messages, l.fields, goCtx, metadata, err, l.assignedGroups)
+	l.processLog(level, messages, l.fields, goCtx, metadata, err, l.assignedGroups, l.loadPlugins())
 }
 
 // processLog assembles Data from fields + error, builds TransportParams, and
@@ -23,8 +23,10 @@ func (l *LogLayer) formatLog(level LogLevel, messages []any, goCtx context.Conte
 //
 // goCtx is the optional per-call Go context.Context attached via WithCtx.
 // entryGroups is the merged set of persistent + per-call group tags for
-// routing decisions (nil when no groups apply).
-func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goCtx context.Context, metadata any, err error, entryGroups []string) {
+// routing decisions (nil when no groups apply). plugins is the plugin
+// snapshot to dispatch through; builder paths cache one at construction so
+// the same set drives WithMetadata's hook and the eventual dispatch.
+func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goCtx context.Context, metadata any, err error, entryGroups []string, plugins *pluginSet) {
 	cfg := &l.config
 	includeFields := !l.muteFields.Load() && len(fields) > 0
 
@@ -77,7 +79,6 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 		rawMetadata = metadata
 	}
 
-	plugins := l.loadPlugins()
 	if plugins.anyDispatchHook {
 		d = plugins.runOnBeforeDataOut(BeforeDataOutParams{
 			LogLevel: level,

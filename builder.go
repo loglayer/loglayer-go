@@ -15,6 +15,7 @@ import "context"
 // stack-allocation benefit.
 type LogBuilder struct {
 	layer    *LogLayer
+	plugins  *pluginSet // snapshot at construction; same set used for hooks and dispatch
 	metadata any
 	err      error
 	ctx      context.Context
@@ -22,7 +23,7 @@ type LogBuilder struct {
 }
 
 func newLogBuilder(l *LogLayer) *LogBuilder {
-	return &LogBuilder{layer: l}
+	return &LogBuilder{layer: l, plugins: l.loadPlugins()}
 }
 
 // WithMetadata attaches metadata to the log entry. Accepts any value: a struct,
@@ -32,7 +33,7 @@ func newLogBuilder(l *LogLayer) *LogBuilder {
 // OnMetadataCalled plugin hooks run here. A hook returning nil drops the
 // metadata entirely for this entry.
 func (b *LogBuilder) WithMetadata(v any) *LogBuilder {
-	b.metadata = b.layer.loadPlugins().runOnMetadataCalled(v)
+	b.metadata = b.plugins.runOnMetadataCalled(v)
 	return b
 }
 
@@ -133,5 +134,5 @@ func (b *LogBuilder) dispatch(level LogLevel, messages []any) {
 	if ctx == nil {
 		ctx = b.layer.boundCtx
 	}
-	b.layer.processLog(level, messages, b.layer.fields, ctx, b.metadata, b.err, groups)
+	b.layer.processLog(level, messages, b.layer.fields, ctx, b.metadata, b.err, groups, b.plugins)
 }

@@ -140,5 +140,5 @@ func (l *LogLayer) Raw(entry RawLogEntry) {
 	if ctx == nil {
 		ctx = l.boundCtx
 	}
-	l.processLog(entry.LogLevel, entry.Messages, fields, ctx, entry.Metadata, entry.Err, groups)
+	l.processLog(entry.LogLevel, entry.Messages, fields, ctx, entry.Metadata, entry.Err, groups, l.loadPlugins())
 }
