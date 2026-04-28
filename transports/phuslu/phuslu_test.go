@@ -7,8 +7,8 @@ import (
 	plog "github.com/phuslu/log"
 
 	"go.loglayer.dev"
-	"go.loglayer.dev/internal/transporttest"
 	"go.loglayer.dev/transport"
+	"go.loglayer.dev/transport/transporttest"
 	llphuslu "go.loglayer.dev/transports/phuslu"
 )
 

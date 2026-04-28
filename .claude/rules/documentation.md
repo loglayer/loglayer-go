@@ -102,7 +102,6 @@ docs/src/
 ├── getting-started.md          Install + minimal example
 ├── configuration.md            Every Config field
 ├── cheatsheet.md               One-page API reference
-├── concepts/                   Cross-cutting concept pages (data-shapes, etc.)
 ├── logging-api/                Per-method guides
 ├── plugins/
 │   ├── index.md                Overview + catalog only
@@ -233,6 +232,17 @@ Confirmed pitfalls already inlined:
 - oteltrace plugin needs propagator across service boundaries → `plugins/oteltrace.md`.
 
 When you ship a new trap, add a `::: warning` (or `:::danger` for breakage) on the owning page. Don't create a sibling reference.
+
+## Testing helpers for transport / plugin authors
+
+Two public helper packages back the testing sections of the creator docs:
+
+- `transport/transporttest` (package `transporttest`): `RunContract` runs the 14-test wrapper-transport contract suite against any wrapper-shaped transport that produces JSON output. Also exports `ParseJSONLine` and `MessageContains`. Used by every built-in wrapper test.
+- `plugins/plugintest` (package `plugintest`): `Install` wires a plugin into a fresh logger backed by the testing transport. `AssertNoMutation` proves an input-side hook doesn't mutate caller-owned input. `AssertPanicRecovered` drives a panicking hook and confirms `*loglayer.RecoveredPanicError` reaches `OnError`. Used by every built-in plugin test.
+
+The doc pages that document these helpers are `transports/testing-transports.md` and `plugins/testing-plugins.md`, respectively. The matching `creating-*` pages have a one-paragraph "Testing" section that links to them; don't duplicate worked examples between the creating- and testing- pairs.
+
+When you change a helper, update the testing-* page in the same change. The pattern in built-in tests is the canonical reference.
 
 ## Examples for strategy / policy choices
 

@@ -340,28 +340,3 @@ func (s *pluginSet) runOnFieldsCalled(fields Fields) Fields {
 	}
 	return out
 }
-
-// MetadataPlugin returns a Plugin with only OnMetadataCalled set. Sugar
-// for the common single-hook case; equivalent to:
-//
-//	loglayer.Plugin{ID: id, OnMetadataCalled: fn}
-func MetadataPlugin(id string, fn func(metadata any) any) Plugin {
-	return Plugin{ID: id, OnMetadataCalled: fn}
-}
-
-// FieldsPlugin returns a Plugin with only OnFieldsCalled set. Sugar for
-// the common single-hook case; equivalent to:
-//
-//	loglayer.Plugin{ID: id, OnFieldsCalled: fn}
-func FieldsPlugin(id string, fn func(fields Fields) Fields) Plugin {
-	return Plugin{ID: id, OnFieldsCalled: fn}
-}
-
-// LevelPlugin returns a Plugin with only TransformLogLevel set. Sugar
-// for the common single-hook case (e.g., "promote entries that carry an
-// error key to LogLevelError"); equivalent to:
-//
-//	loglayer.Plugin{ID: id, TransformLogLevel: fn}
-func LevelPlugin(id string, fn func(TransformLogLevelParams) (LogLevel, bool)) Plugin {
-	return Plugin{ID: id, TransformLogLevel: fn}
-}

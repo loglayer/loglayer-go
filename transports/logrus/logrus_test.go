@@ -7,8 +7,8 @@ import (
 	logrusbase "github.com/sirupsen/logrus"
 
 	"go.loglayer.dev"
-	"go.loglayer.dev/internal/transporttest"
 	"go.loglayer.dev/transport"
+	"go.loglayer.dev/transport/transporttest"
 	lllogrus "go.loglayer.dev/transports/logrus"
 )
 

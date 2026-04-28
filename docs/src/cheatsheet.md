@@ -221,11 +221,6 @@ log.AddPlugin(loglayer.Plugin{
     },
 })
 
-// Convenience constructors for single-hook plugins
-log.AddPlugin(loglayer.MetadataPlugin("upper", func(m any) any { ... }))
-log.AddPlugin(loglayer.FieldsPlugin("rename", func(f loglayer.Fields) loglayer.Fields { ... }))
-log.AddPlugin(loglayer.LevelPlugin("promote", func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) { ... }))
-
 // Redact plugin (key + regex matching, walks structs/maps/slices)
 log.AddPlugin(redact.New(redact.Config{
     Keys:     []string{"password", "apiKey"},

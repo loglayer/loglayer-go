@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"go.loglayer.dev"
-	"go.loglayer.dev/internal/transporttest"
 	"go.loglayer.dev/transport"
+	"go.loglayer.dev/transport/transporttest"
 	"go.loglayer.dev/transports/structured"
 )
 

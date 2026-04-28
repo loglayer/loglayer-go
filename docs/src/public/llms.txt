@@ -31,7 +31,7 @@ LogLayer for Go gives you one consistent API for messages, persistent fields, pe
 
 - [Overview](https://go.loglayer.dev/transports/): Renderers vs Supported Loggers.
 - [Multiple Transports](https://go.loglayer.dev/transports/multiple-transports): Fan-out semantics.
-- [Creating Transports](https://go.loglayer.dev/transports/creating-transports): The Transport interface and BaseTransport helper.
+- [Creating Transports](https://go.loglayer.dev/transports/creating-transports): The Transport interface and BaseTransport helper. transport/transporttest exports RunContract for the 14-test wrapper contract suite plus ParseJSONLine.
 
 ### Renderers
 
@@ -62,8 +62,8 @@ LogLayer for Go gives you one consistent API for messages, persistent fields, pe
 
 ## Plugins
 
-- [Plugins overview](https://go.loglayer.dev/plugins/): Six lifecycle hooks (OnFieldsCalled, OnMetadataCalled, OnBeforeDataOut, OnBeforeMessageOut, TransformLogLevel, ShouldSend). Function-field struct API; AddPlugin/RemovePlugin/GetPlugin/PluginCount. Dispatch-time hooks receive context.Context via Params.Ctx. Convenience constructors: MetadataPlugin/FieldsPlugin/LevelPlugin. Hook panics are recovered centrally by the framework (each hook returns its no-op value on panic; ShouldSend fails open). Set Plugin.OnError to observe recovered panics.
-- [Creating Plugins](https://go.loglayer.dev/plugins/creating-plugins): Per-hook reference and design patterns.
+- [Plugins overview](https://go.loglayer.dev/plugins/): Six lifecycle hooks (OnFieldsCalled, OnMetadataCalled, OnBeforeDataOut, OnBeforeMessageOut, TransformLogLevel, ShouldSend). Function-field struct API; AddPlugin/RemovePlugin/GetPlugin/PluginCount. Dispatch-time hooks receive context.Context via Params.Ctx. Hook panics are recovered centrally by the framework (each hook returns its no-op value on panic; ShouldSend fails open). Set Plugin.OnError to observe recovered panics.
+- [Creating Plugins](https://go.loglayer.dev/plugins/creating-plugins): Per-hook reference and design patterns. plugins/plugintest exports Install (wires plugin into a logger backed by the testing transport), AssertNoMutation, AssertPanicRecovered.
 - [Redact](https://go.loglayer.dev/plugins/redact): Built-in redaction plugin. Match by Keys (exact, json-tag aware) or Patterns (regex against string values). Walks nested maps, structs, slices, and pointers at any depth via reflection; preserves the caller's runtime type. Dependency-free.
 - [Datadog APM Trace Injector](https://go.loglayer.dev/plugins/datadogtrace): Inject the active dd-trace-go trace and span IDs (dd.trace_id, dd.span_id, plus optional dd.service/env/version) into every log entry that carries a context. Tracer-agnostic: bring your own dd-trace-go (v1 or v2) via a small Extract function.
 - [OpenTelemetry Trace Injector](https://go.loglayer.dev/plugins/oteltrace): Inject the active OTel trace_id and span_id (lowercase hex, configurable keys) plus optional trace_flags, W3C trace_state, and W3C baggage members (under a configurable key prefix) into every log entry that carries a context. Baggage rides independently of the span, so contexts with baggage but no span still surface baggage attributes. Use with non-OTel transports for log/trace correlation; transports/otellog does this automatically.

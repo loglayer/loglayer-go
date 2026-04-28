@@ -5,7 +5,7 @@ description: "Per-log structured data: maps, structs, or any value."
 
 # Logging with Metadata
 
-Metadata attaches structured data to a single log entry. Unlike [fields](/logging-api/fields), it does not persist. Once the entry is emitted, the metadata is discarded. For a side-by-side comparison of `Fields`, `Metadata`, and `Data` (the third concept that surfaces in plugins), see [Fields, Metadata, and Data](/concepts/data-shapes).
+Metadata attaches structured data to a single log entry. Unlike [fields](/logging-api/fields), it does not persist. Once the entry is emitted, the metadata is discarded.
 
 ## `loglayer.Metadata`: the canonical map shape
 

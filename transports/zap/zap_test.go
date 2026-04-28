@@ -8,8 +8,8 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	"go.loglayer.dev"
-	"go.loglayer.dev/internal/transporttest"
 	"go.loglayer.dev/transport"
+	"go.loglayer.dev/transport/transporttest"
 	llzap "go.loglayer.dev/transports/zap"
 )
 

@@ -377,63 +377,6 @@ func TestPlugin_DispatchHooksReceiveCtx(t *testing.T) {
 	}
 }
 
-func TestPlugin_MetadataPlugin_Constructor(t *testing.T) {
-	log, lib := setup(t)
-	log.AddPlugin(loglayer.MetadataPlugin("upper", func(metadata any) any {
-		if m, ok := metadata.(map[string]any); ok {
-			out := make(map[string]any, len(m))
-			for k, v := range m {
-				if s, ok := v.(string); ok {
-					out[k] = "U:" + s
-				} else {
-					out[k] = v
-				}
-			}
-			return out
-		}
-		return metadata
-	}))
-	log.WithMetadata(map[string]any{"k": "v"}).Info("ok")
-	line := lib.PopLine()
-	if line.Metadata.(map[string]any)["k"] != "U:v" {
-		t.Errorf("MetadataPlugin constructor failed: %v", line.Metadata)
-	}
-}
-
-func TestPlugin_FieldsPlugin_Constructor(t *testing.T) {
-	log, lib := setup(t)
-	log = log.WithFields(loglayer.Fields{}) // no-op to confirm hook doesn't run on empty
-	log.AddPlugin(loglayer.FieldsPlugin("tag", func(f loglayer.Fields) loglayer.Fields {
-		out := make(loglayer.Fields, len(f)+1)
-		for k, v := range f {
-			out[k] = v
-		}
-		out["tagged"] = true
-		return out
-	}))
-	log = log.WithFields(loglayer.Fields{"k": "v"})
-	log.Info("ok")
-	line := lib.PopLine()
-	if line.Data["tagged"] != true {
-		t.Errorf("FieldsPlugin constructor failed: %v", line.Data)
-	}
-}
-
-func TestPlugin_LevelPlugin_Constructor(t *testing.T) {
-	log, lib := setup(t)
-	log.AddPlugin(loglayer.LevelPlugin("promote", func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) {
-		if p.LogLevel == loglayer.LogLevelInfo {
-			return loglayer.LogLevelWarn, true
-		}
-		return 0, false
-	}))
-	log.Info("originally info")
-	line := lib.PopLine()
-	if line.Level != loglayer.LogLevelWarn {
-		t.Errorf("LevelPlugin constructor: level not promoted, got %v", line.Level)
-	}
-}
-
 func TestPlugin_PostRegistrationMutationIsNoOp(t *testing.T) {
 	log, lib := setup(t)
 	called := false

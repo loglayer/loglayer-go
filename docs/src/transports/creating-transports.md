@@ -242,39 +242,6 @@ func (t *Transport) SendToLogger(p loglayer.TransportParams) { /* ... */ }
 
 Match the pattern the built-ins use ([`transports/structured`](https://github.com/loglayer/loglayer-go/blob/main/transports/structured) for a renderer; [`transports/http`](https://github.com/loglayer/loglayer-go/blob/main/transports/http) for a network transport with `Build`).
 
-## Testing your transport
+## Testing
 
-Drive entries through your transport via a real `*loglayer.LogLayer` and assert on whatever your transport actually produced (a buffer, a captured request, a wrapped logger's calls). The pattern mirrors the built-in transport tests:
-
-```go
-import (
-    "bytes"
-    "testing"
-
-    "go.loglayer.dev"
-    "go.loglayer.dev/transport"
-)
-
-func TestMyTransport_Basic(t *testing.T) {
-    buf := &bytes.Buffer{}
-    tr := mytransport.New(mytransport.Config{
-        BaseConfig: transport.BaseConfig{ID: "test"},
-        Writer:     buf,
-    })
-    log := loglayer.New(loglayer.Config{
-        Transport:        tr,
-        DisableFatalExit: true,
-    })
-
-    log.WithFields(loglayer.Fields{"k": "v"}).Info("served")
-
-    // Assert on whatever shape your transport produced.
-    if !strings.Contains(buf.String(), `"k":"v"`) {
-        t.Errorf("k=v missing from output: %q", buf.String())
-    }
-}
-```
-
-For wrapper transports (those that hand entries off to a third-party logger), assert on the wrapped logger's output rather than the transport's. The slog/zerolog/zap test files in `transports/` show this pattern.
-
-Cover the level-filtering case, the `MetadataFieldName` non-map path, and `WithCtx` propagation when applicable. The existing wrapper-transport test files are good templates: same structure, same assertion shape.
+For testing a custom transport, see [Testing Transports](/transports/testing-transports). It covers the direct buffer assertion pattern and the `RunContract` helper that drives the same 14-test contract suite every built-in wrapper passes.

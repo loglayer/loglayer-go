@@ -50,8 +50,6 @@ type ContractCase struct {
 	Expect  Expectations
 }
 
-const metadataKey = "metadata"
-
 // RunContract runs the shared wrapper-transport contract suite.
 func RunContract(t *testing.T, c ContractCase) {
 	t.Helper()
@@ -178,8 +176,8 @@ func testStructMetadataNested(t *testing.T, c ContractCase) {
 	// inner struct may not parse as a nested map[string]any. Loose substring
 	// check covers that case; strict nested-map check runs when JSON is clean.
 	out := buf.String()
-	if !strings.Contains(out, metadataKey) {
-		t.Fatalf("expected %q key in output, got %q", metadataKey, out)
+	if !strings.Contains(out, "metadata") {
+		t.Fatalf("expected \"metadata\" key in output, got %q", out)
 	}
 	if !strings.Contains(out, "Alice") {
 		t.Errorf("expected struct field rendered, got %q", out)
@@ -188,7 +186,7 @@ func testStructMetadataNested(t *testing.T, c ContractCase) {
 	if err != nil {
 		return
 	}
-	if nested, ok := obj[metadataKey].(map[string]any); ok {
+	if nested, ok := obj["metadata"].(map[string]any); ok {
 		if nested["id"] != float64(7) || nested["name"] != "Alice" {
 			t.Errorf("nested fields: got %v", nested)
 		}

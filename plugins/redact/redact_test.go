@@ -5,22 +5,13 @@ import (
 	"testing"
 
 	"go.loglayer.dev"
+	"go.loglayer.dev/plugins/plugintest"
 	"go.loglayer.dev/plugins/redact"
-	"go.loglayer.dev/transport"
-	lltest "go.loglayer.dev/transports/testing"
 )
 
-func newLogger(t *testing.T, plugin loglayer.Plugin) (*loglayer.LogLayer, *lltest.TestLoggingLibrary) {
-	t.Helper()
-	lib := &lltest.TestLoggingLibrary{}
-	tr := lltest.New(lltest.Config{BaseConfig: transport.BaseConfig{ID: "test"}, Library: lib})
-	log := loglayer.New(loglayer.Config{Transport: tr, DisableFatalExit: true})
-	log.AddPlugin(plugin)
-	return log, lib
-}
-
 func TestRedact_MetadataMapKey(t *testing.T) {
-	log, lib := newLogger(t, redact.New(redact.Config{
+	t.Parallel()
+	log, lib := plugintest.Install(t, redact.New(redact.Config{
 		Keys: []string{"password"},
 	}))
 
@@ -40,7 +31,8 @@ func TestRedact_MetadataMapKey(t *testing.T) {
 }
 
 func TestRedact_NestedMap(t *testing.T) {
-	log, lib := newLogger(t, redact.New(redact.Config{
+	t.Parallel()
+	log, lib := plugintest.Install(t, redact.New(redact.Config{
 		Keys: []string{"secret"},
 	}))
 
@@ -63,7 +55,8 @@ func TestRedact_NestedMap(t *testing.T) {
 }
 
 func TestRedact_FieldsKey(t *testing.T) {
-	log, lib := newLogger(t, redact.New(redact.Config{
+	t.Parallel()
+	log, lib := plugintest.Install(t, redact.New(redact.Config{
 		Keys: []string{"apiKey"},
 	}))
 
@@ -83,7 +76,8 @@ func TestRedact_FieldsKey(t *testing.T) {
 }
 
 func TestRedact_CustomCensor(t *testing.T) {
-	log, lib := newLogger(t, redact.New(redact.Config{
+	t.Parallel()
+	log, lib := plugintest.Install(t, redact.New(redact.Config{
 		Keys:   []string{"k"},
 		Censor: "***",
 	}))
@@ -97,7 +91,8 @@ func TestRedact_CustomCensor(t *testing.T) {
 }
 
 func TestRedact_PreservesCallerMap(t *testing.T) {
-	log, _ := newLogger(t, redact.New(redact.Config{
+	t.Parallel()
+	log, _ := plugintest.Install(t, redact.New(redact.Config{
 		Keys: []string{"password"},
 	}))
 
@@ -110,7 +105,8 @@ func TestRedact_PreservesCallerMap(t *testing.T) {
 }
 
 func TestRedact_NonMatchingStructPassesThrough(t *testing.T) {
-	log, lib := newLogger(t, redact.New(redact.Config{
+	t.Parallel()
+	log, lib := plugintest.Install(t, redact.New(redact.Config{
 		Keys: []string{"password"},
 	}))
 
@@ -125,7 +121,8 @@ func TestRedact_NonMatchingStructPassesThrough(t *testing.T) {
 }
 
 func TestRedact_SliceOfMaps(t *testing.T) {
-	log, lib := newLogger(t, redact.New(redact.Config{
+	t.Parallel()
+	log, lib := plugintest.Install(t, redact.New(redact.Config{
 		Keys: []string{"password"},
 	}))
 
@@ -147,7 +144,8 @@ func TestRedact_SliceOfMaps(t *testing.T) {
 }
 
 func TestRedact_TypedSliceOfMaps(t *testing.T) {
-	log, lib := newLogger(t, redact.New(redact.Config{
+	t.Parallel()
+	log, lib := plugintest.Install(t, redact.New(redact.Config{
 		Keys: []string{"secret"},
 	}))
 
@@ -168,12 +166,13 @@ func TestRedact_TypedSliceOfMaps(t *testing.T) {
 }
 
 func TestRedact_StructPreservesType(t *testing.T) {
+	t.Parallel()
 	type user struct {
 		Name     string `json:"name"`
 		Password string `json:"password"`
 	}
 
-	log, lib := newLogger(t, redact.New(redact.Config{
+	log, lib := plugintest.Install(t, redact.New(redact.Config{
 		Keys: []string{"password"},
 	}))
 
@@ -193,6 +192,7 @@ func TestRedact_StructPreservesType(t *testing.T) {
 }
 
 func TestRedact_NestedStruct(t *testing.T) {
+	t.Parallel()
 	type creds struct {
 		APIKey string `json:"apiKey"`
 	}
@@ -201,7 +201,7 @@ func TestRedact_NestedStruct(t *testing.T) {
 		Creds creds  `json:"creds"`
 	}
 
-	log, lib := newLogger(t, redact.New(redact.Config{
+	log, lib := plugintest.Install(t, redact.New(redact.Config{
 		Keys: []string{"apiKey"},
 	}))
 
@@ -214,10 +214,11 @@ func TestRedact_NestedStruct(t *testing.T) {
 }
 
 func TestRedact_PointerToStructPreservesPointer(t *testing.T) {
+	t.Parallel()
 	type user struct {
 		Password string `json:"password"`
 	}
-	log, lib := newLogger(t, redact.New(redact.Config{
+	log, lib := plugintest.Install(t, redact.New(redact.Config{
 		Keys: []string{"password"},
 	}))
 
@@ -237,8 +238,9 @@ func TestRedact_PointerToStructPreservesPointer(t *testing.T) {
 }
 
 func TestRedact_PatternsMatchValues(t *testing.T) {
+	t.Parallel()
 	ssn := regexp.MustCompile(`^\d{3}-\d{2}-\d{4}$`)
-	log, lib := newLogger(t, redact.New(redact.Config{
+	log, lib := plugintest.Install(t, redact.New(redact.Config{
 		Patterns: []*regexp.Regexp{ssn},
 	}))
 
@@ -258,8 +260,9 @@ func TestRedact_PatternsMatchValues(t *testing.T) {
 }
 
 func TestRedact_PatternsRecurseIntoSlices(t *testing.T) {
+	t.Parallel()
 	cc := regexp.MustCompile(`^\d{16}$`)
-	log, lib := newLogger(t, redact.New(redact.Config{
+	log, lib := plugintest.Install(t, redact.New(redact.Config{
 		Patterns: []*regexp.Regexp{cc},
 	}))
 
@@ -278,7 +281,8 @@ func TestRedact_PatternsRecurseIntoSlices(t *testing.T) {
 }
 
 func TestRedact_KeysAndPatternsCombined(t *testing.T) {
-	log, lib := newLogger(t, redact.New(redact.Config{
+	t.Parallel()
+	log, lib := plugintest.Install(t, redact.New(redact.Config{
 		Keys:     []string{"password"},
 		Patterns: []*regexp.Regexp{regexp.MustCompile(`^token-`)},
 	}))
@@ -303,7 +307,8 @@ func TestRedact_KeysAndPatternsCombined(t *testing.T) {
 }
 
 func TestRedact_DefaultCensor(t *testing.T) {
-	log, lib := newLogger(t, redact.New(redact.Config{
+	t.Parallel()
+	log, lib := plugintest.Install(t, redact.New(redact.Config{
 		Keys: []string{"k"},
 	}))
 	log.WithMetadata(map[string]any{"k": "v"}).Info("ok")
@@ -315,6 +320,7 @@ func TestRedact_DefaultCensor(t *testing.T) {
 }
 
 func TestRedact_DefaultID(t *testing.T) {
+	t.Parallel()
 	p := redact.New(redact.Config{Keys: []string{"k"}})
 	if p.ID != "redact" {
 		t.Errorf("default ID: got %q, want \"redact\"", p.ID)

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"go.loglayer.dev"
-	"go.loglayer.dev/internal/transporttest"
+	"go.loglayer.dev/transport/transporttest"
 )
 
 func TestWithError(t *testing.T) {

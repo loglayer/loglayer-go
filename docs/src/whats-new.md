@@ -5,10 +5,6 @@ description: User-visible changes to LogLayer for Go.
 
 # What's New
 
-Changes are recorded here once they ship. Until v0.1.0 lands, this page describes the initial release at a high level; the full API is documented across the rest of the site.
-
-From v0.1.0 forward, [Release Please](https://github.com/googleapis/release-please) maintains the project's [`CHANGELOG.md`](https://github.com/loglayer/loglayer-go/blob/main/CHANGELOG.md) automatically from conventional commits. This page captures user-visible highlights for each release; it's curated by hand to keep the narrative tight.
-
 ## v0.1.0 (unreleased)
 
 Initial release. Pre-1.0; the API may still shift before v1.
@@ -26,12 +22,6 @@ LogLayer for Go is a transport-agnostic structured logging facade. One fluent AP
 - **HTTP middleware**: [`integrations/loghttp`](/integrations/loghttp) derives a per-request logger, binds `r.Context()`, emits a "request completed" log on every response (or "request panicked" with the panic value if a handler crashes).
 - **Runtime control**: change levels, hot-swap transports, add/remove plugins, mute fields/metadata, all live and concurrency-safe.
 - **Defensive defaults**: console and pretty sanitize message strings against CRLF / ANSI / Unicode-bidi injection; `loghttp` sanitizes incoming HTTP headers; `maputil.Cloner` is cycle-safe; the Datadog config redacts its API key via `String()` and a `json:"-"` tag.
-
-### Migrating from another logger?
-
-- [From log/slog](/migrating/from-slog)
-- [From zerolog](/migrating/from-zerolog)
-- [From zap](/migrating/from-zap)
 
 For Go users coming from the TypeScript [`loglayer`](https://loglayer.dev) library, see [For TypeScript Developers](/for-typescript-developers) for the API mapping.
 

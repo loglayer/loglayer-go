@@ -300,12 +300,6 @@ All four dispatch-time hook param structs (`BeforeDataOutParams`, `BeforeMessage
 
 Hook panics are recovered centrally by the framework. A buggy plugin can't tear down the calling goroutine: each hook returns its no-op value on panic (nil for the `On*` shapes, level unchanged for `TransformLogLevel`, fail-open for `ShouldSend` so the entry still dispatches). Set `Plugin.OnError func(error)` to observe recovered panics; the framework wraps the recovered value in a hook-named error (`loglayer: plugin OnBeforeDataOut panicked: ...`) using `%w`, so callers can still `errors.Is`/`errors.As` against the original.
 
-Convenience constructors for the common single-hook cases:
-
-- `loglayer.MetadataPlugin(id, func(any) any) Plugin`
-- `loglayer.FieldsPlugin(id, func(Fields) Fields) Plugin`
-- `loglayer.LevelPlugin(id, func(TransformLogLevelParams) (LogLevel, bool)) Plugin`
-
 ```go
 log.AddPlugin(loglayer.Plugin{
     ID: "redact-password",

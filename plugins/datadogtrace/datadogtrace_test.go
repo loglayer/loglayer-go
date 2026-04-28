@@ -8,8 +8,7 @@ import (
 
 	"go.loglayer.dev"
 	"go.loglayer.dev/plugins/datadogtrace"
-	"go.loglayer.dev/transport"
-	lltest "go.loglayer.dev/transports/testing"
+	"go.loglayer.dev/plugins/plugintest"
 )
 
 // fakeExtract returns a deterministic extractor for tests.
@@ -19,20 +18,9 @@ func fakeExtract(traceID, spanID uint64, ok bool) func(context.Context) (uint64,
 	}
 }
 
-func setup(t *testing.T, plugin loglayer.Plugin) (*loglayer.LogLayer, *lltest.TestLoggingLibrary) {
-	t.Helper()
-	lib := &lltest.TestLoggingLibrary{}
-	tr := lltest.New(lltest.Config{BaseConfig: transport.BaseConfig{ID: "test"}, Library: lib})
-	log := loglayer.New(loglayer.Config{
-		Transport:        tr,
-		DisableFatalExit: true,
-		Plugins:          []loglayer.Plugin{plugin},
-	})
-	return log, lib
-}
-
 func TestDatadogTrace_InjectsIDsWhenSpanPresent(t *testing.T) {
-	log, lib := setup(t, datadogtrace.New(datadogtrace.Config{
+	t.Parallel()
+	log, lib := plugintest.Install(t, datadogtrace.New(datadogtrace.Config{
 		Extract: fakeExtract(0xDEADBEEF, 0xCAFE, true),
 	}))
 
@@ -47,7 +35,8 @@ func TestDatadogTrace_InjectsIDsWhenSpanPresent(t *testing.T) {
 }
 
 func TestDatadogTrace_NoCtxNoInjection(t *testing.T) {
-	log, lib := setup(t, datadogtrace.New(datadogtrace.Config{
+	t.Parallel()
+	log, lib := plugintest.Install(t, datadogtrace.New(datadogtrace.Config{
 		Extract: fakeExtract(1, 1, true),
 	}))
 
@@ -59,7 +48,8 @@ func TestDatadogTrace_NoCtxNoInjection(t *testing.T) {
 }
 
 func TestDatadogTrace_NoSpanNoInjection(t *testing.T) {
-	log, lib := setup(t, datadogtrace.New(datadogtrace.Config{
+	t.Parallel()
+	log, lib := plugintest.Install(t, datadogtrace.New(datadogtrace.Config{
 		Extract: fakeExtract(0, 0, false),
 	}))
 
@@ -71,7 +61,8 @@ func TestDatadogTrace_NoSpanNoInjection(t *testing.T) {
 }
 
 func TestDatadogTrace_OptionalReservedAttributes(t *testing.T) {
-	log, lib := setup(t, datadogtrace.New(datadogtrace.Config{
+	t.Parallel()
+	log, lib := plugintest.Install(t, datadogtrace.New(datadogtrace.Config{
 		Service: "checkout-api",
 		Env:     "prod",
 		Version: "1.2.3",
@@ -92,7 +83,8 @@ func TestDatadogTrace_OptionalReservedAttributes(t *testing.T) {
 }
 
 func TestDatadogTrace_OmitsEmptyOptionalAttributes(t *testing.T) {
-	log, lib := setup(t, datadogtrace.New(datadogtrace.Config{
+	t.Parallel()
+	log, lib := plugintest.Install(t, datadogtrace.New(datadogtrace.Config{
 		// Service/Env/Version unset
 		Extract: fakeExtract(7, 11, true),
 	}))
@@ -107,7 +99,8 @@ func TestDatadogTrace_OmitsEmptyOptionalAttributes(t *testing.T) {
 }
 
 func TestDatadogTrace_PreservesUserData(t *testing.T) {
-	log, lib := setup(t, datadogtrace.New(datadogtrace.Config{
+	t.Parallel()
+	log, lib := plugintest.Install(t, datadogtrace.New(datadogtrace.Config{
 		Extract: fakeExtract(7, 11, true),
 	}))
 
@@ -127,6 +120,7 @@ func TestDatadogTrace_PreservesUserData(t *testing.T) {
 }
 
 func TestDatadogTrace_ExtractorPanicCallsOnError(t *testing.T) {
+	t.Parallel()
 	var caught error
 	plugin := datadogtrace.New(datadogtrace.Config{
 		Extract: func(context.Context) (uint64, uint64, bool) {
@@ -134,7 +128,7 @@ func TestDatadogTrace_ExtractorPanicCallsOnError(t *testing.T) {
 		},
 		OnError: func(err error) { caught = err },
 	})
-	log, lib := setup(t, plugin)
+	log, lib := plugintest.Install(t, plugin)
 
 	log.WithCtx(context.Background()).Info("recovered") // must not panic
 	if caught == nil {
@@ -155,13 +149,14 @@ func TestDatadogTrace_ExtractorPanicCallsOnError(t *testing.T) {
 }
 
 func TestDatadogTrace_ExtractorPanicWithoutOnErrorIsSilent(t *testing.T) {
+	t.Parallel()
 	plugin := datadogtrace.New(datadogtrace.Config{
 		Extract: func(context.Context) (uint64, uint64, bool) {
 			panic("string-panic")
 		},
 		// OnError nil
 	})
-	log, lib := setup(t, plugin)
+	log, lib := plugintest.Install(t, plugin)
 
 	// Must not panic.
 	log.WithCtx(context.Background()).Info("recovered")
@@ -171,6 +166,7 @@ func TestDatadogTrace_ExtractorPanicWithoutOnErrorIsSilent(t *testing.T) {
 }
 
 func TestDatadogTrace_PanicsWithoutExtract(t *testing.T) {
+	t.Parallel()
 	defer func() {
 		if r := recover(); r == nil {
 			t.Fatal("expected panic when Extract is nil")
@@ -180,6 +176,7 @@ func TestDatadogTrace_PanicsWithoutExtract(t *testing.T) {
 }
 
 func TestDatadogTrace_DefaultID(t *testing.T) {
+	t.Parallel()
 	p := datadogtrace.New(datadogtrace.Config{Extract: fakeExtract(1, 1, true)})
 	if p.ID != "datadog-trace-injector" {
 		t.Errorf("default ID: got %q, want %q", p.ID, "datadog-trace-injector")
@@ -187,6 +184,7 @@ func TestDatadogTrace_DefaultID(t *testing.T) {
 }
 
 func TestDatadogTrace_CustomID(t *testing.T) {
+	t.Parallel()
 	p := datadogtrace.New(datadogtrace.Config{
 		ID:      "my-injector",
 		Extract: fakeExtract(1, 1, true),

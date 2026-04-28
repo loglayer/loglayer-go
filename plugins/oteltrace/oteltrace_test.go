@@ -6,8 +6,7 @@ import (
 
 	"go.loglayer.dev"
 	"go.loglayer.dev/plugins/oteltrace"
-	"go.loglayer.dev/transport"
-	lltest "go.loglayer.dev/transports/testing"
+	"go.loglayer.dev/plugins/plugintest"
 	"go.opentelemetry.io/otel/baggage"
 	otrace "go.opentelemetry.io/otel/trace"
 )
@@ -36,20 +35,9 @@ func ctxWithSpan(traceID otrace.TraceID, spanID otrace.SpanID, sampled bool) con
 	return otrace.ContextWithSpanContext(context.Background(), sc)
 }
 
-func setup(t *testing.T, plugin loglayer.Plugin) (*loglayer.LogLayer, *lltest.TestLoggingLibrary) {
-	t.Helper()
-	lib := &lltest.TestLoggingLibrary{}
-	tr := lltest.New(lltest.Config{BaseConfig: transport.BaseConfig{ID: "test"}, Library: lib})
-	log := loglayer.New(loglayer.Config{
-		Transport:        tr,
-		DisableFatalExit: true,
-		Plugins:          []loglayer.Plugin{plugin},
-	})
-	return log, lib
-}
-
 func TestInjectsIDsWhenSpanPresent(t *testing.T) {
-	log, lib := setup(t, oteltrace.New(oteltrace.Config{}))
+	t.Parallel()
+	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{}))
 
 	log.WithCtx(ctxWithSpan(fixedTraceID, fixedSpanID, true)).Info("served")
 
@@ -63,7 +51,8 @@ func TestInjectsIDsWhenSpanPresent(t *testing.T) {
 }
 
 func TestNoCtxNoInjection(t *testing.T) {
-	log, lib := setup(t, oteltrace.New(oteltrace.Config{}))
+	t.Parallel()
+	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{}))
 
 	log.Info("plain") // no WithCtx
 
@@ -74,7 +63,8 @@ func TestNoCtxNoInjection(t *testing.T) {
 }
 
 func TestNoSpanNoInjection(t *testing.T) {
-	log, lib := setup(t, oteltrace.New(oteltrace.Config{}))
+	t.Parallel()
+	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{}))
 
 	// Background ctx has no span context attached.
 	log.WithCtx(context.Background()).Info("ctx but no span")
@@ -86,9 +76,10 @@ func TestNoSpanNoInjection(t *testing.T) {
 }
 
 func TestInvalidSpanContextNoInjection(t *testing.T) {
+	t.Parallel()
 	// Zero-valued TraceID/SpanID make the SpanContext invalid.
 	ctx := ctxWithSpan(otrace.TraceID{}, otrace.SpanID{}, false)
-	log, lib := setup(t, oteltrace.New(oteltrace.Config{}))
+	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{}))
 
 	log.WithCtx(ctx).Info("invalid span")
 
@@ -99,7 +90,8 @@ func TestInvalidSpanContextNoInjection(t *testing.T) {
 }
 
 func TestCustomKeys(t *testing.T) {
-	log, lib := setup(t, oteltrace.New(oteltrace.Config{
+	t.Parallel()
+	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{
 		TraceIDKey: "trace.id",
 		SpanIDKey:  "span.id",
 	}))
@@ -120,7 +112,8 @@ func TestCustomKeys(t *testing.T) {
 }
 
 func TestTraceFlagsEmittedWhenConfigured(t *testing.T) {
-	log, lib := setup(t, oteltrace.New(oteltrace.Config{
+	t.Parallel()
+	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{
 		TraceFlagsKey: "trace_flags",
 	}))
 
@@ -133,7 +126,8 @@ func TestTraceFlagsEmittedWhenConfigured(t *testing.T) {
 }
 
 func TestTraceFlagsOmittedByDefault(t *testing.T) {
-	log, lib := setup(t, oteltrace.New(oteltrace.Config{}))
+	t.Parallel()
+	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{}))
 
 	log.WithCtx(ctxWithSpan(fixedTraceID, fixedSpanID, true)).Info("no-flags")
 
@@ -144,7 +138,8 @@ func TestTraceFlagsOmittedByDefault(t *testing.T) {
 }
 
 func TestPreservesUserData(t *testing.T) {
-	log, lib := setup(t, oteltrace.New(oteltrace.Config{}))
+	t.Parallel()
+	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{}))
 	log = log.WithFields(loglayer.Fields{"requestId": "abc-123"})
 
 	log.WithCtx(ctxWithSpan(fixedTraceID, fixedSpanID, true)).
@@ -164,6 +159,7 @@ func TestPreservesUserData(t *testing.T) {
 }
 
 func TestDefaultID(t *testing.T) {
+	t.Parallel()
 	p := oteltrace.New(oteltrace.Config{})
 	if p.ID != "otel-trace-injector" {
 		t.Errorf("default ID: got %q, want %q", p.ID, "otel-trace-injector")
@@ -171,6 +167,7 @@ func TestDefaultID(t *testing.T) {
 }
 
 func TestCustomID(t *testing.T) {
+	t.Parallel()
 	p := oteltrace.New(oteltrace.Config{ID: "my-injector"})
 	if p.ID != "my-injector" {
 		t.Errorf("custom ID: got %q", p.ID)
@@ -196,7 +193,8 @@ func ctxWithSpanAndState(t *testing.T, ts string) context.Context {
 }
 
 func TestTraceStateEmittedWhenConfigured(t *testing.T) {
-	log, lib := setup(t, oteltrace.New(oteltrace.Config{
+	t.Parallel()
+	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{
 		TraceStateKey: "trace_state",
 	}))
 
@@ -209,7 +207,8 @@ func TestTraceStateEmittedWhenConfigured(t *testing.T) {
 }
 
 func TestTraceStateOmittedByDefault(t *testing.T) {
-	log, lib := setup(t, oteltrace.New(oteltrace.Config{}))
+	t.Parallel()
+	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{}))
 
 	log.WithCtx(ctxWithSpanAndState(t, "vendor1=val1")).Info("hi")
 
@@ -220,8 +219,9 @@ func TestTraceStateOmittedByDefault(t *testing.T) {
 }
 
 func TestTraceStateOmittedWhenEmpty(t *testing.T) {
+	t.Parallel()
 	// Key is configured but the trace state itself is empty: emit nothing.
-	log, lib := setup(t, oteltrace.New(oteltrace.Config{
+	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{
 		TraceStateKey: "trace_state",
 	}))
 
@@ -234,7 +234,8 @@ func TestTraceStateOmittedWhenEmpty(t *testing.T) {
 }
 
 func TestBaggageEmittedWithPrefix(t *testing.T) {
-	log, lib := setup(t, oteltrace.New(oteltrace.Config{
+	t.Parallel()
+	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{
 		BaggageKeyPrefix: "baggage.",
 	}))
 
@@ -255,7 +256,8 @@ func TestBaggageEmittedWithPrefix(t *testing.T) {
 }
 
 func TestBaggageOmittedByDefault(t *testing.T) {
-	log, lib := setup(t, oteltrace.New(oteltrace.Config{}))
+	t.Parallel()
+	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{}))
 
 	user, _ := baggage.NewMember("user_id", "alice")
 	bag, _ := baggage.New(user)
@@ -272,9 +274,10 @@ func TestBaggageOmittedByDefault(t *testing.T) {
 }
 
 func TestBaggageEmittedWithoutSpan(t *testing.T) {
+	t.Parallel()
 	// Baggage rides independently of the trace span: a context with
 	// baggage but no span should still surface baggage attributes.
-	log, lib := setup(t, oteltrace.New(oteltrace.Config{
+	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{
 		BaggageKeyPrefix: "baggage.",
 	}))
 
@@ -295,7 +298,8 @@ func TestBaggageEmittedWithoutSpan(t *testing.T) {
 }
 
 func TestNoSpanNoBaggageNoInjection(t *testing.T) {
-	log, lib := setup(t, oteltrace.New(oteltrace.Config{
+	t.Parallel()
+	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{
 		BaggageKeyPrefix: "baggage.",
 	}))
 

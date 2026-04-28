@@ -29,18 +29,6 @@ func New(prefix string) loglayer.Plugin {
 }
 ```
 
-::: tip Single-hook shortcuts
-For the common cases where a plugin only implements one hook, three named constructors avoid the struct-literal boilerplate:
-
-```go
-loglayer.MetadataPlugin("redact", func(m any) any { ... })
-loglayer.FieldsPlugin("rename", func(f loglayer.Fields) loglayer.Fields { ... })
-loglayer.LevelPlugin("promote", func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) { ... })
-```
-
-These are sugar over `loglayer.Plugin{...}` — use the struct literal directly when you need multiple hooks.
-:::
-
 ::: warning Plugin is consumed by value
 The `Plugin` struct is copied at `AddPlugin` time. Mutating its function fields *after* registration has no effect on the registered behavior — to update a plugin, build a new `Plugin` and `AddPlugin` it again (the existing one is replaced because IDs match).
 :::
@@ -83,18 +71,6 @@ Plugins run in the order they were added. `OnFieldsCalled` and `OnMetadataCalled
 ### Child loggers inherit plugins
 
 `Child()` (and `WithFields`, `WithPrefix`) clones the plugin set by reference. Once either side mutates, the snapshots fork — copy-on-write. Adding a plugin to the child does not affect the parent.
-
-## Picking the right hook
-
-| You want to…                                    | Use                  |
-|-------------------------------------------------|----------------------|
-| Redact / rewrite per-call metadata              | `OnMetadataCalled`   |
-| Redact / rewrite logger fields                  | `OnFieldsCalled`     |
-| Add or rewrite assembled output keys            | `OnBeforeDataOut`    |
-| Rewrite the message text                        | `OnBeforeMessageOut` |
-| Promote / demote the level for some entries     | `TransformLogLevel`  |
-| Drop entries from one specific transport        | `ShouldSend`         |
-| Drop entries from the logger entirely           | `ShouldSend` returning false for every transport, or a level filter |
 
 ## Hook reference
 
@@ -415,43 +391,9 @@ yourpkg/
 
 The constructor signature `func New(Config) loglayer.Plugin` matches the [`plugins/redact`](/plugins/redact) reference plugin and the constructor pattern transports use.
 
-## Testing your plugin
+## Testing
 
-Use [`transports/testing`](/transports/testing) as the capture target. It records every emitted entry into a `TestLoggingLibrary` you can assert against:
-
-```go
-import (
-    "testing"
-
-    "go.loglayer.dev"
-    "go.loglayer.dev/transport"
-    lltest "go.loglayer.dev/transports/testing"
-)
-
-func TestMyPlugin_AddsField(t *testing.T) {
-    lib := &lltest.TestLoggingLibrary{}
-    tr := lltest.New(lltest.Config{
-        BaseConfig: transport.BaseConfig{ID: "test"},
-        Library:    lib,
-    })
-    log := loglayer.New(loglayer.Config{
-        Transport:        tr,
-        DisableFatalExit: true,
-        Plugins:          []loglayer.Plugin{myplugin.New(...)},
-    })
-
-    log.Info("served")
-
-    line := lib.PopLine()
-    if line.Data["my-field"] != "expected" {
-        t.Errorf("my-field: got %v", line.Data["my-field"])
-    }
-}
-```
-
-`PopLine` returns the most recent entry and removes it; `Lines()` returns all captured. Both are `LogLine` structs with `LogLevel`, `Messages`, `Data`, `Metadata`, and `Err` fields. See [`transports/testing`](/transports/testing) for the full helper API.
-
-For panic-recovery tests, set `Plugin.OnError` to a closure that captures the error and assert on `*loglayer.RecoveredPanicError` via `errors.As`. See `plugin_test.go:TestPlugin_RecoveredPanic*` in the loglayer-go source for examples.
+For testing a custom plugin, see [Testing Plugins](/plugins/testing-plugins). It covers `Install`, `AssertNoMutation` (verifies an input-side hook doesn't mutate caller-owned input), and `AssertPanicRecovered`.
 
 ## See also
 

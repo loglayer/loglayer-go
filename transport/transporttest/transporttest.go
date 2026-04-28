@@ -1,6 +1,16 @@
-// Package transporttest provides helpers for transport tests in this module.
-// Internal: not part of the public API. Use only from go.loglayer.dev
-// and its sub-packages.
+// Package transporttest provides helpers and a contract test suite for
+// LogLayer transport implementations.
+//
+// Use [RunContract] to exercise the wrapper-transport contract (14 sub-tests
+// covering message rendering, levels, metadata placement, fields, error
+// rendering, level filtering, MetadataOnly / ErrorOnly / Raw, and WithCtx)
+// against any transport that wraps a third-party logger and produces JSON
+// output. The contract is what every built-in wrapper transport (zerolog,
+// zap, slog, logrus, charmlog, phuslu) verifies, parameterised by per-wrapper
+// rendering quirks (message key, level rendering, fatal handling).
+//
+// [ParseJSONLine] and [MessageContains] are general assertion helpers usable
+// from any transport test.
 package transporttest
 
 import (

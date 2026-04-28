@@ -9,8 +9,8 @@ import (
 
 	"go.loglayer.dev"
 	"go.loglayer.dev/integrations/loghttp"
-	"go.loglayer.dev/internal/transporttest"
 	"go.loglayer.dev/transport"
+	"go.loglayer.dev/transport/transporttest"
 	lltest "go.loglayer.dev/transports/testing"
 )
 

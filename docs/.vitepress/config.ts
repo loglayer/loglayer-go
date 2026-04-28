@@ -99,20 +99,6 @@ export default defineConfig({
         ],
       },
       {
-        text: 'Concepts',
-        items: [
-          { text: 'Fields, Metadata, and Data', link: '/concepts/data-shapes' },
-        ],
-      },
-      {
-        text: 'Migrating to LogLayer',
-        items: [
-          { text: 'From log/slog', link: '/migrating/from-slog' },
-          { text: 'From zerolog', link: '/migrating/from-zerolog' },
-          { text: 'From zap', link: '/migrating/from-zap' },
-        ],
-      },
-      {
         text: 'Logging API',
         items: [
           { text: 'Basic Logging', link: '/logging-api/basic-logging' },
@@ -135,6 +121,7 @@ export default defineConfig({
           { text: 'Management', link: '/transports/management' },
           { text: 'Multiple Transports', link: '/transports/multiple-transports' },
           { text: 'Creating Transports', link: '/transports/creating-transports' },
+          { text: 'Testing Transports', link: '/transports/testing-transports' },
           {
             text: 'Renderers',
             items: [
@@ -173,9 +160,15 @@ export default defineConfig({
           { text: 'Configuration', link: '/plugins/configuration' },
           { text: 'Management', link: '/plugins/management' },
           { text: 'Creating Plugins', link: '/plugins/creating-plugins' },
-          { text: 'Redact', link: '/plugins/redact' },
-          { text: 'Datadog APM Trace Injector', link: '/plugins/datadogtrace' },
-          { text: 'OpenTelemetry Trace Injector', link: '/plugins/oteltrace' },
+          { text: 'Testing Plugins', link: '/plugins/testing-plugins' },
+          {
+            text: 'Available Plugins',
+            items: [
+              { text: 'Redact', link: '/plugins/redact' },
+              { text: 'Datadog APM Trace Injector', link: '/plugins/datadogtrace' },
+              { text: 'OpenTelemetry Trace Injector', link: '/plugins/oteltrace' },
+            ],
+          },
         ],
       },
       {
