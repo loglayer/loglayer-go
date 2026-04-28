@@ -106,10 +106,11 @@ log.MuteFields().UnmuteFields()                            // suppress in output
 
 ### Metadata
 
-`loglayer.Metadata` is a type alias for `map[string]any`. The two forms are runtime-identical; the alias is the idiomatic form in user code.
+`loglayer.Metadata` is a type alias for `map[string]any`. The two forms are runtime-identical; the alias is the idiomatic form in user code. `loglayer.M` is a shorter alias for `loglayer.Metadata` (same for `loglayer.F` ↔ `loglayer.Fields`); use them for terser call sites.
 
 ```go
 log.WithMetadata(loglayer.Metadata{"userId": 42}).Info("login")  // map
+log.WithMetadata(loglayer.M{"userId": 42}).Info("login")         // short alias
 log.WithMetadata(MyStruct{...}).Info("event")                    // struct
 ```
 
@@ -320,6 +321,7 @@ log.AddPlugin(loglayer.NewMetadataHook("redact-password", func(metadata any) any
 Built-in plugins:
 
 - `plugins/redact`. Match by `Keys` (exact key names; honors `json` tags when matching struct fields) or `Patterns` (regex against string values). Walks nested maps, structs, slices, arrays, and pointers at any depth via reflection; preserves the caller's runtime type (struct in → struct out). Caller's input is never mutated. Dependency-free.
+- `fmtlog` (sub-package of the main module). Single MessageHook plugin: opt the logger into `fmt.Sprintf` semantics for multi-arg messages. After `log.AddPlugin(fmtlog.New())`, calls like `log.Info("user %d", id)` resolve to `"user 1234"` before downstream MessageHooks see them. Without the plugin, multi-arg messages remain space-joined (the framework default). Composes naturally with the builder chain.
 - `plugins/datadogtrace`. Reads the active span from each entry's `WithCtx` context via a user-supplied `Extract` function and emits `dd.trace_id`, `dd.span_id`, plus optional `dd.service` / `dd.env` / `dd.version` for Datadog's log/trace correlation. Tracer-agnostic: works with `dd-trace-go` v1, v2, or any custom extractor; LogLayer itself takes no Datadog dependency.
 - `plugins/oteltrace`. Reads the active OTel span from each entry's `WithCtx` context via `trace.SpanContextFromContext` (`go.opentelemetry.io/otel/trace`) and emits `trace_id` / `span_id` in OTel's lowercase-hex canonical form, plus optional `trace_flags`, `trace_state` (W3C vendor-specific routing/sampling info), and W3C baggage members (`go.opentelemetry.io/otel/baggage`) keyed `<prefix><member-key>`. Baggage rides independently of the trace span, so a context with baggage but no active span still surfaces baggage attributes. Configurable keys (defaults match OTel JSON serialization; switch to `trace.id`/`span.id` for ECS, etc.). Companion to `transports/otellog`: use the plugin when shipping logs to non-OTel destinations (structured stdout, Datadog HTTP, Loki); use the transport when shipping through the OTel pipeline (the SDK handles correlation automatically).
 

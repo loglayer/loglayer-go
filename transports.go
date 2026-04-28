@@ -20,21 +20,14 @@ func closeIfCloser(t Transport) {
 
 // flushTransports closes every transport that implements io.Closer,
 // blocking up to timeout. Closes run in parallel; total wall-time is
-// max(per-transport close), not sum. timeout == 0 uses
-// [defaultTransportCloseTimeout]; a negative value waits without a cap.
-// On timeout, goroutines driving still-running Close calls leak —
-// best-effort drain is the contract.
+// max(per-transport close), not sum. timeout <= 0 uses
+// [defaultTransportCloseTimeout]. On timeout, goroutines driving any
+// still-running Close calls leak; best-effort drain is the contract.
 func flushTransports(transports []Transport, timeout time.Duration) {
 	if len(transports) == 0 {
 		return
 	}
-	if timeout < 0 {
-		for _, t := range transports {
-			closeIfCloser(t)
-		}
-		return
-	}
-	if timeout == 0 {
+	if timeout <= 0 {
 		timeout = defaultTransportCloseTimeout
 	}
 	done := make(chan struct{})

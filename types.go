@@ -92,8 +92,7 @@ type Config struct {
 	// io.Closer transport to drain on removal (RemoveTransport,
 	// SetTransports, AddTransport-by-replace) or pre-Fatal flush, so a
 	// wedged endpoint can't hang the process or mutator goroutine.
-	// Defaults to 5 seconds when zero; a negative value waits without
-	// a cap.
+	// Defaults to 5 seconds when zero or negative.
 	TransportCloseTimeout time.Duration
 
 	// Groups defines named routing rules. Each group lists the transport

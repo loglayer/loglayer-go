@@ -1,9 +1,9 @@
 ---
-title: Format Strings (fmtlog)
+title: Format Strings
 description: "Opt-in fmt.Sprintf semantics for multi-arg log calls."
 ---
 
-# Format Strings (fmtlog)
+# Format Strings
 
 `fmtlog` is a one-line plugin that opts a logger into `fmt.Sprintf`-style format strings. After registration, every call where the first message is a string and there are extra arguments is rewritten via `fmt.Sprintf(messages[0], messages[1:]...)` before downstream `MessageHook`s run.
 
@@ -89,4 +89,4 @@ if log.IsLevelEnabled(loglayer.LogLevelDebug) {
 
 ## Plugin Hook
 
-`fmtlog.New()` registers a single `MessageHook` named `"fmtlog"`. Other plugins that read or rewrite `Messages` see the resolved string when their hook runs after `fmtlog`. To control ordering relative to other `MessageHook`s, register them in the desired order — hooks run in registration order.
+`fmtlog.New()` registers a single `MessageHook` named `"fmtlog"`. Other plugins that read or rewrite `Messages` see the resolved string when their hook runs after `fmtlog`. To control ordering relative to other `MessageHook`s, register them in the desired order; hooks run in registration order.

@@ -167,7 +167,7 @@ export default defineConfig({
             text: 'Available Plugins',
             items: [
               { text: 'Redact', link: '/plugins/redact' },
-              { text: 'Format Strings (fmtlog)', link: '/plugins/fmtlog' },
+              { text: 'Format Strings', link: '/plugins/fmtlog' },
               { text: 'Datadog APM Trace Injector', link: '/plugins/datadogtrace' },
               { text: 'OpenTelemetry Trace Injector', link: '/plugins/oteltrace' },
             ],
