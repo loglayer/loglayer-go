@@ -5,6 +5,10 @@ import (
 	"os"
 )
 
+// osExit is the process-exit hook for fatal-level entries. Overridden in
+// tests to verify the pre-exit flush without terminating the test runner.
+var osExit = os.Exit
+
 // formatLog applies the prefix to messages then hands the entry to processLog
 // using the logger's persistent fields. Per-call goCtx overrides the
 // logger's bound ctx (when one is provided), otherwise the bound ctx is
@@ -140,6 +144,12 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 	}
 
 	if level == LogLevelFatal && !cfg.DisableFatalExit {
-		os.Exit(1)
+		// Async transports (HTTP/Datadog) only enqueue in SendToLogger;
+		// without flushing them here the Fatal entry would be lost when
+		// os.Exit terminates the worker goroutines mid-batch.
+		for _, t := range l.loadTransports().list {
+			closeIfCloser(t)
+		}
+		osExit(1)
 	}
 }

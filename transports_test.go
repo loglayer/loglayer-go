@@ -97,6 +97,88 @@ func TestAddTransport_SameIDReplaces(t *testing.T) {
 	}
 }
 
+// closableTransport records Close calls. Used to verify that
+// RemoveTransport / SetTransports / AddTransport-by-replace drain
+// async-transport workers via io.Closer.
+type closableTransport struct {
+	*lltest.TestTransport
+	closed *int
+}
+
+func (c *closableTransport) Close() error {
+	*c.closed++
+	return nil
+}
+
+func newClosable(id string, lib *lltest.TestLoggingLibrary, closed *int) *closableTransport {
+	return &closableTransport{
+		TestTransport: lltest.New(lltest.Config{BaseConfig: transport.BaseConfig{ID: id}, Library: lib}),
+		closed:        closed,
+	}
+}
+
+func TestRemoveTransport_ClosesRemoved(t *testing.T) {
+	closed := 0
+	keep := newClosable("keep", &lltest.TestLoggingLibrary{}, &closed)
+	tr := newClosable("t", &lltest.TestLoggingLibrary{}, &closed)
+	log := loglayer.New(loglayer.Config{
+		DisableFatalExit: true,
+		Transports:       []loglayer.Transport{keep, tr},
+	})
+
+	if !log.RemoveTransport("t") {
+		t.Fatal("RemoveTransport should return true")
+	}
+	if closed != 1 {
+		t.Errorf("removed transport should be closed once, got %d", closed)
+	}
+}
+
+func TestSetTransports_ClosesEvicted(t *testing.T) {
+	closed := 0
+	old := newClosable("old", &lltest.TestLoggingLibrary{}, &closed)
+	keep := newClosable("keep", &lltest.TestLoggingLibrary{}, &closed)
+	log := loglayer.New(loglayer.Config{
+		DisableFatalExit: true,
+		Transports:       []loglayer.Transport{old, keep},
+	})
+
+	newTr := newClosable("new", &lltest.TestLoggingLibrary{}, &closed)
+	log.SetTransports(keep, newTr)
+
+	// "old" was evicted; "keep" carried over; "new" is fresh — only "old" closed.
+	if closed != 1 {
+		t.Errorf("only the evicted transport should be closed, got %d closes", closed)
+	}
+}
+
+func TestAddTransport_SameIDClosesDisplaced(t *testing.T) {
+	closed := 0
+	original := newClosable("shared", &lltest.TestLoggingLibrary{}, &closed)
+	replacement := newClosable("shared", &lltest.TestLoggingLibrary{}, &closed)
+
+	log := loglayer.New(loglayer.Config{DisableFatalExit: true, Transport: original})
+	log.AddTransport(replacement)
+	if closed != 1 {
+		t.Errorf("displaced transport should be closed, got %d closes", closed)
+	}
+}
+
+// TestFatal_DisableFatalExitSkipsFlush pins the contract that
+// DisableFatalExit skips both os.Exit and the pre-exit flush, so
+// async transports remain operational for subsequent emissions
+// (relevant for tests that exercise Fatal-via-mock).
+func TestFatal_DisableFatalExitSkipsFlush(t *testing.T) {
+	closed := 0
+	tr := newClosable("t", &lltest.TestLoggingLibrary{}, &closed)
+	log := loglayer.New(loglayer.Config{Transport: tr, DisableFatalExit: true})
+
+	log.Fatal("goodbye")
+	if closed != 0 {
+		t.Errorf("DisableFatalExit should skip the flush, got %d closes", closed)
+	}
+}
+
 // BaseConfig.Disabled at construction time skips the transport regardless
 // of the global level state. We test the global Config.Disabled elsewhere
 // but never the per-transport version.

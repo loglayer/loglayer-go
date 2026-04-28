@@ -1,7 +1,18 @@
 package loglayer
 
+import "io"
+
+// closeIfCloser closes t if it implements io.Closer. Drains async-transport
+// workers (HTTP/Datadog) when a transport is removed or replaced so they
+// aren't orphaned.
+func closeIfCloser(t Transport) {
+	if c, ok := t.(io.Closer); ok {
+		_ = c.Close()
+	}
+}
+
 // AddTransport appends one or more transports. If a transport with the same ID
-// already exists it is replaced.
+// already exists it is closed (if it implements io.Closer) and replaced.
 //
 // Safe to call concurrently with log emission: the new transport set is
 // published atomically. Concurrent mutators on the same logger serialize via
@@ -19,16 +30,24 @@ func (l *LogLayer) AddTransport(transports ...Transport) *LogLayer {
 		newIDs[t.ID()] = true
 	}
 	filtered := make([]Transport, 0, len(current)+len(transports))
+	var displaced []Transport
 	for _, t := range current {
-		if !newIDs[t.ID()] {
-			filtered = append(filtered, t)
+		if newIDs[t.ID()] {
+			displaced = append(displaced, t)
+			continue
 		}
+		filtered = append(filtered, t)
 	}
 	l.publishTransports(append(filtered, transports...))
+	for _, t := range displaced {
+		closeIfCloser(t)
+	}
 	return l
 }
 
-// RemoveTransport removes the transport with the given ID.
+// RemoveTransport removes the transport with the given ID. The removed
+// transport is closed if it implements io.Closer (HTTP/Datadog drain
+// pending entries before returning).
 // Returns true if found and removed, false otherwise.
 //
 // Safe to call concurrently with log emission.
@@ -37,7 +56,8 @@ func (l *LogLayer) RemoveTransport(id string) bool {
 	defer l.txMu.Unlock()
 
 	current := l.loadTransports()
-	if _, ok := current.byID[id]; !ok {
+	removed, ok := current.byID[id]
+	if !ok {
 		return false
 	}
 	remaining := make([]Transport, 0, len(current.list)-1)
@@ -47,17 +67,30 @@ func (l *LogLayer) RemoveTransport(id string) bool {
 		}
 	}
 	l.publishTransports(remaining)
+	closeIfCloser(removed)
 	return true
 }
 
-// SetTransports replaces all existing transports.
+// SetTransports replaces all existing transports. Any previous transport
+// not present in the new set (matched by ID) is closed if it implements
+// io.Closer.
 //
 // Safe to call concurrently with log emission.
 func (l *LogLayer) SetTransports(transports ...Transport) *LogLayer {
 	l.txMu.Lock()
 	defer l.txMu.Unlock()
 
+	current := l.loadTransports().list
+	keep := make(map[string]bool, len(transports))
+	for _, t := range transports {
+		keep[t.ID()] = true
+	}
 	l.publishTransports(transports)
+	for _, t := range current {
+		if !keep[t.ID()] {
+			closeIfCloser(t)
+		}
+	}
 	return l
 }
 

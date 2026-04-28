@@ -12,6 +12,8 @@ package datadog
 
 import (
 	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/goccy/go-json"
 
@@ -87,6 +89,14 @@ type Config struct {
 	// Optional.
 	Tags string
 
+	// AllowInsecureURL permits Config.URL to use a non-https scheme. The
+	// API key is sent in the DD-API-KEY header on every request; without
+	// this flag, Build refuses a non-https URL to keep the key off the
+	// wire in plaintext. Set true only when an on-prem forwarder
+	// terminates TLS upstream and a private network carries the cleartext
+	// hop. The Site-derived intake URLs are always https and unaffected.
+	AllowInsecureURL bool
+
 	// HTTP overrides batching, client, error handling, and any other
 	// transports/http settings. The URL, Encoder, and DD-API-KEY header are
 	// set by this package and cannot be overridden via this field.
@@ -146,6 +156,12 @@ func Build(cfg Config) (*Transport, error) {
 	httpCfg := cfg.HTTP
 	httpCfg.BaseConfig = cfg.BaseConfig
 	if cfg.URL != "" {
+		if !cfg.AllowInsecureURL {
+			u, err := url.Parse(cfg.URL)
+			if err != nil || !strings.EqualFold(u.Scheme, "https") {
+				return nil, ErrInsecureURL
+			}
+		}
 		httpCfg.URL = cfg.URL
 	} else {
 		httpCfg.URL = cfg.Site.IntakeURL()

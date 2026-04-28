@@ -190,6 +190,28 @@ func TestDatadog_Build_ReturnsErrAPIKeyRequired(t *testing.T) {
 	}
 }
 
+func TestDatadog_Build_RejectsInsecureURL(t *testing.T) {
+	_, err := datadog.Build(datadog.Config{
+		APIKey: "k",
+		URL:    "http://example.com",
+	})
+	if !errors.Is(err, datadog.ErrInsecureURL) {
+		t.Errorf("Build with http URL: got %v, want ErrInsecureURL", err)
+	}
+}
+
+func TestDatadog_Build_AllowsInsecureURLWithOptIn(t *testing.T) {
+	tr, err := datadog.Build(datadog.Config{
+		APIKey:           "k",
+		URL:              "http://example.com",
+		AllowInsecureURL: true,
+	})
+	if err != nil {
+		t.Fatalf("AllowInsecureURL=true should pass: %v", err)
+	}
+	_ = tr.Close()
+}
+
 func TestDatadog_SiteIntakeURL(t *testing.T) {
 	cases := []struct {
 		site datadog.Site
@@ -265,10 +287,11 @@ func TestDatadog_URLOverride(t *testing.T) {
 	defer srv.Close()
 
 	tr := datadog.New(datadog.Config{
-		BaseConfig: transport.BaseConfig{ID: "datadog"},
-		APIKey:     "k",
-		Site:       datadog.SiteEU, // would point at datadoghq.eu
-		URL:        srv.URL,        // override wins
+		BaseConfig:       transport.BaseConfig{ID: "datadog"},
+		APIKey:           "k",
+		Site:             datadog.SiteEU, // would point at datadoghq.eu
+		URL:              srv.URL,        // override wins
+		AllowInsecureURL: true,           // httptest server is http://
 		HTTP: httptr.Config{
 			BatchSize:     1,
 			BatchInterval: 10 * time.Millisecond,
