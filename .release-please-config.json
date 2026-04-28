@@ -19,6 +19,20 @@
       "include-component-in-tag": true,
       "changelog-path": "CHANGELOG.md"
     },
+    "transports/datadog": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/transports/datadog",
+      "component": "transports/datadog",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "transports/http": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/transports/http",
+      "component": "transports/http",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
     "transports/logrus": {
       "release-type": "go",
       "package-name": "go.loglayer.dev/transports/logrus",
@@ -37,6 +51,13 @@
       "release-type": "go",
       "package-name": "go.loglayer.dev/transports/phuslu",
       "component": "transports/phuslu",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "transports/pretty": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/transports/pretty",
+      "component": "transports/pretty",
       "include-component-in-tag": true,
       "changelog-path": "CHANGELOG.md"
     },

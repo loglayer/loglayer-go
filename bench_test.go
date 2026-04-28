@@ -1,11 +1,12 @@
 package loglayer_test
 
-// Benchmarks for the framework core, the renderer transports
-// (structured/console/pretty/testing), and shared dispatch paths.
+// Benchmarks for the framework core, the in-main renderer transports
+// (structured/console/testing), and shared dispatch paths.
 //
 // Per-vendor wrapper benchmarks (Direct_Zerolog vs Wrapped_Zerolog,
 // etc.) live in each wrapper's own module so the main module doesn't
-// pull every vendor SDK into its dependency graph.
+// pull every vendor SDK into its dependency graph. Render_Pretty
+// benchmarks live in transports/pretty for the same reason.
 //
 // Run with:
 //   go test -bench=. -benchmem -run=^$ -benchtime=1s .
@@ -21,7 +22,6 @@ import (
 	"go.loglayer.dev"
 	"go.loglayer.dev/transport"
 	"go.loglayer.dev/transports/console"
-	"go.loglayer.dev/transports/pretty"
 	"go.loglayer.dev/transports/structured"
 	lltest "go.loglayer.dev/transports/testing"
 )
@@ -112,30 +112,6 @@ func BenchmarkRender_Structured_StructMetadata(b *testing.B) {
 		}),
 	})
 	runStruct(b, log)
-}
-
-func BenchmarkRender_Pretty_SimpleMessage(b *testing.B) {
-	log := loglayer.New(loglayer.Config{
-		DisableFatalExit: true,
-		Transport: pretty.New(pretty.Config{
-			BaseConfig: transport.BaseConfig{ID: "pretty"},
-			Writer:     discard,
-			NoColor:    true,
-		}),
-	})
-	runSimple(b, log)
-}
-
-func BenchmarkRender_Pretty_MapMetadata(b *testing.B) {
-	log := loglayer.New(loglayer.Config{
-		DisableFatalExit: true,
-		Transport: pretty.New(pretty.Config{
-			BaseConfig: transport.BaseConfig{ID: "pretty"},
-			Writer:     discard,
-			NoColor:    true,
-		}),
-	})
-	runMap(b, log)
 }
 
 func BenchmarkRender_Console_SimpleMessage(b *testing.B) {

@@ -5,10 +5,6 @@ description: Wrap a github.com/sirupsen/logrus logger with LogLayer.
 
 # logrus Transport
 
-::: info Separate module
-`transports/logrus` ships as its own Go module (`go.loglayer.dev/transports/logrus`) so consumers who don't use the logrus wrapper never pull `github.com/sirupsen/logrus` into their dependency graph.
-:::
-
 Wraps an existing `*logrus.Logger`. Map metadata flattens via `Entry.WithFields`; struct metadata lands under a configurable key.
 
 ```sh

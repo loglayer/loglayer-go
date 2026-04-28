@@ -5,10 +5,6 @@ description: Wrap a go.uber.org/zap logger with LogLayer.
 
 # Zap Transport
 
-::: info Separate module
-`transports/zap` ships as its own Go module (`go.loglayer.dev/transports/zap`) so consumers who don't use the zap wrapper never pull `go.uber.org/zap` into their dependency graph.
-:::
-
 Wraps a `*zap.Logger`. Map metadata becomes individual zap fields; struct metadata lands under a configurable key. Fatal-level entries are written via a custom `CheckWriteHook` so the process is **not** terminated, regardless of zap's defaults.
 
 ```sh

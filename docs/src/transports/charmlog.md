@@ -5,10 +5,6 @@ description: Wrap a github.com/charmbracelet/log logger with LogLayer.
 
 # charmbracelet/log Transport
 
-::: info Separate module
-`transports/charmlog` ships as its own Go module (`go.loglayer.dev/transports/charmlog`) so consumers who don't use the charmbracelet wrapper never pull `github.com/charmbracelet/log` (and its termenv/lipgloss closure) into their dependency graph.
-:::
-
 Wraps an existing `*charmbracelet/log.Logger`. Map metadata flattens to alternating key/value pairs; struct metadata lands under a configurable key.
 
 ```sh

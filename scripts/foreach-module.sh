@@ -16,13 +16,19 @@ set -euo pipefail
 ALL_MODULES=(
   .
   transports/charmlog
+  transports/datadog
+  transports/http
   transports/logrus
   transports/otellog
   transports/phuslu
+  transports/pretty
   transports/zap
   transports/zerolog
   plugins/oteltrace
   plugins/datadogtrace/livetest
+  examples/custom-plugin
+  examples/datadog-shipping
+  examples/multi-transport
   examples/otel-end-to-end
 )
 
@@ -32,9 +38,12 @@ ALL_MODULES=(
 SHIPPED_MODULES=(
   .
   transports/charmlog
+  transports/datadog
+  transports/http
   transports/logrus
   transports/otellog
   transports/phuslu
+  transports/pretty
   transports/zap
   transports/zerolog
   plugins/oteltrace
@@ -89,14 +98,17 @@ case "$op" in
     fi
     ;;
   test)
-    # examples/otel-end-to-end has no tests; skip to avoid the
-    # confusing "[no test files]" output. Other modules all have tests.
+    # Example modules have no tests; skip to avoid the confusing
+    # "[no test files]" output. Every other module has tests.
     for mod in \
       . \
       transports/charmlog \
+      transports/datadog \
+      transports/http \
       transports/logrus \
       transports/otellog \
       transports/phuslu \
+      transports/pretty \
       transports/zap \
       transports/zerolog \
       plugins/oteltrace \
