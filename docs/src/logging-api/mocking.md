@@ -58,17 +58,13 @@ Use this when the test's purpose is to verify *what* was logged. The `transports
 ```go
 import (
     "go.loglayer.dev"
-    "go.loglayer.dev/transport"
     lltest "go.loglayer.dev/transports/testing"
 )
 
 func TestRequestLogging(t *testing.T) {
     lib := &lltest.TestLoggingLibrary{}
     log := loglayer.New(loglayer.Config{
-        Transport: lltest.New(lltest.Config{
-            BaseConfig: transport.BaseConfig{ID: "test"},
-            Library:    lib,
-        }),
+        Transport: lltest.New(lltest.Config{Library: lib}),
     })
 
     handleRequest(log, "abc-123")

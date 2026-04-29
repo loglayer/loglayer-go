@@ -26,7 +26,7 @@ Four primary adoption paths, in order of overhead on a simple message:
 
 Sub-microsecond on every path. The sections below break down where the time goes.
 
-## Same call site, any transport
+## Same Call Site, Any Transport
 
 All four setups produce the same call site:
 
@@ -94,7 +94,7 @@ log := loglayer.New(loglayer.Config{
     Transport: llzap.New(llzap.Config{Logger: zp}),
 })
 
-// slog frontend (733 ns) — same setup, plus install the handler
+// slog frontend (733 ns): same setup, plus install the handler
 log := loglayer.New(loglayer.Config{
     Transport: structured.New(structured.Config{}),
 })
@@ -118,9 +118,9 @@ What LogLayer gives you: one call-site shape against any transport, a single poi
 
 | Setup | Time | Allocs | Bytes | Δ vs direct |
 |---|---:|---:|---:|---:|
-| Direct zerolog, simple message | 77 ns | 0 | 0 | — |
+| Direct zerolog, simple message | 77 ns | 0 | 0 | - |
 | LogLayer + zerolog, simple message | 142 ns | 1 | 16 | **+65 ns / +1 alloc** |
-| Direct zerolog, three keyed fields | 138 ns | 0 | 0 | — |
+| Direct zerolog, three keyed fields | 138 ns | 0 | 0 | - |
 | LogLayer + zerolog, struct metadata | 535 ns | 5 | 272 | **+397 ns / +5 allocs** |
 | LogLayer + zerolog, map metadata | 713 ns | 8 | 544 | **+575 ns / +8 allocs** |
 
@@ -142,9 +142,9 @@ zerolog wins on every shape. Its hand-tuned JSON encoder writes directly into a 
 
 | Setup | Time | Allocs | Bytes | Δ vs direct |
 |---|---:|---:|---:|---:|
-| Direct zap, simple message | 370 ns | 0 | 0 | — |
+| Direct zap, simple message | 370 ns | 0 | 0 | - |
 | LogLayer + zap, simple message | 470 ns | 1 | 16 | **+100 ns / +1 alloc** |
-| Direct zap, three keyed fields | 570 ns | 1 | 192 | — |
+| Direct zap, three keyed fields | 570 ns | 1 | 192 | - |
 | LogLayer + zap, struct metadata | 1,018 ns | 5 | 320 | **+448 ns / +4 allocs** |
 | LogLayer + zap, map metadata | 1,128 ns | 5 | 641 | **+558 ns / +4 allocs** |
 
@@ -215,14 +215,14 @@ The loglayer-native path (`log.Info("msg")` directly, no slog frontend) is ~41 n
 
 ## Plugin pipeline overhead
 
-This benchmark measures **framework dispatch cost**, not real plugin work. Three trivial hooks (a `DataHook` returning `{"tagged": true}`, a passthrough `LevelHook`, a passthrough `SendGate`):
+This benchmark measures **loglayer's dispatch cost**, not real plugin work. Three trivial hooks (a `DataHook` returning `{"tagged": true}`, a passthrough `LevelHook`, a passthrough `SendGate`):
 
 | Setup | Time | Allocs | Bytes |
 |---|---:|---:|---:|
 | No plugins, simple message | 41 ns | 1 | 16 |
 | Three trivial hooks, simple message | 433 ns | 5 | 688 |
 
-The framework cost is per-hook params construction plus the `recover()` defer; LogLayer pre-indexes hook membership at registration time, so plugins that don't implement a given hook never run.
+The dispatch cost is per-hook params construction plus the `recover()` defer; LogLayer pre-indexes hook membership at registration time, so plugins that don't implement a given hook never run.
 
 Real plugin cost is whatever the plugin does on top of dispatch:
 
@@ -238,9 +238,9 @@ For mutation-heavy plugins, see [Creating Plugins → Performance: only clone if
 
 | Setup | Time | Allocs | Bytes | Δ vs off |
 |---|---:|---:|---:|---:|
-| Simple message, off | 41 ns | 1 | 16 | — |
+| Simple message, off | 41 ns | 1 | 16 | - |
 | Simple message, on | 636 ns | 6 | 648 | **+595 ns / +5 allocs** |
-| Map metadata, off | 235 ns | 4 | 448 | — |
+| Map metadata, off | 235 ns | 4 | 448 | - |
 | Map metadata, on | 891 ns | 9 | 1,080 | **+656 ns / +5 allocs** |
 
 The added cost is constant across emission shapes and dominated by `runtime.FuncForPC().Name()` materializing the function-name string plus the heap-allocated `*Source`. Leave `Source.Enabled` off in throughput-sensitive code.

@@ -31,7 +31,7 @@ log.Info("user signed in") // both transports receive it
 
 Authoring a custom transport? See [Creating Transports](/transports/creating-transports) for the dispatch-side contract (immutable params, error handling, concurrency).
 
-## Why Sequential, Not Parallel
+## Why Sequential (Not Parallel)
 
 Most transports are pure formatting + a write. Goroutine setup costs more than the work itself. If a transport does I/O that genuinely blocks, that transport should buffer or queue internally, making the whole dispatch loop async would penalize the common case.
 
@@ -79,7 +79,7 @@ loglayer.New(loglayer.Config{Transport: t})                                // si
 loglayer.New(loglayer.Config{Transports: []loglayer.Transport{t1, t2}})   // multiple
 ```
 
-## Recipe: pretty in dev, structured to a file, ship to Datadog
+## Recipe: Multi-Output Production Setup
 
 A realistic production setup. Pretty is colorized terminal output for the developer attached to the process; structured writes JSON-per-line to a rolling file for local correlation; Datadog ships everything to the Logs HTTP intake. Each transport has its own minimum level so the noisy `Debug` lines stay local.
 

@@ -94,7 +94,7 @@ This is useful when the payload is computed across several lines, populated cond
 
 The core never dereferences or copies the value: it stores `any` and hands it to the transport. Pointer-vs-value behavior is therefore a transport concern. Transports that use `encoding/json` (structured, http, datadog) and the wrappers that hand off to a JSON-aware logger (zap, zerolog, slog, logrus, charmlog, phuslu) all dereference pointers via the standard library or their own marshaler.
 
-## Replacing, Not Merging
+## WithMetadata Replaces (Doesn't Merge)
 
 Calling `WithMetadata` twice on the same builder **replaces** the value:
 

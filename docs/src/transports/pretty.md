@@ -217,7 +217,7 @@ log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
 
 <!--@include: ./_partials/fatal-passthrough.md-->
 
-## Threat Model: Use for Terminals, Not for Pipelines
+## Threat Model: For Terminals (Not Pipelines)
 
 Pretty is a terminal renderer. It writes ANSI color codes for level chevrons, keys, and timestamps directly to the writer (defaults to stdout). The message string is sanitized for control characters before output, but **field/metadata values** in pretty's rendered output pass through to the terminal in their typed form, including any ANSI escape sequences they happen to contain.
 

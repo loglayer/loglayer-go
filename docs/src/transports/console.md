@@ -161,7 +161,7 @@ When `MessageFn` is set, the logfmt tail still appends after its return value (u
 
 Map metadata is merged into the same data bag as fields and errors. Struct metadata is JSON-roundtripped into root fields before logfmt rendering. See [Metadata](/logging-api/metadata) for the design.
 
-## Threat Model: Plaintext, Not for Pipelines
+## Threat Model: Plaintext (Not for Pipelines)
 
 User message strings are sanitized for control characters before output (CR, LF, ESC, Unicode bidi controls, zero-width joiners; see `sanitize.Message`). Field and metadata **string values** are quoted and `\n` / `\r` / `\t` are escaped, so user-controlled string fields can't forge log lines. Non-string values pass through their typed renderer (numbers, bools, JSON encoding for nested), which doesn't introduce control characters.
 
