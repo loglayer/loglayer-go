@@ -12,16 +12,11 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
 </p>
 
-`loglayer-go` is a structured logging facade for Go that sits in front of whatever logger you already use (zerolog, zap, log/slog, logrus, charmbracelet/log, phuslu) or one of the built-in transports (pretty terminal, structured JSON, HTTP, Datadog, OpenTelemetry). The pieces that aren't already trivial in slog or zerolog:
+`loglayer-go` is a unified logger that routes logs to various logging libraries, cloud providers, files, terminals, and OpenTelemetry while providing a fluent API for specifying log messages, fields, metadata, and errors.
 
-- **Reflective redaction.** A built-in plugin walks structs, maps, slices, and pointers at any depth and replaces matched keys or value patterns before any transport sees the value. Honors `json` tags; preserves runtime types.
-- **Multi-transport fan-out with per-transport level filters.** Pretty in dev plus structured to a file plus batched HTTP to Datadog, all from one logger.
-- **Group routing.** Tag entries by subsystem (`db`, `auth`, ...) and route each group to specific transports with its own minimum level. Toggle which groups are active at runtime via env var.
-- **Two-way slog interop.** Wrap a `*slog.Logger` as a backend, or install a `slog.Handler` so `slog.Info(...)` calls (yours and your dependencies') flow through your full loglayer pipeline.
-- **First-class test capture.** A typed `LogLine` capture so tests assert on level, message, fields, metadata, and context independently. No JSON parsing in tests.
-- **Caller info opt-in.** `Config.Source.Enabled` captures file/line/function per emission and renders it under `Config.Source.FieldName` (default `"source"`). JSON tags match the `log/slog` convention so output is interchangeable. The slog handler forwards `Record.PC` for free.
+Requires **Go 1.25+** for the main module.
 
-Application code uses one fluent API for messages, fields, metadata, and errors regardless of which transport(s) are behind it. Full documentation at [go.loglayer.dev](https://go.loglayer.dev).
+For full documentation, read the [docs](https://go.loglayer.dev).
 
 ```go
 // Example using the Pretty terminal transport.
@@ -40,7 +35,7 @@ log := loglayer.New(loglayer.Config{
     FieldsKey: "context",
 })
 
-// Persisted fields that appear on every subsequent log
+// Persistent fields that appear on every subsequent log
 log = log.WithFields(loglayer.Fields{
     "path":  "/",
     "reqId": "1234",
@@ -75,44 +70,17 @@ log.WithPrefix("[my-app]").
 go get go.loglayer.dev
 ```
 
-Requires **Go 1.25+** for the main module. The OpenTelemetry transport (`go.loglayer.dev/transports/otellog`) and trace-injector plugin (`go.loglayer.dev/plugins/oteltrace`) ship as their own Go modules so the OTel SDK's transitive deps don't bind users who don't need them. Individual transports/plugins note any stricter requirement on their doc page.
-
-## Examples
-
-Runnable demos under [`examples/`](./examples):
-
-- [`http-server`](./examples/http-server): `loghttp` middleware in an HTTP handler
-- [`multi-transport`](./examples/multi-transport): pretty in dev + structured to file with per-transport level filtering
-- [`custom-transport`](./examples/custom-transport): implementing the Transport interface from scratch (renderer / "flatten" policy)
-- [`custom-transport-attribute`](./examples/custom-transport-attribute): Transport that forwards to an attribute-style backend (wrapper policy)
-- [`custom-plugin`](./examples/custom-plugin): writing a plugin from scratch (`OnBeforeDataOut`, `OnMetadataCalled`, `ShouldSend`)
-- [`datadog-shipping`](./examples/datadog-shipping): Datadog Logs intake with tuned batching
-- [`otel-end-to-end`](./examples/otel-end-to-end): `transports/otellog` + `plugins/oteltrace` against a real OTel SDK (own module; `cd examples/otel-end-to-end && go run .`)
-
-Run any of the main-module ones with `go run ./examples/<name>`.
-
-## Transports & Integrations
-
-LogLayer ships adapters for the major Go loggers, self-contained renderers, network transports, and HTTP middleware. The full catalog with per-adapter docs lives at **[go.loglayer.dev/transports](https://go.loglayer.dev/transports/)** and **[go.loglayer.dev/integrations/loghttp](https://go.loglayer.dev/integrations/loghttp)**.
-
-Writing your own transport is [a single interface](https://go.loglayer.dev/transports/creating-transports) with four methods.
-
 ## Documentation
 
-Full docs at **[go.loglayer.dev](https://go.loglayer.dev)**:
-
-- [Getting Started](https://go.loglayer.dev/getting-started)
-- [Configuration](https://go.loglayer.dev/configuration): every Config field
-- [Cheat Sheet](https://go.loglayer.dev/cheatsheet): one-page API reference
-- [Logging API](https://go.loglayer.dev/logging-api/basic-logging): per-method guides
+For detailed documentation, visit [go.loglayer.dev](https://go.loglayer.dev).
 
 ## TypeScript counterpart
 
-Already using [loglayer for TypeScript](https://loglayer.dev)? The Go port keeps the same mental model: persistent fields, per-call metadata, transport-agnostic facade. See [For TypeScript Developers](https://go.loglayer.dev/for-typescript-developers) for the full API mapping, conventions, and the deliberate Go-specific differences.
+Coming from [loglayer for TypeScript](https://loglayer.dev)? See [For TypeScript Developers](https://go.loglayer.dev/for-typescript-developers) for the API mapping and Go-specific differences.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, commit conventions, the test/lint/docs workflow, and PR requirements. Deeper architecture context (project structure, design decisions, thread-safety contract) lives in [AGENTS.md](AGENTS.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, commit conventions, and PR requirements. Architecture context lives in [AGENTS.md](AGENTS.md).
 
 ## License
 
