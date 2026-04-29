@@ -15,6 +15,65 @@ from conventional commits. From v1.0.0 forward, this file is maintained
 automatically; the `[Unreleased]` section below describes the initial
 release at a high level.
 
+## 1.0.0 (2026-04-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* **console:** emit logfmt key=value instead of Go map %v
+* Config sub-structs, transport panic recovery, unified RecoveredPanicError
+* **fmtlog:** rewrite as a MessageHook plugin
+* split pretty/http/datadog into modules; per-module README/CHANGELOG
+* split heavy-dep wrapper transports into sub-modules
+* drop Trace level, swap to goccy/go-json, rewrite structured transport
+* rework Plugin from struct-of-funcs to interface-based
+
+### Features
+
+* Caller / source-info capture (Config.AddSource); slog.Handler forwards Record.PC ([89106c4](https://github.com/loglayer/loglayer-go/commit/89106c43724321cd8aeedb2f945d4dc858b14c3d))
+* Config sub-structs, transport panic recovery, unified RecoveredPanicError ([dc3d94f](https://github.com/loglayer/loglayer-go/commit/dc3d94f7bd7480cdc6ace661a368b1d0943a7835))
+* **console:** Emit logfmt key=value instead of Go map %v ([8b29155](https://github.com/loglayer/loglayer-go/commit/8b291552372468c73c08d490be7beb415b0ab35a))
+* Drop Trace level, swap to goccy/go-json, rewrite structured transport ([adb7114](https://github.com/loglayer/loglayer-go/commit/adb7114871931074b1e0c2b37de5466adf0e3ddc))
+* Fmtlog sub-package for printf-style logging ([4e90b43](https://github.com/loglayer/loglayer-go/commit/4e90b435909d80a0429c5333180a5cfa2f03660e))
+* Groups (named transport routing rules) ([a6ae557](https://github.com/loglayer/loglayer-go/commit/a6ae55718d3f0e7109918a215dab87cf307bed10))
+* HTTP/Datadog transports, dev tooling, structure cleanup ([feaacc9](https://github.com/loglayer/loglayer-go/commit/feaacc9cae99581c836edafe70bd5738fdbc2e06))
+* Initial v0.1.0 implementation ([bca353c](https://github.com/loglayer/loglayer-go/commit/bca353cf965645d46360cfb3b6f5e43bb4e135d0))
+* Loglayer.F / loglayer.M aliases for Fields / Metadata ([624dbe4](https://github.com/loglayer/loglayer-go/commit/624dbe4b6307756fd70529789bd91bf7ecb85870))
+* Optional auto-generated IDs for plugins and transports ([b6fc05a](https://github.com/loglayer/loglayer-go/commit/b6fc05a6c2d4a03359035c7f0aabbf9f77fca8d3))
+* **otel:** Logs transport, trace plugin, livetests against real SDKs ([84d8e18](https://github.com/loglayer/loglayer-go/commit/84d8e189102a7d6c037894d5ccc0bd2405e5785a))
+* **oteltrace:** Emit W3C trace_state and baggage members ([da40e25](https://github.com/loglayer/loglayer-go/commit/da40e25950942c8dbc2572ca57d5235cb83e5369))
+* **plugins:** Datadogtrace plugin, persistent WithCtx, hook panic recovery ([3f701cf](https://github.com/loglayer/loglayer-go/commit/3f701cf69e081acb3caf6217b4c36707271d02bd))
+* **plugins:** Plugin system, redact plugin, shared maputil ([b0cce53](https://github.com/loglayer/loglayer-go/commit/b0cce5376c56487064767f65692a69751aa76b6f))
+* Rework Plugin from struct-of-funcs to interface-based ([0a95c1a](https://github.com/loglayer/loglayer-go/commit/0a95c1a3445b6cdfdc2669b3474ef092e154d318))
+* Slog.Handler integration, security hardening, doc lead rewrite ([bcd4a1e](https://github.com/loglayer/loglayer-go/commit/bcd4a1e8679a28cb2454b78c1c04a198238d7a8f))
+* Split heavy-dep wrapper transports into sub-modules ([aef6053](https://github.com/loglayer/loglayer-go/commit/aef6053a1e80c646eb2c666fd0f893b98a66e883))
+* Split pretty/http/datadog into modules; per-module README/CHANGELOG ([852d363](https://github.com/loglayer/loglayer-go/commit/852d363829eb622032bf5608010f24755bba2c7c))
+* Trace + Panic levels, stdlib log bridge, sampling plugins, error chain serializer ([78485ec](https://github.com/loglayer/loglayer-go/commit/78485ec55305d03a48f72ed89f8475471528659c))
+
+
+### Bug Fixes
+
+* 100go.co review — substring leaks, http transport TOCTOU/leaks ([ca4b08d](https://github.com/loglayer/loglayer-go/commit/ca4b08d8e2498f2921f5afc6fa9fa6adaa8b9924))
+* Bound UnwrappingErrorSerializer walk against cyclic Unwrap ([57ca21b](https://github.com/loglayer/loglayer-go/commit/57ca21b2955627a443ce1cad5daeb7bdb13f48c2))
+* Cap transport-close on Fatal/mutators; reject Datadog HTTP overrides ([feeb8fe](https://github.com/loglayer/loglayer-go/commit/feeb8fe9b3d46116eb65df31166763245249f81b))
+* Datadog URL scheme; Close transports on remove/Fatal ([0f666ce](https://github.com/loglayer/loglayer-go/commit/0f666ce49ef8acb063c300284737c12d99c84645))
+* **loghttp:** Recover handler panics + assorted doc clarifications ([14339e6](https://github.com/loglayer/loglayer-go/commit/14339e6106c73ae2a5a602057a2fbcacdae20c03))
+* **loghttp:** Sanitize panic value before logging ([8bf612d](https://github.com/loglayer/loglayer-go/commit/8bf612ddbb66f6072d88bf0793f093a146dab74b))
+* MetadataOnly plugin-set straddle; trim narrating comments ([0de80d8](https://github.com/loglayer/loglayer-go/commit/0de80d837b956b2660818695f06909d13f17ed36))
+* Races, walker correctness, and builder plugin-set straddle ([d150c3c](https://github.com/loglayer/loglayer-go/commit/d150c3c13fe24fe37c1a0f5b9b700c4f680f370c))
+* **security:** Cycle-safe Cloner, header sanitization, secret redaction + on-prem Datadog URL ([057c787](https://github.com/loglayer/loglayer-go/commit/057c787681843e611fdf04a83db64cdeed429d7e))
+
+
+### Performance Improvements
+
+* Byte-scan fast path for SanitizeMessage + benchmark coverage ([9dbbec7](https://github.com/loglayer/loglayer-go/commit/9dbbec7b7fec48914ff8b8e7336dffb7820603aa))
+* **maputil:** Reflect-based struct walker for ToMap ([3881861](https://github.com/loglayer/loglayer-go/commit/38818614454c0d65a4494f722828ec2e51f2cafe))
+
+
+### Code Refactoring
+
+* **fmtlog:** Rewrite as a MessageHook plugin ([655bcf6](https://github.com/loglayer/loglayer-go/commit/655bcf65d5a6572f556829326556e59dcd570978))
+
 ## [Unreleased] (target: v1.0.0)
 
 Initial release. Stable API; SemVer applies from this point forward.
