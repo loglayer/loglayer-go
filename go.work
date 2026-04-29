@@ -1,0 +1,33 @@
+go 1.25.0
+
+use (
+	.
+
+	./transports/blank
+	./transports/charmlog
+	./transports/datadog
+	./transports/http
+	./transports/logrus
+	./transports/otellog
+	./transports/phuslu
+	./transports/pretty
+	./transports/slog
+	./transports/zap
+	./transports/zerolog
+
+	./plugins/datadogtrace
+	./plugins/datadogtrace/livetest
+	./plugins/fmtlog
+	./plugins/oteltrace
+	./plugins/redact
+	./plugins/sampling
+
+	./integrations/loghttp
+	./integrations/sloghandler
+
+	./examples/custom-plugin
+	./examples/datadog-shipping
+	./examples/http-server
+	./examples/multi-transport
+	./examples/otel-end-to-end
+)
