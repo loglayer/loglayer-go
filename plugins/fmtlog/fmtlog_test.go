@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"go.loglayer.dev"
-	"go.loglayer.dev/fmtlog"
+	"go.loglayer.dev/plugins/fmtlog"
 	"go.loglayer.dev/transport"
 	lltest "go.loglayer.dev/transports/testing"
 )

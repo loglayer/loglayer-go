@@ -61,10 +61,10 @@ log.Panic("...") // calls panic(joined-message) after dispatch; recoverable
 
 Each method takes `...any`, joined with a space.
 
-For `fmt.Sprintf`-style format strings, register the optional [`fmtlog`](https://pkg.go.dev/go.loglayer.dev/fmtlog) plugin:
+For `fmt.Sprintf`-style format strings, register the optional [`fmtlog`](https://pkg.go.dev/go.loglayer.dev/plugins/fmtlog) plugin:
 
 ```go
-import "go.loglayer.dev/fmtlog"
+import "go.loglayer.dev/plugins/fmtlog"
 
 log.AddPlugin(fmtlog.New())
 
