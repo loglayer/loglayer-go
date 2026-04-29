@@ -15,22 +15,6 @@ from conventional commits. From v1.0.0 forward, this file is maintained
 automatically; the `[Unreleased]` section below describes the initial
 release at a high level.
 
-## [2.0.0](https://github.com/loglayer/loglayer-go/compare/v1.0.2...v2.0.0) (2026-04-29)
-
-
-### ⚠ BREAKING CHANGES
-
-* **fmtlog:** the fmtlog plugin's import path changes from `go.loglayer.dev/fmtlog` to `go.loglayer.dev/plugins/fmtlog`. Update imports accordingly.
-
-### Code Refactoring
-
-* **fmtlog:** Move fmtlog from /fmtlog to /plugins/fmtlog ([#7](https://github.com/loglayer/loglayer-go/issues/7)) ([165cd4b](https://github.com/loglayer/loglayer-go/commit/165cd4b06cc8bbb290cf7d8d8930066a2c222f07))
-
-
-### Miscellaneous Chores
-
-* **release-please:** Expose refactor in changelog and force v2.0.0 ([#9](https://github.com/loglayer/loglayer-go/issues/9)) ([f3a980e](https://github.com/loglayer/loglayer-go/commit/f3a980e6eefa1e7b9f25a86d3f68de475de20534)), closes [#7](https://github.com/loglayer/loglayer-go/issues/7)
-
 ## [1.0.2](https://github.com/loglayer/loglayer-go/compare/v1.0.1...v1.0.2) (2026-04-29)
 
 
