@@ -17,6 +17,7 @@ ALL_MODULES=(
   .
   transports/blank
   transports/charmlog
+  transports/console
   transports/datadog
   transports/http
   transports/logrus
@@ -24,12 +25,15 @@ ALL_MODULES=(
   transports/phuslu
   transports/pretty
   transports/slog
+  transports/structured
+  transports/testing
   transports/zap
   transports/zerolog
   plugins/datadogtrace
   plugins/datadogtrace/livetest
   plugins/fmtlog
   plugins/oteltrace
+  plugins/plugintest
   plugins/redact
   plugins/sampling
   integrations/loghttp
@@ -48,6 +52,7 @@ SHIPPED_MODULES=(
   .
   transports/blank
   transports/charmlog
+  transports/console
   transports/datadog
   transports/http
   transports/logrus
@@ -55,11 +60,14 @@ SHIPPED_MODULES=(
   transports/phuslu
   transports/pretty
   transports/slog
+  transports/structured
+  transports/testing
   transports/zap
   transports/zerolog
   plugins/datadogtrace
   plugins/fmtlog
   plugins/oteltrace
+  plugins/plugintest
   plugins/redact
   plugins/sampling
   integrations/loghttp
@@ -132,6 +140,7 @@ case "$op" in
       . \
       transports/blank \
       transports/charmlog \
+      transports/console \
       transports/datadog \
       transports/http \
       transports/logrus \
@@ -139,12 +148,15 @@ case "$op" in
       transports/phuslu \
       transports/pretty \
       transports/slog \
+      transports/structured \
+      transports/testing \
       transports/zap \
       transports/zerolog \
       plugins/datadogtrace \
       plugins/datadogtrace/livetest \
       plugins/fmtlog \
       plugins/oteltrace \
+      plugins/plugintest \
       plugins/redact \
       plugins/sampling \
       integrations/loghttp \

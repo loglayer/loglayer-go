@@ -4,13 +4,12 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning
 follows [SemVer](https://semver.org/spec/v2.0.0.html).
 
-`go.loglayer.dev` is the main module. Most transports, plugins, and
-integrations ship as their own sub-modules under their own tags
-(e.g. `go.loglayer.dev/transports/datadog`,
-`go.loglayer.dev/plugins/redact`,
-`go.loglayer.dev/integrations/loghttp`). The full list lives in
-`.release-please-manifest.json`. See `AGENTS.md` for the splitting
-policy and release flow.
+`go.loglayer.dev` is the main module — it hosts only the framework
+core, the shared `transport/` package, and the `utils/*` helpers. Every
+transport, plugin, and integration ships as its own sub-module under
+its own tag (`<path>/v<X.Y.Z>`); the canonical list lives in
+`.release-please-manifest.json`. See `AGENTS.md` for the layout and
+release flow.
 
 Releases are managed by [Release Please](https://github.com/googleapis/release-please)
 from conventional commits. From v1.0.0 forward, this file is maintained

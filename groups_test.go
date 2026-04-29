@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"go.loglayer.dev"
+	"go.loglayer.dev/internal/lltest"
 	"go.loglayer.dev/transport"
-	lltest "go.loglayer.dev/transports/testing"
 )
 
 // twoTransports builds two named TestLoggingLibrary-backed transports for

@@ -151,6 +151,34 @@
       "component": "integrations/sloghandler",
       "include-component-in-tag": true,
       "changelog-path": "CHANGELOG.md"
+    },
+    "transports/console": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/transports/console",
+      "component": "transports/console",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "transports/structured": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/transports/structured",
+      "component": "transports/structured",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "transports/testing": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/transports/testing",
+      "component": "transports/testing",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "plugins/plugintest": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/plugins/plugintest",
+      "component": "plugins/plugintest",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
     }
   },
   "plugins": [

@@ -55,21 +55,11 @@ loglayer-go/
 - **No `Logger` interface in core**: Go convention is "consumer defines the interface."
   Application code accepts the concrete `*loglayer.LogLayer`; `loglayer.NewMock()` returns
   the same type for test injection.
-- **Multi-module layout**: the main `go.loglayer.dev` module hosts the framework core (loglayer/builder/dispatch/plugin/level/etc.), the `transport/` package (BaseTransport, helpers, transporttest, benchtest), the renderer transports that main's own tests/examples consume (`transports/console`, `transports/structured`, `transports/testing`), `plugins/plugintest`, and the `utils/{maputil,sanitize,idgen}` helpers. Every other transport, plugin, and integration ships as its own Go module so consumers only pay for the SDKs they import *and* a breaking change in any one of them stays local to that sub-module's major version:
-  - `transports/blank` (stdlib only — example/prototype dispatcher)
-  - `transports/pretty` (fatih/color)
-  - `transports/http`, `transports/datadog` (network shippers; datadog wraps http)
-  - `transports/slog` (stdlib `log/slog` wrapper)
-  - `transports/zerolog`, `transports/zap`, `transports/logrus`, `transports/phuslu`, `transports/charmlog` (vendor wrappers)
-  - `transports/otellog`, `plugins/oteltrace` (OTel SDK; Go 1.25 floor)
-  - `plugins/redact`, `plugins/sampling`, `plugins/fmtlog`, `plugins/datadogtrace` (stdlib-only plugins, but each independently versionable)
-  - `plugins/datadogtrace/livetest` (test-only, dd-trace-go v2)
-  - `integrations/loghttp` (HTTP middleware; stdlib only)
-  - `integrations/sloghandler` (stdlib `log/slog` adapter)
+- **Multi-module layout**: the main `go.loglayer.dev` module hosts only the framework core (loglayer/builder/dispatch/plugin/level/etc.), the shared `transport/` package (BaseTransport, helpers, transporttest, benchtest), the `utils/*` helpers, and `internal/lltest` (a private capture transport so main's own tests don't have to require `transports/testing`). Every transport, plugin, and integration ships as its own independently-versioned Go module; `.release-please-manifest.json` is the canonical list.
 
-  **Why so many split modules** — once a sub-package starts to look like an independent shipping unit (its own users, its own breaking-change cadence), splitting early avoids being trapped later. A breaking change in, say, `plugins/redact` only forces `plugins/redact/v2`; the main `go.loglayer.dev` import path is unaffected. Pre-split, every breaking refactor cascaded into a `go.loglayer.dev/v2` semantic-import-versioning migration. The packages still bundled in main are only those whose split would create a require cycle with main's own tests/examples.
+  The split is the whole point: a breaking change in any single sub-module bumps only that sub-module's major version, so `go.loglayer.dev` itself never has to migrate to `/v2` because of a downstream rename. Pre-split, every breaking refactor cascaded into a main-module path migration.
 
-  Each sub-module has its own `go.mod` with a `replace go.loglayer.dev => ../..` (and any relevant sibling) directive for development. A `go.work` at the repo root lets `gopls` and `go test all` see every module from a single root; CI uses `scripts/foreach-module.sh` which runs each module in isolation and is unaffected.
+  Each sub-module has its own `go.mod` with a `replace go.loglayer.dev => ../..` (and any relevant sibling) directive for development. A `go.work` at the repo root lets `gopls` and `go test ./...` see every module from one place; CI uses `scripts/foreach-module.sh` which runs each module in isolation and is unaffected.
 
 ## Verification
 
@@ -187,32 +177,32 @@ creates the tag(s) and the GitHub Release(s). Don't `git tag` manually.
   component name (`transports/otellog`, `plugins/oteltrace`) trigger
   a release of that sub-module specifically.
 
-### When to Split a Transport into Its Own Module
+### Adding a new transport, plugin, or integration
 
-Default is single module. Migrate a transport (or plugin) to its own go.mod when:
+Every transport, plugin, and integration ships as its own Go module. There is no "bundle it in main first, split later" path — split from day one so the eventual breaking change is local to that module's tag namespace.
 
-1. The transport accumulates breaking changes faster than core (its consumers
-   want stability while it churns).
-2. It needs to follow the underlying library's release cadence (e.g. zap goes
-   v2 and our wrapper has to follow).
-3. Users complain about transitive dependency bloat from transports they don't use.
-4. **The transport's deps require a higher Go version than the rest of the library**,
-   so keeping it in the main module would force every user onto that floor.
+To add `<path>` (e.g. `transports/foo` or `plugins/bar`):
 
-The OpenTelemetry pair (`transports/otellog`, `plugins/oteltrace`) is split for
-reason 4 — both bind against `go.opentelemetry.io/otel/*` modules that require
-Go 1.25+. Putting them in their own modules means OTel users opt into the
-floor explicitly while the rest of the library stays at whatever the remaining
-deps demand.
+1. Create the directory and code as usual.
+2. Add `<path>/go.mod` with:
 
-Migration path: add `go.mod` under the package directory, with a `replace
-go.loglayer.dev => ../...` directive (depth depends on nesting) and a
-placeholder `require go.loglayer.dev v0.0.0-...` that the replace directive
-overrides during development. Update tags to use the prefix form
-(`transports/<name>/v1.0.0` or `plugins/<name>/v1.0.0`). Do not split
-preemptively; the overhead (per-package go.mod, replace directives during dev,
-more complex release flow) is real and only worth it once one of the above
-triggers fires.
+   ```
+   module go.loglayer.dev/<path>
+
+   go 1.25.0
+
+   replace go.loglayer.dev => ../..
+
+   require go.loglayer.dev v0.0.0-00010101000000-000000000000
+   ```
+
+   Adjust the `replace` depth (`../..` for `transports/foo`, `../../..` for `plugins/foo/livetest`, etc.). If the package depends on other split sub-modules (e.g. `plugins/plugintest`), add corresponding `replace` and `require` lines following the existing siblings as a template.
+3. Register the module in `.release-please-config.json` (`packages` map with the right `package-name` and `component`) and `.release-please-manifest.json` (initial version, conventionally `1.0.0`).
+4. Add the path to `scripts/foreach-module.sh` (`ALL_MODULES`, `SHIPPED_MODULES`, and the `test` op's hardcoded list).
+5. Add the path to `go.work`'s `use` block.
+6. Run `bash scripts/foreach-module.sh tidy` to settle indirect deps and `bash scripts/foreach-module.sh test` to confirm.
+
+Tags are auto-generated by release-please from conventional commits scoped to the module (`feat(transports/foo): ...` triggers a release of `transports/foo`). The post-merge tag form is `<path>/v<X.Y.Z>` — release-please handles that via `tag-separator: "/"` in the config.
 
 When you split a new sub-module that should be releasable on its own,
 add an entry to `.release-please-config.json` (with the right

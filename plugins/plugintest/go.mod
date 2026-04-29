@@ -1,4 +1,4 @@
-module go.loglayer.dev/integrations/loghttp
+module go.loglayer.dev/plugins/plugintest
 
 go 1.25.0
 

@@ -17,5 +17,9 @@
   "plugins/fmtlog": "1.1.0",
   "plugins/datadogtrace": "1.1.0",
   "integrations/loghttp": "1.1.0",
-  "integrations/sloghandler": "1.1.0"
+  "integrations/sloghandler": "1.1.0",
+  "transports/console": "1.0.0",
+  "transports/structured": "1.0.0",
+  "transports/testing": "1.0.0",
+  "plugins/plugintest": "1.0.0"
 }

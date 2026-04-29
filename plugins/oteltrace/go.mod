@@ -2,10 +2,16 @@ module go.loglayer.dev/plugins/oteltrace
 
 go 1.25.0
 
-replace go.loglayer.dev => ../..
+replace (
+	go.loglayer.dev => ../..
+	go.loglayer.dev/plugins/plugintest => ../plugintest
+	go.loglayer.dev/transports/testing => ../../transports/testing
+)
 
 require (
 	go.loglayer.dev v0.0.0-00010101000000-000000000000
+	go.loglayer.dev/plugins/plugintest v0.0.0-00010101000000-000000000000
+	go.loglayer.dev/transports/testing v0.0.0-00010101000000-000000000000
 	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/sdk v1.43.0
 	go.opentelemetry.io/otel/trace v1.43.0
