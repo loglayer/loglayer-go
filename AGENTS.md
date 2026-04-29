@@ -15,7 +15,7 @@ structured logging library with a fluent API for messages, fields, metadata, and
 ## Project Structure
 
 ```
-loglayer-golang/
+loglayer-go/
 ├── docs/                       VitePress documentation site
 │   ├── .vitepress/             VitePress config (sidebar lives here)
 │   └── src/                    Markdown source

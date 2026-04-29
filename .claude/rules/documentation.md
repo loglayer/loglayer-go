@@ -291,7 +291,7 @@ Every transport doc page must have a `## Fatal Behavior` section. The shape:
 
 ## Words to Avoid
 
-- "first-party" / "First-party": every transport, plugin, and integration in the loglayer-golang module is part of the same module; calling them "first-party" implies a tier that doesn't exist. Just say "built-in" if a qualifier is needed at all, or drop the qualifier entirely (e.g. "the redact plugin", not "the first-party redact plugin").
+- "first-party" / "First-party": every transport, plugin, and integration in the loglayer-go module is part of the same module; calling them "first-party" implies a tier that doesn't exist. Just say "built-in" if a qualifier is needed at all, or drop the qualifier entirely (e.g. "the redact plugin", not "the first-party redact plugin").
 - Em dashes anywhere.
 
 ## When You Add a New Feature or Make an API Change
