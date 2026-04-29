@@ -1,16 +1,19 @@
 name: Docs
 
+# Builds the VitePress docs on every PR (clean-build verification),
+# and deploys to GitHub Pages only when a new GitHub Release is
+# published. Release Please's release PR merge fires release:published,
+# so the cadence is "deploy on release," not "deploy on every commit."
+# Use workflow_dispatch to force a deploy outside the release flow.
+
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'docs/**'
-      - '.github/workflows/docs.yml'
   pull_request:
     branches: [main]
     paths:
       - 'docs/**'
       - '.github/workflows/docs.yml'
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -44,14 +47,14 @@ jobs:
         run: bun run docs:build
 
       - name: Upload pages artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs/.vitepress/dist
 
   deploy:
     name: Deploy to GitHub Pages
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     needs: build
     runs-on: ubuntu-latest
     environment:
