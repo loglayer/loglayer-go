@@ -9,6 +9,33 @@ from conventional commits scoped to `transports/datadog`. Tags use the
 prefixed form `transports/datadog/v<X.Y.Z>` so this module versions
 independently of the framework core.
 
+## 1.0.0 (2026-04-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* split pretty/http/datadog into modules; per-module README/CHANGELOG
+* drop Trace level, swap to goccy/go-json, rewrite structured transport
+
+### Features
+
+* Drop Trace level, swap to goccy/go-json, rewrite structured transport ([adb7114](https://github.com/loglayer/loglayer-go/commit/adb7114871931074b1e0c2b37de5466adf0e3ddc))
+* HTTP/Datadog transports, dev tooling, structure cleanup ([feaacc9](https://github.com/loglayer/loglayer-go/commit/feaacc9cae99581c836edafe70bd5738fdbc2e06))
+* Optional auto-generated IDs for plugins and transports ([b6fc05a](https://github.com/loglayer/loglayer-go/commit/b6fc05a6c2d4a03359035c7f0aabbf9f77fca8d3))
+* Split pretty/http/datadog into modules; per-module README/CHANGELOG ([852d363](https://github.com/loglayer/loglayer-go/commit/852d363829eb622032bf5608010f24755bba2c7c))
+
+
+### Bug Fixes
+
+* Cap transport-close on Fatal/mutators; reject Datadog HTTP overrides ([feeb8fe](https://github.com/loglayer/loglayer-go/commit/feeb8fe9b3d46116eb65df31166763245249f81b))
+* Datadog URL scheme; Close transports on remove/Fatal ([0f666ce](https://github.com/loglayer/loglayer-go/commit/0f666ce49ef8acb063c300284737c12d99c84645))
+* **security:** Cycle-safe Cloner, header sanitization, secret redaction + on-prem Datadog URL ([057c787](https://github.com/loglayer/loglayer-go/commit/057c787681843e611fdf04a83db64cdeed429d7e))
+
+
+### Performance Improvements
+
+* Byte-scan fast path for SanitizeMessage + benchmark coverage ([9dbbec7](https://github.com/loglayer/loglayer-go/commit/9dbbec7b7fec48914ff8b8e7336dffb7820603aa))
+
 ## [Unreleased] (target: v1.0.0)
 
 Initial release as a separate Go module.
