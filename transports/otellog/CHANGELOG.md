@@ -9,6 +9,13 @@ from conventional commits scoped to `transports/otellog`. Tags use the
 prefixed form `transports/otellog/v<X.Y.Z>` so this module versions
 independently of the framework core.
 
+## [1.1.0](https://github.com/loglayer/loglayer-go/compare/transports/otellog/v1.0.1...transports/otellog/v1.1.0) (2026-04-29)
+
+
+### Miscellaneous Chores
+
+* **release-please:** Force next main release to v1.1.0 ([bbcd772](https://github.com/loglayer/loglayer-go/commit/bbcd77202f70ccd4f4a6f3bbe70f8dc91b4ea695))
+
 ## [1.0.1](https://github.com/loglayer/loglayer-go/compare/transports/otellog-v1.0.0...transports/otellog-v1.0.1) (2026-04-29)
 
 
