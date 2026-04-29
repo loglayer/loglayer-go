@@ -4,6 +4,7 @@ const defaultTitle = 'LogLayer for Go'
 const defaultDescription =
   'A transport-agnostic structured logging library for Go with a fluent API for messages, metadata, and errors.'
 const baseUrl = 'https://go.loglayer.dev'
+const gaMeasurementId = 'G-4SB3FY76P0'
 
 export default defineConfig({
   lang: 'en-US',
@@ -14,6 +15,22 @@ export default defineConfig({
   sitemap: { hostname: baseUrl },
   async transformHead({ pageData }) {
     const head: HeadConfig[] = [
+      // Google Analytics (gtag.js)
+      [
+        'script',
+        {
+          async: '',
+          src: `https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`,
+        },
+      ],
+      [
+        'script',
+        {},
+        `window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${gaMeasurementId}');`,
+      ],
       ['link', { rel: 'icon', href: '/images/icons/favicon.ico' }],
       ['link', { rel: 'manifest', href: '/images/icons/site.webmanifest' }],
       // Vanity import path for `go get go.loglayer.dev`. Go's
