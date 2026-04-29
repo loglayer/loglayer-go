@@ -5,6 +5,50 @@ description: User-visible changes to LogLayer for Go.
 
 # What's New
 
+## v1.1.0 (2026-04-29)
+
+Two structural changes since v1.0.x. Behaviour is unchanged for callers who weren't using the old `fmtlog` import path.
+
+### Module layout
+
+Eight previously-bundled packages are now their own Go modules — their import paths are unchanged but they version independently from the framework core:
+
+| Package | New module path |
+|---|---|
+| Redact plugin | `go.loglayer.dev/plugins/redact` |
+| Sampling plugin | `go.loglayer.dev/plugins/sampling` |
+| Format-string plugin | `go.loglayer.dev/plugins/fmtlog` |
+| Datadog APM trace injector | `go.loglayer.dev/plugins/datadogtrace` |
+| HTTP middleware | `go.loglayer.dev/integrations/loghttp` |
+| `slog.Handler` adapter | `go.loglayer.dev/integrations/sloghandler` |
+| `log/slog` wrapper transport | `go.loglayer.dev/transports/slog` |
+| Blank transport | `go.loglayer.dev/transports/blank` |
+
+You may need a `go mod tidy` to pick up the new sub-module entries. Existing source code keeps compiling without changes.
+
+The four packages that main's own tests/examples depend on (`transports/console`, `transports/structured`, `transports/testing`, `plugins/plugintest`) stay bundled in `go.loglayer.dev` to avoid require cycles.
+
+The split's payoff: a future breaking change in any one of these now bumps only that sub-module's major version (`<package>/v2.x.x`), leaving `go.loglayer.dev` itself stable on v1.
+
+### `go.loglayer.dev/fmtlog` → `go.loglayer.dev/plugins/fmtlog`
+
+The fmtlog plugin moved from the top of the repo to under `plugins/` for consistency with every other plugin. If you were using the old import:
+
+```diff
+- import "go.loglayer.dev/fmtlog"
++ import "go.loglayer.dev/plugins/fmtlog"
+```
+
+No other API change. `fmtlog.New()` works identically.
+
+This is technically a SemVer-breaking change (the old import path is gone), but ships under v1.1.0 rather than v2.0.0 — see the [CHANGELOG note](https://github.com/loglayer/loglayer-go/blob/main/CHANGELOG.md#110-2026-04-29) for the version-rationale.
+
+### Coordinated v1.1.0 across all sub-modules
+
+Every loglayer-go module — main, all transports, all plugins, all integrations — now sits at v1.1.0. Most sub-modules had no actual code change for this release; their v1.1.0 tag is a coordinated bump alongside main caused by the version-override commit applying globally. Each sub-module's own `CHANGELOG.md` carries a one-line "no code changes" note for the v1.1.0 entry.
+
+---
+
 ## v1.0.0 (2026-04-29)
 
 Initial release. Stable API; SemVer applies from this point forward.

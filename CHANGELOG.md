@@ -19,6 +19,21 @@ release at a high level.
 
 ## [1.1.0](https://github.com/loglayer/loglayer-go/compare/v1.0.2...v1.1.0) (2026-04-29)
 
+> **Note on version**: this release is technically SemVer-breaking
+> (the `go.loglayer.dev/fmtlog` import path was removed) but ships as
+> v1.1.0 rather than v2.0.0. Reasoning: v1.0.x went out with no known
+> users, and the post-split module layout (#11) means future breaking
+> changes in any single transport/plugin/integration stay local to
+> that sub-module's major version — the main `go.loglayer.dev` import
+> path is intended to stay on v1 indefinitely. Callers using the old
+> `fmtlog` import path should update per the migration entry below.
+>
+> All other loglayer-go modules (transports/*, plugins/*, integrations/*)
+> were also tagged at v1.1.0 alongside this release as a coordinated
+> bump. Their content is unchanged since their previous tags; the
+> coordinated bump was a side-effect of the version-override commit
+> applying globally to all packages release-please tracks. See each
+> sub-module's `CHANGELOG.md` for the no-op v1.1.0 note.
 
 ### ⚠ BREAKING CHANGES
 
