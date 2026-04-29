@@ -104,8 +104,10 @@ sl.With("global", "field").Info("...")
 
 | LogLayer Level   | slog Level         | Note                                              |
 |------------------|--------------------|---------------------------------------------------|
+| `LogLevelTrace`  | `LevelDebug - 4`   | slog has no Trace; renders as `DEBUG-4` in output |
 | `LogLevelDebug`  | `LevelDebug`       |                                                   |
 | `LogLevelInfo`   | `LevelInfo`        |                                                   |
 | `LogLevelWarn`   | `LevelWarn`        |                                                   |
 | `LogLevelError`  | `LevelError`       |                                                   |
 | `LogLevelFatal`  | `LevelError + 4`   | slog has no Fatal; renders as `ERROR+4` in output |
+| `LogLevelPanic`  | `LevelError + 8`   | slog has no Panic; renders as `ERROR+8` in output |

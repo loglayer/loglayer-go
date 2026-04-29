@@ -113,8 +113,10 @@ l.AddHook(myHook)
 
 | LogLayer Level   | logrus Level   |
 |------------------|----------------|
+| `LogLevelTrace`  | `TraceLevel`   |
 | `LogLevelDebug`  | `DebugLevel`   |
 | `LogLevelInfo`   | `InfoLevel`    |
 | `LogLevelWarn`   | `WarnLevel`    |
 | `LogLevelError`  | `ErrorLevel`   |
 | `LogLevelFatal`  | `FatalLevel`   |
+| `LogLevelPanic`  | `PanicLevel`   |

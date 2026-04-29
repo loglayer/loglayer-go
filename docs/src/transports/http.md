@@ -227,10 +227,12 @@ The `level` field in the default encoder uses the standard loglayer names:
 
 | LogLayer Level   | level string |
 |------------------|--------------|
+| `LogLevelTrace`  | `trace`      |
 | `LogLevelDebug`  | `debug`      |
 | `LogLevelInfo`   | `info`       |
 | `LogLevelWarn`   | `warn`       |
 | `LogLevelError`  | `error`      |
 | `LogLevelFatal`  | `fatal`      |
+| `LogLevelPanic`  | `panic`      |
 
 For Datadog-specific status mapping, use the [Datadog transport](/transports/datadog) which provides the right strings.

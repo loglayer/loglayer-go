@@ -110,10 +110,12 @@ This is the wrapped instance, not the original you passed in. For most operation
 
 ## Level Mapping
 
-| LogLayer Level   | zap Level       | Note                        |
-|------------------|-----------------|-----------------------------|
-| `LogLevelDebug`  | `DebugLevel`    |                             |
-| `LogLevelInfo`   | `InfoLevel`     |                             |
-| `LogLevelWarn`   | `WarnLevel`     |                             |
-| `LogLevelError`  | `ErrorLevel`    |                             |
-| `LogLevelFatal`  | `FatalLevel`    | written but no `os.Exit`    |
+| LogLayer Level   | zap Level       | Note                                          |
+|------------------|-----------------|-----------------------------------------------|
+| `LogLevelTrace`  | `DebugLevel`    | zap has no Trace; mapped to lowest            |
+| `LogLevelDebug`  | `DebugLevel`    |                                               |
+| `LogLevelInfo`   | `InfoLevel`     |                                               |
+| `LogLevelWarn`   | `WarnLevel`     |                                               |
+| `LogLevelError`  | `ErrorLevel`    |                                               |
+| `LogLevelFatal`  | `FatalLevel`    | written but no `os.Exit`                      |
+| `LogLevelPanic`  | `PanicLevel`    | zap's PanicLevel triggers `panic()` after write |

@@ -138,8 +138,10 @@ z.Hook(myHook)
 
 | LogLayer Level   | zerolog Level    |
 |------------------|------------------|
+| `LogLevelTrace`  | `TraceLevel`     |
 | `LogLevelDebug`  | `DebugLevel`     |
 | `LogLevelInfo`   | `InfoLevel`      |
 | `LogLevelWarn`   | `WarnLevel`      |
 | `LogLevelError`  | `ErrorLevel`     |
 | `LogLevelFatal`  | `FatalLevel`     |
+| `LogLevelPanic`  | `PanicLevel`     |
