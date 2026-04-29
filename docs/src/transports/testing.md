@@ -50,8 +50,9 @@ type Config struct {
 type LogLine struct {
     Level    loglayer.LogLevel
     Messages []any
-    Data     loglayer.Data // assembled fields + error map; nil when neither were set
-    Metadata any           // raw value passed to WithMetadata
+    Data     loglayer.Data   // assembled fields + error map; nil when neither were set
+    Metadata any             // raw value passed to WithMetadata
+    Ctx      context.Context // per-call context attached via WithContext; nil if not set
 }
 ```
 

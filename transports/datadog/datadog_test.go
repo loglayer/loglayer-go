@@ -123,18 +123,23 @@ func TestDatadog_StatusForLevels(t *testing.T) {
 	})
 	log := loglayer.New(loglayer.Config{Transport: tr, DisableFatalExit: true})
 
+	log.Trace("t")
 	log.Debug("d")
 	log.Info("i")
 	log.Warn("w")
 	log.Error("e")
 	log.Fatal("f")
+	func() {
+		defer func() { _ = recover() }()
+		log.Panic("p")
+	}()
 	if err := tr.Close(); err != nil {
 		t.Fatalf("Close: %v", err)
 	}
 
 	var arr []map[string]any
 	_ = json.Unmarshal(cap.bodies[0], &arr)
-	wantStatuses := []string{"debug", "info", "warning", "error", "critical"}
+	wantStatuses := []string{"debug", "debug", "info", "warning", "error", "critical", "emergency"}
 	for i, want := range wantStatuses {
 		if arr[i]["status"] != want {
 			t.Errorf("entry %d status: got %v, want %s", i, arr[i]["status"], want)

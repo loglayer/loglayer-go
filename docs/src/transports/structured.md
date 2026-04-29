@@ -86,7 +86,7 @@ log := loglayer.New(loglayer.Config{
 })
 ```
 
-The transport calls `fmt.Fprintln` once per entry, make sure your writer is concurrency-safe if multiple goroutines log at once.
+The transport calls `Writer.Write` once per entry with a complete newline-terminated JSON line; make sure your writer is concurrency-safe if multiple goroutines log at once.
 
 ## Struct Metadata
 

@@ -219,9 +219,12 @@ func newEncoder(cfg Config) httptr.Encoder {
 
 // statusFor maps a loglayer LogLevel to Datadog's status string.
 // See https://docs.datadoghq.com/logs/log_collection/#reserved-attributes.
+// Datadog has no native "trace" status, so Trace folds into "debug".
+// Panic uses "emergency" (Datadog's highest-severity status) to stay
+// distinguishable from Fatal.
 func statusFor(l loglayer.LogLevel) string {
 	switch l {
-	case loglayer.LogLevelDebug:
+	case loglayer.LogLevelTrace, loglayer.LogLevelDebug:
 		return "debug"
 	case loglayer.LogLevelInfo:
 		return "info"
@@ -231,6 +234,8 @@ func statusFor(l loglayer.LogLevel) string {
 		return "error"
 	case loglayer.LogLevelFatal:
 		return "critical"
+	case loglayer.LogLevelPanic:
+		return "emergency"
 	default:
 		return "info"
 	}

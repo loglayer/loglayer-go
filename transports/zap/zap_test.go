@@ -34,11 +34,13 @@ func TestZapContract(t *testing.T) {
 			MessageKey: "msg",
 			LevelKey:   "level",
 			Levels: map[loglayer.LogLevel]string{
+				loglayer.LogLevelTrace: "debug", // zap has no Trace; mapped to lowest
 				loglayer.LogLevelDebug: "debug",
 				loglayer.LogLevelInfo:  "info",
 				loglayer.LogLevelWarn:  "warn",
 				loglayer.LogLevelError: "error",
 				loglayer.LogLevelFatal: "fatal",
+				loglayer.LogLevelPanic: "panic",
 			},
 		},
 	})

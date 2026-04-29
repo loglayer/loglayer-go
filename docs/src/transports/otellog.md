@@ -50,7 +50,7 @@ For explicit wiring (recommended in services that own their SDK setup):
 ```go
 import (
     sdklog "go.opentelemetry.io/otel/sdk/log"
-    "go.opentelemetry.io/otel/sdk/log/otlploghttp"
+    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
     "go.opentelemetry.io/otel/sdk/resource"
     semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
@@ -147,11 +147,15 @@ OTel defines four sub-levels per severity bucket (`SeverityDebug1`-`Debug4`, `In
 
 | LogLayer Level   | OTel Severity      | Numeric |
 |------------------|--------------------|---------|
+| `LogLevelTrace`  | `SeverityTrace`    | 1       |
 | `LogLevelDebug`  | `SeverityDebug`    | 5       |
 | `LogLevelInfo`   | `SeverityInfo`     | 9       |
 | `LogLevelWarn`   | `SeverityWarn`     | 13      |
 | `LogLevelError`  | `SeverityError`    | 17      |
 | `LogLevelFatal`  | `SeverityFatal`    | 21      |
+| `LogLevelPanic`  | `SeverityFatal4`   | 24      |
+
+Panic uses `SeverityFatal4` (the highest tier in OTel's Fatal bucket) so it stays distinguishable from Fatal on the OTel side.
 
 The original LogLayer level name (`"info"`, `"error"`, etc.) is also set as `SeverityText` on the record.
 

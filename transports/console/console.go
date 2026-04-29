@@ -86,7 +86,7 @@ func (c *Transport) writer(level loglayer.LogLevel) io.Writer {
 		return c.cfg.Writer
 	}
 	switch level {
-	case loglayer.LogLevelWarn, loglayer.LogLevelError, loglayer.LogLevelFatal:
+	case loglayer.LogLevelWarn, loglayer.LogLevelError, loglayer.LogLevelFatal, loglayer.LogLevelPanic:
 		return os.Stderr
 	default:
 		return os.Stdout

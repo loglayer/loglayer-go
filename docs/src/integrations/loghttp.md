@@ -54,7 +54,7 @@ A request to `GET /users` produces:
 
 For each incoming request:
 
-1. Reads the request ID from `X-Request-ID`. Generates one (8 random bytes hex-encoded) if the header is absent.
+1. Reads the request ID from `X-Request-ID`. Generates one (12 hex chars from `crypto/rand`) if the header is absent.
 2. Derives a per-request logger from the base logger via `WithFields`, attaching `requestId`, `method`, `path`.
 3. Stores the per-request logger in `r.Context()` via `loglayer.NewContext`.
 4. Wraps the response writer to capture status code and bytes written.
@@ -84,6 +84,7 @@ type Config struct {
     RequestIDGenerator func() string
     FieldNames         FieldNames
     StartLog           bool
+    ShouldStartLog     func(r *http.Request) bool
     StatusLevels       func(status int) loglayer.LogLevel
     ExtraFields        func(*http.Request) loglayer.Fields
 }
@@ -101,7 +102,7 @@ loghttp.Middleware(log, loghttp.Config{RequestIDHeader: "X-Trace-ID"})
 
 ### `RequestIDGenerator`
 
-Function called when no request-ID header is present. Default: 8 random bytes hex-encoded.
+Function called when no request-ID header is present. Default: 12 hex chars from `crypto/rand`.
 
 ```go
 loghttp.Middleware(log, loghttp.Config{
@@ -127,10 +128,22 @@ Default keys: `requestId`, `method`, `path`, `status`, `durationMs`, `bytes`.
 
 ### `StartLog`
 
-When true, emit a "request started" log line at the start of every request in addition to the "request completed" line. Default false.
+When true, emit a "request started" log line at the start of every request in addition to the "request completed" line. Default false. Ignored when `ShouldStartLog` is non-nil.
 
 ```go
 loghttp.Middleware(log, loghttp.Config{StartLog: true})
+```
+
+### `ShouldStartLog`
+
+Per-request callback that decides whether to emit the "request started" line. Use it for sampling or conditional logging — log 1% of requests, only emit when a debug header is set, etc. Returning true emits the start line; false skips it. The "request completed" line still emits regardless. When set, `StartLog` is ignored.
+
+```go
+loghttp.Middleware(log, loghttp.Config{
+    ShouldStartLog: func(r *http.Request) bool {
+        return r.Header.Get("X-Debug") == "1"
+    },
+})
 ```
 
 ### `StatusLevels`

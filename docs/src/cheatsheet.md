@@ -277,11 +277,13 @@ log.Raw(loglayer.RawLogEntry{
 ## Levels
 
 ```go
+loglayer.LogLevelTrace  // 5
 loglayer.LogLevelDebug  // 10
 loglayer.LogLevelInfo   // 20
 loglayer.LogLevelWarn   // 30
 loglayer.LogLevelError  // 40
 loglayer.LogLevelFatal  // 50
+loglayer.LogLevelPanic  // 60
 ```
 
 ## Source / Caller info

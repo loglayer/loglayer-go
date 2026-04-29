@@ -83,6 +83,6 @@ The `FixedRate` gate runs first and drops 99% of traffic. The `Burst` gate then 
 
 ## Caveats
 
-- Sampling decisions happen **per transport** (the `SendGate` hook is called once per `(entry, transport)` pair). With multiple transports, each transport sees the same sampling decision because the gate is stateful. If you want per-transport sampling rates, use [Group routing](/logging-api/groups) with different transports per group.
+- Sampling decisions happen **per transport** (the `SendGate` hook is called once per `(entry, transport)` pair). With multiple transports, `FixedRate` and `FixedRatePerLevel` perform an independent Bernoulli draw for each transport — one transport may keep the entry while another drops it. `Burst` shares a single counter across transports, so each per-transport call consumes a slot from the same window (e.g. with two transports and a 100/sec cap, you get ~50 fully-delivered entries per second). If you want per-transport sampling rates, use [Group routing](/logging-api/groups) with different transports per group.
 - The `Burst` sampler holds an internal mutex. Lock scope is tiny (a counter check + time comparison) but under extreme contention it can serialize the dispatch path. For most workloads this is negligible compared to the emission cost itself.
 - Sampling does **not** affect plugin hooks that ran earlier (`OnFieldsCalled`, `OnMetadataCalled`). It only gates dispatch to transports.

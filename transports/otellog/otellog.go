@@ -194,9 +194,12 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 // toOtelSeverity maps loglayer levels onto the OTel severity scale.
 // OTel defines four sub-levels per severity bucket (Debug1-4, Info1-4,
 // etc.); we use the first of each bucket since loglayer has a single
-// level per bucket.
+// level per bucket. Panic uses SeverityFatal4 (the highest tier) so it
+// stays distinguishable from Fatal on the OTel side.
 func toOtelSeverity(l loglayer.LogLevel) otellog.Severity {
 	switch l {
+	case loglayer.LogLevelTrace:
+		return otellog.SeverityTrace
 	case loglayer.LogLevelDebug:
 		return otellog.SeverityDebug
 	case loglayer.LogLevelInfo:
@@ -207,6 +210,8 @@ func toOtelSeverity(l loglayer.LogLevel) otellog.Severity {
 		return otellog.SeverityError
 	case loglayer.LogLevelFatal:
 		return otellog.SeverityFatal
+	case loglayer.LogLevelPanic:
+		return otellog.SeverityFatal4
 	default:
 		return otellog.SeverityInfo
 	}

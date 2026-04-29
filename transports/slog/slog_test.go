@@ -15,7 +15,7 @@ import (
 func factory(opts transporttest.FactoryOpts) (*loglayer.LogLayer, *bytes.Buffer) {
 	buf := &bytes.Buffer{}
 	logger := stdlibslog.New(stdlibslog.NewJSONHandler(buf, &stdlibslog.HandlerOptions{
-		Level: stdlibslog.LevelDebug,
+		Level: stdlibslog.LevelDebug - 4, // allow LogLevelTrace through
 	}))
 	cfg := llslog.Config{
 		BaseConfig:        transport.BaseConfig{ID: "slog", Level: opts.Level},
@@ -34,25 +34,17 @@ func TestSlogContract(t *testing.T) {
 			MessageKey: "msg",
 			LevelKey:   "level",
 			Levels: map[loglayer.LogLevel]string{
-				// Fatal omitted: slog renders custom levels as "ERROR+N";
-				// covered by TestSlogFatalAboveError.
+				// slog has no Trace/Fatal/Panic; they render as DEBUG-/ERROR+ offsets.
+				loglayer.LogLevelTrace: "DEBUG-4",
 				loglayer.LogLevelDebug: "DEBUG",
 				loglayer.LogLevelInfo:  "INFO",
 				loglayer.LogLevelWarn:  "WARN",
 				loglayer.LogLevelError: "ERROR",
+				loglayer.LogLevelFatal: "ERROR+4",
+				loglayer.LogLevelPanic: "ERROR+8",
 			},
 		},
 	})
-}
-
-func TestSlogFatalAboveError(t *testing.T) {
-	log, buf := factory(transporttest.FactoryOpts{})
-	log.Fatal("survives")
-	obj := transporttest.ParseJSONLine(t, buf)
-	// slog renders custom levels as "ERROR+N".
-	if obj["level"] != "ERROR+4" {
-		t.Errorf("expected ERROR+4 for fatal, got %v", obj["level"])
-	}
 }
 
 func TestSlogWithContextPassedToHandler(t *testing.T) {

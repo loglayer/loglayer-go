@@ -35,10 +35,12 @@ func TestPhusluContract(t *testing.T) {
 			MessageKey: "message",
 			LevelKey:   "level",
 			Levels: map[loglayer.LogLevel]string{
+				loglayer.LogLevelTrace: "trace",
 				loglayer.LogLevelDebug: "debug",
 				loglayer.LogLevelInfo:  "info",
 				loglayer.LogLevelWarn:  "warn",
 				loglayer.LogLevelError: "error",
+				loglayer.LogLevelPanic: "panic", // phuslu's panic() is recoverable
 			},
 			SkipFatal: true, // phuslu/log always os.Exits on Fatal
 		},

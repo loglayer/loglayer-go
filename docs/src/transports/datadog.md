@@ -160,11 +160,15 @@ Datadog uses a `status` string per entry. The transport maps loglayer levels:
 
 | LogLayer Level   | Datadog status |
 |------------------|----------------|
+| `LogLevelTrace`  | `debug`        |
 | `LogLevelDebug`  | `debug`        |
 | `LogLevelInfo`   | `info`         |
 | `LogLevelWarn`   | `warning`      |
 | `LogLevelError`  | `error`        |
 | `LogLevelFatal`  | `critical`     |
+| `LogLevelPanic`  | `emergency`    |
+
+Datadog has no native `trace` status, so Trace folds into `debug` (the closest below-info bucket). Panic uses `emergency`, the highest-severity status in Datadog's reserved set, so it stays distinguishable from Fatal.
 
 ## API Limits
 

@@ -20,8 +20,10 @@ type Config struct {
 	// to share encoders, hooks, samplers, or fields already configured.
 	//
 	// Whichever logger is used, this transport always wraps it with
-	// zap.WithFatalHook(zapcore.WriteThenNoop) so loglayer's contract that
-	// Fatal does NOT terminate the process is honored.
+	// zap.WithFatalHook(noopFatalHook{}) so loglayer's contract that
+	// Fatal does NOT terminate the process is honored. (zap silently
+	// reverts zapcore.WriteThenNoop back to WriteThenFatal, so a custom
+	// no-op hook is required.)
 	Logger *zap.Logger
 
 	// Writer is used only when Logger is nil. Defaults to os.Stderr.
@@ -53,10 +55,6 @@ func New(cfg Config) *Transport {
 		core := zapcore.NewCore(enc, zapcore.AddSync(transport.WriterOrStderr(cfg.Writer)), zapcore.DebugLevel)
 		base = zap.New(core)
 	}
-	// Always neutralize the fatal hook so loglayer's "Fatal does not exit"
-	// contract holds regardless of how the supplied logger was constructed.
-	// zap explicitly overrides zapcore.WriteThenNoop back to WriteThenFatal,
-	// so a custom hook is required.
 	logger := base.WithOptions(zap.WithFatalHook(noopFatalHook{}))
 	return &Transport{
 		BaseTransport: transport.NewBaseTransport(cfg.BaseConfig),

@@ -20,7 +20,7 @@ log.Warn("kept")       // emitted
 log.Error("kept")      // emitted
 ```
 
-Level ordering is `Debug < Info < Warn < Error < Fatal`.
+Level ordering is `Trace < Debug < Info < Warn < Error < Fatal < Panic`.
 
 ## Enabling / Disabling Individual Levels
 

@@ -52,12 +52,13 @@ The redact plugin runs even though the call site is `slog.Info(...)`. Same for `
 
 | slog                             | loglayer                  |
 |----------------------------------|---------------------------|
-| `slog.LevelDebug` and below      | `LogLevelDebug`           |
+| `slog.LevelDebug - 4` and below  | `LogLevelTrace`           |
+| `slog.LevelDebug`                | `LogLevelDebug`           |
 | `slog.LevelInfo`                 | `LogLevelInfo`            |
 | `slog.LevelWarn`                 | `LogLevelWarn`            |
 | `slog.LevelError` and above      | `LogLevelError`           |
 
-slog has no Fatal level, so values at or above `slog.LevelError` pin to `LogLevelError`. **A slog emission cannot trigger loglayer's `os.Exit(1)`.** If you need Fatal, call `log.Fatal(...)` directly on the loglayer side.
+slog has no Fatal or Panic level, so values at or above `slog.LevelError` pin to `LogLevelError`. **A slog emission cannot trigger loglayer's `os.Exit(1)` or `panic()`.** If you need Fatal or Panic semantics, call `log.Fatal(...)` or `log.Panic(...)` directly on the loglayer side.
 
 ### Attrs
 

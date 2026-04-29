@@ -49,7 +49,7 @@ type Config struct {
 	RequestIDHeader string
 
 	// RequestIDGenerator is called when no incoming request-ID header is
-	// present. Defaults to 8 random bytes hex-encoded.
+	// present. Defaults to 12 hex chars from crypto/rand.
 	RequestIDGenerator func() string
 
 	// FieldNames overrides the keys used in the emitted logs. Empty

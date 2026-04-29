@@ -92,11 +92,16 @@ func TestLevels(t *testing.T) {
 		fn  func(*loglayer.LogLayer)
 		sev otelapi.Severity
 	}{
+		{func(l *loglayer.LogLayer) { l.Trace("x") }, otelapi.SeverityTrace},
 		{func(l *loglayer.LogLayer) { l.Debug("x") }, otelapi.SeverityDebug},
 		{func(l *loglayer.LogLayer) { l.Info("x") }, otelapi.SeverityInfo},
 		{func(l *loglayer.LogLayer) { l.Warn("x") }, otelapi.SeverityWarn},
 		{func(l *loglayer.LogLayer) { l.Error("x") }, otelapi.SeverityError},
 		{func(l *loglayer.LogLayer) { l.Fatal("x") }, otelapi.SeverityFatal},
+		{func(l *loglayer.LogLayer) {
+			defer func() { _ = recover() }()
+			l.Panic("x")
+		}, otelapi.SeverityFatal4},
 	}
 	for _, c := range cases {
 		log, rec := newLogger(t, otellog.Config{})

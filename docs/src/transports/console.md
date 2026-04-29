@@ -7,7 +7,7 @@ description: Plain-text logs to stdout/stderr in logfmt key=value format.
 
 <ModuleBadges path="transports/console" />
 
-The `console` transport writes log entries to `os.Stdout` (info, debug, trace) or `os.Stderr` (warn, error, fatal) as plain text: the message followed by [logfmt](https://brandur.org/logfmt)-style `key=value` pairs. One line per entry, no colors, no JSON.
+The `console` transport writes log entries to `os.Stdout` (trace, debug, info) or `os.Stderr` (warn, error, fatal, panic) as plain text: the message followed by [logfmt](https://brandur.org/logfmt)-style `key=value` pairs. One line per entry, no colors, no JSON.
 
 ::: tip For human-readable dev output, prefer Pretty
 The console transport is intentionally minimal. For day-to-day local development you almost certainly want the [Pretty Transport](/transports/pretty): it provides color-coded levels, themes, and three view modes that make multi-field logs easy to scan. Pick `console` only when you specifically need a no-color, no-JSON, logfmt-style writer (e.g. CI logs that humans grep, fixture generation, deliberate plain output).
@@ -44,8 +44,8 @@ logged in id=42 user=alice
 
 By default:
 
-- `Debug`, `Info` → `os.Stdout`
-- `Warn`, `Error`, `Fatal` → `os.Stderr`
+- `Trace`, `Debug`, `Info` → `os.Stdout`
+- `Warn`, `Error`, `Fatal`, `Panic` → `os.Stderr`
 
 Set `Writer` to override and send everything to a single writer (useful in tests or when redirecting output):
 

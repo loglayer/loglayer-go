@@ -36,11 +36,13 @@ func TestCharmContract(t *testing.T) {
 			MessageKey: "msg",
 			LevelKey:   "level",
 			Levels: map[loglayer.LogLevel]string{
+				loglayer.LogLevelTrace: "debug", // charm has no Trace; mapped to lowest
 				loglayer.LogLevelDebug: "debug",
 				loglayer.LogLevelInfo:  "info",
 				loglayer.LogLevelWarn:  "warn",
 				loglayer.LogLevelError: "error",
 				loglayer.LogLevelFatal: "fatal",
+				loglayer.LogLevelPanic: "fatal", // charm has no Panic; surfaced as Fatal
 			},
 		},
 	})

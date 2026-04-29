@@ -24,7 +24,10 @@ type RawLogEntry struct {
     Messages []any
     Metadata any
     Err      error
-    Fields   Fields // optional override
+    Fields   Fields          // optional override of the logger's persistent fields
+    Ctx      context.Context // optional per-entry context; surfaced via TransportParams.Ctx
+    Groups   []string        // optional override of the logger's assigned group tags
+    Source   *Source         // optional override of captured source info; useful for adapters
 }
 ```
 

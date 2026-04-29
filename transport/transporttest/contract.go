@@ -120,11 +120,16 @@ func testLevels(t *testing.T, c ContractCase) {
 		level loglayer.LogLevel
 		emit  func(*loglayer.LogLayer)
 	}{
+		{loglayer.LogLevelTrace, func(l *loglayer.LogLayer) { l.Trace("x") }},
 		{loglayer.LogLevelDebug, func(l *loglayer.LogLayer) { l.Debug("x") }},
 		{loglayer.LogLevelInfo, func(l *loglayer.LogLayer) { l.Info("x") }},
 		{loglayer.LogLevelWarn, func(l *loglayer.LogLayer) { l.Warn("x") }},
 		{loglayer.LogLevelError, func(l *loglayer.LogLayer) { l.Error("x") }},
 		{loglayer.LogLevelFatal, func(l *loglayer.LogLayer) { l.Fatal("x") }},
+		{loglayer.LogLevelPanic, func(l *loglayer.LogLayer) {
+			defer func() { _ = recover() }()
+			l.Panic("x")
+		}},
 	}
 	for _, tc := range cases {
 		if c.Expect.SkipFatal && tc.level == loglayer.LogLevelFatal {
