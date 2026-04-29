@@ -6,14 +6,21 @@ import (
 
 	"go.loglayer.dev"
 	"go.loglayer.dev/transport"
-	"go.loglayer.dev/transports/blank"
+	lltest "go.loglayer.dev/transports/testing"
 )
 
 // TestSetEnabledNoRace exercises the contract that BaseTransport.SetEnabled
 // is safe to call concurrently with emission. The -race detector runs this
 // test; if SetEnabled isn't atomic, this test must fail.
+//
+// Uses the in-process lltest transport (which stays bundled in the main
+// module) rather than transports/blank, because blank now lives in its own
+// module and importing it here would create a require cycle with main.
 func TestSetEnabledNoRace(t *testing.T) {
-	tr := blank.New(blank.Config{BaseConfig: transport.BaseConfig{ID: "b"}})
+	tr := lltest.New(lltest.Config{
+		BaseConfig: transport.BaseConfig{ID: "b"},
+		Library:    &lltest.TestLoggingLibrary{},
+	})
 	log := loglayer.New(loglayer.Config{Transport: tr, DisableFatalExit: true})
 
 	var wg sync.WaitGroup
