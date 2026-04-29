@@ -15,6 +15,13 @@ from conventional commits. From v1.0.0 forward, this file is maintained
 automatically; the `[Unreleased]` section below describes the initial
 release at a high level.
 
+## [1.0.2](https://github.com/loglayer/loglayer-go/compare/v1.0.1...v1.0.2) (2026-04-29)
+
+
+### Bug Fixes
+
+* **release-please:** Correct field name (tag-separator, not separator) ([37e1d1d](https://github.com/loglayer/loglayer-go/commit/37e1d1deba7e3c9e6197260e7df20f7b78f7a28e))
+
 ## [1.0.1](https://github.com/loglayer/loglayer-go/compare/v1.0.0...v1.0.1) (2026-04-29)
 
 
