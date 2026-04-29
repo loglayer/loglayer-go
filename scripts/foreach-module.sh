@@ -15,6 +15,7 @@ set -euo pipefail
 # sub-modules. Don't reorder without a reason.
 ALL_MODULES=(
   .
+  transports/blank
   transports/charmlog
   transports/datadog
   transports/http
@@ -22,12 +23,20 @@ ALL_MODULES=(
   transports/otellog
   transports/phuslu
   transports/pretty
+  transports/slog
   transports/zap
   transports/zerolog
-  plugins/oteltrace
+  plugins/datadogtrace
   plugins/datadogtrace/livetest
+  plugins/fmtlog
+  plugins/oteltrace
+  plugins/redact
+  plugins/sampling
+  integrations/loghttp
+  integrations/sloghandler
   examples/custom-plugin
   examples/datadog-shipping
+  examples/http-server
   examples/multi-transport
   examples/otel-end-to-end
 )
@@ -37,6 +46,7 @@ ALL_MODULES=(
 # of example code shouldn't gate the build.
 SHIPPED_MODULES=(
   .
+  transports/blank
   transports/charmlog
   transports/datadog
   transports/http
@@ -44,9 +54,16 @@ SHIPPED_MODULES=(
   transports/otellog
   transports/phuslu
   transports/pretty
+  transports/slog
   transports/zap
   transports/zerolog
+  plugins/datadogtrace
+  plugins/fmtlog
   plugins/oteltrace
+  plugins/redact
+  plugins/sampling
+  integrations/loghttp
+  integrations/sloghandler
 )
 
 op="${1:-}"
@@ -113,6 +130,7 @@ case "$op" in
     # "[no test files]" output. Every other module has tests.
     for mod in \
       . \
+      transports/blank \
       transports/charmlog \
       transports/datadog \
       transports/http \
@@ -120,10 +138,17 @@ case "$op" in
       transports/otellog \
       transports/phuslu \
       transports/pretty \
+      transports/slog \
       transports/zap \
       transports/zerolog \
+      plugins/datadogtrace \
+      plugins/datadogtrace/livetest \
+      plugins/fmtlog \
       plugins/oteltrace \
-      plugins/datadogtrace/livetest; do
+      plugins/redact \
+      plugins/sampling \
+      integrations/loghttp \
+      integrations/sloghandler; do
       echo "==> $mod (test)"
       (cd "$mod" && go test -race -count=1 ./...)
     done

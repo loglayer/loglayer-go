@@ -5,7 +5,7 @@ description: "Drop a fraction of log emissions to keep volume and cost under con
 
 # Sampling Plugin
 
-<ModuleBadges path="plugins/sampling" bundled />
+<ModuleBadges path="plugins/sampling" />
 
 `plugins/sampling` keeps log volume bounded by dropping a fraction of emissions before any transport sees them. Three strategies built on the [`SendGate`](/plugins/creating-plugins#sendgate) hook:
 

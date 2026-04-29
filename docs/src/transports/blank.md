@@ -5,7 +5,7 @@ description: A bring-your-own-function Transport for prototyping or one-off inte
 
 # Blank Transport
 
-<ModuleBadges path="transports/blank" bundled />
+<ModuleBadges path="transports/blank" />
 
 The `blank` transport delegates `SendToLogger` to a function you supply inline. Use it for:
 

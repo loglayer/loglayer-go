@@ -5,7 +5,7 @@ description: Wrap a *slog.Logger with LogLayer.
 
 # log/slog Transport
 
-<ModuleBadges path="transports/slog" bundled />
+<ModuleBadges path="transports/slog" />
 
 Wraps a stdlib `*log/slog.Logger`. Map metadata flattens to `slog.Attr`s; struct metadata lands under a configurable key. Per-call `context.Context` attached via `WithContext` is passed through to `slog.Logger.LogAttrs` so handlers downstream (OpenTelemetry, structured shippers) can extract trace context.
 

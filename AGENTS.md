@@ -55,12 +55,19 @@ loglayer-go/
 - **No `Logger` interface in core**: Go convention is "consumer defines the interface."
   Application code accepts the concrete `*loglayer.LogLayer`; `loglayer.NewMock()` returns
   the same type for test injection.
-- **Multi-module layout**: the main `go.loglayer.dev` module hosts the framework core (loglayer/builder/dispatch/plugin/level/etc.), the `transport/` package (BaseTransport, helpers, transporttest, benchtest), the in-stdlib renderer transports (blank/console/structured/testing), the slog wrapper (stdlib only), `integrations/loghttp`, plugins/{redact,datadogtrace,plugintest}, and utils/{maputil,sanitize,idgen}. Every other transport and plugin lives in its own Go module so consumers only pay for the SDKs they actually import:
+- **Multi-module layout**: the main `go.loglayer.dev` module hosts the framework core (loglayer/builder/dispatch/plugin/level/etc.), the `transport/` package (BaseTransport, helpers, transporttest, benchtest), the renderer transports that main's own tests/examples consume (`transports/console`, `transports/structured`, `transports/testing`), `plugins/plugintest`, and the `utils/{maputil,sanitize,idgen}` helpers. Every other transport, plugin, and integration ships as its own Go module so consumers only pay for the SDKs they import *and* a breaking change in any one of them stays local to that sub-module's major version:
+  - `transports/blank` (stdlib only — example/prototype dispatcher)
   - `transports/pretty` (fatih/color)
   - `transports/http`, `transports/datadog` (network shippers; datadog wraps http)
+  - `transports/slog` (stdlib `log/slog` wrapper)
   - `transports/zerolog`, `transports/zap`, `transports/logrus`, `transports/phuslu`, `transports/charmlog` (vendor wrappers)
   - `transports/otellog`, `plugins/oteltrace` (OTel SDK; Go 1.25 floor)
+  - `plugins/redact`, `plugins/sampling`, `plugins/fmtlog`, `plugins/datadogtrace` (stdlib-only plugins, but each independently versionable)
   - `plugins/datadogtrace/livetest` (test-only, dd-trace-go v2)
+  - `integrations/loghttp` (HTTP middleware; stdlib only)
+  - `integrations/sloghandler` (stdlib `log/slog` adapter)
+
+  **Why so many split modules** — once a sub-package starts to look like an independent shipping unit (its own users, its own breaking-change cadence), splitting early avoids being trapped later. A breaking change in, say, `plugins/redact` only forces `plugins/redact/v2`; the main `go.loglayer.dev` import path is unaffected. Pre-split, every breaking refactor cascaded into a `go.loglayer.dev/v2` semantic-import-versioning migration. The packages still bundled in main are only those whose split would create a require cycle with main's own tests/examples.
 
   Each sub-module has its own `go.mod` with a `replace go.loglayer.dev => ../..` (and any relevant sibling) directive for development. A `go.work` at the repo root lets `gopls` and `go test all` see every module from a single root; CI uses `scripts/foreach-module.sh` which runs each module in isolation and is unaffected.
 
