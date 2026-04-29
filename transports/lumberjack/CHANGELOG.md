@@ -9,6 +9,18 @@ from conventional commits scoped to `transports/lumberjack`. Tags use the
 prefixed form `transports/lumberjack/v<X.Y.Z>` so this module versions
 independently of the framework core.
 
+## [1.1.0](https://github.com/loglayer/loglayer-go/compare/transports/lumberjack/v1.0.0...transports/lumberjack/v1.1.0) (2026-04-29)
+
+
+### Features
+
+* **transports/lumberjack:** Add rotating-file JSON transport ([#16](https://github.com/loglayer/loglayer-go/issues/16)) ([fa7bef0](https://github.com/loglayer/loglayer-go/commit/fa7bef051e0221bb4c3bbb0612bdffa96aeb6869))
+
+
+### Miscellaneous Chores
+
+* **release-please:** Force next main release to v1.1.0 ([bbcd772](https://github.com/loglayer/loglayer-go/commit/bbcd77202f70ccd4f4a6f3bbe70f8dc91b4ea695))
+
 ## [Unreleased] (target: v1.0.0)
 
 Initial release as a separate Go module.
