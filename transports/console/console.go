@@ -1,10 +1,14 @@
-// Package console provides a Transport that writes log entries to stdout/stderr.
+// Package console provides a Transport that writes log entries to stdout/stderr
+// using logfmt-style output (key=value pairs after the message).
 package console
 
 import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/goccy/go-json"
@@ -18,21 +22,17 @@ import (
 type Config struct {
 	transport.BaseConfig
 
-	// AppendObjectData appends data after messages (default: prepend).
-	// Has no effect when MessageField is set.
-	AppendObjectData bool
-
 	// MessageField places the joined message text into this key, producing a
 	// single structured object as the sole log argument.
 	// When set, DateField and LevelField are also included in that object.
 	MessageField string
 
-	// DateField adds a timestamp entry to the structured output.
-	// If MessageField is not set, date is added as an extra argument.
+	// DateField, when set, emits a timestamp as a logfmt key alongside fields.
+	// When MessageField is set, the timestamp is included in the structured object instead.
 	DateField string
 
-	// LevelField adds the log level to the structured output.
-	// If MessageField is not set, level is added as an extra argument.
+	// LevelField, when set, emits the log level as a logfmt key alongside fields.
+	// When MessageField is set, the level is included in the structured object instead.
 	LevelField string
 
 	// DateFn overrides the default ISO-8601 timestamp when DateField is set.
@@ -41,7 +41,7 @@ type Config struct {
 	// LevelFn overrides the default level string when LevelField is set.
 	LevelFn func(loglayer.LogLevel) string
 
-	// Stringify JSON-encodes the structured object instead of passing it raw.
+	// Stringify JSON-encodes the structured object instead of emitting logfmt.
 	// Only applies when MessageField, DateField, or LevelField is set.
 	Stringify bool
 
@@ -93,7 +93,10 @@ func (c *Transport) writer(level loglayer.LogLevel) io.Writer {
 	}
 }
 
-// buildMessages assembles the argument list to pass to Fprintln.
+// buildMessages assembles the argument list to pass to Fprintln. In the
+// default mode, fields and metadata render as logfmt (key=value, key=value)
+// after the message. MessageField and Stringify switch to single-object output
+// for callers that want a structured-but-non-pipeline shape.
 func buildMessages(params loglayer.TransportParams, cfg Config) []any {
 	messages := make([]any, len(params.Messages))
 	copy(messages, params.Messages)
@@ -104,8 +107,7 @@ func buildMessages(params loglayer.TransportParams, cfg Config) []any {
 
 	// Sanitize user-controlled message strings so a CRLF or ANSI ESC
 	// can't forge log lines or smuggle terminal escapes through the
-	// renderer. Non-string elements pass through; their %v rendering
-	// doesn't introduce control characters.
+	// renderer.
 	for i, m := range messages {
 		if s, ok := m.(string); ok {
 			messages[i] = sanitize.Message(s)
@@ -113,8 +115,8 @@ func buildMessages(params loglayer.TransportParams, cfg Config) []any {
 	}
 
 	combined := transport.MergeFieldsAndMetadata(params)
-	hasCombined := len(combined) > 0
 
+	// MessageField: single structured object as the sole arg.
 	if cfg.MessageField != "" {
 		obj := make(map[string]any, len(combined)+3)
 		for k, v := range combined {
@@ -130,27 +132,26 @@ func buildMessages(params loglayer.TransportParams, cfg Config) []any {
 		return []any{maybeStringify(obj, cfg.Stringify)}
 	}
 
+	// Bake in date/level as additional logfmt keys when configured.
 	if cfg.DateField != "" || cfg.LevelField != "" {
-		obj := make(map[string]any, len(combined)+2)
-		for k, v := range combined {
-			obj[k] = v
+		if combined == nil {
+			combined = make(map[string]any, 2)
 		}
 		if cfg.DateField != "" {
-			obj[cfg.DateField] = dateValue(cfg)
+			combined[cfg.DateField] = dateValue(cfg)
 		}
 		if cfg.LevelField != "" {
-			obj[cfg.LevelField] = levelValue(cfg, params.LogLevel)
+			combined[cfg.LevelField] = levelValue(cfg, params.LogLevel)
 		}
-		messages = append(messages, maybeStringify(obj, cfg.Stringify))
-		return messages
+		// Stringify: emit a JSON object after the message instead of logfmt.
+		if cfg.Stringify {
+			messages = append(messages, maybeStringify(combined, true))
+			return messages
+		}
 	}
 
-	if hasCombined {
-		if cfg.AppendObjectData {
-			messages = append(messages, combined)
-		} else {
-			messages = append([]any{combined}, messages...)
-		}
+	if len(combined) > 0 {
+		messages = append(messages, renderLogfmt(combined))
 	}
 
 	return messages
@@ -179,4 +180,119 @@ func maybeStringify(obj map[string]any, stringify bool) any {
 		return obj
 	}
 	return string(b)
+}
+
+// renderLogfmt formats a map as logfmt key=value pairs separated by spaces.
+// Keys are emitted in sorted order so output is stable across runs.
+// Scalar values render directly (numbers, bools, time.Time as RFC3339Nano);
+// strings are quoted when they contain spaces, equals signs, quotes, or
+// control characters. Nested values (maps, structs, slices) are JSON-encoded
+// and treated as a string.
+func renderLogfmt(data map[string]any) string {
+	keys := make([]string, 0, len(data))
+	for k := range data {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	var b strings.Builder
+	for i, k := range keys {
+		if i > 0 {
+			b.WriteByte(' ')
+		}
+		writeLogfmtString(&b, k)
+		b.WriteByte('=')
+		writeLogfmtValue(&b, data[k])
+	}
+	return b.String()
+}
+
+func writeLogfmtValue(b *strings.Builder, v any) {
+	switch x := v.(type) {
+	case nil:
+		b.WriteString("null")
+	case string:
+		writeLogfmtString(b, x)
+	case bool:
+		if x {
+			b.WriteString("true")
+		} else {
+			b.WriteString("false")
+		}
+	case int:
+		b.WriteString(strconv.Itoa(x))
+	case int8:
+		b.WriteString(strconv.FormatInt(int64(x), 10))
+	case int16:
+		b.WriteString(strconv.FormatInt(int64(x), 10))
+	case int32:
+		b.WriteString(strconv.FormatInt(int64(x), 10))
+	case int64:
+		b.WriteString(strconv.FormatInt(x, 10))
+	case uint:
+		b.WriteString(strconv.FormatUint(uint64(x), 10))
+	case uint8:
+		b.WriteString(strconv.FormatUint(uint64(x), 10))
+	case uint16:
+		b.WriteString(strconv.FormatUint(uint64(x), 10))
+	case uint32:
+		b.WriteString(strconv.FormatUint(uint64(x), 10))
+	case uint64:
+		b.WriteString(strconv.FormatUint(x, 10))
+	case float32:
+		b.WriteString(strconv.FormatFloat(float64(x), 'g', -1, 32))
+	case float64:
+		b.WriteString(strconv.FormatFloat(x, 'g', -1, 64))
+	case time.Time:
+		writeLogfmtString(b, x.Format(time.RFC3339Nano))
+	case error:
+		writeLogfmtString(b, x.Error())
+	case fmt.Stringer:
+		writeLogfmtString(b, x.String())
+	default:
+		if encoded, err := json.Marshal(x); err == nil {
+			writeLogfmtString(b, string(encoded))
+		} else {
+			writeLogfmtString(b, fmt.Sprintf("%v", x))
+		}
+	}
+}
+
+func writeLogfmtString(b *strings.Builder, s string) {
+	if !needsLogfmtQuote(s) {
+		b.WriteString(s)
+		return
+	}
+	b.WriteByte('"')
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		switch c {
+		case '"':
+			b.WriteString(`\"`)
+		case '\\':
+			b.WriteString(`\\`)
+		case '\n':
+			b.WriteString(`\n`)
+		case '\r':
+			b.WriteString(`\r`)
+		case '\t':
+			b.WriteString(`\t`)
+		default:
+			b.WriteByte(c)
+		}
+	}
+	b.WriteByte('"')
+}
+
+func needsLogfmtQuote(s string) bool {
+	if s == "" {
+		return true
+	}
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c == ' ' || c == '=' || c == '"' || c == '\\' || c < 0x20 {
+			return true
+		}
+	}
+	return false
 }

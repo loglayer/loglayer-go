@@ -1,16 +1,16 @@
 ---
 title: Console Transport
-description: Human-readable log output to stdout/stderr.
+description: Plain-text logs to stdout/stderr in logfmt key=value format.
 ---
 
 # Console Transport
 
 <ModuleBadges path="transports/console" bundled />
 
-The `console` transport writes log entries to `os.Stdout` (info, debug, trace) or `os.Stderr` (warn, error, fatal). Output is formatted with `fmt.Println`-style printing: one line per entry, with structured data appended or prepended as a Go map (e.g. `map[k:v]`).
+The `console` transport writes log entries to `os.Stdout` (info, debug, trace) or `os.Stderr` (warn, error, fatal) as plain text: the message followed by [logfmt](https://brandur.org/logfmt)-style `key=value` pairs. One line per entry, no colors, no JSON.
 
 ::: tip For human-readable dev output, prefer Pretty
-The console transport is intentionally minimal. For day-to-day local development you almost certainly want the [Pretty Transport](/transports/pretty): it provides color-coded levels, themes, and three view modes that make multi-field logs easy to scan. Pick `console` only when you specifically need a zero-dependency, no-color, raw `fmt`-style writer (e.g. constrained environments, fixture generation, deliberate plain output).
+The console transport is intentionally minimal. For day-to-day local development you almost certainly want the [Pretty Transport](/transports/pretty): it provides color-coded levels, themes, and three view modes that make multi-field logs easy to scan. Pick `console` only when you specifically need a no-color, no-JSON, logfmt-style writer (e.g. CI logs that humans grep, fixture generation, deliberate plain output).
 :::
 
 For production logging, use the [structured](/transports/structured) transport or one of the [logger wrappers](/transports/zerolog).
@@ -32,12 +32,12 @@ log := loglayer.New(loglayer.Config{
 })
 
 log.Info("hello world")
-log.WithMetadata(loglayer.Metadata{"k": "v"}).Info("with data")
+log.WithMetadata(loglayer.Metadata{"id": 42, "user": "alice"}).Info("logged in")
 ```
 
 ```
 hello world
-map[k:v] with data
+logged in id=42 user=alice
 ```
 
 ## Output Routing
@@ -59,10 +59,9 @@ console.New(console.Config{Writer: &buf})
 type Config struct {
     transport.BaseConfig
 
-    AppendObjectData bool   // append data after messages instead of prepending
-    MessageField     string // when set, emit one structured object per entry
-    DateField        string // include timestamp under this key
-    LevelField       string // include level under this key
+    MessageField string // when set, emit one structured object per entry
+    DateField    string // include timestamp under this key
+    LevelField   string // include level under this key
 
     DateFn   func() string                              // override default ISO-8601 timestamp
     LevelFn  func(loglayer.LogLevel) string             // override level string
@@ -73,19 +72,55 @@ type Config struct {
 }
 ```
 
-### Append vs Prepend
+### Logfmt Rendering
 
-By default the data map is prepended to the message arguments. Set `AppendObjectData: true` to put it after:
+Fields and metadata render as `key=value` pairs after the message, in sorted-by-key order:
 
 ```go
-console.New(console.Config{AppendObjectData: true})
-log.WithMetadata(loglayer.Metadata{"x": 1}).Info("event")
-// "event map[x:1]"
+log.WithFields(loglayer.Fields{"requestId": "abc"}).
+    WithMetadata(loglayer.Metadata{"status": 200, "bytes": 1024}).
+    Info("request served")
+// "request served bytes=1024 requestId=abc status=200"
 ```
 
-### Single-Object Output
+Values render based on type:
 
-Setting `MessageField` switches the transport into structured mode. Instead of printing `[data, ...messages]`, it builds one object containing the message, data, and (optionally) timestamp/level fields, and prints just that:
+- **Strings**: bare when safe, quoted when they contain spaces, `=`, `"`, `\`, or control characters. `\"`, `\\`, `\n`, `\r`, `\t` are escaped inside quotes.
+- **Numbers and bools**: rendered directly (`id=42`, `enabled=true`).
+- **`time.Time`**: RFC3339Nano (`ts=2026-04-26T12:00:00Z`).
+- **`error`**: the result of `Error()`, quoted if needed.
+- **Anything else (maps, structs, slices)**: JSON-encoded and treated as a quoted string (`obj="{\"a\":1}"`).
+
+Keys are sorted to keep output stable across runs (Go map iteration is non-deterministic).
+
+### Level / Timestamp
+
+By default the line is just message + fields. Add a level or timestamp via `LevelField` / `DateField`:
+
+```go
+console.New(console.Config{
+    DateField:  "ts",
+    LevelField: "level",
+})
+
+log.Info("served")
+// "served level=info ts=2026-04-26T12:00:00Z"
+```
+
+Override the value formatters with `LevelFn` / `DateFn`:
+
+```go
+console.New(console.Config{
+    LevelField: "lvl",
+    LevelFn:    func(l loglayer.LogLevel) string { return strings.ToUpper(l.String()) },
+    DateField:  "ts",
+    DateFn:     func() string { return time.Now().Format(time.RFC822) },
+})
+```
+
+### Single-Object Output (`MessageField`)
+
+Setting `MessageField` switches the transport into structured-object mode. Instead of `msg key=value...`, it builds one map containing the message + data + (optionally) timestamp/level fields, and prints just that:
 
 ```go
 console.New(console.Config{
@@ -95,47 +130,43 @@ console.New(console.Config{
 })
 
 log.Info("structured")
-// map[level:info msg:structured ts:2026-04-25T...]
+// map[level:info msg:structured ts:2026-04-26T...]
 ```
 
-Add `Stringify: true` to JSON-encode the object instead of printing it as a Go map:
+Add `Stringify: true` to JSON-encode the object instead:
 
 ```go
-console.New(console.Config{
-    MessageField: "msg",
-    Stringify:    true,
-})
+console.New(console.Config{MessageField: "msg", Stringify: true})
 log.Info("json out")
 // {"msg":"json out"}
 ```
 
 If you only want JSON output, prefer the [structured transport](/transports/structured); it's purpose-built for that.
 
-### Custom Date / Level / Message Functions
+### Custom Message Function
+
+`MessageFn` replaces the default message-then-logfmt assembly with a single string of your choice. It receives the full `TransportParams` so you can format based on the level, fields, or anything else.
 
 ```go
 console.New(console.Config{
-    LevelField: "lvl",
-    LevelFn:    func(l loglayer.LogLevel) string { return strings.ToUpper(l.String()) },
-    DateField:  "ts",
-    DateFn:     func() string { return time.Now().Format(time.RFC822) },
-    MessageFn:  func(p loglayer.TransportParams) string { return strings.Join(stringifyMessages(p.Messages), " | ") },
+    MessageFn: func(p loglayer.TransportParams) string {
+        return fmt.Sprintf("[%s] %s", p.LogLevel, strings.Join(stringifyMessages(p.Messages), " | "))
+    },
 })
 ```
 
-`MessageFn` receives the full `TransportParams` so you can format based on the level, fields, or anything else.
+When `MessageFn` is set, the logfmt tail still appends after its return value (use it for header formatting, not full takeover).
 
 ## Metadata Handling
 
-Map metadata is merged into the same data bag as fields and errors. Struct metadata is JSON-roundtripped into root fields. See [Metadata](/logging-api/metadata) for the design.
+Map metadata is merged into the same data bag as fields and errors. Struct metadata is JSON-roundtripped into root fields before logfmt rendering. See [Metadata](/logging-api/metadata) for the design.
 
 ## Threat Model: Plaintext, Not for Pipelines
 
-Console's user message string is sanitized for control characters before output (CR, LF, ESC, Unicode bidi controls, zero-width joiners; see `transport.SanitizeMessage`). Field and metadata values, however, are rendered through `fmt`'s `%v` and pass through to the writer in their typed form, including any control characters they happen to contain.
+User message strings are sanitized for control characters before output (CR, LF, ESC, Unicode bidi controls, zero-width joiners; see `sanitize.Message`). Field and metadata **string values** are quoted and `\n` / `\r` / `\t` are escaped, so user-controlled string fields can't forge log lines. Non-string values pass through their typed renderer (numbers, bools, JSON encoding for nested), which doesn't introduce control characters.
 
-If your service has untrusted input flowing into a logged field and the resulting log lines are read by a viewer or parser that's tricked by control characters, **use [`structured`](/transports/structured) instead**. Structured emits JSON; encoding/json escapes all control characters by default. Console (like pretty) is for the developer's terminal during local dev.
+If your service has untrusted input flowing into a logged field and the resulting log lines are read by a parser sensitive to subtle escape variations, **use [`structured`](/transports/structured) instead**. Structured emits JSON; encoding/json applies a strict, well-specified escaping. Console (like pretty) is for the developer's terminal during local dev.
 
 ## Fatal Behavior
 
 <!--@include: ./_partials/fatal-passthrough.md-->
-

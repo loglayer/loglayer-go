@@ -85,6 +85,17 @@ func BenchmarkRender_Console_MapMetadata(b *testing.B) {
 	benchtest.RunMap(b, log)
 }
 
+func BenchmarkRender_Console_StructMetadata(b *testing.B) {
+	log := loglayer.New(loglayer.Config{
+		DisableFatalExit: true,
+		Transport: console.New(console.Config{
+			BaseConfig: transport.BaseConfig{ID: "console"},
+			Writer:     benchtest.Discard,
+		}),
+	})
+	benchtest.RunStruct(b, log)
+}
+
 func BenchmarkRender_Testing_SimpleMessage(b *testing.B) {
 	log := loglayer.New(loglayer.Config{
 		DisableFatalExit: true,
