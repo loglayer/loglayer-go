@@ -9,6 +9,13 @@ from conventional commits scoped to `transports/charmlog`. Tags use the
 prefixed form `transports/charmlog/v<X.Y.Z>` so this module versions
 independently of the framework core.
 
+## [1.0.1](https://github.com/loglayer/loglayer-go/compare/transports/charmlog-v1.0.0...transports/charmlog-v1.0.1) (2026-04-29)
+
+
+### Bug Fixes
+
+* **charmlog:** Tidy go.sum ([c3d9832](https://github.com/loglayer/loglayer-go/commit/c3d9832920d84cf0d14a8d07febf251c595d60e3))
+
 ## 1.0.0 (2026-04-29)
 
 

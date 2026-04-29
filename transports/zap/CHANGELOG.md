@@ -9,6 +9,13 @@ from conventional commits scoped to `transports/zap`. Tags use the
 prefixed form `transports/zap/v<X.Y.Z>` so this module versions
 independently of the framework core.
 
+## [1.0.1](https://github.com/loglayer/loglayer-go/compare/transports/zap-v1.0.0...transports/zap-v1.0.1) (2026-04-29)
+
+
+### Bug Fixes
+
+* **zap:** Tidy go.sum ([dc4d754](https://github.com/loglayer/loglayer-go/commit/dc4d7547a8f72cf81db8f7f05eb41e371160576a))
+
 ## 1.0.0 (2026-04-29)
 
 
