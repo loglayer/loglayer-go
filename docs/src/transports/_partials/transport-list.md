@@ -14,16 +14,28 @@ Self-contained transports that format the entry and write it to an `io.Writer`. 
 
 </div>
 
-### Network
+### Cloud
 
-Transports that ship log entries to a remote endpoint over the network. Async + batched by default.
+Managed log services. Async + batched by default; site-aware where applicable.
+
+<div class="module-list-table">
+
+| Name | Version | Go Reference | Description |
+|------|---------|--------------|-------------|
+| [Datadog](/transports/datadog) | [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/datadog/v*&sort=date&label=version&style=flat-square&color=blue)](https://github.com/loglayer/loglayer-go/releases?q=transports/datadog/&expanded=true) | [![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/datadog.svg)](https://pkg.go.dev/go.loglayer.dev/transports/datadog) | Datadog Logs HTTP intake. Site-aware URL, DD-API-KEY header, status mapping. |
+
+</div>
+
+### Other Transports
+
+Generic shippers and on-disk sinks.
 
 <div class="module-list-table">
 
 | Name | Version | Go Reference | Description |
 |------|---------|--------------|-------------|
 | [HTTP](/transports/http) | [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/http/v*&sort=date&label=version&style=flat-square&color=blue)](https://github.com/loglayer/loglayer-go/releases?q=transports/http/&expanded=true) | [![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/http.svg)](https://pkg.go.dev/go.loglayer.dev/transports/http) | Generic batched HTTP POST to any endpoint. Pluggable Encoder. |
-| [Datadog](/transports/datadog) | [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/datadog/v*&sort=date&label=version&style=flat-square&color=blue)](https://github.com/loglayer/loglayer-go/releases?q=transports/datadog/&expanded=true) | [![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/datadog.svg)](https://pkg.go.dev/go.loglayer.dev/transports/datadog) | Datadog Logs HTTP intake. Site-aware URL, DD-API-KEY header, status mapping. |
+| [File (Lumberjack)](/transports/lumberjack) | [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/lumberjack/v*&sort=date&label=version&style=flat-square&color=blue)](https://github.com/loglayer/loglayer-go/releases?q=transports/lumberjack/&expanded=true) | [![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/lumberjack.svg)](https://pkg.go.dev/go.loglayer.dev/transports/lumberjack) | One JSON object per line written to a rotating file. Backed by `lumberjack.v2`. |
 
 </div>
 

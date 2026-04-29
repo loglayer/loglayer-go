@@ -29,9 +29,12 @@ go get go.loglayer.dev/transports/logrus
 go get go.loglayer.dev/transports/charmlog
 go get go.loglayer.dev/transports/otellog
 
-# Network shippers
-go get go.loglayer.dev/transports/http
+# Cloud (managed log services)
 go get go.loglayer.dev/transports/datadog
+
+# Other transports
+go get go.loglayer.dev/transports/http
+go get go.loglayer.dev/transports/lumberjack
 
 # Plugins
 go get go.loglayer.dev/plugins/redact
@@ -645,7 +648,32 @@ blank.New(blank.Config{
 })
 ```
 
-## Network Transports
+## Cloud Transports
+
+Managed log services. Async + batched; site-aware where applicable.
+
+### Datadog Transport
+
+Datadog Logs HTTP intake. Site-aware URL, `DD-API-KEY` header, level→status mapping. Built on the HTTP transport.
+
+```go
+import "go.loglayer.dev/transports/datadog"
+
+tr := datadog.New(datadog.Config{
+    APIKey:           os.Getenv("DD_API_KEY"),  // required
+    Site:             datadog.SiteUS3,           // or SiteUS1/EU/AP1, or use URL: ...
+    AllowInsecureURL: false,                     // true to point at httptest.Server
+    Source:           "go",
+    Service:          "checkout-api",
+    Hostname:         hostname,
+    Tags:             "env:prod,team:platform",
+})
+defer tr.Close()
+```
+
+## Other Transports
+
+Generic shippers and on-disk sinks.
 
 ### HTTP Transport
 
@@ -668,24 +696,29 @@ tr := httptr.New(httptr.Config{
 defer tr.Close()  // flush pending entries
 ```
 
-### Datadog Transport
+### File (Lumberjack)
 
-Datadog Logs HTTP intake. Site-aware URL, `DD-API-KEY` header, level→status mapping. Built on the HTTP transport.
+One JSON object per log entry written to a rotating file. Render path matches `transports/structured`. Rotation delegated to `lumberjack.v2`. The package name `lumberjack` shadows the upstream `gopkg.in/natefinch/lumberjack.v2`; alias one of them when both are imported. The shorter `transports/file` import path is reserved for a future rolled-our-own implementation.
 
 ```go
-import "go.loglayer.dev/transports/datadog"
+import "go.loglayer.dev/transports/lumberjack"
 
-tr := datadog.New(datadog.Config{
-    APIKey:           os.Getenv("DD_API_KEY"),  // required
-    Site:             datadog.SiteUS3,           // or SiteUS1/EU/AP1, or use URL: ...
-    AllowInsecureURL: false,                     // true to point at httptest.Server
-    Source:           "go",
-    Service:          "checkout-api",
-    Hostname:         hostname,
-    Tags:             "env:prod,team:platform",
+tr := lumberjack.New(lumberjack.Config{
+    Filename:   "/var/log/myapp/app.log",  // required
+    MaxSize:    100,   // MB before rotation; default 100
+    MaxBackups: 7,     // 0 = keep all (subject to MaxAge)
+    MaxAge:     30,    // days; 0 = no age-based cleanup
+    Compress:   true,  // gzip rotated files
 })
-defer tr.Close()
+defer tr.Close()  // releases file handle; post-Close logs are dropped
+
+// Force rotation (e.g. from a SIGHUP handler):
+_ = tr.Rotate()
 ```
+
+`lumberjack.Build` returns `ErrFilenameRequired` instead of panicking when `Filename` is empty.
+
+To pretty-print to a file, plug `*lumberjack.Logger` directly into the pretty/console transport's `Writer` field — no need for the file transport.
 
 ## Wrapper Transports
 

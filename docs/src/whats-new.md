@@ -8,6 +8,12 @@ description: Latest features and improvements in LogLayer for Go.
 - [`go.loglayer.dev` Changelog](https://github.com/loglayer/loglayer-go/blob/main/CHANGELOG.md)
 - For users coming from the TypeScript [`loglayer`](https://loglayer.dev) library, see [For TypeScript Developers](/for-typescript-developers) for the API mapping.
 
+## File transport (rotating)
+
+`transports/lumberjack` ships as its own module: one JSON object per log entry, written to a rotating file via [lumberjack.v2](https://github.com/natefinch/lumberjack). Size-triggered rollover, configurable backup retention, age-based cleanup, optional gzip compression, and a `Rotate()` method for SIGHUP-driven roll-overs. See [File (Lumberjack)](/transports/lumberjack).
+
+The `lumberjack` suffix names the rotation backend explicitly so the shorter `transports/file` name stays available for a future rolled-our-own implementation. If you want pretty/console output written to a rotating file today, you don't need this transport. Pass a `*lumberjack.Logger` directly as the `Writer` field of any existing transport.
+
 ## Apr 29, 2026
 
 `v1.0.0`:

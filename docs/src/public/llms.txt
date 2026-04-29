@@ -339,9 +339,12 @@ lines := lib.Lines()  // []lltest.LogLine — assert on Level, Messages, Data, M
 - `transports/testing` — in-memory capture for tests
 - `transports/blank` — user-supplied dispatch function
 
-**Network** (async batched shippers):
-- `transports/http` — generic batched HTTP POST
+**Cloud** (managed log services):
 - `transports/datadog` — Datadog Logs HTTP intake
+
+**Other transports**:
+- `transports/http` — generic batched HTTP POST
+- `transports/lumberjack` — one JSON object per line, rotating file via `lumberjack.v2`
 
 **Wrappers around third-party loggers**:
 - `transports/zerolog`, `transports/zap`, `transports/slog`, `transports/phuslu`, `transports/logrus`, `transports/charmlog`, `transports/otellog`

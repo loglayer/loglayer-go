@@ -140,6 +140,7 @@ gtag('config', '${gaMeasurementId}');`,
           { text: 'Configuration', link: '/transports/configuration' },
           { text: 'Management', link: '/transports/management' },
           { text: 'Multiple Transports', link: '/transports/multiple-transports' },
+          { text: 'Writers', link: '/transports/writers' },
           { text: 'Creating Transports', link: '/transports/creating-transports' },
           { text: 'Testing Transports', link: '/transports/testing-transports' },
           {
@@ -153,10 +154,16 @@ gtag('config', '${gaMeasurementId}');`,
             ],
           },
           {
-            text: 'Network',
+            text: 'Cloud',
+            items: [
+              { text: 'Datadog', link: '/transports/datadog' },
+            ],
+          },
+          {
+            text: 'Other Transports',
             items: [
               { text: 'HTTP', link: '/transports/http' },
-              { text: 'Datadog', link: '/transports/datadog' },
+              { text: 'File (Lumberjack)', link: '/transports/lumberjack' },
             ],
           },
           {
