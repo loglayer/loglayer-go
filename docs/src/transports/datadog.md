@@ -62,15 +62,31 @@ datadog.New(datadog.Config{
 })
 ```
 
+The transport rejects non-HTTPS URLs by default. To point at an `httptest.Server` or a local plain-HTTP proxy, also set `AllowInsecureURL: true`:
+
+```go
+srv := httptest.NewServer(http.HandlerFunc(...))
+defer srv.Close()
+
+tr := datadog.New(datadog.Config{
+    APIKey:           "fake-for-tests",
+    URL:              srv.URL,        // http:// from httptest
+    AllowInsecureURL: true,           // required for non-HTTPS URLs
+})
+```
+
+`AllowInsecureURL` is a test/debug ergonomic; leave it off for any URL that leaves your machine.
+
 ## Config
 
 ```go
 type Config struct {
     transport.BaseConfig
 
-    APIKey   string  // required
-    Site     Site    // default SiteUS1; ignored when URL is set
-    URL      string  // overrides the Site-derived intake URL (on-prem / mock)
+    APIKey           string  // required
+    Site             Site    // default SiteUS1; ignored when URL is set
+    URL              string  // overrides the Site-derived intake URL (on-prem / mock)
+    AllowInsecureURL bool    // permit non-HTTPS URLs (httptest, local proxies)
 
     Source   string  // ddsource (e.g. "go")
     Service  string  // service name
