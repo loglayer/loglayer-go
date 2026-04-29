@@ -4,12 +4,12 @@ import "context"
 
 // LogBuilder accumulates per-log metadata, error, and context.Context before
 // dispatching to a log level method. Obtain one via LogLayer.WithMetadata,
-// LogLayer.WithError, or LogLayer.WithCtx.
+// LogLayer.WithError, or LogLayer.WithContext.
 //
 // LogBuilders are intended to be single-use and stack-allocated. Build, chain,
 // and terminate inline:
 //
-//	log.WithCtx(ctx).WithMetadata(meta).WithError(err).Error("failed")
+//	log.WithContext(ctx).WithMetadata(meta).WithError(err).Error("failed")
 //
 // Holding a *LogBuilder past its terminal call works but discards the
 // stack-allocation benefit.
@@ -43,17 +43,17 @@ func (b *LogBuilder) WithError(err error) *LogBuilder {
 	return b
 }
 
-// WithCtx attaches a context.Context to this single log entry, overriding
-// any context bound to the parent logger via (*LogLayer).WithCtx for this
+// WithContext attaches a context.Context to this single log entry, overriding
+// any context bound to the parent logger via (*LogLayer).WithContext for this
 // emission only.
 //
 // For the persistent variant (bind once, every subsequent emission carries
-// the ctx), use (*LogLayer).WithCtx instead.
+// the ctx), use (*LogLayer).WithContext instead.
 //
 // Passing nil clears any per-call ctx previously set on this builder.
 // On a fresh builder it has no observable effect (the layer's bound ctx,
 // if any, still applies on dispatch).
-func (b *LogBuilder) WithCtx(ctx context.Context) *LogBuilder {
+func (b *LogBuilder) WithContext(ctx context.Context) *LogBuilder {
 	b.ctx = ctx
 	return b
 }
@@ -175,7 +175,7 @@ func (b *LogBuilder) dispatch(level LogLevel, messages []any, source *Source) {
 	if len(b.groups) > 0 {
 		groups = mergeGroups(groups, b.groups)
 	}
-	// Per-call WithCtx on the builder overrides the layer's bound ctx.
+	// Per-call WithContext on the builder overrides the layer's bound ctx.
 	ctx := b.ctx
 	if ctx == nil {
 		ctx = b.layer.boundCtx

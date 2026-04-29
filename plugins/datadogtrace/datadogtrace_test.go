@@ -24,7 +24,7 @@ func TestDatadogTrace_InjectsIDsWhenSpanPresent(t *testing.T) {
 		Extract: fakeExtract(0xDEADBEEF, 0xCAFE, true),
 	}))
 
-	log.WithCtx(context.Background()).Info("served")
+	log.WithContext(context.Background()).Info("served")
 	line := lib.PopLine()
 	if line.Data["dd.trace_id"] != "3735928559" {
 		t.Errorf("dd.trace_id: got %v, want 3735928559", line.Data["dd.trace_id"])
@@ -40,7 +40,7 @@ func TestDatadogTrace_NoCtxNoInjection(t *testing.T) {
 		Extract: fakeExtract(1, 1, true),
 	}))
 
-	log.Info("no context attached") // no WithCtx
+	log.Info("no context attached") // no WithContext
 	line := lib.PopLine()
 	if _, has := line.Data["dd.trace_id"]; has {
 		t.Errorf("trace_id should be absent when no Ctx: %v", line.Data)
@@ -53,7 +53,7 @@ func TestDatadogTrace_NoSpanNoInjection(t *testing.T) {
 		Extract: fakeExtract(0, 0, false),
 	}))
 
-	log.WithCtx(context.Background()).Info("ctx but no span")
+	log.WithContext(context.Background()).Info("ctx but no span")
 	line := lib.PopLine()
 	if _, has := line.Data["dd.trace_id"]; has {
 		t.Errorf("trace_id should be absent when no span: %v", line.Data)
@@ -69,7 +69,7 @@ func TestDatadogTrace_OptionalReservedAttributes(t *testing.T) {
 		Extract: fakeExtract(7, 11, true),
 	}))
 
-	log.WithCtx(context.Background()).Info("hi")
+	log.WithContext(context.Background()).Info("hi")
 	line := lib.PopLine()
 	if line.Data["dd.service"] != "checkout-api" {
 		t.Errorf("dd.service: got %v", line.Data["dd.service"])
@@ -89,7 +89,7 @@ func TestDatadogTrace_OmitsEmptyOptionalAttributes(t *testing.T) {
 		Extract: fakeExtract(7, 11, true),
 	}))
 
-	log.WithCtx(context.Background()).Info("hi")
+	log.WithContext(context.Background()).Info("hi")
 	line := lib.PopLine()
 	for _, k := range []string{"dd.service", "dd.env", "dd.version"} {
 		if _, has := line.Data[k]; has {
@@ -105,7 +105,7 @@ func TestDatadogTrace_PreservesUserData(t *testing.T) {
 	}))
 
 	log = log.WithFields(loglayer.Fields{"requestId": "abc-123"})
-	log.WithCtx(context.Background()).WithMetadata(loglayer.Metadata{"durationMs": 42}).Info("served")
+	log.WithContext(context.Background()).WithMetadata(loglayer.Metadata{"durationMs": 42}).Info("served")
 	line := lib.PopLine()
 
 	if line.Data["requestId"] != "abc-123" {
@@ -130,7 +130,7 @@ func TestDatadogTrace_ExtractorPanicCallsOnError(t *testing.T) {
 	})
 	log, lib := plugintest.Install(t, plugin)
 
-	log.WithCtx(context.Background()).Info("recovered") // must not panic
+	log.WithContext(context.Background()).Info("recovered") // must not panic
 	if caught == nil {
 		t.Fatal("OnError should have been called with the panic value")
 	}
@@ -159,7 +159,7 @@ func TestDatadogTrace_ExtractorPanicWithoutOnErrorIsSilent(t *testing.T) {
 	log, lib := plugintest.Install(t, plugin)
 
 	// Must not panic.
-	log.WithCtx(context.Background()).Info("recovered")
+	log.WithContext(context.Background()).Info("recovered")
 	if lib.Len() != 1 {
 		t.Fatal("entry should still emit when OnError is nil")
 	}

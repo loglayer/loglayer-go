@@ -40,10 +40,10 @@ So Go uses **`Fields`**:
 
 The behavior is identical; only the name changed.
 
-Per-call `context.Context` (the Go stdlib type, e.g. for trace IDs and deadlines) is attached separately via [`WithCtx`](/logging-api/go-context):
+Per-call `context.Context` (the Go stdlib type, e.g. for trace IDs and deadlines) is attached separately via [`WithContext`](/logging-api/go-context):
 
 ```go
-log.WithCtx(ctx).Info("request received")
+log.WithContext(ctx).Info("request received")
 ```
 
 This concept doesn't exist in TS, since JavaScript doesn't have a comparable per-request context primitive.

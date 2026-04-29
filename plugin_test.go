@@ -370,7 +370,7 @@ func TestPlugin_DispatchHooksReceiveCtx(t *testing.T) {
 		dataCtx: &dataCtx, msgCtx: &msgCtx, lvlCtx: &lvlCtx, sendCtx: &sendCtx,
 	})
 
-	log.WithCtx(ctx).Info("hello")
+	log.WithContext(ctx).Info("hello")
 
 	for name, got := range map[string]context.Context{
 		"OnBeforeDataOut":    dataCtx,

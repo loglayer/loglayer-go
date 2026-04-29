@@ -223,7 +223,7 @@ Why: a centralized pitfalls page bit-rots, gets read once and forgotten, and mea
 
 Confirmed pitfalls already inlined:
 
-- `WithFields` / `WithCtx` returns a new logger → `fields.md`, `go-context.md`.
+- `WithFields` / `WithContext` returns a new logger → `fields.md`, `go-context.md`.
 - Maps passed to `WithFields` / `WithMetadata` aren't deep-copied → `fields.md`, `metadata.md`.
 - Mute toggles can interleave under concurrency → `fields.md`, `metadata.md` (in their Muting sections).
 - `MetadataFieldName` only applies to non-map metadata → `metadata.md`.

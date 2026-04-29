@@ -44,7 +44,7 @@ Once the reference is loaded, these prompts produce useful output:
 - *"Show me how to set up loglayer with the structured transport in production and the pretty transport in dev, switched by an env var."*
 - *"Write a Datadog setup that batches every 2 seconds and pipes send errors to a metrics counter."*
 - *"What's the right pattern for a per-request logger in an HTTP handler?"*
-- *"Explain when to use WithFields vs WithMetadata vs WithCtx."*
+- *"Explain when to use WithFields vs WithMetadata vs WithContext."*
 - *"Write an integration test using `transports/testing` that verifies my handler logs the request ID."*
 
 ## Why two files?

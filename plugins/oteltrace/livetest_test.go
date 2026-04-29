@@ -35,7 +35,7 @@ func TestLive_RealSpanInjectsRealIDs(t *testing.T) {
 	log, lib, tracer := newLiveSetup(t, oteltrace.New(oteltrace.Config{}))
 
 	ctx, span := tracer.Start(context.Background(), "op")
-	log.WithCtx(ctx).Info("served")
+	log.WithContext(ctx).Info("served")
 	span.End()
 
 	line := lib.PopLine()
@@ -53,11 +53,11 @@ func TestLive_NestedSpansEachInjectOwnIDs(t *testing.T) {
 	log, lib, tracer := newLiveSetup(t, oteltrace.New(oteltrace.Config{}))
 
 	ctxOuter, outer := tracer.Start(context.Background(), "outer")
-	log.WithCtx(ctxOuter).Info("outer entry")
+	log.WithContext(ctxOuter).Info("outer entry")
 	outerLine := lib.PopLine()
 
 	ctxInner, inner := tracer.Start(ctxOuter, "inner")
-	log.WithCtx(ctxInner).Info("inner entry")
+	log.WithContext(ctxInner).Info("inner entry")
 	innerLine := lib.PopLine()
 
 	inner.End()
@@ -90,7 +90,7 @@ func TestLive_SampledFlagEmitted(t *testing.T) {
 	}))
 
 	ctx, span := tracer.Start(context.Background(), "op")
-	log.WithCtx(ctx).Info("sampled")
+	log.WithContext(ctx).Info("sampled")
 	span.End()
 
 	line := lib.PopLine()
@@ -114,7 +114,7 @@ func TestLive_NeverSampleProducesValidIDs(t *testing.T) {
 	)
 
 	ctx, span := tracer.Start(context.Background(), "op")
-	log.WithCtx(ctx).Info("not sampled")
+	log.WithContext(ctx).Info("not sampled")
 	span.End()
 
 	line := lib.PopLine()
@@ -149,7 +149,7 @@ func TestLive_TraceStatePropagatesFromParent(t *testing.T) {
 	parentCtx := otrace.ContextWithSpanContext(context.Background(), parentSC)
 
 	ctx, span := tracer.Start(parentCtx, "child")
-	log.WithCtx(ctx).Info("traced")
+	log.WithContext(ctx).Info("traced")
 	span.End()
 
 	line := lib.PopLine()
@@ -179,7 +179,7 @@ func TestLive_BaggageEmitted(t *testing.T) {
 	ctx := baggage.ContextWithBaggage(context.Background(), bag)
 
 	ctx, span := tracer.Start(ctx, "op")
-	log.WithCtx(ctx).Info("served")
+	log.WithContext(ctx).Info("served")
 	span.End()
 
 	line := lib.PopLine()

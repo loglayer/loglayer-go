@@ -13,8 +13,8 @@ The contract is verified by `concurrency_test.go` under `-race`, including a run
 
 | Class | Methods | How safety is achieved |
 |-------|---------|------------------------|
-| **Emission** | `Info`, `Warn`, `Error`, `Debug`, `Fatal`, `WithMetadata`, `WithError`, `WithCtx` (on builder), `Raw`, `MetadataOnly`, `ErrorOnly` | Read-only on logger state. |
-| **Returns-new** | `WithFields`, `WithoutFields`, `Child`, `WithPrefix`, `WithGroup` (on `*LogLayer`), `WithCtx` (on `*LogLayer`) | Build a new logger; receiver untouched. |
+| **Emission** | `Info`, `Warn`, `Error`, `Debug`, `Fatal`, `WithMetadata`, `WithError`, `WithContext` (on builder), `Raw`, `MetadataOnly`, `ErrorOnly` | Read-only on logger state. |
+| **Returns-new** | `WithFields`, `WithoutFields`, `Child`, `WithPrefix`, `WithGroup` (on `*LogLayer`), `WithContext` (on `*LogLayer`) | Build a new logger; receiver untouched. |
 | **Read-only** | `GetFields`, `GetLoggerInstance`, `IsLevelEnabled` | No state change. |
 | **Level mutators** | `SetLevel`, `EnableLevel`, `DisableLevel`, `EnableLogging`, `DisableLogging` | Backed by an `atomic.Uint32` bitmap. Mirrors `zap.AtomicLevel`. Designed for live runtime toggling (SIGUSR1, admin endpoints flipping debug on, etc.). |
 | **Transport mutators** | `AddTransport`, `RemoveTransport`, `SetTransports` | Publish a new immutable transport set via `atomic.Pointer`. Concurrent mutators on the same logger serialize via an internal mutex (slow path); the dispatch hot path only loads the pointer. |

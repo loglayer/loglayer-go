@@ -166,8 +166,8 @@ func Middleware(log *loglayer.LogLayer, cfg Config) func(http.Handler) http.Hand
 			// Bind r.Context() to the per-request logger so handlers can
 			// just call .Info(...) and any plugin reading TransportParams.Ctx
 			// (e.g. trace-injectors) sees the request's context without the
-			// caller having to chain WithCtx on every emission.
-			reqLog := log.WithFields(fields).WithCtx(r.Context())
+			// caller having to chain WithContext on every emission.
+			reqLog := log.WithFields(fields).WithContext(r.Context())
 			r = r.WithContext(loglayer.NewContext(r.Context(), reqLog))
 
 			sw := wrapWriter(w)

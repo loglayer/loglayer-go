@@ -3,7 +3,7 @@
 //
 // Use [RunContract] to exercise the wrapper-transport contract (14 sub-tests
 // covering message rendering, levels, metadata placement, fields, error
-// rendering, level filtering, MetadataOnly / ErrorOnly / Raw, and WithCtx)
+// rendering, level filtering, MetadataOnly / ErrorOnly / Raw, and WithContext)
 // against any transport that wraps a third-party logger and produces JSON
 // output. The contract is what every built-in wrapper transport (zerolog,
 // zap, slog, logrus, charmlog, phuslu) verifies, parameterised by per-wrapper

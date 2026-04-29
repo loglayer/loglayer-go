@@ -19,7 +19,7 @@ LogLayer for Go gives you one consistent API for messages, persistent fields, pe
 - [Fields](https://go.loglayer.dev/logging-api/fields): Persistent keyed data via WithFields, WithoutFields, FieldsKey.
 - [Metadata](https://go.loglayer.dev/logging-api/metadata): Per-log payload via WithMetadata. loglayer.Metadata is the canonical map alias; loglayer.M is a shorter alias for the same type. Same shape for loglayer.F = Fields.
 - [Error Handling](https://go.loglayer.dev/logging-api/error-handling): WithError, ErrorOnly, custom ErrorSerializer (recommend rotisserie/eris). Built-in opt-in: loglayer.UnwrappingErrorSerializer walks errors.Unwrap and errors.Join's Unwrap() []error to surface every wrapped cause under "causes".
-- [Go Context](https://go.loglayer.dev/logging-api/go-context): WithCtx on *LogLayer binds a context.Context to every emission from the returned logger; on *LogBuilder it's a per-call override. Surfaced to transports via TransportParams.Ctx and to plugin dispatch hooks via params.Ctx. loghttp middleware auto-binds r.Context().
+- [Go Context](https://go.loglayer.dev/logging-api/go-context): WithContext on *LogLayer binds a context.Context to every emission from the returned logger; on *LogBuilder it's a per-call override. Surfaced to transports via TransportParams.Ctx and to plugin dispatch hooks via params.Ctx. loghttp middleware auto-binds r.Context().
 - [Child Loggers](https://go.loglayer.dev/logging-api/child-loggers): Child(), WithPrefix(), isolation semantics.
 - [Transport Configuration](https://go.loglayer.dev/transports/configuration): Config.Transport / Transports, BaseConfig (ID/Disabled/Level), transport ID semantics.
 - [Transport Management](https://go.loglayer.dev/transports/management): AddTransport, RemoveTransport, SetTransports, GetLoggerInstance.
@@ -51,11 +51,11 @@ LogLayer for Go gives you one consistent API for messages, persistent fields, pe
 
 - [Zerolog](https://go.loglayer.dev/transports/zerolog): Wraps github.com/rs/zerolog.
 - [Zap](https://go.loglayer.dev/transports/zap): Wraps go.uber.org/zap.
-- [log/slog](https://go.loglayer.dev/transports/slog): Wraps the stdlib *slog.Logger. Forwards WithCtx to LogAttrs.
+- [log/slog](https://go.loglayer.dev/transports/slog): Wraps the stdlib *slog.Logger. Forwards WithContext to LogAttrs.
 - [phuslu/log](https://go.loglayer.dev/transports/phuslu): Wraps github.com/phuslu/log. Always exits on Fatal.
 - [logrus](https://go.loglayer.dev/transports/logrus): Wraps github.com/sirupsen/logrus.
 - [charmbracelet/log](https://go.loglayer.dev/transports/charmlog): Wraps github.com/charmbracelet/log.
-- [OpenTelemetry Logs](https://go.loglayer.dev/transports/otellog): Emits each entry as an OTel log.Record on a go.opentelemetry.io/otel/log.Logger. Defaults to global.GetLoggerProvider; accepts an explicit LoggerProvider+Name/Version/SchemaURL or a pre-built Logger. Forwards WithCtx to Logger.Emit so SDK processors correlate with the active span.
+- [OpenTelemetry Logs](https://go.loglayer.dev/transports/otellog): Emits each entry as an OTel log.Record on a go.opentelemetry.io/otel/log.Logger. Defaults to global.GetLoggerProvider; accepts an explicit LoggerProvider+Name/Version/SchemaURL or a pre-built Logger. Forwards WithContext to Logger.Emit so SDK processors correlate with the active span.
 
 ## Integrations
 
@@ -104,7 +104,7 @@ log.WithMetadata(MyEvent{...}).Info("event")
 log.WithError(err).Error("operation failed")
 
 // Per-call Go context (trace IDs, deadlines, etc.)
-log.WithCtx(ctx).Info("request received")
+log.WithContext(ctx).Info("request received")
 
 // Test mock (silent, fatal does not exit)
 log := loglayer.NewMock()

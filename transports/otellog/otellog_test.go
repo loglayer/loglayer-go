@@ -171,12 +171,12 @@ func TestWithError(t *testing.T) {
 	}
 }
 
-func TestWithCtxForwarded(t *testing.T) {
+func TestWithContextForwarded(t *testing.T) {
 	type ctxKey struct{}
 	parent := context.WithValue(context.Background(), ctxKey{}, "trace-123")
 
 	log, rec := newLogger(t, otellog.Config{})
-	log.WithCtx(parent).Info("with ctx")
+	log.WithContext(parent).Info("with ctx")
 	got := lastRecord(t, rec).Context
 	if got == nil || got.Value(ctxKey{}) != "trace-123" {
 		t.Errorf("ctx not forwarded to OTel logger: %v", got)

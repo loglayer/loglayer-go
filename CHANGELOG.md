@@ -24,7 +24,7 @@ fluent API for messages, fields, metadata, and errors. v1.0.0 ships:
 
 - **Core**: `*LogLayer` with seven log levels (Trace, Debug, Info, Warn,
   Error, Fatal, Panic) and a fluent builder (`WithMetadata`, `WithError`,
-  `WithCtx`, `WithFields`, `WithGroup`, `WithPrefix`). Trace sits below
+  `WithContext`, `WithFields`, `WithGroup`, `WithPrefix`). Trace sits below
   Debug for fine-grained diagnostic; Panic dispatches and then panics
   with the joined message string (recoverable, matching zerolog/zap/
   logrus convention). Distinct `Fields`/`Metadata`/`Data` named types
@@ -39,7 +39,7 @@ fluent API for messages, fields, metadata, and errors. v1.0.0 ships:
 - **Renderers**: `pretty` (colorized terminal), `structured` (JSON per
   line), `console`, `testing`, `blank`.
 - **Logger wrappers**: `zerolog`, `zap`, `log/slog`, `logrus`,
-  `charmbracelet/log`, `phuslu/log`. Each forwards `WithCtx` so
+  `charmbracelet/log`, `phuslu/log`. Each forwards `WithContext` so
   context-aware downstream handlers (OTel, etc.) keep working. Each
   vendor wrapper (zerolog/zap/logrus/phuslu/charmlog/otellog) ships
   as its own Go module so consumers only pay for the SDKs they

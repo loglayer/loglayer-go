@@ -7,7 +7,7 @@ description: Wrap a *slog.Logger with LogLayer.
 
 <ModuleBadges path="transports/slog" bundled />
 
-Wraps a stdlib `*log/slog.Logger`. Map metadata flattens to `slog.Attr`s; struct metadata lands under a configurable key. Per-call `context.Context` attached via `WithCtx` is passed through to `slog.Logger.LogAttrs` so handlers downstream (OpenTelemetry, structured shippers) can extract trace context.
+Wraps a stdlib `*log/slog.Logger`. Map metadata flattens to `slog.Attr`s; struct metadata lands under a configurable key. Per-call `context.Context` attached via `WithContext` is passed through to `slog.Logger.LogAttrs` so handlers downstream (OpenTelemetry, structured shippers) can extract trace context.
 
 ```sh
 go get go.loglayer.dev/transports/slog
@@ -80,13 +80,13 @@ The JSON handler honors `json:` tags; other handlers may render fields different
 
 ## context.Context Pass-through
 
-The slog transport is special: it forwards `WithCtx` directly to the underlying `slog.Logger.LogAttrs` call.
+The slog transport is special: it forwards `WithContext` directly to the underlying `slog.Logger.LogAttrs` call.
 
 ```go
 import "context"
 
 ctx := context.WithValue(context.Background(), traceKey{}, "trace-abc")
-log.WithCtx(ctx).Info("request received")
+log.WithContext(ctx).Info("request received")
 ```
 
 If your slog handler is wired to OpenTelemetry (e.g. via `slogcontext` or a custom handler), the trace context is extracted automatically. See [Go Context](/logging-api/go-context) for the broader pattern.

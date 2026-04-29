@@ -1,7 +1,7 @@
 # go.loglayer.dev/transports/otellog
 
 OpenTelemetry Logs transport for LogLayer. Emits each entry as an OTel
-`log.Record` on a configured `LoggerProvider`, propagating `WithCtx` so
+`log.Record` on a configured `LoggerProvider`, propagating `WithContext` so
 the SDK's span correlation works.
 
 **Requires Go 1.25+** (driven by `go.opentelemetry.io/otel/sdk/log`).

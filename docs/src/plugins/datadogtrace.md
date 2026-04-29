@@ -7,7 +7,7 @@ description: "Inject Datadog APM trace and span IDs into log entries for log/tra
 
 <ModuleBadges path="plugins/datadogtrace" bundled />
 
-`plugins/datadogtrace` adds Datadog's [log/trace correlation](https://docs.datadoghq.com/tracing/other_telemetry/connect_logs_and_traces/) fields to every log entry that carries an active span via `WithCtx`. Once your logs ship to Datadog, the UI will link each log line to the trace it originated in.
+`plugins/datadogtrace` adds Datadog's [log/trace correlation](https://docs.datadoghq.com/tracing/other_telemetry/connect_logs_and_traces/) fields to every log entry that carries an active span via `WithContext`. Once your logs ship to Datadog, the UI will link each log line to the trace it originated in.
 
 ```sh
 go get go.loglayer.dev/plugins/datadogtrace
@@ -55,7 +55,7 @@ func main() {
     })
 
     // Inside any handler that has a span on the context, bind once:
-    handlerLog := log.WithCtx(r.Context())
+    handlerLog := log.WithContext(r.Context())
     handlerLog.Info("request served")
     handlerLog.Info("downstream call done")
     // every emission carries r.Context(); the plugin reads it from
@@ -64,7 +64,7 @@ func main() {
 ```
 
 ::: tip Using loghttp middleware?
-The [`loghttp`](/integrations/loghttp) middleware automatically binds `r.Context()` to the per-request logger, so handlers don't need the `log.WithCtx(r.Context())` step at all:
+The [`loghttp`](/integrations/loghttp) middleware automatically binds `r.Context()` to the per-request logger, so handlers don't need the `log.WithContext(r.Context())` step at all:
 
 ```go
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -170,7 +170,7 @@ The plugin implements `OnBeforeDataOut`, which runs once per emission after fiel
 
 The extractor runs on the dispatching goroutine for every log entry that has a context attached. dd-trace-go's `SpanFromContext` is a constant-time map lookup, fast enough for hot paths. No allocations beyond the `loglayer.Data` map the plugin returns.
 
-The plugin is a no-op for log calls without `WithCtx`, so untraced logs pay zero cost.
+The plugin is a no-op for log calls without `WithContext`, so untraced logs pay zero cost.
 
 ## Live Integration Tests
 

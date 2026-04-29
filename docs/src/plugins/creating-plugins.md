@@ -263,7 +263,7 @@ If multiple plugins implement `SendGate`, the entry goes only when **every** plu
 
 ## Per-call `context.Context`
 
-All four dispatch-time hooks (`DataHook`, `MessageHook`, `LevelHook`, `SendGate`) receive a `Ctx context.Context` field on their params, populated from `WithCtx(ctx)`. The value is `nil` when the user didn't attach a context.
+All four dispatch-time hooks (`DataHook`, `MessageHook`, `LevelHook`, `SendGate`) receive a `Ctx context.Context` field on their params, populated from `WithContext(ctx)`. The value is `nil` when the user didn't attach a context.
 
 Use it to:
 
@@ -292,7 +292,7 @@ Use it to:
   })
   ```
 
-`MetadataHook` and `FieldsHook` do **not** receive a context. This is intentional, not an oversight: these hooks fire at builder time, when chain order is non-deterministic. A user can write `log.WithMetadata(m).WithCtx(ctx).Info(...)` (metadata first, ctx second) just as easily as `log.WithCtx(ctx).WithMetadata(m).Info(...)`. Threading ctx into the hook would mean it's `nil` half the time depending on call order, which is worse than not having it at all.
+`MetadataHook` and `FieldsHook` do **not** receive a context. This is intentional, not an oversight: these hooks fire at builder time, when chain order is non-deterministic. A user can write `log.WithMetadata(m).WithContext(ctx).Info(...)` (metadata first, ctx second) just as easily as `log.WithContext(ctx).WithMetadata(m).Info(...)`. Threading ctx into the hook would mean it's `nil` half the time depending on call order, which is worse than not having it at all.
 
 If you need context-aware behavior, use one of the dispatch-time hooks. They fire after every `With*` chain method has run, so the ctx they receive is the same one the transport will see.
 

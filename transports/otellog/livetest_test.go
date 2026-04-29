@@ -129,7 +129,7 @@ func TestLive_TraceCorrelation(t *testing.T) {
 	log := loglayer.New(loglayer.Config{Transport: tr, DisableFatalExit: true})
 
 	ctx, span := tracer.Start(context.Background(), "op")
-	log.WithCtx(ctx).Info("traced")
+	log.WithContext(ctx).Info("traced")
 	span.End()
 
 	got := exp.all()
@@ -156,7 +156,7 @@ func TestLive_NoCtxNoTraceCorrelation(t *testing.T) {
 	tr := otellog.New(otellog.Config{Name: "livetest", LoggerProvider: provider})
 	log := loglayer.New(loglayer.Config{Transport: tr, DisableFatalExit: true})
 
-	log.Info("untraced") // no WithCtx
+	log.Info("untraced") // no WithContext
 
 	got := exp.all()
 	if len(got) != 1 {

@@ -78,9 +78,9 @@ func TestMyWrapperContract(t *testing.T) {
 }
 ```
 
-Set `Expectations.SkipFatal` for libraries that unconditionally call `os.Exit` on Fatal (the `phuslu` wrapper does this). Library-specific behavior (positive `WithCtx` forwarding for `slog`-style wrappers, etc.) goes in your own per-wrapper test functions next to the `RunContract` call.
+Set `Expectations.SkipFatal` for libraries that unconditionally call `os.Exit` on Fatal (the `phuslu` wrapper does this). Library-specific behavior (positive `WithContext` forwarding for `slog`-style wrappers, etc.) goes in your own per-wrapper test functions next to the `RunContract` call.
 
-Cover the level-filtering case, the `MetadataFieldName` non-map path, and `WithCtx` propagation when applicable. The existing wrapper-transport test files are good templates: same structure, same assertion shape.
+Cover the level-filtering case, the `MetadataFieldName` non-map path, and `WithContext` propagation when applicable. The existing wrapper-transport test files are good templates: same structure, same assertion shape.
 
 ## See Also
 

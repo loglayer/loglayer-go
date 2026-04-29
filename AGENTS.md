@@ -276,10 +276,10 @@ concurrently with emission. There is no setup-only category.
 How each class achieves safety:
 
 - **Emission methods** (`Info`, `Warn`, `Error`, `Debug`, `Fatal`,
-  `WithMetadata`, `WithError`, `WithCtx`, `Raw`, `MetadataOnly`, `ErrorOnly`):
+  `WithMetadata`, `WithError`, `WithContext`, `Raw`, `MetadataOnly`, `ErrorOnly`):
   read-only on logger state.
 - **Returns-new** (`WithFields`, `WithoutFields`, `Child`, `WithPrefix`,
-  `WithGroup` on `*LogLayer`, `WithCtx` on `*LogLayer`): build a new
+  `WithGroup` on `*LogLayer`, `WithContext` on `*LogLayer`): build a new
   logger; receiver untouched.
 - **Read-only** (`GetFields`, `GetLoggerInstance`, `IsLevelEnabled`): no state
   change.

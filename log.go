@@ -14,16 +14,16 @@ func (l *LogLayer) WithError(err error) *LogBuilder {
 	return newLogBuilder(l).WithError(err)
 }
 
-// WithCtx returns a derived logger that automatically attaches the given
+// WithContext returns a derived logger that automatically attaches the given
 // context.Context to every emission. Transports receive it via
 // TransportParams.Ctx; plugins receive it on dispatch-time hook params.
 //
-// Per-call (*LogBuilder).WithCtx still overrides for one emission.
+// Per-call (*LogBuilder).WithContext still overrides for one emission.
 //
 // The receiver is unchanged (returns a new logger; assign the result).
 // Passing nil returns a clone with no bound context, which clears any
 // context the receiver had previously bound.
-func (l *LogLayer) WithCtx(ctx context.Context) *LogLayer {
+func (l *LogLayer) WithContext(ctx context.Context) *LogLayer {
 	child := l.Child()
 	child.boundCtx = ctx
 	return child

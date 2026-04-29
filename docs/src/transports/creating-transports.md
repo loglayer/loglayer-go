@@ -73,7 +73,7 @@ type TransportParams struct {
     Metadata any     // raw value passed to WithMetadata, your transport decides serialization
     Err      error
     Fields   Fields
-    Ctx      context.Context // per-call WithCtx value, or nil
+    Ctx      context.Context // per-call WithContext value, or nil
 }
 ```
 
@@ -135,7 +135,7 @@ Don't roll your own `metadataAsMap` unless your transport needs a placement poli
 
 ## Reading `params.Ctx`
 
-`params.Ctx` carries the `context.Context` the caller bound via [`WithCtx`](/logging-api/go-context). It's `nil` when no context was attached. Use it when your transport needs to forward the context to a downstream library (OpenTelemetry, slog handlers, anything context-aware) or extract values from it (trace IDs, deadlines, request-scoped data).
+`params.Ctx` carries the `context.Context` the caller bound via [`WithContext`](/logging-api/go-context). It's `nil` when no context was attached. Use it when your transport needs to forward the context to a downstream library (OpenTelemetry, slog handlers, anything context-aware) or extract values from it (trace IDs, deadlines, request-scoped data).
 
 ```go
 func (t *Transport) SendToLogger(p loglayer.TransportParams) {

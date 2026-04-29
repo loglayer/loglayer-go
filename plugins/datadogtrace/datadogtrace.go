@@ -3,7 +3,7 @@
 // log/trace correlation feature.
 //
 // The plugin reads the active span via a user-supplied Extract function
-// from the per-call context.Context (attached via WithCtx). It then
+// from the per-call context.Context (attached via WithContext). It then
 // emits dd.trace_id, dd.span_id, plus the optional dd.service /
 // dd.env / dd.version reserved attributes.
 //
@@ -44,7 +44,7 @@
 //	})
 //
 //	// Inside an HTTP handler whose context carries a span, bind once:
-//	handlerLog := log.WithCtx(r.Context())
+//	handlerLog := log.WithContext(r.Context())
 //	handlerLog.Info("served")
 //	// Output includes dd.trace_id and dd.span_id, ready for log/trace
 //	// correlation in the Datadog UI.

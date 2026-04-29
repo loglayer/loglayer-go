@@ -40,7 +40,7 @@ log := loglayer.New(loglayer.Config{
 })
 
 // Inside a handler whose context carries an OTel span, bind once:
-handlerLog := log.WithCtx(r.Context())
+handlerLog := log.WithContext(r.Context())
 handlerLog.Info("request served")
 handlerLog.Info("downstream call done")
 ```
@@ -60,7 +60,7 @@ A request with an active span produces:
 When no span is attached (the context is nil, or it carries no valid span), the plugin emits nothing. The log entry goes through unchanged.
 
 ::: tip Using loghttp middleware?
-The [`loghttp`](/integrations/loghttp) middleware automatically binds `r.Context()` to the per-request logger, so handlers don't need the `log.WithCtx(r.Context())` step:
+The [`loghttp`](/integrations/loghttp) middleware automatically binds `r.Context()` to the per-request logger, so handlers don't need the `log.WithContext(r.Context())` step:
 
 ```go
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -153,7 +153,7 @@ The plugin implements `OnBeforeDataOut`, which runs once per emission after fiel
 
 The plugin reads the span context via `trace.SpanContextFromContext` (a single context value lookup) on every emission that has a context attached. No allocations beyond the small `loglayer.Data` map the plugin returns.
 
-The plugin is a no-op for log calls without `WithCtx` and for contexts that don't carry a valid span context, so untraced logs pay zero cost.
+The plugin is a no-op for log calls without `WithContext` and for contexts that don't carry a valid span context, so untraced logs pay zero cost.
 
 ## Live Integration Tests
 

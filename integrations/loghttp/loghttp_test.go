@@ -281,7 +281,7 @@ func TestMiddleware_MustFromRequestPanicsWithoutMiddleware(t *testing.T) {
 }
 
 // The middleware binds r.Context() to the per-request logger so handlers
-// don't need to chain WithCtx on every emission. Plugins that read
+// don't need to chain WithContext on every emission. Plugins that read
 // TransportParams.Ctx (trace injectors, cancellation gates) see the
 // request context for free.
 func TestMiddleware_BindsRequestContextToLogger(t *testing.T) {
@@ -289,7 +289,7 @@ func TestMiddleware_BindsRequestContextToLogger(t *testing.T) {
 	log, lib := setupLogger(t)
 
 	handler := loghttp.Middleware(log, loghttp.Config{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Plain Info call — no WithCtx chain.
+		// Plain Info call — no WithContext chain.
 		loghttp.FromRequest(r).Info("inside handler")
 	}))
 

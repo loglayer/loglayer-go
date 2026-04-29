@@ -77,10 +77,10 @@ log.Panic(...messages any)  // dispatches then panics with the joined message st
 
 ### Builder Chain
 
-`WithMetadata` and `WithError` return `*LogBuilder`. Chain then terminate with a level method. `WithCtx` on `*LogLayer` returns `*LogLayer` (binds ctx to subsequent emissions); on `*LogBuilder` it's a per-call override that returns `*LogBuilder`.
+`WithMetadata` and `WithError` return `*LogBuilder`. Chain then terminate with a level method. `WithContext` on `*LogLayer` returns `*LogLayer` (binds ctx to subsequent emissions); on `*LogBuilder` it's a per-call override that returns `*LogBuilder`.
 
 ```go
-log.WithCtx(ctx).
+log.WithContext(ctx).
     WithMetadata(loglayer.Metadata{"k": "v"}).
     WithError(err).
     Error("failed")
@@ -98,9 +98,9 @@ log.ErrorOnly(err, loglayer.ErrorOnlyOpts{LogLevel: ..., CopyMsg: ...})
 log.Raw(loglayer.RawLogEntry{                                     // bypass builder
     LogLevel: ..., Messages: ..., Metadata: ..., Err: ..., Fields: ..., Ctx: ...,
 })
-log = log.WithCtx(ctx)                                            // bind ctx to logger (returns *LogLayer)
+log = log.WithContext(ctx)                                            // bind ctx to logger (returns *LogLayer)
 log.Info("...")                                                   // bound ctx propagates
-log.WithCtx(otherCtx).Info("...")                                 // per-call override (builder)
+log.WithContext(otherCtx).Info("...")                                 // per-call override (builder)
 ```
 
 ### Fields
@@ -228,11 +228,11 @@ Transports that hand the entry to an existing logger.
 
 - **zerolog**: wraps `github.com/rs/zerolog`. Routes fatal entries through `WithLevel(FatalLevel)` to defer the exit decision to core.
 - **zap**: wraps `go.uber.org/zap`. Always wraps the supplied logger with `zap.WithFatalHook(noopFatalHook{})` because zap silently overrides `WriteThenNoop` back to `WriteThenFatal`. A custom hook is required.
-- **slog**: wraps the stdlib `*log/slog.Logger`. Forwards `WithCtx` to `LogAttrs` so handlers downstream can extract trace context. Fatal maps to `slog.LevelError + 4`.
+- **slog**: wraps the stdlib `*log/slog.Logger`. Forwards `WithContext` to `LogAttrs` so handlers downstream can extract trace context. Fatal maps to `slog.LevelError + 4`.
 - **phuslu**: wraps `github.com/phuslu/log`. **Always exits on Fatal** regardless of `DisableFatalExit`. phuslu calls `os.Exit` from every fatal dispatch path.
 - **logrus**: wraps `github.com/sirupsen/logrus`. Builds a fresh `*logrus.Logger` copying the user's settings with `ExitFunc` neutralized so the user's original logger is never mutated.
 - **charmlog**: wraps `github.com/charmbracelet/log` (package named `charmlog` to avoid stdlib `log` collision). Uses `Log(level, ...)` which doesn't exit on Fatal.
-- **otellog**: emits each entry as an OpenTelemetry `log.Record` on a `log.Logger` (`go.opentelemetry.io/otel/log`; package named `otellog` to avoid colliding with the OTel root package). `Config.Name` is required when `Logger` is nil (instrumentation scope name). `Config.LoggerProvider` defaults to `global.GetLoggerProvider`. `Config.Logger` is an escape hatch for tests/advanced wiring. Severity maps `Debug/Info/Warn/Error/Fatal` to OTel `SeverityDebug/Info/Warn/Error/Fatal` (numeric 5/9/13/17/21); `SeverityText` carries the original LogLayer level name. `WithCtx` is forwarded to `Logger.Emit` so SDK processors can correlate the record with the active span. Fatal exit is the LogLayer core's decision via `Config.DisableFatalExit`.
+- **otellog**: emits each entry as an OpenTelemetry `log.Record` on a `log.Logger` (`go.opentelemetry.io/otel/log`; package named `otellog` to avoid colliding with the OTel root package). `Config.Name` is required when `Logger` is nil (instrumentation scope name). `Config.LoggerProvider` defaults to `global.GetLoggerProvider`. `Config.Logger` is an escape hatch for tests/advanced wiring. Severity maps `Debug/Info/Warn/Error/Fatal` to OTel `SeverityDebug/Info/Warn/Error/Fatal` (numeric 5/9/13/17/21); `SeverityText` carries the original LogLayer level name. `WithContext` is forwarded to `Logger.Emit` so SDK processors can correlate the record with the active span. Fatal exit is the LogLayer core's decision via `Config.DisableFatalExit`.
 
 ### TransportParams Shape
 
@@ -247,7 +247,7 @@ type TransportParams struct {
     Metadata any             // raw value passed to WithMetadata
     Err      error
     Fields   Fields          // logger's persistent key/value bag
-    Ctx      context.Context // per-call Go context attached via WithCtx; nil if not set
+    Ctx      context.Context // per-call Go context attached via WithContext; nil if not set
 }
 ```
 
@@ -318,7 +318,7 @@ Six hook interfaces:
 - `LevelHook { TransformLogLevel(TransformLogLevelParams) (LogLevel, bool) }`. Per emission. Last ok=true wins.
 - `SendGate { ShouldSend(ShouldSendParams) bool }`. Per (entry, transport). Any false vetoes that transport.
 
-All four dispatch-time hook param structs (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`) include a `Ctx context.Context` field populated from `WithCtx`. `FieldsHook` and `MetadataHook` do not receive a context (they fire from the builder phase, before the level method).
+All four dispatch-time hook param structs (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`) include a `Ctx context.Context` field populated from `WithContext`. `FieldsHook` and `MetadataHook` do not receive a context (they fire from the builder phase, before the level method).
 
 Hook panics are recovered centrally by LogLayer. A buggy plugin can't tear down the calling goroutine: each hook returns its no-op value on panic (nil for input/output hooks, level unchanged for `LevelHook`, fail-open for `SendGate`). When the plugin implements `ErrorReporter { OnError(err error) }` the recovered panic is forwarded to it; otherwise a one-line description is written to `os.Stderr`. The recovered value is wrapped in a `*RecoveredPanicError` (hook name + recovered value), with `errors.Unwrap` reaching the original when the panic value implemented `error`.
 
@@ -345,8 +345,8 @@ Built-in plugins:
 
 - `plugins/redact`. Match by `Keys` (exact key names; honors `json` tags when matching struct fields) or `Patterns` (regex against string values). Walks nested maps, structs, slices, arrays, and pointers at any depth via reflection; preserves the caller's runtime type (struct in → struct out). Caller's input is never mutated. Dependency-free.
 - `fmtlog` (sub-package of the main module). Single MessageHook plugin: opt the logger into `fmt.Sprintf` semantics for multi-arg messages. After `log.AddPlugin(fmtlog.New())`, calls like `log.Info("user %d", id)` resolve to `"user 1234"` before downstream MessageHooks see them. Without the plugin, multi-arg messages remain space-joined (the default). Composes naturally with the builder chain.
-- `plugins/datadogtrace`. Reads the active span from each entry's `WithCtx` context via a user-supplied `Extract` function and emits `dd.trace_id`, `dd.span_id`, plus optional `dd.service` / `dd.env` / `dd.version` for Datadog's log/trace correlation. Tracer-agnostic: works with `dd-trace-go` v1, v2, or any custom extractor; LogLayer itself takes no Datadog dependency.
-- `plugins/oteltrace`. Reads the active OTel span from each entry's `WithCtx` context via `trace.SpanContextFromContext` (`go.opentelemetry.io/otel/trace`) and emits `trace_id` / `span_id` in OTel's lowercase-hex canonical form, plus optional `trace_flags`, `trace_state` (W3C vendor-specific routing/sampling info), and W3C baggage members (`go.opentelemetry.io/otel/baggage`) keyed `<prefix><member-key>`. Baggage rides independently of the trace span, so a context with baggage but no active span still surfaces baggage attributes. Configurable keys (defaults match OTel JSON serialization; switch to `trace.id`/`span.id` for ECS, etc.). Companion to `transports/otellog`: use the plugin when shipping logs to non-OTel destinations (structured stdout, Datadog HTTP, Loki); use the transport when shipping through the OTel pipeline (the SDK handles correlation automatically).
+- `plugins/datadogtrace`. Reads the active span from each entry's `WithContext` context via a user-supplied `Extract` function and emits `dd.trace_id`, `dd.span_id`, plus optional `dd.service` / `dd.env` / `dd.version` for Datadog's log/trace correlation. Tracer-agnostic: works with `dd-trace-go` v1, v2, or any custom extractor; LogLayer itself takes no Datadog dependency.
+- `plugins/oteltrace`. Reads the active OTel span from each entry's `WithContext` context via `trace.SpanContextFromContext` (`go.opentelemetry.io/otel/trace`) and emits `trace_id` / `span_id` in OTel's lowercase-hex canonical form, plus optional `trace_flags`, `trace_state` (W3C vendor-specific routing/sampling info), and W3C baggage members (`go.opentelemetry.io/otel/baggage`) keyed `<prefix><member-key>`. Baggage rides independently of the trace span, so a context with baggage but no active span still surfaces baggage attributes. Configurable keys (defaults match OTel JSON serialization; switch to `trace.id`/`span.id` for ECS, etc.). Companion to `transports/otellog`: use the plugin when shipping logs to non-OTel destinations (structured stdout, Datadog HTTP, Loki); use the transport when shipping through the OTel pipeline (the SDK handles correlation automatically).
 
 ## Shared Utilities
 

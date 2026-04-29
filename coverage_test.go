@@ -69,12 +69,12 @@ func (discardTransport) IsEnabled() bool                         { return true }
 func (discardTransport) SendToLogger(_ loglayer.TransportParams) {}
 func (discardTransport) GetLoggerInstance() any                  { return nil }
 
-func TestWithCtx_PassesThroughToTransport(t *testing.T) {
+func TestWithContext_PassesThroughToTransport(t *testing.T) {
 	log, lib := setup(t)
 	type ctxKey struct{}
 	ctx := context.WithValue(context.Background(), ctxKey{}, "trace-abc")
 
-	log.WithCtx(ctx).Info("with ctx")
+	log.WithContext(ctx).Info("with ctx")
 	line := lib.PopLine()
 	if line == nil || line.Ctx == nil {
 		t.Fatal("expected Ctx to be set on captured line")
@@ -84,11 +84,11 @@ func TestWithCtx_PassesThroughToTransport(t *testing.T) {
 	}
 }
 
-func TestWithCtx_BuilderChain(t *testing.T) {
+func TestWithContext_BuilderChain(t *testing.T) {
 	log, lib := setup(t)
 	ctx := context.Background()
 
-	log.WithCtx(ctx).
+	log.WithContext(ctx).
 		WithMetadata(loglayer.Metadata{"k": "v"}).
 		WithError(errors.New("boom")).
 		Error("chained")
@@ -108,7 +108,7 @@ func TestWithCtx_BuilderChain(t *testing.T) {
 	}
 }
 
-func TestWithCtx_Raw(t *testing.T) {
+func TestWithContext_Raw(t *testing.T) {
 	log, lib := setup(t)
 	ctx := context.Background()
 	log.Raw(loglayer.RawLogEntry{
@@ -159,15 +159,15 @@ func TestWithoutCtx_NilOnTransport(t *testing.T) {
 	}
 }
 
-// (*LogLayer).WithCtx binds a context to all subsequent emissions from
+// (*LogLayer).WithContext binds a context to all subsequent emissions from
 // the returned logger. Tests the persistent-ctx semantics added to
-// distinguish from per-call (*LogBuilder).WithCtx.
-func TestWithCtx_BindsToLogger(t *testing.T) {
+// distinguish from per-call (*LogBuilder).WithContext.
+func TestWithContext_BindsToLogger(t *testing.T) {
 	log, lib := setup(t)
 	type ctxKey struct{}
 	ctx := context.WithValue(context.Background(), ctxKey{}, "trace-xyz")
 
-	bound := log.WithCtx(ctx)
+	bound := log.WithContext(ctx)
 	bound.Info("first")
 	bound.Warn("second")
 	bound.WithMetadata(loglayer.Metadata{"k": "v"}).Info("third")
@@ -186,18 +186,18 @@ func TestWithCtx_BindsToLogger(t *testing.T) {
 	}
 }
 
-// Per-call (*LogBuilder).WithCtx still overrides the bound ctx for that
+// Per-call (*LogBuilder).WithContext still overrides the bound ctx for that
 // emission only. The bound ctx applies again for subsequent emissions.
-func TestWithCtx_PerCallOverridesBound(t *testing.T) {
+func TestWithContext_PerCallOverridesBound(t *testing.T) {
 	log, lib := setup(t)
 	type ctxKey struct{}
 	bound := context.WithValue(context.Background(), ctxKey{}, "BOUND")
 	override := context.WithValue(context.Background(), ctxKey{}, "OVERRIDE")
 
-	logger := log.WithCtx(bound)
+	logger := log.WithContext(bound)
 
 	logger.Info("uses bound")
-	logger.WithCtx(override).Info("uses override")
+	logger.WithContext(override).Info("uses override")
 	logger.Info("back to bound")
 
 	want := []string{"BOUND", "OVERRIDE", "BOUND"}
@@ -210,27 +210,27 @@ func TestWithCtx_PerCallOverridesBound(t *testing.T) {
 	}
 }
 
-// WithCtx returns a derived logger; the receiver's behavior is unchanged.
-func TestWithCtx_ReceiverUnchanged(t *testing.T) {
+// WithContext returns a derived logger; the receiver's behavior is unchanged.
+func TestWithContext_ReceiverUnchanged(t *testing.T) {
 	log, lib := setup(t)
 	ctx := context.Background()
-	_ = log.WithCtx(ctx)
+	_ = log.WithContext(ctx)
 
 	log.Info("from base logger") // should not have any ctx attached
 	line := lib.PopLine()
 	if line.Ctx != nil {
-		t.Errorf("base logger should not have ctx after WithCtx call: got %v", line.Ctx)
+		t.Errorf("base logger should not have ctx after WithContext call: got %v", line.Ctx)
 	}
 }
 
 // Child() inherits the parent's bound ctx; later mutations on either
 // side don't bleed.
-func TestWithCtx_ChildInheritsAndIsolates(t *testing.T) {
+func TestWithContext_ChildInheritsAndIsolates(t *testing.T) {
 	log, lib := setup(t)
 	type ctxKey struct{}
 	ctx := context.WithValue(context.Background(), ctxKey{}, "parent")
 
-	parent := log.WithCtx(ctx)
+	parent := log.WithContext(ctx)
 	child := parent.Child()
 
 	child.Info("inherits parent's bound ctx")
@@ -239,7 +239,7 @@ func TestWithCtx_ChildInheritsAndIsolates(t *testing.T) {
 	}
 
 	other := context.WithValue(context.Background(), ctxKey{}, "rebound")
-	rebound := child.WithCtx(other)
+	rebound := child.WithContext(other)
 	rebound.Info("child rebinds")
 	if got := lib.PopLine().Ctx.Value(ctxKey{}); got != "rebound" {
 		t.Errorf("child rebind: got %v", got)
@@ -251,18 +251,18 @@ func TestWithCtx_ChildInheritsAndIsolates(t *testing.T) {
 	}
 }
 
-// Passing nil to WithCtx clears any bound ctx (returns a logger with
+// Passing nil to WithContext clears any bound ctx (returns a logger with
 // no ctx bound).
-func TestWithCtx_NilClears(t *testing.T) {
+func TestWithContext_NilClears(t *testing.T) {
 	log, lib := setup(t)
-	bound := log.WithCtx(context.Background())
+	bound := log.WithContext(context.Background())
 	//lint:ignore SA1012 nil is intentional: test the clears-binding path.
-	cleared := bound.WithCtx(nil)
+	cleared := bound.WithContext(nil)
 
 	cleared.Info("no ctx")
 	line := lib.PopLine()
 	if line.Ctx != nil {
-		t.Errorf("WithCtx(nil) should clear bound ctx: got %v", line.Ctx)
+		t.Errorf("WithContext(nil) should clear bound ctx: got %v", line.Ctx)
 	}
 }
 

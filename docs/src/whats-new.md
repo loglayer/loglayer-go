@@ -32,4 +32,4 @@ For Go users coming from the TypeScript [`loglayer`](https://loglayer.dev) libra
 
 ### Known gotchas
 
-Each per-API page calls out its own traps inline: assign the result of `WithFields` / `WithCtx`; treat `Fields` and `Metadata` maps as read-only after handing them off; mute toggles are setup-time only; phuslu can't suppress its `os.Exit` on Fatal (every other wrapper honors `Config.DisableFatalExit`).
+Each per-API page calls out its own traps inline: assign the result of `WithFields` / `WithContext`; treat `Fields` and `Metadata` maps as read-only after handing them off; mute toggles are setup-time only; phuslu can't suppress its `os.Exit` on Fatal (every other wrapper honors `Config.DisableFatalExit`).

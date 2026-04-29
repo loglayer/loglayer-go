@@ -19,7 +19,7 @@ type LogLine struct {
 	Data loglayer.Data
 	// Metadata is the raw value passed to WithMetadata. Nil if not set.
 	Metadata any
-	// Ctx is the per-call context.Context attached via WithCtx. Nil if not set.
+	// Ctx is the per-call context.Context attached via WithContext. Nil if not set.
 	Ctx context.Context
 }
 

@@ -5,7 +5,7 @@
 // Use this plugin when your service runs OpenTelemetry tracing but you
 // ship logs to a destination other than the OTel logs pipeline. The
 // plugin reads the active span from each entry's per-call context (the
-// one attached via WithCtx) and emits trace_id and span_id, plus an
+// one attached via WithContext) and emits trace_id and span_id, plus an
 // optional trace_flags, as fields on the entry. Downstream UIs (Grafana,
 // Tempo, Honeycomb, custom dashboards) can use these to link a log line
 // back to its trace.
@@ -29,7 +29,7 @@
 //	})
 //
 //	// Inside a handler whose context carries an OTel span:
-//	handlerLog := log.WithCtx(r.Context())
+//	handlerLog := log.WithContext(r.Context())
 //	handlerLog.Info("served")
 //	// {"level":"info","msg":"served","trace_id":"4bf...","span_id":"00f..."}
 package oteltrace

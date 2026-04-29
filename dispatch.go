@@ -28,7 +28,7 @@ func (l *LogLayer) formatLog(level LogLevel, messages []any, goCtx context.Conte
 // dispatches to every enabled transport. After dispatch, calls os.Exit(1) for
 // fatal-level entries unless Config.DisableFatalExit is set.
 //
-// goCtx is the optional per-call Go context.Context attached via WithCtx.
+// goCtx is the optional per-call Go context.Context attached via WithContext.
 // entryGroups is the merged set of persistent + per-call group tags for
 // routing decisions (nil when no groups apply). plugins is the snapshot
 // used for all hooks on this entry; callers that already snapshotted

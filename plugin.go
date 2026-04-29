@@ -102,7 +102,7 @@ type BeforeDataOutParams struct {
 	Metadata any
 	// Err is the error attached via WithError, or nil.
 	Err error
-	// Ctx is the per-call context.Context attached via WithCtx, or nil.
+	// Ctx is the per-call context.Context attached via WithContext, or nil.
 	Ctx context.Context
 }
 
@@ -110,7 +110,7 @@ type BeforeDataOutParams struct {
 type BeforeMessageOutParams struct {
 	LogLevel LogLevel
 	Messages []any
-	// Ctx is the per-call context.Context attached via WithCtx, or nil.
+	// Ctx is the per-call context.Context attached via WithContext, or nil.
 	Ctx context.Context
 }
 
@@ -122,7 +122,7 @@ type TransformLogLevelParams struct {
 	Fields   Fields
 	Metadata any
 	Err      error
-	// Ctx is the per-call context.Context attached via WithCtx, or nil.
+	// Ctx is the per-call context.Context attached via WithContext, or nil.
 	Ctx context.Context
 }
 
@@ -138,7 +138,7 @@ type ShouldSendParams struct {
 	Fields      Fields
 	Metadata    any
 	Err         error
-	// Ctx is the per-call context.Context attached via WithCtx, or nil.
+	// Ctx is the per-call context.Context attached via WithContext, or nil.
 	Ctx context.Context
 }
 

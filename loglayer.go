@@ -42,7 +42,7 @@ type TransportParams struct {
 	Err      error
 	// Fields is the logger's persistent key/value bag, raw (not yet folded into Data).
 	Fields Fields
-	// Ctx is the per-call context.Context attached via WithCtx, if any.
+	// Ctx is the per-call context.Context attached via WithContext, if any.
 	// Transports can use it to extract trace IDs, span context, deadlines, etc.
 	// Nil when no Go context was attached.
 	Ctx context.Context
@@ -73,9 +73,9 @@ type LogLayer struct {
 	// logger; never mutated post-publish, so the dispatch path can read
 	// it without synchronization.
 	assignedGroups []string
-	// boundCtx is the persistent context.Context applied by WithCtx on
-	// this logger. Per-call WithCtx on a builder overrides it for that
-	// emission. Set only between Child() and the WithCtx call that
+	// boundCtx is the persistent context.Context applied by WithContext on
+	// this logger. Per-call WithContext on a builder overrides it for that
+	// emission. Set only between Child() and the WithContext call that
 	// produced this logger; never mutated post-publish, so the dispatch
 	// path can read it without synchronization.
 	boundCtx context.Context

@@ -146,10 +146,10 @@ log.WithMetadata(User{ID: 9}).Info("hi")
 
 ## context.Context Pass-through
 
-The `context.Context` attached via `WithCtx` is forwarded to `log.Logger.Emit`. OTel SDK processors (and the `BatchProcessor` in particular) read the active span from the context to populate the record's `TraceID` / `SpanID`, giving you log/trace correlation automatically:
+The `context.Context` attached via `WithContext` is forwarded to `log.Logger.Emit`. OTel SDK processors (and the `BatchProcessor` in particular) read the active span from the context to populate the record's `TraceID` / `SpanID`, giving you log/trace correlation automatically:
 
 ```go
-log.WithCtx(ctx).Info("served")
+log.WithContext(ctx).Info("served")
 // If ctx carries an active span, the exported log.Record carries
 // TraceID and SpanID copied from it.
 ```

@@ -83,12 +83,12 @@ func main() {
 
 	tracer := otel.Tracer("otel-end-to-end-example")
 	ctxOuter, outer := tracer.Start(ctx, "handle-request")
-	requestLog := log.WithCtx(ctxOuter)
+	requestLog := log.WithContext(ctxOuter)
 	requestLog.WithFields(loglayer.Fields{"path": "/checkout"}).
 		Info("request received")
 
 	ctxInner, inner := tracer.Start(ctxOuter, "db-query")
-	requestLog.WithCtx(ctxInner).
+	requestLog.WithContext(ctxInner).
 		WithMetadata(loglayer.Metadata{"durationMs": 47}).
 		Info("query completed")
 	inner.End()

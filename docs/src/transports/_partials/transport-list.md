@@ -27,8 +27,8 @@ Transports that hand the entry off to an existing third-party logger you already
 |-------------------------------------|------------------------------------------------------------|
 | [Zerolog](/transports/zerolog)      | Wraps a `*zerolog.Logger`                                  |
 | [Zap](/transports/zap)              | Wraps a `*zap.Logger`                                      |
-| [log/slog](/transports/slog)        | Wraps a stdlib `*slog.Logger`. Forwards `WithCtx` to handlers. |
+| [log/slog](/transports/slog)        | Wraps a stdlib `*slog.Logger`. Forwards `WithContext` to handlers. |
 | [phuslu/log](/transports/phuslu)    | High-performance zero-alloc JSON logger. Always exits on fatal. |
 | [logrus](/transports/logrus)        | The classic structured logger                              |
 | [charmbracelet/log](/transports/charmlog) | Pretty terminal-friendly logger from Charm           |
-| [OpenTelemetry Logs](/transports/otellog) | Emits to an OTel `log.Logger`. Forwards `WithCtx` so SDK processors can correlate with the active span. |
+| [OpenTelemetry Logs](/transports/otellog) | Emits to an OTel `log.Logger`. Forwards `WithContext` so SDK processors can correlate with the active span. |

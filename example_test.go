@@ -104,12 +104,12 @@ func ExampleLogLayer_WithError() {
 	// Output: {"level":"error","time":"2026-04-26T12:00:00Z","msg":"query failed","err":{"message":"connection refused"}}
 }
 
-// WithCtx attaches a context.Context to one log call. Transports can read
+// WithContext attaches a context.Context to one log call. Transports can read
 // trace IDs, deadlines, and other request-scoped values from it.
-func ExampleLogLayer_WithCtx() {
+func ExampleLogLayer_WithContext() {
 	log := exampleLogger()
 	ctx := context.Background()
-	log.WithCtx(ctx).Info("request received")
+	log.WithContext(ctx).Info("request received")
 	// Output: {"level":"info","time":"2026-04-26T12:00:00Z","msg":"request received"}
 }
 

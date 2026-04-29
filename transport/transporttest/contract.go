@@ -68,7 +68,7 @@ func RunContract(t *testing.T, c ContractCase) {
 	t.Run(c.Name+"/MetadataOnly", func(t *testing.T) { t.Parallel(); testMetadataOnly(t, c) })
 	t.Run(c.Name+"/ErrorOnly", func(t *testing.T) { t.Parallel(); testErrorOnly(t, c) })
 	t.Run(c.Name+"/Raw", func(t *testing.T) { t.Parallel(); testRaw(t, c) })
-	t.Run(c.Name+"/WithCtxDoesNotBreakDispatch", func(t *testing.T) { t.Parallel(); testWithCtxDoesNotBreakDispatch(t, c) })
+	t.Run(c.Name+"/WithContextDoesNotBreakDispatch", func(t *testing.T) { t.Parallel(); testWithContextDoesNotBreakDispatch(t, c) })
 }
 
 // assertErrContains accepts either a map with a "message" key or a string,
@@ -274,9 +274,9 @@ func testRaw(t *testing.T, c ContractCase) {
 	}
 }
 
-func testWithCtxDoesNotBreakDispatch(t *testing.T, c ContractCase) {
+func testWithContextDoesNotBreakDispatch(t *testing.T, c ContractCase) {
 	log, buf := c.Factory(FactoryOpts{})
-	log = log.WithCtx(context.Background())
+	log = log.WithContext(context.Background())
 	log.Info("with ctx")
 	obj := ParseJSONLine(t, buf)
 	if obj[c.Expect.MessageKey] != "with ctx" {

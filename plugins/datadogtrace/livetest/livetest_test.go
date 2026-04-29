@@ -61,7 +61,7 @@ func TestLive_RealDDSpanInjectsRealIDs(t *testing.T) {
 	}))
 
 	span, ctx := ddtracer.StartSpanFromContext(context.Background(), "operation")
-	log.WithCtx(ctx).Info("served")
+	log.WithContext(ctx).Info("served")
 	span.Finish()
 
 	line := lib.PopLine()
@@ -85,11 +85,11 @@ func TestLive_NestedDDSpansEachInjectOwnIDs(t *testing.T) {
 	}))
 
 	outerSpan, ctxOuter := ddtracer.StartSpanFromContext(context.Background(), "outer")
-	log.WithCtx(ctxOuter).Info("outer entry")
+	log.WithContext(ctxOuter).Info("outer entry")
 	outerLine := lib.PopLine()
 
 	innerSpan, ctxInner := ddtracer.StartSpanFromContext(ctxOuter, "inner")
-	log.WithCtx(ctxInner).Info("inner entry")
+	log.WithContext(ctxInner).Info("inner entry")
 	innerLine := lib.PopLine()
 
 	innerSpan.Finish()
@@ -122,7 +122,7 @@ func TestLive_NoSpanOmitsIDs(t *testing.T) {
 	}))
 
 	// Background ctx has no active span; extractor returns ok=false.
-	log.WithCtx(context.Background()).Info("no span")
+	log.WithContext(context.Background()).Info("no span")
 
 	line := lib.PopLine()
 	if _, has := line.Data["dd.trace_id"]; has {
@@ -145,7 +145,7 @@ func TestLive_ServiceEnvVersionEmitted(t *testing.T) {
 	}))
 
 	span, ctx := ddtracer.StartSpanFromContext(context.Background(), "op")
-	log.WithCtx(ctx).Info("served")
+	log.WithContext(ctx).Info("served")
 	span.Finish()
 
 	line := lib.PopLine()
@@ -169,7 +169,7 @@ func TestLive_DecimalIDsMatchDatadogIngestionFormat(t *testing.T) {
 	}))
 
 	span, ctx := ddtracer.StartSpanFromContext(context.Background(), "op")
-	log.WithCtx(ctx).Info("served")
+	log.WithContext(ctx).Info("served")
 	span.Finish()
 
 	line := lib.PopLine()

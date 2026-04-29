@@ -39,7 +39,7 @@ func TestInjectsIDsWhenSpanPresent(t *testing.T) {
 	t.Parallel()
 	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{}))
 
-	log.WithCtx(ctxWithSpan(fixedTraceID, fixedSpanID, true)).Info("served")
+	log.WithContext(ctxWithSpan(fixedTraceID, fixedSpanID, true)).Info("served")
 
 	line := lib.PopLine()
 	if line.Data["trace_id"] != fixedTraceIDHex {
@@ -54,7 +54,7 @@ func TestNoCtxNoInjection(t *testing.T) {
 	t.Parallel()
 	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{}))
 
-	log.Info("plain") // no WithCtx
+	log.Info("plain") // no WithContext
 
 	line := lib.PopLine()
 	if _, has := line.Data["trace_id"]; has {
@@ -67,7 +67,7 @@ func TestNoSpanNoInjection(t *testing.T) {
 	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{}))
 
 	// Background ctx has no span context attached.
-	log.WithCtx(context.Background()).Info("ctx but no span")
+	log.WithContext(context.Background()).Info("ctx but no span")
 
 	line := lib.PopLine()
 	if _, has := line.Data["trace_id"]; has {
@@ -81,7 +81,7 @@ func TestInvalidSpanContextNoInjection(t *testing.T) {
 	ctx := ctxWithSpan(otrace.TraceID{}, otrace.SpanID{}, false)
 	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{}))
 
-	log.WithCtx(ctx).Info("invalid span")
+	log.WithContext(ctx).Info("invalid span")
 
 	line := lib.PopLine()
 	if _, has := line.Data["trace_id"]; has {
@@ -96,7 +96,7 @@ func TestCustomKeys(t *testing.T) {
 		SpanIDKey:  "span.id",
 	}))
 
-	log.WithCtx(ctxWithSpan(fixedTraceID, fixedSpanID, true)).Info("ecs-style")
+	log.WithContext(ctxWithSpan(fixedTraceID, fixedSpanID, true)).Info("ecs-style")
 
 	line := lib.PopLine()
 	if line.Data["trace.id"] != fixedTraceIDHex {
@@ -117,7 +117,7 @@ func TestTraceFlagsEmittedWhenConfigured(t *testing.T) {
 		TraceFlagsKey: "trace_flags",
 	}))
 
-	log.WithCtx(ctxWithSpan(fixedTraceID, fixedSpanID, true)).Info("sampled")
+	log.WithContext(ctxWithSpan(fixedTraceID, fixedSpanID, true)).Info("sampled")
 
 	line := lib.PopLine()
 	if line.Data["trace_flags"] != int(otrace.FlagsSampled) {
@@ -129,7 +129,7 @@ func TestTraceFlagsOmittedByDefault(t *testing.T) {
 	t.Parallel()
 	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{}))
 
-	log.WithCtx(ctxWithSpan(fixedTraceID, fixedSpanID, true)).Info("no-flags")
+	log.WithContext(ctxWithSpan(fixedTraceID, fixedSpanID, true)).Info("no-flags")
 
 	line := lib.PopLine()
 	if _, has := line.Data["trace_flags"]; has {
@@ -142,7 +142,7 @@ func TestPreservesUserData(t *testing.T) {
 	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{}))
 	log = log.WithFields(loglayer.Fields{"requestId": "abc-123"})
 
-	log.WithCtx(ctxWithSpan(fixedTraceID, fixedSpanID, true)).
+	log.WithContext(ctxWithSpan(fixedTraceID, fixedSpanID, true)).
 		WithMetadata(loglayer.Metadata{"durationMs": 42}).
 		Info("served")
 
@@ -198,7 +198,7 @@ func TestTraceStateEmittedWhenConfigured(t *testing.T) {
 		TraceStateKey: "trace_state",
 	}))
 
-	log.WithCtx(ctxWithSpanAndState(t, "vendor1=val1,vendor2=val2")).Info("hi")
+	log.WithContext(ctxWithSpanAndState(t, "vendor1=val1,vendor2=val2")).Info("hi")
 
 	line := lib.PopLine()
 	if line.Data["trace_state"] != "vendor1=val1,vendor2=val2" {
@@ -210,7 +210,7 @@ func TestTraceStateOmittedByDefault(t *testing.T) {
 	t.Parallel()
 	log, lib := plugintest.Install(t, oteltrace.New(oteltrace.Config{}))
 
-	log.WithCtx(ctxWithSpanAndState(t, "vendor1=val1")).Info("hi")
+	log.WithContext(ctxWithSpanAndState(t, "vendor1=val1")).Info("hi")
 
 	line := lib.PopLine()
 	if _, has := line.Data["trace_state"]; has {
@@ -225,7 +225,7 @@ func TestTraceStateOmittedWhenEmpty(t *testing.T) {
 		TraceStateKey: "trace_state",
 	}))
 
-	log.WithCtx(ctxWithSpan(fixedTraceID, fixedSpanID, true)).Info("hi") // no trace state
+	log.WithContext(ctxWithSpan(fixedTraceID, fixedSpanID, true)).Info("hi") // no trace state
 
 	line := lib.PopLine()
 	if _, has := line.Data["trace_state"]; has {
@@ -244,7 +244,7 @@ func TestBaggageEmittedWithPrefix(t *testing.T) {
 	bag, _ := baggage.New(user, tenant)
 	ctx := baggage.ContextWithBaggage(ctxWithSpan(fixedTraceID, fixedSpanID, true), bag)
 
-	log.WithCtx(ctx).Info("hi")
+	log.WithContext(ctx).Info("hi")
 
 	line := lib.PopLine()
 	if line.Data["baggage.user_id"] != "alice" {
@@ -263,7 +263,7 @@ func TestBaggageOmittedByDefault(t *testing.T) {
 	bag, _ := baggage.New(user)
 	ctx := baggage.ContextWithBaggage(ctxWithSpan(fixedTraceID, fixedSpanID, true), bag)
 
-	log.WithCtx(ctx).Info("hi")
+	log.WithContext(ctx).Info("hi")
 
 	line := lib.PopLine()
 	for k := range line.Data {
@@ -285,7 +285,7 @@ func TestBaggageEmittedWithoutSpan(t *testing.T) {
 	bag, _ := baggage.New(feature)
 	ctx := baggage.ContextWithBaggage(context.Background(), bag)
 
-	log.WithCtx(ctx).Info("no span")
+	log.WithContext(ctx).Info("no span")
 
 	line := lib.PopLine()
 	if line.Data["baggage.feature_flag"] != "checkout-v2" {
@@ -304,7 +304,7 @@ func TestNoSpanNoBaggageNoInjection(t *testing.T) {
 	}))
 
 	// Background ctx: no span, no baggage. Nothing to emit.
-	log.WithCtx(context.Background()).Info("plain")
+	log.WithContext(context.Background()).Info("plain")
 
 	line := lib.PopLine()
 	if _, has := line.Data["trace_id"]; has {

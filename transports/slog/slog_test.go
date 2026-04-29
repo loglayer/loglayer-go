@@ -55,10 +55,10 @@ func TestSlogFatalAboveError(t *testing.T) {
 	}
 }
 
-func TestSlogWithCtxPassedToHandler(t *testing.T) {
+func TestSlogWithContextPassedToHandler(t *testing.T) {
 	// Slog is the one wrapper that *does* forward ctx to the underlying
 	// handler. This positive test verifies the forwarding; the contract's
-	// WithCtxDoesNotBreakDispatch covers the negative shape on the others.
+	// WithContextDoesNotBreakDispatch covers the negative shape on the others.
 	type ctxKey struct{}
 	ctx := context.WithValue(context.Background(), ctxKey{}, "trace-id-123")
 
@@ -74,7 +74,7 @@ func TestSlogWithCtxPassedToHandler(t *testing.T) {
 	})
 	log := loglayer.New(loglayer.Config{Transport: tr, DisableFatalExit: true})
 
-	log.WithCtx(ctx).Info("with ctx")
+	log.WithContext(ctx).Info("with ctx")
 	if captured == nil || captured.Value(ctxKey{}) != "trace-id-123" {
 		t.Errorf("Ctx not propagated to slog handler: %v", captured)
 	}

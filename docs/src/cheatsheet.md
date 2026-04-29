@@ -93,7 +93,7 @@ log.MetadataOnly(loglayer.Metadata{"status": "healthy"})
 log.MetadataOnly(loglayer.Metadata{"status": "warn"}, loglayer.MetadataOnlyOpts{LogLevel: loglayer.LogLevelWarn})
 ```
 
-`MetadataOnly` is a **terminal call**, not a builder. It dispatches the entry immediately. You cannot chain `WithError` or `WithCtx` onto it; for that, use `log.WithMetadata(...).Info(...)` etc.
+`MetadataOnly` is a **terminal call**, not a builder. It dispatches the entry immediately. You cannot chain `WithError` or `WithContext` onto it; for that, use `log.WithMetadata(...).Info(...)` etc.
 
 ## Errors
 
@@ -140,12 +140,12 @@ log.WithFields(loglayer.F{"requestId": "abc"}).
 import "context"
 
 // Bind once, every emission carries it (per-request handlers).
-log = log.WithCtx(ctx)
+log = log.WithContext(ctx)
 log.Info("served")
 log.Warn("retrying")
 
 // Or per-call only (override):
-log.WithCtx(otherCtx).Info("override for this entry")
+log.WithContext(otherCtx).Info("override for this entry")
 ```
 
 Surfaced to transports via `TransportParams.Ctx` and to plugin dispatch hooks via `params.Ctx`. The `loghttp` middleware binds `r.Context()` automatically. See [Go Context](/logging-api/go-context).
@@ -165,8 +165,8 @@ log := loglayer.MustFromContext(ctx)     // panics if not attached
 
 The "At a Glance" example shows the typical chain. Two things to know:
 
-- `WithFields`, `WithCtx`, `WithGroup` (when called on `*LogLayer`) and `WithPrefix`, `Child`, `WithoutFields` all return a **new logger**. Assign them: `log = log.WithCtx(ctx)`.
-- `WithMetadata`, `WithError`, and the same `WithCtx` / `WithGroup` when called on a `*LogBuilder` return a **`*LogBuilder`**: single-use, terminated by a level method (`Info`, `Warn`, ...). Don't assign the builder.
+- `WithFields`, `WithContext`, `WithGroup` (when called on `*LogLayer`) and `WithPrefix`, `Child`, `WithoutFields` all return a **new logger**. Assign them: `log = log.WithContext(ctx)`.
+- `WithMetadata`, `WithError`, and the same `WithContext` / `WithGroup` when called on a `*LogBuilder` return a **`*LogBuilder`**: single-use, terminated by a level method (`Info`, `Warn`, ...). Don't assign the builder.
 
 ## Child Loggers
 

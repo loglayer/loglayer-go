@@ -78,7 +78,7 @@ slog has no Fatal level, so values at or above `slog.LevelError` pin to `LogLeve
 
 ### Context
 
-The `context.Context` passed to `slog.InfoContext(ctx, ...)` (and the handler's `Handle` method generally) is forwarded to dispatch-time plugin hooks via `TransportParams.Ctx`. Plugins like [`oteltrace`](/plugins/oteltrace) and [`datadogtrace`](/plugins/datadogtrace) extract trace IDs from this context, so `slog.InfoContext(ctx, ...)` participates in distributed tracing the same way `log.WithCtx(ctx).Info(...)` does on the loglayer side.
+The `context.Context` passed to `slog.InfoContext(ctx, ...)` (and the handler's `Handle` method generally) is forwarded to dispatch-time plugin hooks via `TransportParams.Ctx`. Plugins like [`oteltrace`](/plugins/oteltrace) and [`datadogtrace`](/plugins/datadogtrace) extract trace IDs from this context, so `slog.InfoContext(ctx, ...)` participates in distributed tracing the same way `log.WithContext(ctx).Info(...)` does on the loglayer side.
 
 ## Underlying Loglayer Fields
 

@@ -146,7 +146,7 @@ func (t *Transport) GetLoggerInstance() any { return t.logger }
 //
 // Builds a log.Record (timestamp = time.Now, severity from the log
 // level, body = joined messages, attributes from data + metadata) and
-// emits it. The caller's context.Context (from WithCtx) is forwarded so
+// emits it. The caller's context.Context (from WithContext) is forwarded so
 // OTel SDK processors can correlate the entry with the active span.
 //
 // Fatal entries are emitted at SeverityFatal; the core's

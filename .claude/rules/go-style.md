@@ -28,7 +28,7 @@ There are three distinct ways to attach data to a log call. Don't blur them.
 |-----|------|-------|---------|
 | `WithFields(loglayer.Fields)` | `map[string]any` | Persistent on the logger | Request IDs, user info, anything that should appear on every subsequent log |
 | `WithMetadata(any)` | any value | Single log call only | Per-event payload — counters, durations, structs |
-| `WithCtx(context.Context)` | `context.Context` | Single log call only | Trace IDs, deadlines, cancellation; for transports that forward to OTel/slog |
+| `WithContext(context.Context)` | `context.Context` | Single log call only | Trace IDs, deadlines, cancellation; for transports that forward to OTel/slog |
 
 When adding new logging surface, fit it into one of these three. Do not introduce a fourth bag.
 
