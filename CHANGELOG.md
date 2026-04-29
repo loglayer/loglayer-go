@@ -16,6 +16,13 @@ from conventional commits. From v1.0.0 forward, this file is maintained
 automatically; the `[Unreleased]` section below describes the initial
 release at a high level.
 
+## [1.3.0](https://github.com/loglayer/loglayer-go/compare/v1.2.0...v1.3.0) (2026-04-29)
+
+
+### Features
+
+* **transports/lumberjack:** Add rotating-file JSON transport ([#16](https://github.com/loglayer/loglayer-go/issues/16)) ([fa7bef0](https://github.com/loglayer/loglayer-go/commit/fa7bef051e0221bb4c3bbb0612bdffa96aeb6869))
+
 ## [1.2.0](https://github.com/loglayer/loglayer-go/compare/v1.1.1...v1.2.0) (2026-04-29)
 
 
