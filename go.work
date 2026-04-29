@@ -5,6 +5,7 @@ use (
 
 	./transports/blank
 	./transports/charmlog
+	./transports/console
 	./transports/datadog
 	./transports/http
 	./transports/logrus
@@ -12,6 +13,8 @@ use (
 	./transports/phuslu
 	./transports/pretty
 	./transports/slog
+	./transports/structured
+	./transports/testing
 	./transports/zap
 	./transports/zerolog
 
@@ -19,6 +22,7 @@ use (
 	./plugins/datadogtrace/livetest
 	./plugins/fmtlog
 	./plugins/oteltrace
+	./plugins/plugintest
 	./plugins/redact
 	./plugins/sampling
 

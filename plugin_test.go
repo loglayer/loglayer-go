@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"go.loglayer.dev"
+	"go.loglayer.dev/internal/lltest"
 	"go.loglayer.dev/transport"
-	lltest "go.loglayer.dev/transports/testing"
 )
 
 func TestPlugin_OnBeforeDataOut_AddsKeys(t *testing.T) {

@@ -2,35 +2,81 @@ package loglayer_test
 
 // Example* functions documented per Go convention. Each is a runnable test
 // (the `// Output:` comment is verified by `go test`). They surface in
-// pkg.go.dev next to the corresponding type/method, and IDEs show them in
-// hover popups via the gopls "View Examples" affordance.
+// pkg.go.dev next to the corresponding type/method.
 //
-// All examples use the structured transport with a fixed DateFn so the
-// output is deterministic. The transport writes a fixed `level, time, msg`
-// header followed by user-supplied keys; Go map iteration is randomized,
-// so examples keep at most one user key per logger to make the output
-// reproducible.
+// Examples use a small in-file `exampleTransport` that emits one JSON
+// line per entry with a fixed time so the output is deterministic. It's
+// private to this file because the public transports live in their own
+// Go modules and main can't import them without a require cycle.
+//
+// Each example keeps at most one user-supplied key per emission to avoid
+// any map-iteration-order ambiguity.
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
+	"sort"
+	"strings"
 
 	"go.loglayer.dev"
-	"go.loglayer.dev/transports/structured"
 )
 
 // fixedTime returns a deterministic timestamp for example output.
 func fixedTime() string { return "2026-04-26T12:00:00Z" }
 
-// exampleLogger builds a logger that writes to stdout with a deterministic
-// date so example output is reproducible by `go test`.
+// exampleTransport emits one JSON line per entry to stdout with a fixed
+// `level, time, msg` prefix followed by data + metadata keys in
+// alphabetical order. Matches the on-disk format the godoc `// Output:`
+// comments below assert against.
+type exampleTransport struct{}
+
+func (exampleTransport) ID() string             { return "example" }
+func (exampleTransport) IsEnabled() bool        { return true }
+func (exampleTransport) GetLoggerInstance() any { return nil }
+func (exampleTransport) SendToLogger(p loglayer.TransportParams) {
+	parts := make([]string, 0, 8)
+	parts = append(parts, fmt.Sprintf(`"level":%q`, p.LogLevel.String()))
+	parts = append(parts, fmt.Sprintf(`"time":%q`, fixedTime()))
+
+	msg := ""
+	if len(p.Messages) > 0 {
+		bits := make([]string, len(p.Messages))
+		for i, m := range p.Messages {
+			bits[i] = fmt.Sprint(m)
+		}
+		msg = strings.Join(bits, " ")
+	}
+	parts = append(parts, fmt.Sprintf(`"msg":%q`, msg))
+
+	merged := map[string]any{}
+	for k, v := range p.Data {
+		merged[k] = v
+	}
+	if md, ok := p.Metadata.(loglayer.Metadata); ok {
+		for k, v := range md {
+			merged[k] = v
+		}
+	}
+	keys := make([]string, 0, len(merged))
+	for k := range merged {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		b, _ := json.Marshal(merged[k])
+		parts = append(parts, fmt.Sprintf(`%q:%s`, k, b))
+	}
+	fmt.Fprintln(os.Stdout, "{"+strings.Join(parts, ",")+"}")
+}
+
+// exampleLogger builds a logger that uses exampleTransport so example
+// output is reproducible by `go test`.
 func exampleLogger() *loglayer.LogLayer {
 	return loglayer.New(loglayer.Config{
-		Transport: structured.New(structured.Config{
-			Writer: os.Stdout,
-			DateFn: fixedTime,
-		}),
+		Transport:        exampleTransport{},
 		DisableFatalExit: true,
 	})
 }
@@ -44,10 +90,7 @@ func Example() {
 
 func ExampleNew() {
 	log := loglayer.New(loglayer.Config{
-		Transport: structured.New(structured.Config{
-			Writer: os.Stdout,
-			DateFn: fixedTime,
-		}),
+		Transport: exampleTransport{},
 	})
 	log.Info("hello")
 	// Output: {"level":"info","time":"2026-04-26T12:00:00Z","msg":"hello"}

@@ -5,7 +5,7 @@ description: Capture log entries in memory for assertions in tests.
 
 # Testing Transport
 
-<ModuleBadges path="transports/testing" bundled />
+<ModuleBadges path="transports/testing" />
 
 The `transports/testing` package is the transport you want in test code: it captures every log entry into a mutex-safe in-memory library, exposing `Messages`, `Data`, and `Metadata` as typed fields on each captured `LogLine`.
 

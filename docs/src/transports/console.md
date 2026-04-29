@@ -5,7 +5,7 @@ description: Plain-text logs to stdout/stderr in logfmt key=value format.
 
 # Console Transport
 
-<ModuleBadges path="transports/console" bundled />
+<ModuleBadges path="transports/console" />
 
 The `console` transport writes log entries to `os.Stdout` (info, debug, trace) or `os.Stderr` (warn, error, fatal) as plain text: the message followed by [logfmt](https://brandur.org/logfmt)-style `key=value` pairs. One line per entry, no colors, no JSON.
 

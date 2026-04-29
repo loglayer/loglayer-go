@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"go.loglayer.dev"
+	"go.loglayer.dev/internal/lltest"
 	"go.loglayer.dev/transport"
-	lltest "go.loglayer.dev/transports/testing"
 )
 
 // dispatch_edge_test.go covers edge cases of the processLog dispatch path

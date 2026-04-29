@@ -5,7 +5,9 @@ go 1.25.0
 replace (
 	go.loglayer.dev => ../..
 	go.loglayer.dev/plugins/oteltrace => ../../plugins/oteltrace
+	go.loglayer.dev/plugins/plugintest => ../../plugins/plugintest
 	go.loglayer.dev/transports/otellog => ../../transports/otellog
+	go.loglayer.dev/transports/testing => ../../transports/testing
 )
 
 require (
