@@ -5,9 +5,11 @@ description: User-visible changes to LogLayer for Go.
 
 # What's New
 
-## v1.0.0 (unreleased)
+## v1.0.0 (2026-04-29)
 
 Initial release. Stable API; SemVer applies from this point forward.
+
+Subsequent v1.0.x releases (v1.0.1, v1.0.2) are build- and test-only fixes (`go.sum` tidies, livetest repairs, release-please config). No user-visible behavior changes; full notes in [CHANGELOG.md](https://github.com/loglayer/loglayer-go/blob/main/CHANGELOG.md).
 
 LogLayer for Go is a transport-agnostic structured logging facade. One fluent API on top of any logging library, JSON, terminal, HTTP, OpenTelemetry, or your own transport.
 
