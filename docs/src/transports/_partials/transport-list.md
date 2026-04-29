@@ -2,33 +2,33 @@
 
 Self-contained transports that format the entry and write it to an `io.Writer`. Pick one of these when you want LogLayer to do the rendering itself.
 
-| Name                                  | Description                                                                |
-|---------------------------------------|----------------------------------------------------------------------------|
-| [Pretty](/transports/pretty)          | Colorized, theme-aware terminal output. **Recommended for local dev.**     |
-| [Structured](/transports/structured)  | One JSON object per log entry. Recommended for production.                 |
-| [Console](/transports/console)        | Plain `fmt.Println`-style output to stdout/stderr; minimal formatting.     |
-| [Testing](/transports/testing)        | Captures entries in memory for tests.                                      |
-| [Blank](/transports/blank)            | Delegates dispatch to a user-supplied function. For prototyping or one-off integrations. |
+| Name | Version | Go Reference | Description |
+|------|---------|--------------|-------------|
+| [Pretty](/transports/pretty) | [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/pretty/v*&sort=semver&label=version&style=flat-square)](https://github.com/loglayer/loglayer-go/releases?q=transports/pretty/&expanded=true) | [![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/pretty.svg)](https://pkg.go.dev/go.loglayer.dev/transports/pretty) | Colorized, theme-aware terminal output. **Recommended for local dev.** |
+| [Structured](/transports/structured) | [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=v*&sort=semver&label=go.loglayer.dev&style=flat-square)](https://github.com/loglayer/loglayer-go/releases) | [![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/structured.svg)](https://pkg.go.dev/go.loglayer.dev/transports/structured) | One JSON object per log entry. Recommended for production. Bundled in `go.loglayer.dev`. |
+| [Console](/transports/console) | [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=v*&sort=semver&label=go.loglayer.dev&style=flat-square)](https://github.com/loglayer/loglayer-go/releases) | [![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/console.svg)](https://pkg.go.dev/go.loglayer.dev/transports/console) | Plain `fmt.Println`-style output to stdout/stderr; minimal formatting. Bundled in `go.loglayer.dev`. |
+| [Testing](/transports/testing) | [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=v*&sort=semver&label=go.loglayer.dev&style=flat-square)](https://github.com/loglayer/loglayer-go/releases) | [![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/testing.svg)](https://pkg.go.dev/go.loglayer.dev/transports/testing) | Captures entries in memory for tests. Bundled in `go.loglayer.dev`. |
+| [Blank](/transports/blank) | [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/blank/v*&sort=semver&label=version&style=flat-square)](https://github.com/loglayer/loglayer-go/releases?q=transports/blank/&expanded=true) | [![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/blank.svg)](https://pkg.go.dev/go.loglayer.dev/transports/blank) | Delegates dispatch to a user-supplied function. For prototyping or one-off integrations. |
 
 ### Network
 
 Transports that ship log entries to a remote endpoint over the network. Async + batched by default.
 
-| Name                                   | Description                                                              |
-|----------------------------------------|--------------------------------------------------------------------------|
-| [HTTP](/transports/http)               | Generic batched HTTP POST to any endpoint. Pluggable Encoder.            |
-| [Datadog](/transports/datadog)         | Datadog Logs HTTP intake. Site-aware URL, DD-API-KEY header, status mapping. |
+| Name | Version | Go Reference | Description |
+|------|---------|--------------|-------------|
+| [HTTP](/transports/http) | [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/http/v*&sort=semver&label=version&style=flat-square)](https://github.com/loglayer/loglayer-go/releases?q=transports/http/&expanded=true) | [![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/http.svg)](https://pkg.go.dev/go.loglayer.dev/transports/http) | Generic batched HTTP POST to any endpoint. Pluggable Encoder. |
+| [Datadog](/transports/datadog) | [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/datadog/v*&sort=semver&label=version&style=flat-square)](https://github.com/loglayer/loglayer-go/releases?q=transports/datadog/&expanded=true) | [![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/datadog.svg)](https://pkg.go.dev/go.loglayer.dev/transports/datadog) | Datadog Logs HTTP intake. Site-aware URL, DD-API-KEY header, status mapping. |
 
 ### Supported Loggers
 
 Transports that hand the entry off to an existing third-party logger you already configure. Pick one of these when you have an established logging stack and want LogLayer's API on top.
 
-| Name                                | Description                                                |
-|-------------------------------------|------------------------------------------------------------|
-| [Zerolog](/transports/zerolog)      | Wraps a `*zerolog.Logger`                                  |
-| [Zap](/transports/zap)              | Wraps a `*zap.Logger`                                      |
-| [log/slog](/transports/slog)        | Wraps a stdlib `*slog.Logger`. Forwards `WithContext` to handlers. |
-| [phuslu/log](/transports/phuslu)    | High-performance zero-alloc JSON logger. Always exits on fatal. |
-| [logrus](/transports/logrus)        | The classic structured logger                              |
-| [charmbracelet/log](/transports/charmlog) | Pretty terminal-friendly logger from Charm           |
-| [OpenTelemetry Logs](/transports/otellog) | Emits to an OTel `log.Logger`. Forwards `WithContext` so SDK processors can correlate with the active span. |
+| Name | Version | Go Reference | Description |
+|------|---------|--------------|-------------|
+| [Zerolog](/transports/zerolog) | [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/zerolog/v*&sort=semver&label=version&style=flat-square)](https://github.com/loglayer/loglayer-go/releases?q=transports/zerolog/&expanded=true) | [![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/zerolog.svg)](https://pkg.go.dev/go.loglayer.dev/transports/zerolog) | Wraps a `*zerolog.Logger` |
+| [Zap](/transports/zap) | [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/zap/v*&sort=semver&label=version&style=flat-square)](https://github.com/loglayer/loglayer-go/releases?q=transports/zap/&expanded=true) | [![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/zap.svg)](https://pkg.go.dev/go.loglayer.dev/transports/zap) | Wraps a `*zap.Logger` |
+| [log/slog](/transports/slog) | [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/slog/v*&sort=semver&label=version&style=flat-square)](https://github.com/loglayer/loglayer-go/releases?q=transports/slog/&expanded=true) | [![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/slog.svg)](https://pkg.go.dev/go.loglayer.dev/transports/slog) | Wraps a stdlib `*slog.Logger`. Forwards `WithContext` to handlers. |
+| [phuslu/log](/transports/phuslu) | [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/phuslu/v*&sort=semver&label=version&style=flat-square)](https://github.com/loglayer/loglayer-go/releases?q=transports/phuslu/&expanded=true) | [![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/phuslu.svg)](https://pkg.go.dev/go.loglayer.dev/transports/phuslu) | High-performance zero-alloc JSON logger. Always exits on fatal. |
+| [logrus](/transports/logrus) | [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/logrus/v*&sort=semver&label=version&style=flat-square)](https://github.com/loglayer/loglayer-go/releases?q=transports/logrus/&expanded=true) | [![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/logrus.svg)](https://pkg.go.dev/go.loglayer.dev/transports/logrus) | The classic structured logger |
+| [charmbracelet/log](/transports/charmlog) | [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/charmlog/v*&sort=semver&label=version&style=flat-square)](https://github.com/loglayer/loglayer-go/releases?q=transports/charmlog/&expanded=true) | [![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/charmlog.svg)](https://pkg.go.dev/go.loglayer.dev/transports/charmlog) | Pretty terminal-friendly logger from Charm |
+| [OpenTelemetry Logs](/transports/otellog) | [![Version](https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=transports/otellog/v*&sort=semver&label=version&style=flat-square)](https://github.com/loglayer/loglayer-go/releases?q=transports/otellog/&expanded=true) | [![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/otellog.svg)](https://pkg.go.dev/go.loglayer.dev/transports/otellog) | Emits to an OTel `log.Logger`. Forwards `WithContext` so SDK processors can correlate with the active span. |
