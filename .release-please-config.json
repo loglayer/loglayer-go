@@ -40,6 +40,13 @@
       "include-component-in-tag": true,
       "changelog-path": "CHANGELOG.md"
     },
+    "transports/lumberjack": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/transports/lumberjack",
+      "component": "transports/lumberjack",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
     "transports/http": {
       "release-type": "go",
       "package-name": "go.loglayer.dev/transports/http",

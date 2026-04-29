@@ -79,14 +79,7 @@ log.Warn("loud")
 
 ## Writing to a File or Buffer
 
-```go
-f, _ := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-log := loglayer.New(loglayer.Config{
-    Transport: structured.New(structured.Config{Writer: f}),
-})
-```
-
-The transport calls `Writer.Write` once per entry with a complete newline-terminated JSON line; make sure your writer is concurrency-safe if multiple goroutines log at once.
+The `Writer` field accepts any `io.Writer`. See [Writers](/transports/writers) for recipes covering files, rotating files, `bytes.Buffer`, `io.MultiWriter`, and network sockets, plus a concurrency-safety table.
 
 ## Struct Metadata
 
