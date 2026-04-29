@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -12,7 +11,6 @@ import (
 
 	"go.loglayer.dev"
 	"go.loglayer.dev/integrations/sloghandler"
-	"go.loglayer.dev/plugins/redact"
 	lltest "go.loglayer.dev/transports/testing"
 )
 
@@ -349,8 +347,26 @@ func TestPluginPipeline_Runs(t *testing.T) {
 		Transport:        lltest.New(lltest.Config{Library: lib}),
 		DisableFatalExit: true,
 	})
-	log.AddPlugin(redact.New(redact.Config{
-		Patterns: []*regexp.Regexp{regexp.MustCompile(`secret-`)},
+
+	// Inline DataHook plugin: rewrites any string value starting with
+	// "secret-" to "[REDACTED]". This used to use the standalone redact
+	// plugin, but pulling that in created a cross-module test
+	// dependency we don't otherwise need. The test isn't really about
+	// redact; it's verifying that values arriving via the slog adapter
+	// participate in the plugin pipeline at all.
+	log.AddPlugin(loglayer.NewDataHook("test-redactor", func(p loglayer.BeforeDataOutParams) loglayer.Data {
+		if p.Data == nil {
+			return nil
+		}
+		out := make(loglayer.Data, len(p.Data))
+		for k, v := range p.Data {
+			if s, ok := v.(string); ok && strings.HasPrefix(s, "secret-") {
+				out[k] = "[REDACTED]"
+			} else {
+				out[k] = v
+			}
+		}
+		return out
 	}))
 
 	l := slog.New(sloghandler.New(log))
@@ -358,7 +374,7 @@ func TestPluginPipeline_Runs(t *testing.T) {
 
 	line := lib.PopLine()
 	if line.Data["token"] != "[REDACTED]" {
-		t.Errorf("redact plugin should rewrite values arriving from slog: got %v", line.Data["token"])
+		t.Errorf("plugin should rewrite values arriving from slog: got %v", line.Data["token"])
 	}
 }
 

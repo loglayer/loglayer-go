@@ -5,7 +5,7 @@ description: "Replace values for sensitive keys, value patterns, or struct field
 
 # Redact Plugin
 
-<ModuleBadges path="plugins/redact" bundled />
+<ModuleBadges path="plugins/redact" />
 
 `plugins/redact` replaces sensitive values in metadata and persistent fields before any transport sees them. Useful for keeping secrets, PII, and credentials out of log output without rewriting every call site.
 

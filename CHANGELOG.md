@@ -4,32 +4,18 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning
 follows [SemVer](https://semver.org/spec/v2.0.0.html).
 
-`go.loglayer.dev` is the main module. Three sub-modules ship under their
-own tags: `go.loglayer.dev/transports/otellog`,
-`go.loglayer.dev/plugins/oteltrace`, and (test-only)
-`go.loglayer.dev/plugins/datadogtrace/livetest`. See `AGENTS.md` for the
-splitting policy and release flow.
+`go.loglayer.dev` is the main module. Most transports, plugins, and
+integrations ship as their own sub-modules under their own tags
+(e.g. `go.loglayer.dev/transports/datadog`,
+`go.loglayer.dev/plugins/redact`,
+`go.loglayer.dev/integrations/loghttp`). The full list lives in
+`.release-please-manifest.json`. See `AGENTS.md` for the splitting
+policy and release flow.
 
 Releases are managed by [Release Please](https://github.com/googleapis/release-please)
 from conventional commits. From v1.0.0 forward, this file is maintained
 automatically; the `[Unreleased]` section below describes the initial
 release at a high level.
-
-## [2.0.0](https://github.com/loglayer/loglayer-go/compare/v1.0.2...v2.0.0) (2026-04-29)
-
-
-### ⚠ BREAKING CHANGES
-
-* **fmtlog:** the fmtlog plugin's import path changes from `go.loglayer.dev/fmtlog` to `go.loglayer.dev/plugins/fmtlog`. Update imports accordingly.
-
-### Code Refactoring
-
-* **fmtlog:** Move fmtlog from /fmtlog to /plugins/fmtlog ([#7](https://github.com/loglayer/loglayer-go/issues/7)) ([165cd4b](https://github.com/loglayer/loglayer-go/commit/165cd4b06cc8bbb290cf7d8d8930066a2c222f07))
-
-
-### Miscellaneous Chores
-
-* **release-please:** Expose refactor in changelog and force v2.0.0 ([#9](https://github.com/loglayer/loglayer-go/issues/9)) ([f3a980e](https://github.com/loglayer/loglayer-go/commit/f3a980e6eefa1e7b9f25a86d3f68de475de20534)), closes [#7](https://github.com/loglayer/loglayer-go/issues/7)
 
 ## [1.0.2](https://github.com/loglayer/loglayer-go/compare/v1.0.1...v1.0.2) (2026-04-29)
 

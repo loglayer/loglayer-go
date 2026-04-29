@@ -21,7 +21,9 @@ profile.cov
 # vendor/
 
 # Go workspace file
-go.work
+# go.work itself IS committed (this monorepo has multiple modules and
+# every contributor needs the same workspace layout). Only the env-
+# specific go.work.sum is ignored.
 go.work.sum
 
 # env file

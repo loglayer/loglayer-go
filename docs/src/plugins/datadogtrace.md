@@ -5,7 +5,7 @@ description: "Inject Datadog APM trace and span IDs into log entries for log/tra
 
 # Datadog APM Trace Injector Plugin
 
-<ModuleBadges path="plugins/datadogtrace" bundled />
+<ModuleBadges path="plugins/datadogtrace" />
 
 `plugins/datadogtrace` adds Datadog's [log/trace correlation](https://docs.datadoghq.com/tracing/other_telemetry/connect_logs_and_traces/) fields to every log entry that carries an active span via `WithContext`. Once your logs ship to Datadog, the UI will link each log line to the trace it originated in.
 

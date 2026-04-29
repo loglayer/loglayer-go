@@ -5,7 +5,7 @@ description: "slog.Handler that routes every slog.Info(...) call through your lo
 
 # slog Handler
 
-<ModuleBadges path="integrations/sloghandler" bundled />
+<ModuleBadges path="integrations/sloghandler" />
 
 `integrations/sloghandler` is a `log/slog.Handler` backed by a loglayer logger. Once installed, every `slog.Info(...)` call (yours or your dependencies') flows through loglayer's plugin pipeline, multi-transport fan-out, group routing, and level filtering.
 

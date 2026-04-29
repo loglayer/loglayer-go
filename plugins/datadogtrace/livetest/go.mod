@@ -2,11 +2,15 @@ module go.loglayer.dev/plugins/datadogtrace/livetest
 
 go 1.25.0
 
-replace go.loglayer.dev => ../../..
+replace (
+	go.loglayer.dev => ../../..
+	go.loglayer.dev/plugins/datadogtrace => ..
+)
 
 require (
 	github.com/DataDog/dd-trace-go/v2 v2.7.3
 	go.loglayer.dev v0.0.0-00010101000000-000000000000
+	go.loglayer.dev/plugins/datadogtrace v0.0.0-00010101000000-000000000000
 )
 
 require (

@@ -5,7 +5,7 @@ description: One-line HTTP middleware that derives a per-request logger and stuf
 
 # HTTP Middleware (loghttp)
 
-<ModuleBadges path="integrations/loghttp" bundled />
+<ModuleBadges path="integrations/loghttp" />
 
 `integrations/loghttp` is HTTP middleware that does the per-request logger derivation for you. Drop it into your router once at startup, and every handler downstream gets a logger pre-populated with `requestId`, `method`, `path`. The middleware also emits a "request completed" log line at the end of every request with status code, bytes written, and duration.
 

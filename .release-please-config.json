@@ -95,6 +95,62 @@
       "component": "plugins/oteltrace",
       "include-component-in-tag": true,
       "changelog-path": "CHANGELOG.md"
+    },
+    "transports/blank": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/transports/blank",
+      "component": "transports/blank",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "transports/slog": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/transports/slog",
+      "component": "transports/slog",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "plugins/redact": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/plugins/redact",
+      "component": "plugins/redact",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "plugins/sampling": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/plugins/sampling",
+      "component": "plugins/sampling",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "plugins/fmtlog": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/plugins/fmtlog",
+      "component": "plugins/fmtlog",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "plugins/datadogtrace": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/plugins/datadogtrace",
+      "component": "plugins/datadogtrace",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "integrations/loghttp": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/integrations/loghttp",
+      "component": "integrations/loghttp",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "integrations/sloghandler": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/integrations/sloghandler",
+      "component": "integrations/sloghandler",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
     }
   },
   "plugins": [

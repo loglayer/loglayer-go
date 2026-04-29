@@ -1,5 +1,5 @@
 {
-  ".": "2.0.0",
+  ".": "1.0.2",
   "transports/charmlog": "1.0.1",
   "transports/datadog": "1.0.0",
   "transports/http": "1.0.0",
@@ -9,5 +9,13 @@
   "transports/pretty": "1.0.0",
   "transports/zap": "1.0.1",
   "transports/zerolog": "1.0.0",
-  "plugins/oteltrace": "1.0.1"
+  "plugins/oteltrace": "1.0.1",
+  "transports/blank": "1.0.0",
+  "transports/slog": "1.0.0",
+  "plugins/redact": "1.0.0",
+  "plugins/sampling": "1.0.0",
+  "plugins/fmtlog": "1.0.0",
+  "plugins/datadogtrace": "1.0.0",
+  "integrations/loghttp": "1.0.0",
+  "integrations/sloghandler": "1.0.0"
 }
