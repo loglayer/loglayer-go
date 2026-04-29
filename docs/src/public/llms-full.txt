@@ -924,7 +924,7 @@ Baggage rides independently of the span — contexts with baggage but no span st
 import "go.loglayer.dev/integrations/loghttp"
 
 mux := http.NewServeMux()
-handler := loghttp.Middleware(log)(mux)
+handler := loghttp.Middleware(log, loghttp.Config{})(mux)
 http.ListenAndServe(":8080", handler)
 
 // Inside handlers
