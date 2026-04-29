@@ -51,11 +51,20 @@ For explicit wiring (recommended in services that own their SDK setup):
 import (
     sdklog "go.opentelemetry.io/otel/sdk/log"
     "go.opentelemetry.io/otel/sdk/log/otlploghttp"
+    "go.opentelemetry.io/otel/sdk/resource"
+    semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+)
+
+res := resource.NewSchemaless(
+    semconv.ServiceName("checkout-api"),
+    semconv.ServiceVersion("1.2.3"),
+    semconv.DeploymentEnvironment("production"),
 )
 
 exporter, _ := otlploghttp.New(ctx)
 provider := sdklog.NewLoggerProvider(
     sdklog.WithProcessor(sdklog.NewBatchProcessor(exporter)),
+    sdklog.WithResource(res),
 )
 defer provider.Shutdown(ctx)
 
@@ -66,6 +75,12 @@ tr := otellog.New(otellog.Config{
 })
 ```
 
+::: warning Resource schema URL conflicts
+Wiring a resource with `resource.Merge(resource.Default(), resource.NewWithAttributes(semconv.SchemaURL, ...))` can fail with `conflicting Schema URL`: `resource.Default()` carries the SDK's current schema URL, while `semconv.SchemaURL` from a pinned import is older. The merge refuses to combine the two.
+
+Fix by either dropping the schema URL on your additions (`resource.NewSchemaless(...)`, shown above) or upgrading the `semconv` import to match `resource.Default()`'s schema. `resource.NewSchemaless` is the simpler choice for most apps; the schema URL only matters when downstream consumers do strict semantic-conventions validation.
+:::
+
 ## Pre-Built Logger (Tests, Advanced Wiring)
 
 When you've already constructed a `log.Logger` (or want to inject a stub in tests), pass it directly. `Logger` takes precedence over `LoggerProvider`/`Name`/`Version`/`SchemaURL`:
@@ -73,6 +88,37 @@ When you've already constructed a `log.Logger` (or want to inject a stub in test
 ```go
 tr := otellog.New(otellog.Config{Logger: myLogger})
 ```
+
+### Tests with `logtest.Recorder`
+
+For unit tests, the OTel project's [`logtest.Recorder`](https://pkg.go.dev/go.opentelemetry.io/otel/log/logtest#Recorder) implements `log.LoggerProvider` directly, so you can pass it straight to `Config.LoggerProvider` without an SDK provider, processor, or exporter in between:
+
+```go
+import "go.opentelemetry.io/otel/log/logtest"
+
+func TestEmits(t *testing.T) {
+    rec := logtest.NewRecorder()
+    log := loglayer.New(loglayer.Config{
+        Transport: otellog.New(otellog.Config{
+            Name:           "test",
+            LoggerProvider: rec,
+        }),
+    })
+
+    log.Info("user signed in")
+
+    for _, records := range rec.Result() {
+        for _, r := range records {
+            if r.Body.AsString() == "user signed in" {
+                return
+            }
+        }
+    }
+    t.Fatal("expected log record not captured")
+}
+```
+
+`rec.Result()` returns a `Recording` keyed by instrumentation scope; each value is a `[]logtest.Record` you can assert against (Body, Severity, Attributes, Context).
 
 ## Config
 
