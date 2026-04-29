@@ -4,7 +4,7 @@
   "draft": false,
   "prerelease": false,
   "include-component-in-tag": true,
-  "separator": "/",
+  "tag-separator": "/",
   "packages": {
     ".": {
       "release-type": "go",
