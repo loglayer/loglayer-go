@@ -1,3 +1,25 @@
-/* Reserved for future site-wide style overrides. Per-module badge layout
-   lives in components/ModuleBadges.vue with inline styles to bypass
-   VitePress's base img reset. */
+/* Per-module badge layout lives in components/ModuleBadges.vue with
+   inline styles to bypass VitePress's base img reset. */
+
+/* Module-list tables (the Plugins / Transports / Integrations partial
+   summary tables): keep the Name / Version / Go Reference columns
+   sized to their content (badges at natural width) so the long
+   Description column doesn't squeeze them. The Description column
+   absorbs whatever's left. */
+.module-list-table table {
+  width: 100%;
+}
+.module-list-table th:nth-child(1),
+.module-list-table td:nth-child(1),
+.module-list-table th:nth-child(2),
+.module-list-table td:nth-child(2),
+.module-list-table th:nth-child(3),
+.module-list-table td:nth-child(3) {
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.module-list-table img {
+  vertical-align: middle;
+  max-width: none; /* override VitePress's default img max-width: 100% so
+                      shields.io badges don't scale down inside cells */
+}
