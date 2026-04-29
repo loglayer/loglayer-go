@@ -16,6 +16,13 @@ from conventional commits. From v1.0.0 forward, this file is maintained
 automatically; the `[Unreleased]` section below describes the initial
 release at a high level.
 
+## [1.1.1](https://github.com/loglayer/loglayer-go/compare/v1.1.0...v1.1.1) (2026-04-29)
+
+
+### Code Refactoring
+
+* Split the last four bundled packages so go.loglayer.dev hosts only the framework core ([#13](https://github.com/loglayer/loglayer-go/issues/13)) ([feef8a6](https://github.com/loglayer/loglayer-go/commit/feef8a6cc7b2350b802c43fc78b336037d4a5ea0))
+
 ## [1.1.0](https://github.com/loglayer/loglayer-go/compare/v1.0.2...v1.1.0) (2026-04-29)
 
 > **Note on version**: this release is technically SemVer-breaking
