@@ -186,6 +186,34 @@ cd plugins/datadogtrace/livetest && go test -race ./...
 
 CI runs it automatically on every push.
 
+## Troubleshooting
+
+### `unexpected status code: "403 Forbidden"` on stderr
+
+If you start dd-trace-go without a local Datadog Agent reachable on `localhost:8126`, you may see this line on stderr:
+
+```
+unexpected status code: "403 Forbidden" (received body: 79 bytes)
+```
+
+This is **not** from LogLayer or the Datadog log transport. It's emitted by dd-trace-go's own background **telemetry writer**, which tries to ship runtime metrics to Datadog through the Agent and falls back to a direct HTTPS path that requires Agent-issued auth. The 79-byte body is Datadog's `{"errors":[{"status":"403","title":"Forbidden","detail":"API key is missing"}]}`, which can be confusing because the same string also appears for *any* unauthorized intake request.
+
+Two ways to silence it:
+
+```sh
+# Option 1: disable dd-trace-go's telemetry (recommended for local dev)
+export DD_INSTRUMENTATION_TELEMETRY_ENABLED=false
+go run ./cmd/your-app
+```
+
+```go
+// Option 2: run a local Datadog Agent so the telemetry path works.
+// docker run -d -p 8126:8126 -e DD_API_KEY=... -e DD_APM_ENABLED=true \
+//   gcr.io/datadoghq/agent:latest
+```
+
+Your log entries are unaffected either way: the LogLayer Datadog transport ships them directly to the Logs intake with your `DD-API-KEY`, independent of dd-trace-go's telemetry channel.
+
 ## What it Does NOT Do
 
 - **Doesn't start its own tracer.** You're responsible for `tracer.Start(...)` and `tracer.Stop()`.
