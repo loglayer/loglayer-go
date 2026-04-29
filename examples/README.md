@@ -6,7 +6,8 @@ Runnable demos showing common LogLayer wiring patterns. Each example is a standa
 |---------|--------------|
 | [`http-server`](./http-server) | `integrations/loghttp` middleware: per-request logger derivation in an HTTP handler |
 | [`multi-transport`](./multi-transport) | Fan-out: pretty in dev + structured to a file with per-transport level filtering |
-| [`custom-transport`](./custom-transport) | Implementing the `loglayer.Transport` interface from scratch |
+| [`custom-transport`](./custom-transport) | Implementing the `loglayer.Transport` interface from scratch (renderer / "flatten" policy) |
+| [`custom-transport-attribute`](./custom-transport-attribute) | Transport that forwards to an attribute-style backend (wrapper policy) |
 | [`custom-plugin`](./custom-plugin) | Writing a plugin from scratch: `OnBeforeDataOut`, `OnMetadataCalled`, and `ShouldSend` hooks |
 | [`datadog-shipping`](./datadog-shipping) | Datadog Logs intake setup with tuned batching, error callback, and graceful Close |
 | [`otel-end-to-end`](./otel-end-to-end) | `transports/otellog` + `plugins/oteltrace` against a real OTel SDK with stdout exporters |

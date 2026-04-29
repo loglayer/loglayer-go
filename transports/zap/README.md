@@ -1,6 +1,8 @@
 # go.loglayer.dev/transports/zap
 
-LogLayer transport that wraps a `*zap.Logger`.
+[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/zap.svg)](https://pkg.go.dev/go.loglayer.dev/transports/zap)
+
+LogLayer transport that wraps a `*zap.Logger`. Map metadata becomes individual zap fields; struct metadata lands under a configurable key. Fatal-level entries are routed through a custom `CheckWriteHook` so loglayer's `DisableFatalExit` is honored.
 
 ## Install
 
@@ -12,4 +14,4 @@ go get go.loglayer.dev/transports/zap
 
 Full reference and examples: <https://go.loglayer.dev/transports/zap>
 
-The framework itself: <https://go.loglayer.dev>
+Main library: <https://go.loglayer.dev>

@@ -1,6 +1,8 @@
 # go.loglayer.dev/transports/zerolog
 
-LogLayer transport that wraps a `*zerolog.Logger`.
+[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/zerolog.svg)](https://pkg.go.dev/go.loglayer.dev/transports/zerolog)
+
+LogLayer transport that wraps a `*zerolog.Logger`. Map metadata becomes individual zerolog fields; struct metadata lands under a configurable key. Fatal-level entries skip zerolog's default `os.Exit` so loglayer's `DisableFatalExit` is honored.
 
 ## Install
 
@@ -12,4 +14,4 @@ go get go.loglayer.dev/transports/zerolog
 
 Full reference and examples: <https://go.loglayer.dev/transports/zerolog>
 
-The framework itself: <https://go.loglayer.dev>
+Main library: <https://go.loglayer.dev>

@@ -1,6 +1,8 @@
 # go.loglayer.dev/transports/phuslu
 
-LogLayer transport that wraps a `*phuslu/log.Logger`.
+[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/phuslu.svg)](https://pkg.go.dev/go.loglayer.dev/transports/phuslu)
+
+LogLayer transport that wraps a `*phuslu/log.Logger`. Map metadata becomes individual phuslu fields; struct metadata lands under a configurable key. **Fatal entries always exit the process** since phuslu has no public hook to suppress its `os.Exit` (every other wrapper honors `Config.DisableFatalExit`).
 
 ## Install
 
@@ -12,4 +14,4 @@ go get go.loglayer.dev/transports/phuslu
 
 Full reference and examples: <https://go.loglayer.dev/transports/phuslu>
 
-The framework itself: <https://go.loglayer.dev>
+Main library: <https://go.loglayer.dev>
