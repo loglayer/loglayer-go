@@ -1,13 +1,13 @@
 {
-  ".": "1.0.0",
-  "transports/charmlog": "1.0.0",
+  ".": "1.0.1",
+  "transports/charmlog": "1.0.1",
   "transports/datadog": "1.0.0",
   "transports/http": "1.0.0",
   "transports/logrus": "1.0.0",
-  "transports/otellog": "1.0.0",
+  "transports/otellog": "1.0.1",
   "transports/phuslu": "1.0.0",
   "transports/pretty": "1.0.0",
-  "transports/zap": "1.0.0",
+  "transports/zap": "1.0.1",
   "transports/zerolog": "1.0.0",
-  "plugins/oteltrace": "1.0.0"
+  "plugins/oteltrace": "1.0.1"
 }

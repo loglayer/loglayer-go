@@ -15,6 +15,16 @@ from conventional commits. From v1.0.0 forward, this file is maintained
 automatically; the `[Unreleased]` section below describes the initial
 release at a high level.
 
+## [1.0.1](https://github.com/loglayer/loglayer-go/compare/v1.0.0...v1.0.1) (2026-04-29)
+
+
+### Bug Fixes
+
+* **charmlog:** Tidy go.sum ([c3d9832](https://github.com/loglayer/loglayer-go/commit/c3d9832920d84cf0d14a8d07febf251c595d60e3))
+* **livetest:** Tidy go.sum ([5221684](https://github.com/loglayer/loglayer-go/commit/522168411257f5e89b1ae3c17ba086b94064b8ff))
+* **otel:** Repair stale livetests ([de703c7](https://github.com/loglayer/loglayer-go/commit/de703c7f1e7131e018ccc5f80f5bfe1a451c1abc))
+* **zap:** Tidy go.sum ([dc4d754](https://github.com/loglayer/loglayer-go/commit/dc4d7547a8f72cf81db8f7f05eb41e371160576a))
+
 ## 1.0.0 (2026-04-29)
 
 
