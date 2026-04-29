@@ -31,6 +31,11 @@ pre-commit:
 
 pre-push:
   commands:
+    # Catches go.mod / go.sum drift before the push reaches CI. CI
+    # runs the same check; this just shifts the failure left so devs
+    # don't push, fail, fix, push again per drifted module.
+    tidy:
+      run: scripts/foreach-module.sh tidy
     # Tests every module (main + sub-modules) so a clean pre-push
     # mirrors what CI will see. The shared script lives under scripts/
     # so devs can also run `scripts/foreach-module.sh test` (or any

@@ -70,10 +70,21 @@ fi
 
 case "$op" in
   tidy)
+    # Run `go mod tidy` across every module first so a single invocation
+    # cleans up *all* drift, then do one repo-wide diff check at the end.
+    # The earlier per-module diff fail-fast pattern made this script a
+    # poor pre-push hook: each run only ever found the first drifted
+    # module, so multi-module drift took multiple iterations to surface.
     for mod in "${ALL_MODULES[@]}"; do
       echo "==> $mod (tidy)"
-      (cd "$mod" && go mod tidy && git diff --exit-code go.mod go.sum)
+      (cd "$mod" && go mod tidy)
     done
+    echo "==> diff check"
+    if ! git diff --exit-code -- '*go.mod' '*go.sum'; then
+      echo
+      echo "go.mod / go.sum drift after tidy. Stage the changes above and commit." >&2
+      exit 1
+    fi
     ;;
   vet)
     for mod in "${ALL_MODULES[@]}"; do
