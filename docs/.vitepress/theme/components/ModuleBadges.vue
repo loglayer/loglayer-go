@@ -9,8 +9,8 @@ const goRefURL = `https://pkg.go.dev/${modulePath}`
 const goRefBadge = `https://pkg.go.dev/badge/${modulePath}.svg`
 
 const versionBadge = props.bundled
-  ? `https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=v*&label=go.loglayer.dev`&color=blue
-  : `https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=${props.path}/v*&label=version`&color=blue
+  ? `https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=v*&sort=date&label=go.loglayer.dev&color=blue`
+  : `https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=${props.path}/v*&sort=date&label=version&color=blue`
 
 // Bundled modules tag as `vX.Y.Z`; sub-modules tag as
 // `<path>/vX.Y.Z`. Filter the releases page by the tag prefix so the
