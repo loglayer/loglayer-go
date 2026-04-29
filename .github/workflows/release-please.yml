@@ -27,8 +27,20 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: googleapis/release-please-action@v4
+      - id: release
+        uses: googleapis/release-please-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
+
+      # Releases created via secrets.GITHUB_TOKEN do not propagate
+      # release:published events to other workflows (GitHub's anti-recursion
+      # rule). Dispatch the docs deploy explicitly so the site rebuilds on
+      # every release-please-driven release. workflow_dispatch is one of
+      # the two events that DOES dispatch through GITHUB_TOKEN.
+      - name: Deploy docs on release
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run docs.yml --ref main
