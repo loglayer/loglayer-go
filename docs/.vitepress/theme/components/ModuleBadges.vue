@@ -12,7 +12,14 @@ const versionBadge = props.bundled
   ? `https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=v*&label=go.loglayer.dev`
   : `https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=${props.path}/v*&label=version`
 
-const releasesURL = `https://github.com/loglayer/loglayer-go/releases`
+// Bundled modules tag as `vX.Y.Z`; sub-modules tag as
+// `<path>/vX.Y.Z`. Filter the releases page by the tag prefix so the
+// badge link lands on this module's releases instead of the global
+// list. The `?q=` filter is GitHub's search-by-tag-name on the
+// /releases page, which respects the slash-form tag names.
+const releasesURL = props.bundled
+  ? `https://github.com/loglayer/loglayer-go/releases`
+  : `https://github.com/loglayer/loglayer-go/releases?q=${encodeURIComponent(props.path + '/')}&expanded=true`
 const sourceURL = `https://github.com/loglayer/loglayer-go/tree/main/${props.path}`
 
 const changelogURL = props.bundled
