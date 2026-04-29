@@ -16,6 +16,7 @@ import (
 
 	"go.loglayer.dev"
 	"go.loglayer.dev/plugins/oteltrace"
+	"go.loglayer.dev/plugins/plugintest"
 	lltest "go.loglayer.dev/transports/testing"
 	"go.opentelemetry.io/otel/baggage"
 	otrace "go.opentelemetry.io/otel/trace"
@@ -25,7 +26,7 @@ import (
 
 func newLiveSetup(t *testing.T, plugin loglayer.Plugin, tpOpts ...sdktrace.TracerProviderOption) (*loglayer.LogLayer, *lltest.TestLoggingLibrary, otrace.Tracer) {
 	t.Helper()
-	log, lib := setup(t, plugin)
+	log, lib := plugintest.Install(t, plugin)
 	tp := sdktrace.NewTracerProvider(tpOpts...)
 	t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
 	return log, lib, tp.Tracer("livetest")

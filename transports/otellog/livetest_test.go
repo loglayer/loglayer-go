@@ -187,8 +187,9 @@ func TestLive_StructMetadataNestedThroughSDK(t *testing.T) {
 		t.Fatalf("metadata attr should be Map, got %v", meta.Kind())
 	}
 	nested := kvMap(meta.AsMap())
-	// JSON roundtrip turns Go ints into float64.
-	if nested["id"].AsFloat64() != 7 || nested["name"].AsString() != "Alice" {
+	// MetadataAsMap walks the struct via reflection and preserves the
+	// runtime type, so an int field arrives as KindInt64.
+	if nested["id"].AsInt64() != 7 || nested["name"].AsString() != "Alice" {
 		t.Errorf("metadata fields: got %v", nested)
 	}
 }
