@@ -24,13 +24,97 @@ Four primary adoption paths, in order of overhead on a simple message:
 | Wrap zap | 470 ns / 1 alloc | Already on zap, or need its `zapcore` features. |
 | slog frontend (`sloghandler`) | 733 ns / 7 allocs | Standardizing on `slog.Default()` so dependencies' logs route through loglayer too. |
 
-Sub-microsecond emission across the board. The sections below break down where each cost goes.
+Sub-microsecond on every path. The sections below break down where the time goes.
+
+## Same call site, any transport
+
+All four setups produce the same call site:
+
+```go
+log.WithFields(loglayer.Fields{"requestId": "abc"}).
+    WithMetadata(loglayer.Metadata{"user": "alice", "id": 42}).
+    Info("logged in")
+```
+
+By contrast, each underlying logger has its own call-site shape, and using one directly commits every line to that vendor's API:
+
+```go
+// zerolog: chained typed builder
+zl.Info().
+    Str("requestId", "abc").
+    Str("user", "alice").
+    Int("id", 42).
+    Msg("logged in")
+
+// zap: typed Field constructors
+zp.Info("logged in",
+    zap.String("requestId", "abc"),
+    zap.String("user", "alice"),
+    zap.Int("id", 42),
+)
+
+// slog: alternating key/value variadic
+slog.Info("logged in",
+    "requestId", "abc",
+    "user", "alice",
+    "id", 42,
+)
+
+// logrus: WithFields chained, separate Info call
+logrus.WithFields(logrus.Fields{
+    "requestId": "abc",
+    "user":      "alice",
+    "id":        42,
+}).Info("logged in")
+```
+
+With LogLayer, swapping the underlying transport is a one-line change in `New()`:
+
+```go
+import (
+    "go.loglayer.dev"
+    "go.loglayer.dev/integrations/sloghandler"
+    "go.loglayer.dev/transports/structured"
+    llzero "go.loglayer.dev/transports/zerolog"
+    llzap "go.loglayer.dev/transports/zap"
+)
+
+// Wrap zerolog (142 ns)
+log := loglayer.New(loglayer.Config{
+    Transport: llzero.New(llzero.Config{Logger: zl}),
+})
+
+// Standalone structured (353 ns)
+log := loglayer.New(loglayer.Config{
+    Transport: structured.New(structured.Config{}),
+})
+
+// Wrap zap (470 ns)
+log := loglayer.New(loglayer.Config{
+    Transport: llzap.New(llzap.Config{Logger: zp}),
+})
+
+// slog frontend (733 ns) — same setup, plus install the handler
+log := loglayer.New(loglayer.Config{
+    Transport: structured.New(structured.Config{}),
+})
+slog.SetDefault(slog.New(sloghandler.New(log)))
+```
+
+Cross-cutting concerns plug in once and apply to every emission, regardless of which transport is below:
+
+```go
+log.AddPlugin(redact.New(redact.Config{Keys: []string{"password"}}))
+log.AddPlugin(oteltrace.New(oteltrace.Config{}))
+```
+
+What LogLayer gives you: one call-site shape against any transport, a single point to install plugins (redact, sampling, oteltrace, datadogtrace, custom hooks), and runtime knobs (level changes, transport hot-swap, mute toggles) that work the same way regardless of what's below.
 
 ## Wrapping a third-party logger
 
 ### zerolog
 
-`zerolog` is the fastest of the popular Go loggers; the question is what wrapping it costs.
+`zerolog` is the fastest of the popular Go loggers.
 
 | Setup | Time | Allocs | Bytes | Δ vs direct |
 |---|---:|---:|---:|---:|
@@ -44,6 +128,16 @@ The simple-message overhead is one allocation: the `*LogBuilder` for the metadat
 
 Metadata costs more because LogLayer builds an intermediate map for the dispatched payload before handing it to zerolog. **Structs are cheaper than maps** because the encoder serializes the value directly. If you log the same shape repeatedly, declare a struct.
 
+#### vs standalone renderers
+
+| Workload | LogLayer + zerolog | `structured` | `console` |
+|---|---:|---:|---:|
+| Simple message | **142 ns** | 353 ns | 155 ns |
+| Map metadata | **713 ns** | 1,191 ns | 1,095 ns |
+| Struct metadata | **535 ns** | 1,634 ns | 1,537 ns |
+
+zerolog wins on every shape. Its hand-tuned JSON encoder writes directly into a per-call buffer without going through an intermediate `map[string]any`, which is what the standalone renderers (and every other wrapper) pay for. If raw throughput is the priority and you don't mind the dependency, this is the fastest setup.
+
 ### zap
 
 | Setup | Time | Allocs | Bytes | Δ vs direct |
@@ -54,7 +148,17 @@ Metadata costs more because LogLayer builds an intermediate map for the dispatch
 | LogLayer + zap, struct metadata | 1,018 ns | 5 | 320 | **+448 ns / +4 allocs** |
 | LogLayer + zap, map metadata | 1,128 ns | 5 | 641 | **+558 ns / +4 allocs** |
 
-The wrapper overhead has the same shape as zerolog's. zap's own dispatch is heavier (5× zerolog's floor), so the LogLayer tax is a smaller fraction of the total. If you're already on zap, the overhead is in the noise.
+The wrapper overhead has the same shape as zerolog's. zap's own dispatch is heavier (5× zerolog's floor), so the wrapper is a smaller fraction of the total cost.
+
+#### vs standalone renderers
+
+| Workload | LogLayer + zap | `structured` | `console` |
+|---|---:|---:|---:|
+| Simple message | 470 ns | **353 ns** | **155 ns** |
+| Map metadata | 1,128 ns | 1,191 ns | **1,095 ns** |
+| Struct metadata | **1,018 ns** | 1,634 ns | 1,537 ns |
+
+The standalone renderers beat wrap-zap on simple messages (no `zapcore.Field` construction needed) and `console` ties wrap-zap on map metadata. zap pulls ahead on struct metadata because it doesn't go through the JSON-roundtrip path the renderers use. **Pick zap for its API or ecosystem (`zapcore` integrations, sampling, etc.), not for renderer throughput.** If you're choosing freely, `structured` or wrap-zerolog is the better default.
 
 ## Renderer transports
 
@@ -78,7 +182,7 @@ Reading these:
 
 - **`console` beats `structured` on simple messages** (155 ns vs 353 ns) because it just writes the line. No JSON encoding.
 - **`console` beats `structured` on map metadata** (1,095 ns vs 1,191 ns) because logfmt rendering is cheaper than JSON for shallow scalar payloads. Strings render bare when safe and quoted when they contain spaces or special chars; numbers and bools render directly. Nested values inside the data map (a `map[string]any` value, for instance) get JSON-encoded inline.
-- **`structured` simple-message cost** is faster than wrapping zap (470 ns) and slower than wrapping zerolog (142 ns, hand-tuned JSON encoder). For most workloads the difference is invisible against the cost of actually shipping the bytes.
+- **`structured` simple-message cost** is faster than wrapping zap (470 ns) and slower than wrapping zerolog (142 ns, hand-tuned JSON encoder).
 - **Struct metadata is slower than map** on both renderers because struct values go through a JSON roundtrip in `MetadataAsMap` before the renderer sees them. If you log the same struct shape repeatedly on a hot path and care about renderer cost, build the map directly instead.
 
 ## slog frontend
@@ -104,7 +208,7 @@ How to read these numbers:
 
 - **+229 ns is unavoidable.** Every `slog.Info(...)` captures `Record.PC` and builds a Record before any handler runs. That's slog's design.
 - **+294 ns is JSON serialization** (523 − 229). The loglayer handler skips this because the transport is a no-op; in practice the `structured` transport adds comparable JSON marshalling.
-- **+210 ns is the loglayer pipeline tax** on top of the JSON-emitting baseline (733 − 523). It buys the plugin pipeline, multi-transport fan-out, group routing, runtime level state, the typed `LogLine` testing capture, and source-info forwarding.
+- **+210 ns is the loglayer pipeline** on top of the JSON-emitting baseline (733 − 523). It buys the plugin pipeline, multi-transport fan-out, group routing, runtime level state, the typed `LogLine` testing capture, and source-info forwarding.
 - **The 7-vs-0 alloc gap is structural.** The stdlib JSON handler reuses a `sync.Pool`-backed buffer per call; loglayer's assembled `Data` map can't be pooled because transports are allowed to retain it (the testing transport stores it directly; an async transport would hold it across goroutines). See [`AGENTS.md`](https://github.com/loglayer/loglayer-go/blob/main/AGENTS.md) "Performance: Attempted and Rejected".
 
 The loglayer-native path (`log.Info("msg")` directly, no slog frontend) is ~41 ns / 1 alloc on the same hardware. If raw throughput on the message-emission path matters more than slog interop, call loglayer directly.
@@ -143,16 +247,14 @@ The added cost is constant across emission shapes and dominated by `runtime.Func
 
 The slog handler ([`integrations/sloghandler`](/integrations/sloghandler)) forwards `slog.Record.PC` for free, since slog itself captures the PC regardless. The handler's hot path is comparable to the Source-on path above.
 
-## When the overhead matters
+## Hot-path considerations
 
-LogLayer's overhead is **per-call cost**, not per-byte. If your service does I/O between log calls (an HTTP request, a database query, a goroutine wakeup), the budget is dominated by serialization, not dispatch. The wrapper overhead is invisible.
+LogLayer's overhead is **per-call cost**, not per-byte. If your service does I/O between log calls (HTTP request, DB query, goroutine wakeup), the dispatch cost is dominated by everything else.
 
-Cases where it becomes visible:
+Where it does matter:
 
-- A tight loop emitting millions of logs per second: pre-aggregate, [sample](/plugins/sampling), or gate behind `IsLevelEnabled` and skip the call entirely.
-- A latency-sensitive hot path where every nanosecond is budgeted: gate behind `IsLevelEnabled`.
-
-For typical web services, batch jobs, and CLI tools, the dispatch cost is in the noise.
+- Tight loops emitting millions of logs per second: pre-aggregate, [sample](/plugins/sampling), or gate behind `IsLevelEnabled` and skip the call entirely.
+- Latency-sensitive hot paths where every nanosecond is budgeted: gate behind `IsLevelEnabled`.
 
 ## Reproducing locally
 
