@@ -1,6 +1,8 @@
 // Package pretty provides a colorized terminal transport that renders log
 // entries with theme-aware formatting and three view modes (inline,
 // message-only, expanded). Inspired by loglayer's simple-pretty-terminal.
+//
+// See https://go.loglayer.dev for usage guides and the full API reference.
 package pretty
 
 import (
