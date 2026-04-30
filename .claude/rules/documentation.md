@@ -314,9 +314,44 @@ Rules:
   - For the main module's API changes: `` `loglayer`: ``.
   - For sub-module changes: the import path in backticks: `` `transports/lumberjack`: ``, `` `plugins/fmtlog`: ``.
   - For cross-cutting work tied to a specific release: `` `vX.Y.Z`: `` (e.g. `` `v1.1.0`: ``, `` `v1.0.0`: ``).
-- Bullets format: `- **Title**: prose ending with a `See [Page Name](/path).` link if applicable.` Sentence case after the colon, 1–3 sentences, lead with the conclusion. Don't paraphrase the doc page.
-- Code or diff blocks belong indented under their bullet so they stay attached to it.
+- **Bullets only when listing multiple items.** A scope with a single change reads as a plain paragraph (or a few paragraphs) under the `scope:` line, not as a one-bullet list. Bullets are for genuine enumerations.
+- **For initial releases of a new transport, plugin, or integration**, the whats-new entry is one short paragraph: what it does and a link to the doc page. Don't enumerate config knobs, severity mappings, or implementation details ("forwards entries to a caller-supplied X.Logger", "writes JSON-per-line via Y", etc.); that's the doc page's job.
+- **Make the link text name the project's component, not the upstream product.** `[Sentry transport](/transports/sentry)` (clear: this links to our transport docs), not `[Sentry](/transports/sentry)` (ambiguous: looks like it should go to sentry.io). Same for plugins (`[redact plugin]`) and integrations (`[loghttp integration]`). The inline link replaces a trailing `See [...](...)` link; don't include both.
+- **Lead with the conclusion.** The first sentence (or for multi-item bulleted scopes, the title before the colon) names the change in plain terms. Don't paraphrase the doc page; link to it.
+- **Length: pick the shortest form that fits the change.** Most fixes and minor features are one or two sentences. For substantial changes (multi-aspect features, anything where forcing it into a single sentence produces a parenthetical wall), break the elaboration into paragraphs separated by blank lines so the reader can scan rather than parse. One idea per paragraph.
+- Code or diff blocks belong attached to the entry: indented two spaces under a bullet, or as their own block separated by blank lines under a paragraph entry.
 - Apply the project's general docs-style rules: no em dashes, no comma splices, no filler.
+
+### Examples of each shape
+
+**Single-item scope, brief (initial transport release):**
+
+```markdown
+`transports/foo`:
+
+Initial release. New [Foo transport](/transports/foo).
+```
+
+**Multi-paragraph entry (substantial feature):**
+
+```markdown
+`loglayer`:
+
+**`MetadataFieldName` is now a core `Config` knob.** Set it once and metadata nests under the configured key uniformly across every transport. Joins `FieldsKey` and `ErrorFieldName` as the third assembly-shape knob. See [`MetadataFieldName`](/configuration#metadatafieldname).
+
+The resolved assembly shape is also published as `loglayer.Schema` on `TransportParams` and on the dispatch-time plugin hook param structs, so plugins can navigate `params.Data` without guessing keys.
+
+The per-transport `Config.MetadataFieldName` field is removed from every wrapper; set the core knob instead.
+```
+
+**Multi-item bulleted scope:**
+
+```markdown
+`transports/pretty`:
+
+- **Column-aligned YAML in expanded mode**: same-level scalar keys pad to the longest sibling so values line up.
+- **Nested rendering for keyed metadata**: when `Config.MetadataFieldName` is set, the metadata value renders as YAML under the configured key.
+```
 
 ## When You Add a New Feature or Make an API Change
 

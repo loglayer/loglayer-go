@@ -11,44 +11,49 @@ description: Latest features and improvements in LogLayer for Go.
 
 `transports/gcplogging`:
 
-- **Initial release**: new transport that forwards entries to a caller-supplied [`*logging.Logger`](https://pkg.go.dev/cloud.google.com/go/logging#Logger) from `cloud.google.com/go/logging`. Severity mapping (Trace/Debug → `Debug`, Info → `Info`, Warn → `Warning`, Error → `Error`, Fatal → `Critical`, Panic → `Alert`), root-level `Entry` skeleton (`Resource`, `Labels`, `HTTPRequest`, ...), per-entry `EntryFn` hook for lifting metadata onto typed Entry fields, async or sync dispatch, and `Close()` flushes via `Logger.Flush`. See [Google Cloud Logging Transport](/transports/gcplogging).
-
-`loglayer`:
-
-- **`MetadataFieldName` at the core, plus `Schema` on `TransportParams` and dispatch hook params**: `loglayer.Config.MetadataFieldName` joins `FieldsKey` and `ErrorFieldName` as a core knob. When non-empty, both map and non-map metadata nest under the configured key uniformly across every transport. The resolved assembly shape (`FieldsKey`, `MetadataFieldName`, `ErrorFieldName`, `SourceFieldName`) is published as `loglayer.Schema` on `TransportParams` and the four dispatch-time plugin hook param structs (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`), so plugins can navigate `params.Data` precisely without guessing the key. The per-transport `Config.MetadataFieldName` field is removed from every wrapper (zerolog, zap, charmlog, phuslu, logrus, slog, otellog, sentry); set the core knob instead. See [`MetadataFieldName`](/configuration#metadatafieldname).
+Initial release. New [Google Cloud Logging transport](/transports/gcplogging).
 
 `transports/sentry`:
 
-- **Initial release**: new transport that forwards entries to a caller-supplied [`sentry.Logger`](https://pkg.go.dev/github.com/getsentry/sentry-go#Logger). Routes fatal/panic through `LFatal()` so loglayer's core controls termination (Sentry's `Fatal()` and `Panic()` are never called). Map fields and metadata flatten as typed Sentry attributes; non-typed values JSON-encode into a single `String` attribute so structure is preserved in Sentry's UI. See [Sentry Transport](/transports/sentry).
+Initial release. New [Sentry transport](/transports/sentry).
+
+`loglayer`:
+
+**`MetadataFieldName` is now a core `Config` knob.** Set it once on `loglayer.Config` and metadata nests under the configured key uniformly across every transport, for both map and non-map values. Joins `FieldsKey` and `ErrorFieldName` as the third assembly-shape knob. See [`MetadataFieldName`](/configuration#metadatafieldname).
+
+The resolved assembly shape (`FieldsKey`, `MetadataFieldName`, `ErrorFieldName`, `SourceFieldName`) is also published as `loglayer.Schema` on `TransportParams` and on the dispatch-time plugin hook param structs (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`). Plugins can navigate `params.Data` precisely without guessing keys.
+
+The per-transport `Config.MetadataFieldName` field is removed from every wrapper (zerolog, zap, charmlog, phuslu, logrus, slog, otellog, sentry); set the core knob instead.
 
 `transports/pretty`:
 
-- **Column-aligned YAML in expanded mode**: same-level scalar keys pad to the longest sibling so values line up, matching the [TypeScript `simple-pretty-terminal`](https://loglayer.dev/transports/simple-pretty-terminal.html) shape. Multi-line keys (nested maps, slices) don't participate in the alignment width.
-- **Nested rendering for keyed metadata**: when `Config.MetadataFieldName` is set, the metadata value JSON-roundtrips into a nested map and renders as YAML under the configured key (was previously a single JSON-encoded string).
+- **Column-aligned YAML in expanded mode**: same-level scalar keys pad to the longest sibling so values line up. Multi-line keys (nested maps, slices) don't participate in the alignment width.
+- **Nested rendering for keyed metadata**: when `Config.MetadataFieldName` is set, the metadata value JSON-roundtrips into a nested map and renders as YAML under the configured key.
 
 ## Apr 29, 2026
 
 `loglayer`:
 
-- **Lazy evaluation**: `loglayer.Lazy(fn)` defers value computation in `WithFields` until log dispatch time. The callback runs only when the level passes and re-evaluates on every emission, so expensive work (memory stats, request summaries, large struct serialization) costs nothing on filtered-out entries. Adapted from [LogTape's lazy evaluation](https://logtape.org/manual/lazy). See [Lazy Evaluation](/logging-api/lazy-evaluation).
-- **Groups exposed to transports and plugin hooks**: `TransportParams.Groups` and the four dispatch-time hook param structs (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`) now carry the merged set of persistent and per-call `WithGroup` tags for the entry. Routing decisions still happen before any hook fires; the slice is exposed so transports can ship groups in the wire payload and plugins can drive group-aware data, message, level, or send-gate transformations. Matches the TypeScript loglayer's surface (`LogLayerTransportParams.groups`, `PluginShouldSendToLoggerParams.groups`) and goes beyond it for the other dispatch-time hooks. See [Reading params.Groups](/transports/creating-transports#reading-params-groups) and [Per-call groups](/plugins/creating-plugins#per-call-groups).
+- **Lazy evaluation**: `loglayer.Lazy(fn)` defers value computation in `WithFields` until log dispatch time. The callback runs only when the level passes and re-evaluates on every emission, so expensive work costs nothing on filtered-out entries. See [Lazy Evaluation](/logging-api/lazy-evaluation).
+- **Groups in dispatch-time hooks**: `TransportParams.Groups` and the four dispatch-time plugin hook param structs now carry the entry's merged `WithGroup` tags. Routing still happens before hooks fire; the slice is exposed so transports can ship groups in the wire payload and plugins can drive group-aware transformations. See [Reading params.Groups](/transports/creating-transports#reading-params-groups).
 
 `transports/lumberjack`:
 
-- **Initial release**: new file transport that writes one JSON object per log entry to a rotating file via [lumberjack.v2](https://github.com/natefinch/lumberjack). Size-triggered rollover, configurable backup retention, age-based cleanup, optional gzip compression, and a `Rotate()` method for SIGHUP-driven roll-overs. The `lumberjack` suffix names the rotation backend explicitly so the shorter `transports/file` name stays available for a future rolled-our-own implementation. See [File (Lumberjack)](/transports/lumberjack).
+Initial release. New [rotating-file transport](/transports/lumberjack).
 
 `v1.1.0`:
 
-- **Multi-module split**: every transport (`transports/*`), plugin (`plugins/*`), and integration (`integrations/*`) now ships as its own independently-versioned Go module. Import paths are unchanged; you may need a `go mod tidy` to pick up the new sub-module entries. Future breaking changes in any one sub-package bump only that sub-module's major version, leaving the main `go.loglayer.dev` import path stable on v1. Full module list in [`.release-please-manifest.json`](https://github.com/loglayer/loglayer-go/blob/main/.release-please-manifest.json).
-- **`fmtlog` import path moved**: the `fmtlog` plugin moved from `go.loglayer.dev/fmtlog` to `go.loglayer.dev/plugins/fmtlog` for consistency with every other plugin. Update imports:
+**Multi-module split.** Every transport (`transports/*`), plugin (`plugins/*`), and integration (`integrations/*`) now ships as its own independently-versioned Go module. Import paths are unchanged; you may need `go mod tidy` to pick up the new sub-module entries. Future breaking changes in any sub-package bump only that module's tag namespace, leaving `go.loglayer.dev` itself stable on v1. Full module list in [`.release-please-manifest.json`](https://github.com/loglayer/loglayer-go/blob/main/.release-please-manifest.json).
 
-  ```diff
-  - import "go.loglayer.dev/fmtlog"
-  + import "go.loglayer.dev/plugins/fmtlog"
-  ```
+**`fmtlog` import path moved.** The plugin moved from `go.loglayer.dev/fmtlog` to `go.loglayer.dev/plugins/fmtlog` for consistency with every other plugin. Update imports:
 
-  Technically a SemVer-breaking change (the old import path is gone), but ships as a minor bump rather than v2.0.0. The v1.0.x release went out with no known users yet.
+```diff
+- import "go.loglayer.dev/fmtlog"
++ import "go.loglayer.dev/plugins/fmtlog"
+```
+
+Technically a SemVer-breaking change, but ships as a minor bump rather than v2.0.0 (the v1.0.x release went out with no known users yet).
 
 `v1.0.0`:
 
-- **Initial release**: LogLayer for Go is a transport-agnostic structured logging facade: one fluent API on top of any logging library, JSON or pretty rendering, HTTP shipping, OpenTelemetry, or your own transport. Stable API; SemVer applies from this point forward. See [Getting Started](/getting-started).
+Initial release. LogLayer for Go is a transport-agnostic structured logging facade: one fluent API on top of any logging library, JSON or pretty rendering, HTTP shipping, OpenTelemetry, or your own transport. Stable API; SemVer applies from this point forward. See [Getting Started](/getting-started).
