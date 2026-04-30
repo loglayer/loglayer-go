@@ -1,5 +1,7 @@
 // Package testing provides a TestTransport and TestLoggingLibrary for use in tests.
 // Import this package only in test files.
+//
+// See https://go.loglayer.dev for usage guides and the full API reference.
 package testing
 
 import (
