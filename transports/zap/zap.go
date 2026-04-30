@@ -1,4 +1,6 @@
 // Package zap provides a LogLayer transport backed by go.uber.org/zap.
+//
+// See https://go.loglayer.dev for usage guides and the full API reference.
 package zap
 
 import (
