@@ -16,6 +16,13 @@ from conventional commits. From v1.0.0 forward, this file is maintained
 automatically; the `[Unreleased]` section below describes the initial
 release at a high level.
 
+## [1.5.0](https://github.com/loglayer/loglayer-go/compare/v1.4.0...v1.5.0) (2026-04-30)
+
+
+### Features
+
+* Surface entry groups to transports and dispatch-time plugin hooks ([#22](https://github.com/loglayer/loglayer-go/issues/22)) ([6db2209](https://github.com/loglayer/loglayer-go/commit/6db2209614bfc1ad02b22502a52e409ed130b2b8))
+
 ## [1.4.0](https://github.com/loglayer/loglayer-go/compare/v1.3.0...v1.4.0) (2026-04-30)
 
 

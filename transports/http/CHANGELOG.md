@@ -9,6 +9,13 @@ from conventional commits scoped to `transports/http`. Tags use the
 prefixed form `transports/http/v<X.Y.Z>` so this module versions
 independently of the framework core.
 
+## [1.2.0](https://github.com/loglayer/loglayer-go/compare/transports/http/v1.1.0...transports/http/v1.2.0) (2026-04-30)
+
+
+### Features
+
+* Surface entry groups to transports and dispatch-time plugin hooks ([#22](https://github.com/loglayer/loglayer-go/issues/22)) ([6db2209](https://github.com/loglayer/loglayer-go/commit/6db2209614bfc1ad02b22502a52e409ed130b2b8))
+
 ## [1.1.0](https://github.com/loglayer/loglayer-go/compare/transports/http/v1.0.0...transports/http/v1.1.0) (2026-04-29)
 
 No code changes in this module. v1.1.0 was a coordinated tag created alongside the main `go.loglayer.dev` v1.1.0 release; see the [main CHANGELOG](https://github.com/loglayer/loglayer-go/blob/main/CHANGELOG.md#110-2026-04-29) for the post-launch reshuffle that drove the bump.
