@@ -16,6 +16,13 @@ from conventional commits. From v1.0.0 forward, this file is maintained
 automatically; the `[Unreleased]` section below describes the initial
 release at a high level.
 
+## [1.6.1](https://github.com/loglayer/loglayer-go/compare/v1.6.0...v1.6.1) (2026-04-30)
+
+
+### Miscellaneous Chores
+
+* Bump every module touched by [#28](https://github.com/loglayer/loglayer-go/issues/28) to refresh pkg.go.dev ([#30](https://github.com/loglayer/loglayer-go/issues/30)) ([2ac74a7](https://github.com/loglayer/loglayer-go/commit/2ac74a7a58947f1d4c1c18ff5998b8042b6d1a59))
+
 ## [1.6.0](https://github.com/loglayer/loglayer-go/compare/v1.5.0...v1.6.0) (2026-04-30)
 
 
