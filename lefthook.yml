@@ -4,6 +4,26 @@
 # Hooks run automatically on `git commit` (pre-commit) and `git push`
 # (pre-push). Skip a hook for a single command with --no-verify.
 
+commit-msg:
+  commands:
+    # Lint the commit message with the same parser release-please uses
+    # (@conventional-commits/parser). Catches body-parse errors that the
+    # PR-title workflow can't see (which only checks the title). If bun
+    # isn't installed or deps are missing, the script can't run; we
+    # exit 0 with a hint rather than blocking commits — CI will catch
+    # it regardless.
+    conventional-commits:
+      run: |
+        if ! command -v bun >/dev/null 2>&1; then
+          echo "lefthook: bun not on PATH; skipping commit-msg lint (CI will catch any issues). Install bun: https://bun.sh" >&2
+          exit 0
+        fi
+        if [ ! -d node_modules ]; then
+          echo "lefthook: node_modules missing; run 'bun install' to enable the commit-msg lint locally (CI will catch any issues)." >&2
+          exit 0
+        fi
+        bun scripts/lint-commit.mjs --edit {1}
+
 pre-commit:
   parallel: true
   commands:

@@ -24,12 +24,18 @@ ln -sf ~/go/bin/lefthook ~/.local/bin/lefthook
 Use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 with the package as the scope. The description should be lowercased.
 
-Allowed types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `perf`,
-`ci`. Examples:
+Allowed types: `feat`, `fix`, `perf`, `revert`, `refactor`, `deps`, `docs`,
+`chore`, `style`, `test`, `build`, `ci`. Examples:
 
 - `feat(transports/datadog): add eu1 site support`
 - `fix(integrations/loghttp): preserve trailers when wrapping ResponseWriter`
 - `docs: clarify Fields vs Metadata`
+
+The `commit-msg` git hook lints every message with the same parser
+release-please uses (`@conventional-commits/parser`). CI re-runs the
+same check on every PR and on push to main. Run `bun install` once
+after cloning to enable the local hook; without it the hook skips and
+CI is the only safety net.
 
 ## Tests
 

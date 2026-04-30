@@ -79,6 +79,51 @@ For detailed documentation, visit [go.loglayer.dev](https://go.loglayer.dev).
 
 Coming from [loglayer for TypeScript](https://loglayer.dev)? See [For TypeScript Developers](https://go.loglayer.dev/for-typescript-developers) for the API mapping and Go-specific differences.
 
+## Local development setup
+
+You need:
+
+| Tool | Why | Install |
+|------|-----|---------|
+| **Go 1.25+** | The main module's floor (`go.mod`). Every sub-module's CI matrix tests against it. | <https://go.dev/dl/> |
+| **lefthook** | Manages the pre-commit, commit-msg, and pre-push git hooks (formatting, vet, conventional-commit lint, race tests). | `go install github.com/evilmartians/lefthook@latest` |
+| **staticcheck** | Pre-commit lint that mirrors what CI runs. Hook fails open if not installed; CI catches anything missed. | `go install honnef.co/go/tools/cmd/staticcheck@latest` |
+| **govulncheck** | Advisory vuln scan (CI runs the same one). Optional; the agent-vulncheck hook prints a hint if it isn't installed. | `go install golang.org/x/vuln/cmd/govulncheck@latest` |
+| **Bun** | Runs `scripts/lint-commit.mjs` (the conventional-commit parser check used by the commit-msg hook) and builds the VitePress docs site under `docs/`. Without bun, the local hook skips and CI catches it. | <https://bun.sh/> |
+
+After cloning:
+
+```sh
+git clone https://github.com/loglayer/loglayer-go
+cd loglayer-go
+
+# Wire up the git hooks (one-time per clone).
+lefthook install
+
+# Install the deps used by the commit-msg hook.
+bun install
+
+# Build everything once to fetch sub-module deps.
+go build ./...
+```
+
+Make sure `$(go env GOPATH)/bin` (default `~/go/bin`) is on your `PATH` so the hooks can find `lefthook` / `staticcheck` / `govulncheck`. If only `~/.local/bin` is on `PATH`, symlink:
+
+```sh
+ln -sf ~/go/bin/lefthook ~/.local/bin/lefthook
+```
+
+Without the symlink (or `PATH` entry), lefthook silently fails open and the hooks won't run.
+
+For docs work:
+
+```sh
+cd docs
+bun install
+bun run docs:build      # validate
+bun run docs:dev        # local preview
+```
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, commit conventions, and PR requirements. Architecture context lives in [AGENTS.md](AGENTS.md).

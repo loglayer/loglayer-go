@@ -1,0 +1,60 @@
+name: Commit Lint
+
+# Lints every commit message with the SAME parser release-please uses
+# (@conventional-commits/parser). This catches commits whose body has
+# something the parser can't handle (e.g. a backtick-wrapped function
+# signature with parens) — release-please would silently skip such a
+# commit, so a `feat:` that should trigger a release would land on main
+# without one. The CI failure here surfaces the issue before merge or
+# (on push) immediately after.
+#
+# Local pre-commit equivalent: lefthook's `commit-msg` hook runs the
+# same script on the message you're about to commit.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Need history so we can compute the commit range.
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Determine commit range
+        id: range
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "from=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+            echo "to=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            BEFORE="${{ github.event.before }}"
+            # github.event.before is all-zeros on a force-push or first push;
+            # in that case lint just the latest commit.
+            if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              echo "from=HEAD~1" >> "$GITHUB_OUTPUT"
+            else
+              echo "from=$BEFORE" >> "$GITHUB_OUTPUT"
+            fi
+            echo "to=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Lint commit messages
+        run: |
+          bun scripts/lint-commit.mjs \
+            --range "${{ steps.range.outputs.from }}..${{ steps.range.outputs.to }}"
