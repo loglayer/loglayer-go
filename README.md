@@ -172,7 +172,7 @@ Behind the scenes, anything multi-module routes through `scripts/foreach-module.
 
 ### Adding a new transport, plugin, or integration
 
-Every transport / plugin ships as its own Go module from day one (no "bundle in main, split later"). `transports/blank/` is a copyable template. The full recipe (go.mod, replace directives, release-please registration, foreach-module updates, docs page) lives in [AGENTS.md → Adding a new transport, plugin, or integration](AGENTS.md). Doc-site conventions for the new page are in [`.claude/rules/documentation.md`](.claude/rules/documentation.md).
+Every transport / plugin / integration ships as its own Go module from day one (no "bundle in main, split later"). `transports/blank/` is a copyable template. The full recipe (go.mod, replace directives, release-please registration, foreach-module updates, docs page) lives in [AGENTS.md → Adding a new transport, plugin, or integration](AGENTS.md). Doc-site conventions for the new page are in [`.claude/rules/documentation.md`](.claude/rules/documentation.md).
 
 ### Docs work
 
