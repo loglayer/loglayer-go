@@ -11,6 +11,8 @@
 // than [sentry.Logger.Fatal], so loglayer's core decides whether to
 // call os.Exit (per Config.DisableFatalExit). The Panic level maps to
 // LFatal as well; loglayer's core does the panic separately.
+//
+// See https://go.loglayer.dev for usage guides and the full API reference.
 package sentrytransport
 
 import (
