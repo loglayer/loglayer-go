@@ -59,14 +59,15 @@ type transportSet struct {
 // LogLayer is the central logger. It assembles log entries from fields, metadata,
 // and error data, then dispatches them to one or more transports.
 type LogLayer struct {
-	config       Config
-	fields       Fields
-	levels       *levelState
-	transports   atomic.Pointer[transportSet]
-	plugins      atomic.Pointer[pluginSet]
-	groups       atomic.Pointer[groupSet]
-	muteFields   atomic.Bool
-	muteMetadata atomic.Bool
+	config        Config
+	fields        Fields
+	levels        *levelState
+	transports    atomic.Pointer[transportSet]
+	plugins       atomic.Pointer[pluginSet]
+	groups        atomic.Pointer[groupSet]
+	muteFields    atomic.Bool
+	muteMetadata  atomic.Bool
+	hasLazyFields atomic.Bool
 	// assignedGroups are the persistent group tags applied by WithGroup
 	// on this logger. Per-call WithGroup on a builder merges with these.
 	// Set only between Child() and the WithGroup call that produced this
@@ -205,6 +206,7 @@ func (l *LogLayer) Child() *LogLayer {
 	}
 	child.muteFields.Store(l.muteFields.Load())
 	child.muteMetadata.Store(l.muteMetadata.Load())
+	child.hasLazyFields.Store(l.hasLazyFields.Load())
 	// transportSet, pluginSet, and groupSet are immutable; mutators publish
 	// new sets via copy-on-write, so the child can share the parent's
 	// snapshots until either side mutates. assignedGroups is also immutable

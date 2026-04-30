@@ -193,8 +193,16 @@ func (l *LogLayer) Raw(entry RawLogEntry) {
 	}
 	applyPrefix(l.prefix, entry.Messages)
 	fields := entry.Fields
+	fromLayer := false
 	if fields == nil {
 		fields = l.fields
+		fromLayer = true
+	}
+	if !l.muteFields.Load() {
+		hasLazy := (fromLayer && l.hasLazyFields.Load()) || (!fromLayer && mapHasLazy(fields))
+		if hasLazy {
+			fields = resolveLazyFields(fields)
+		}
 	}
 	groups := entry.Groups
 	if groups == nil {

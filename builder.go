@@ -180,5 +180,9 @@ func (b *LogBuilder) dispatch(level LogLevel, messages []any, source *Source) {
 	if ctx == nil {
 		ctx = b.layer.boundCtx
 	}
-	b.layer.processLog(level, messages, b.layer.fields, ctx, b.metadata, b.err, source, groups, b.plugins)
+	fields := b.layer.fields
+	if !b.layer.muteFields.Load() && b.layer.hasLazyFields.Load() {
+		fields = resolveLazyFields(fields)
+	}
+	b.layer.processLog(level, messages, fields, ctx, b.metadata, b.err, source, groups, b.plugins)
 }

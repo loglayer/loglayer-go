@@ -164,6 +164,26 @@ log = log.MuteMetadata()
 log = log.UnmuteMetadata()
 ```
 
+## Lazy Evaluation
+
+Adapted from [LogTape's lazy evaluation](https://logtape.org/manual/lazy). Wrap a `Fields` value with `loglayer.Lazy(fn)` so it runs only at dispatch time, after the level filter, on every emission. Recognized only as the direct value of a `Fields` (or `RawLogEntry.Fields`) key. A `*LazyValue` nested inside another value (a map, slice, struct field) is not resolved.
+
+```go
+log = log.WithFields(loglayer.Fields{
+    "service": "api",
+    "heap_kb": loglayer.Lazy(func() any {
+        var m runtime.MemStats; runtime.ReadMemStats(&m)
+        return m.HeapAlloc / 1024
+    }),
+})
+log.Info("starting work") // heap_kb captured here
+log.Info("done")          // captured fresh again
+```
+
+If the callback panics, the recovered placeholder `loglayer.LazyEvalError` (`"[LazyEvalError]"`) is substituted into the entry. The rest of the entry still sends so other fields aren't lost.
+
+Callbacks may be invoked concurrently across goroutines if the same `*LogLayer` is shared; they must be thread-safe. Plugin call-time hooks (`OnFieldsCalled`) see the raw `*LazyValue` wrapper; dispatch-time hooks (`OnBeforeDataOut`, `OnBeforeMessageOut`, `TransformLogLevel`) see the resolved value.
+
 ## Fields (persistent data across all log entries)
 
 Fields ride on every emission from the logger they're set on. `WithFields` returns a new `*LogLayer` — always assign the result.

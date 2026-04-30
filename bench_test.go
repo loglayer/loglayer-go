@@ -150,3 +150,19 @@ func BenchmarkLoglayer_MapMetadata_AddSourceOn(b *testing.B) {
 type benchErr string
 
 func (e benchErr) Error() string { return string(e) }
+
+// WithFields paired with a Lazy field. Callback returns a cheap
+// constant so the measured delta is the framework's resolution
+// overhead, not the user payload.
+func BenchmarkLoglayer_WithFields_Lazy(b *testing.B) {
+	log := loglayer.New(loglayer.Config{DisableFatalExit: true, Transport: &noopTransport{}})
+	log = log.WithFields(loglayer.Fields{
+		"requestId": "abc-123",
+		"computed":  loglayer.Lazy(func() any { return "computed-value" }),
+	})
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		log.Info("request handled")
+	}
+}
