@@ -13,6 +13,8 @@
 //
 // Compose by registering multiple instances; each runs as its own SendGate
 // and an emission is kept only when every gate returns true.
+//
+// See https://go.loglayer.dev for usage guides and the full API reference.
 package sampling
 
 import (

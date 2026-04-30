@@ -6,6 +6,8 @@
 // Mental model: log calls enqueue entries into a buffered channel; a
 // background worker drains the channel into batches and POSTs them. Use Close
 // to drain pending entries on shutdown.
+//
+// See https://go.loglayer.dev for usage guides and the full API reference.
 package httptransport
 
 import (

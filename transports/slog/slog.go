@@ -4,6 +4,8 @@
 // Use this transport when your codebase or its dependencies are wired against
 // *slog.Logger and you want LogLayer's API on top, or when you want to plug
 // LogLayer into a slog-based handler stack (JSON, text, OpenTelemetry, etc).
+//
+// See https://go.loglayer.dev for usage guides and the full API reference.
 package slog
 
 import (

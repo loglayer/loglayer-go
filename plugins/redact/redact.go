@@ -21,6 +21,8 @@
 //	log.AddPlugin(redact.New(redact.Config{
 //	    Keys: []string{"password", "apiKey", "ssn"},
 //	}))
+//
+// See https://go.loglayer.dev for usage guides and the full API reference.
 package redact
 
 import (

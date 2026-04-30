@@ -8,6 +8,8 @@
 //     and metadata
 //
 // API reference: https://docs.datadoghq.com/api/latest/logs/#send-logs
+//
+// See https://go.loglayer.dev for usage guides and the full API reference.
 package datadog
 
 import (

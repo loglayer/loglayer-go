@@ -48,6 +48,8 @@
 //	handlerLog.Info("served")
 //	// Output includes dd.trace_id and dd.span_id, ready for log/trace
 //	// correlation in the Datadog UI.
+//
+// See https://go.loglayer.dev for usage guides and the full API reference.
 package datadogtrace
 
 import (

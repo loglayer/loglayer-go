@@ -5,6 +5,8 @@
 // Config.DisableFatalExit). This transport never invokes the underlying
 // library's exit path, regardless of how the wrapped *zerolog.Logger is
 // configured.
+//
+// See https://go.loglayer.dev for usage guides and the full API reference.
 package zerolog
 
 import (

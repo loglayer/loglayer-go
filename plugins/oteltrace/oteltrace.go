@@ -32,6 +32,8 @@
 //	handlerLog := log.WithContext(r.Context())
 //	handlerLog.Info("served")
 //	// {"level":"info","msg":"served","trace_id":"4bf...","span_id":"00f..."}
+//
+// See https://go.loglayer.dev for usage guides and the full API reference.
 package oteltrace
 
 import (

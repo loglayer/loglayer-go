@@ -7,6 +7,8 @@
 // If you find yourself reusing the same blank.Config in multiple places,
 // promote it to its own transport package; see
 // /transports/creating-transports.md for the full template.
+//
+// See https://go.loglayer.dev for usage guides and the full API reference.
 package blank
 
 import (
