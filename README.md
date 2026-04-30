@@ -196,7 +196,7 @@ Source under `docs/src/`. Prose conventions (no em dashes, lead with conclusion,
 
 ## Issues and questions
 
-Bug reports, feature requests, and architectural questions go in [GitHub Issues](https://github.com/loglayer/loglayer-go/issues). Tag the title with the relevant component when applicable (e.g. `[transports/zap]`, `[plugins/redact]`, `[docs]`) so triage is quick.
+Bug reports, feature requests, and architectural questions go in [GitHub Issues](https://github.com/loglayer/loglayer-go/issues).
 
 ## License
 
