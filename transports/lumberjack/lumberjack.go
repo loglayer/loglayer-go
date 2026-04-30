@@ -11,6 +11,8 @@
 // The package name shadows the upstream `gopkg.in/natefinch/lumberjack.v2`
 // (which is also `package lumberjack`); within this file the upstream is
 // aliased to lj. Callers that import both can use a similar alias.
+//
+// See https://go.loglayer.dev for usage guides and the full API reference.
 package lumberjack
 
 import (
