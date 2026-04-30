@@ -7,20 +7,22 @@
 commit-msg:
   commands:
     # Lint the commit message with the same parser release-please uses
-    # (@conventional-commits/parser). Catches body-parse errors that the
-    # PR-title workflow can't see (which only checks the title). If bun
-    # isn't installed or deps are missing, the script can't run; we
-    # exit 0 with a hint rather than blocking commits — CI will catch
-    # it regardless.
+    # (@conventional-commits/parser). Catches body-parse errors the
+    # PR-title workflow can't see (which only checks the title).
+    #
+    # Missing tooling is a hard fail: the local hook only matters if it
+    # actually runs, and a silent skip ships "works on my machine"
+    # commits that fail in CI on someone else's box. Bypass per-commit
+    # with --no-verify if you genuinely need to.
     conventional-commits:
       run: |
         if ! command -v bun >/dev/null 2>&1; then
-          echo "lefthook: bun not on PATH; skipping commit-msg lint (CI will catch any issues). Install bun: https://bun.sh" >&2
-          exit 0
+          echo "lefthook: bun not on PATH. Install bun (https://bun.sh) or skip with: git commit --no-verify" >&2
+          exit 1
         fi
         if [ ! -d node_modules ]; then
-          echo "lefthook: node_modules missing; run 'bun install' to enable the commit-msg lint locally (CI will catch any issues)." >&2
-          exit 0
+          echo "lefthook: node_modules missing. Run 'bun install' or skip with: git commit --no-verify" >&2
+          exit 1
         fi
         bun scripts/lint-commit.mjs --edit {1}
 
@@ -37,17 +39,34 @@ pre-commit:
       glob: "*.go"
       run: go vet ./...
     # Mirror what CI runs so a clean pre-commit means a clean CI run.
-    # Install once: go install honnef.co/go/tools/cmd/staticcheck@latest
-    # If staticcheck isn't on PATH, this hook prints a hint and skips
-    # rather than failing — CI will catch any issue regardless.
+    # Hard-fails if staticcheck isn't installed: the lint should actually
+    # run before the commit lands, not be deferred to CI on a clone where
+    # the tool happens to be missing. Bypass per-commit with --no-verify.
     staticcheck:
       glob: "*.go"
       run: |
         if ! command -v staticcheck >/dev/null 2>&1; then
-          echo "staticcheck not found on PATH; skipping (install: go install honnef.co/go/tools/cmd/staticcheck@latest)"
-          exit 0
+          echo "staticcheck not on PATH. Install with: go install honnef.co/go/tools/cmd/staticcheck@latest" >&2
+          echo "Or skip this commit with: git commit --no-verify" >&2
+          exit 1
         fi
         staticcheck ./...
+    # Keep the README's auto-generated TOC in sync. Same pattern as the
+    # gofmt step: regenerate, re-stage, don't fail. doctoc is a no-op when
+    # the TOC is already current.
+    doctoc:
+      glob: "README.md"
+      run: |
+        if ! command -v bun >/dev/null 2>&1; then
+          echo "lefthook: bun not on PATH. Install bun (https://bun.sh) or skip with: git commit --no-verify" >&2
+          exit 1
+        fi
+        if [ ! -d node_modules ]; then
+          echo "lefthook: node_modules missing. Run 'bun install' or skip with: git commit --no-verify" >&2
+          exit 1
+        fi
+        bun run toc
+      stage_fixed: true
 
 pre-push:
   commands:

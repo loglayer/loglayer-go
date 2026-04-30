@@ -11,6 +11,12 @@
 # Test binary, built with `go test -c`
 *.test
 
+# Bun deps for the commit-msg lint helper (scripts/lint-commit.mjs).
+# Only docs/ commits its bun.lock; the root project's single tiny dep
+# is re-resolved per-environment by `bun install`.
+/node_modules/
+/bun.lock
+
 # Code coverage profiles and other test artifacts
 *.out
 coverage.*
