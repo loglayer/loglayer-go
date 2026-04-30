@@ -1,4 +1,6 @@
 // Package logrus provides a LogLayer transport backed by github.com/sirupsen/logrus.
+//
+// See https://go.loglayer.dev for usage guides and the full API reference.
 package logrus
 
 import (
