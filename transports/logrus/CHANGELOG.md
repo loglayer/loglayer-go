@@ -9,6 +9,13 @@ from conventional commits scoped to `transports/logrus`. Tags use the
 prefixed form `transports/logrus/v<X.Y.Z>` so this module versions
 independently of the framework core.
 
+## [1.3.0](https://github.com/loglayer/loglayer-go/compare/transports/logrus/v1.2.0...transports/logrus/v1.3.0) (2026-04-30)
+
+
+### Features
+
+* Surface assembly Schema to transports and plugins, add Sentry transport ([#24](https://github.com/loglayer/loglayer-go/issues/24)) ([d35a0d5](https://github.com/loglayer/loglayer-go/commit/d35a0d5146e704d92f65fb208b17daaa4d151891))
+
 ## [1.2.0](https://github.com/loglayer/loglayer-go/compare/transports/logrus/v1.1.0...transports/logrus/v1.2.0) (2026-04-29)
 
 
