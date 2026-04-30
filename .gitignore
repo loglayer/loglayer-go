@@ -43,4 +43,17 @@ go.work.sum
 
 # Editor/IDE
 .idea/
-# .vscode/
+.vscode/
+*.iml
+*.swp
+*.swo
+*~
+.\#*
+\#*\#
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
