@@ -11,6 +11,21 @@
 
 set -euo pipefail
 
+# Internal entrypoint: run `go test` for one module and print its output
+# atomically. Used by the parallelized `test` op so concurrent module
+# output doesn't interleave. Not part of the public op set.
+if [ "${1:-}" = "__test_one" ]; then
+  shift
+  mod="$1"
+  out=$(cd "$mod" && go test -race -count=1 ./... 2>&1) && rc=0 || rc=$?
+  if [ "$rc" -eq 0 ]; then
+    printf '==> %s (test)\n%s\n' "$mod" "$out"
+  else
+    printf '==> %s (test) FAILED (rc=%d)\n%s\n' "$mod" "$rc" "$out" >&2
+  fi
+  exit "$rc"
+fi
+
 # All Go modules in the repo. Order is intentional: main first, then
 # sub-modules. Don't reorder without a reason.
 ALL_MODULES=(
@@ -143,37 +158,53 @@ case "$op" in
   test)
     # Example modules have no tests; skip to avoid the confusing
     # "[no test files]" output. Every other module has tests.
-    for mod in \
-      . \
-      transports/blank \
-      transports/central \
-      transports/charmlog \
-      transports/console \
-      transports/datadog \
-      transports/lumberjack \
-      transports/http \
-      transports/logrus \
-      transports/otellog \
-      transports/phuslu \
-      transports/pretty \
-      transports/sentry \
-      transports/slog \
-      transports/structured \
-      transports/testing \
-      transports/zap \
-      transports/zerolog \
-      plugins/datadogtrace \
-      plugins/datadogtrace/livetest \
-      plugins/fmtlog \
-      plugins/oteltrace \
-      plugins/plugintest \
-      plugins/redact \
-      plugins/sampling \
-      integrations/loghttp \
-      integrations/sloghandler; do
-      echo "==> $mod (test)"
-      (cd "$mod" && go test -race -count=1 ./...)
-    done
+    TEST_MODULES=(
+      .
+      transports/blank
+      transports/central
+      transports/charmlog
+      transports/console
+      transports/datadog
+      transports/lumberjack
+      transports/http
+      transports/logrus
+      transports/otellog
+      transports/phuslu
+      transports/pretty
+      transports/sentry
+      transports/slog
+      transports/structured
+      transports/testing
+      transports/zap
+      transports/zerolog
+      plugins/datadogtrace
+      plugins/datadogtrace/livetest
+      plugins/fmtlog
+      plugins/oteltrace
+      plugins/plugintest
+      plugins/redact
+      plugins/sampling
+      integrations/loghttp
+      integrations/sloghandler
+    )
+    # Run modules concurrently. Each `go test ./...` already parallelizes
+    # within a module; this layer parallelizes across modules so the
+    # 27-module sequence stops being a 27x process-startup tax. Output
+    # from each module is buffered by `__test_one` and printed atomically
+    # so the lines from different modules don't interleave.
+    #
+    # Override with PARALLEL=1 to force serial (helpful when debugging a
+    # specific module's output). getconf works on both Linux and macOS;
+    # falls back to 4 if neither is available.
+    PARALLEL="${PARALLEL:-$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)}"
+    if [ "$PARALLEL" -le 1 ]; then
+      for mod in "${TEST_MODULES[@]}"; do
+        "$0" __test_one "$mod"
+      done
+    else
+      printf '%s\n' "${TEST_MODULES[@]}" |
+        xargs -n1 -P "$PARALLEL" -I{} "$0" __test_one {}
+    fi
     ;;
   build)
     for mod in "${ALL_MODULES[@]}"; do

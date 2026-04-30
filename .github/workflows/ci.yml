@@ -29,6 +29,10 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
           cache: true
+          # Default cache key only hashes the root go.sum, which misses
+          # every sub-module's deps. Glob covers them all so a sub-module
+          # bump invalidates the cache (and seeds the new deps into it).
+          cache-dependency-path: '**/go.sum'
 
       - name: Verify modules tidy
         run: scripts/foreach-module.sh tidy
@@ -77,27 +81,63 @@ jobs:
   staticcheck:
     name: Staticcheck
     runs-on: ubuntu-latest
+    env:
+      # Pin instead of @latest so a new staticcheck release with new
+      # checks doesn't surprise CI. Bump deliberately.
+      STATICCHECK_VERSION: '2026.1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
           cache: true
+          cache-dependency-path: '**/go.sum'
+      # Cache the installed binary keyed on tool + Go version so we skip
+      # `go install`'s recompile on cache hit. Cheap, no third-party action
+      # needed (the official dominikh/staticcheck-action targets single-
+      # module repos and doesn't fit our foreach-module loop).
+      - name: Cache staticcheck binary
+        id: cache-staticcheck
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin/staticcheck
+          key: staticcheck-${{ runner.os }}-go1.26-${{ env.STATICCHECK_VERSION }}
       - name: Install staticcheck
-        run: go install honnef.co/go/tools/cmd/staticcheck@latest
+        if: steps.cache-staticcheck.outputs.cache-hit != 'true'
+        run: go install honnef.co/go/tools/cmd/staticcheck@${{ env.STATICCHECK_VERSION }}
+      # Cache staticcheck's own analysis cache so unchanged packages
+      # don't get re-analyzed across runs. This is the bigger of the two
+      # wins; the analysis is what takes time, not the install.
+      - name: Cache staticcheck analysis
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/staticcheck
+          key: staticcheck-cache-${{ runner.os }}-${{ env.STATICCHECK_VERSION }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            staticcheck-cache-${{ runner.os }}-${{ env.STATICCHECK_VERSION }}-
       - name: Run staticcheck
         run: scripts/foreach-module.sh staticcheck
 
   govulncheck:
     name: Govulncheck
     runs-on: ubuntu-latest
+    env:
+      GOVULNCHECK_VERSION: 'v1.1.4'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
           cache: true
+          cache-dependency-path: '**/go.sum'
+      - name: Cache govulncheck binary
+        id: cache-govulncheck
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin/govulncheck
+          key: govulncheck-${{ runner.os }}-go1.26-${{ env.GOVULNCHECK_VERSION }}
       - name: Install govulncheck
-        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+        if: steps.cache-govulncheck.outputs.cache-hit != 'true'
+        run: go install golang.org/x/vuln/cmd/govulncheck@${{ env.GOVULNCHECK_VERSION }}
       - name: Run govulncheck
         run: scripts/foreach-module.sh vuln

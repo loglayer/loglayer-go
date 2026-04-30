@@ -147,7 +147,10 @@ fresh clone won't be blocked while the dev sets up tooling.
 
 Skip a hook for one command with `git commit --no-verify` or
 `git push --no-verify`. Don't make this a habit; the hooks are deliberately
-fast (the full pre-push suite finishes in ~15s).
+fast. The pre-push test step parallelizes the per-module test runs across
+CPUs (override with `PARALLEL=1` to force serial when debugging a single
+module's output), so a typical run finishes in well under 10 seconds on a
+multi-core box.
 
 ## Versioning and Changelog
 
