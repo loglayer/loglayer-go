@@ -135,15 +135,23 @@ missing install doesn't break commits).
 
 What runs:
 
+- **commit-msg**: lints the commit message against the same conventional-commits
+  parser release-please uses. Hard-fails if `bun` isn't on PATH or
+  `node_modules` is missing; install bun (https://bun.sh) and run `bun install`.
 - **pre-commit** (parallel): `gofmt -l` on staged Go files (fails if anything
   needs formatting; run `gofmt -w <file>` to fix), `go vet ./...`, and
-  `staticcheck ./...` (skipped with a hint if `staticcheck` isn't on PATH;
-  install once with `go install honnef.co/go/tools/cmd/staticcheck@latest`).
-- **pre-push**: `go test -race -timeout 60s ./...`.
+  `staticcheck ./...`. Hard-fails if `staticcheck` isn't on PATH;
+  install once with `go install honnef.co/go/tools/cmd/staticcheck@latest`.
+- **pre-push**: `go test -race -count=1 ./...` across every module via
+  `scripts/foreach-module.sh test`. The script parallelizes per-module
+  test runs across CPUs; override with `PARALLEL=1` for serial output.
 
-The staticcheck step mirrors what CI runs so a clean pre-commit means a
-clean CI run. The hook fails open when the binary isn't installed, so a
-fresh clone won't be blocked while the dev sets up tooling.
+Hook commands fail closed: missing tooling blocks the commit/push so the
+local checks actually run. Skip a single commit/push with `--no-verify` if
+you genuinely need to. (Note: this only applies to the steps inside
+lefthook.yml. The git hook script lefthook generates still fails open if
+lefthook itself isn't installed; the line below explains why and how to
+recover.)
 
 Skip a hook for one command with `git commit --no-verify` or
 `git push --no-verify`. Don't make this a habit; the hooks are deliberately
