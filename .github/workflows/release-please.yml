@@ -26,6 +26,8 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    outputs:
+      releases_created: ${{ steps.release.outputs.releases_created }}
     steps:
       - id: release
         uses: googleapis/release-please-action@v4
@@ -34,16 +36,17 @@ jobs:
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      # Releases created via secrets.GITHUB_TOKEN do not propagate
-      # release:published events to other workflows (GitHub's anti-recursion
-      # rule). Dispatch the docs deploy explicitly so the site rebuilds on
-      # every release-please-driven release. workflow_dispatch is one of
-      # the two events that DOES dispatch through GITHUB_TOKEN.
-      #
-      # --repo is required because the job has no checkout, so `gh` can't
-      # infer the repository from a local git directory.
-      - name: Deploy docs on release
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run docs.yml --ref main --repo "${{ github.repository }}"
+  # Releases created via secrets.GITHUB_TOKEN do not propagate
+  # release:published events to other workflows (GitHub's anti-recursion
+  # rule), so docs.yml's `release:` trigger never fires from a release-
+  # please-driven release. Call docs.yml as a reusable workflow instead;
+  # the call runs as part of this workflow's run, with no extra dispatch
+  # event needed.
+  deploy-docs:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.releases_created == 'true' }}
+    uses: ./.github/workflows/docs.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
