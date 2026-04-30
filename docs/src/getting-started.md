@@ -9,8 +9,11 @@ LogLayer for Go targets **Go 1.25+** for the main module: `go.loglayer.dev`. Mos
 
 ## Installation
 
+LogLayer ships as a multi-module repo: the core lives at `go.loglayer.dev`, and every transport and plugin is its own independently-versioned sub-module. You install the core plus only the transports you actually use.
+
 ```sh
 go get go.loglayer.dev
+go get go.loglayer.dev/transports/structured
 ```
 
 ## Basic Usage with the Structured Transport
@@ -79,10 +82,15 @@ For stack traces, custom shapes, or other options, see [Error Handling](/logging
 
 If you already have an existing logging stack, LogLayer can wrap it so your call sites use the LogLayer API while emission goes through the underlying logger you've already configured. Here it is for `zerolog`:
 
+```sh
+go get go.loglayer.dev/transports/zerolog github.com/rs/zerolog
+```
+
 ```go
 import (
-    zlog "github.com/rs/zerolog"
     "os"
+
+    zlog "github.com/rs/zerolog"
 
     "go.loglayer.dev"
     llzero "go.loglayer.dev/transports/zerolog"
