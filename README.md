@@ -32,8 +32,10 @@ import (
 
 log := loglayer.New(loglayer.Config{
     Transport: pretty.New(pretty.Config{}),
-    // Put fields under a specific key (default is flattened)
-    FieldsKey: "context",
+    // Put fields under "context" and metadata under "metadata"
+    // (defaults are flattened to the root).
+    FieldsKey:         "context",
+    MetadataFieldName: "metadata",
 })
 
 // Persistent fields that appear on every subsequent log
@@ -58,7 +60,9 @@ log.WithPrefix("[my-app]").
     "path": "/",
     "reqId": "1234"
   },
-  "some": "data",
+  "metadata": {
+    "some": "data"
+  },
   "err": {
     "message": "test"
   }

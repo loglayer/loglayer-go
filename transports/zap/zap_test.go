@@ -17,13 +17,11 @@ func factory(opts transporttest.FactoryOpts) (*loglayer.LogLayer, *bytes.Buffer)
 	buf := &bytes.Buffer{}
 	enc := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
 	core := zapcore.NewCore(enc, zapcore.AddSync(buf), zapcore.DebugLevel)
-	cfg := llzap.Config{
-		BaseConfig:        transport.BaseConfig{ID: "zap", Level: opts.Level},
-		Logger:            zap.New(core),
-		MetadataFieldName: opts.MetadataFieldName,
-	}
-	tr := llzap.New(cfg)
-	return loglayer.New(loglayer.Config{DisableFatalExit: true, Transport: tr}), buf
+	tr := llzap.New(llzap.Config{
+		BaseConfig: transport.BaseConfig{ID: "zap", Level: opts.Level},
+		Logger:     zap.New(core),
+	})
+	return transporttest.NewLogger(tr, opts), buf
 }
 
 func TestZapContract(t *testing.T) {

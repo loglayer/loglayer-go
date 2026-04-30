@@ -29,11 +29,6 @@ type Config struct {
 
 	// Writer is used only when Logger is nil. Defaults to os.Stderr.
 	Writer io.Writer
-
-	// MetadataFieldName is the key under which non-map metadata values are
-	// emitted (structs, scalars, slices, etc.). Map metadata is always merged
-	// at the root. Defaults to "metadata".
-	MetadataFieldName string
 }
 
 // Transport sends log entries to a *logrus.Logger.
@@ -45,9 +40,6 @@ type Transport struct {
 
 // New creates a logrus Transport from the given Config.
 func New(cfg Config) *Transport {
-	if cfg.MetadataFieldName == "" {
-		cfg.MetadataFieldName = "metadata"
-	}
 	logger := wrap(cfg.Logger, cfg.Writer)
 	return &Transport{
 		BaseTransport: transport.NewBaseTransport(cfg.BaseConfig),
@@ -98,12 +90,14 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 	}
 
 	if params.Metadata != nil {
-		if m, ok := transport.MetadataAsRootMap(params.Metadata); ok {
+		if key := params.Schema.MetadataFieldName; key != "" {
+			fields[key] = params.Metadata
+		} else if m, ok := transport.MetadataAsRootMap(params.Metadata); ok {
 			for k, v := range m {
 				fields[k] = v
 			}
 		} else {
-			fields[t.cfg.MetadataFieldName] = params.Metadata
+			fields["metadata"] = params.Metadata
 		}
 	}
 

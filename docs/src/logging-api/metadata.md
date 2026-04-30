@@ -70,7 +70,7 @@ Use whichever you prefer; both compile to the same `map[string]any`.
 LogLayer doesn't clone the map you pass to `WithMetadata`. Mutating it after the call (e.g. reusing the same map for the next emission with a tweak) can bleed into the previous log when a transport retains the value. Build a fresh map per call, or treat the value as read-only once handed off. Structs sidestep this entirely.
 :::
 
-`MetadataFieldName` (set on a wrapper transport's config) only affects **non-map** metadata; map metadata flattens to root attributes. The exact shape (struct flattens at the root vs. nests under a key) depends on the transport. See each transport's page for its rendering rules, or [Creating Transports → Handling `any` Metadata](/transports/creating-transports#handling-any-metadata) for the placement policies.
+[`MetadataFieldName`](/configuration#metadatafieldname) (set on `loglayer.Config`) nests **both** map and non-map metadata under a single configurable key uniformly across every transport. When unset, each transport keeps its existing default placement policy: renderers flatten map metadata at the root, wrappers flatten map metadata as individual attributes and nest non-map values under a hardcoded `"metadata"` key. See each transport's page for its rendering rules, or [Creating Transports → Handling `any` Metadata](/transports/creating-transports#handling-any-metadata) for the placement policies.
 
 ## Building the Value First
 

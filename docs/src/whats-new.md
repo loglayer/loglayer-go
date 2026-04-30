@@ -7,6 +7,12 @@ description: Latest features and improvements in LogLayer for Go.
 
 - See the [main `CHANGELOG.md`](https://github.com/loglayer/loglayer-go/blob/main/CHANGELOG.md) for the auto-generated per-release log.
 
+## Apr 30, 2026
+
+`transports/sentry`:
+
+- **Initial release**: new transport that forwards entries to a caller-supplied [`sentry.Logger`](https://pkg.go.dev/github.com/getsentry/sentry-go#Logger). Routes fatal/panic through `LFatal()` so loglayer's core controls termination (Sentry's `Fatal()` and `Panic()` are never called). Map fields and metadata flatten as typed Sentry attributes; non-map metadata stringifies under `MetadataFieldName`. See [Sentry Transport](/transports/sentry).
+
 ## Apr 29, 2026
 
 `loglayer`:

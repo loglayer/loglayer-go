@@ -3,6 +3,7 @@ package pretty
 import (
 	"fmt"
 	"io"
+	"maps"
 	"sort"
 	"strings"
 
@@ -12,21 +13,23 @@ import (
 )
 
 // combineData merges Data (fields + error) and Metadata into a single map for
-// rendering. Map metadata merges at root; struct metadata is JSON-roundtripped
-// into root fields.
+// rendering. Behavior depends on params.Schema.MetadataFieldName:
+//   - empty (default): map metadata merges at root; struct metadata is
+//     JSON-roundtripped into root fields; non-roundtrippable values land
+//     under "_metadata".
+//   - set: the entire metadata value nests under the key. Maps and
+//     structs render as nested YAML; scalars render inline.
 func combineData(params loglayer.TransportParams) map[string]any {
 	if len(params.Data) == 0 && params.Metadata == nil {
 		return nil
 	}
 	out := make(map[string]any)
-	if len(params.Data) > 0 {
-		for k, v := range params.Data {
-			out[k] = v
-		}
-	}
+	maps.Copy(out, params.Data)
 	if params.Metadata != nil {
-		for k, v := range metadataAsMap(params.Metadata) {
-			out[k] = v
+		if key := params.Schema.MetadataFieldName; key != "" {
+			out[key] = metadataValueForKey(params.Metadata)
+		} else {
+			maps.Copy(out, metadataAsRootFields(params.Metadata))
 		}
 	}
 	if len(out) == 0 {
@@ -35,15 +38,30 @@ func combineData(params loglayer.TransportParams) map[string]any {
 	return out
 }
 
-// metadataAsMap is a pretty-local variant of transport.MetadataAsMap that
-// preserves an `_metadata` fallback when JSON roundtripping fails, so unknown
-// values still surface in pretty output instead of being dropped.
-func metadataAsMap(v any) map[string]any {
+// metadataValueForKey returns a value suitable for nesting under a single
+// key in the YAML output. Maps and structs JSON-roundtrip into a generic
+// map[string]any (so writeMap renders nested keys and slices land as []any
+// for YAML list rendering); scalars and non-roundtrippable values pass
+// through so writeMap's scalar path renders them inline.
+func metadataValueForKey(v any) any {
+	if v == nil {
+		return v
+	}
+	if b, err := json.Marshal(v); err == nil {
+		var m map[string]any
+		if json.Unmarshal(b, &m) == nil {
+			return m
+		}
+	}
+	return v
+}
+
+// metadataAsRootFields is a pretty-local variant of transport.MetadataAsMap
+// that preserves an `_metadata` fallback when JSON roundtripping fails, so
+// unknown values still surface in pretty output instead of being dropped.
+func metadataAsRootFields(v any) map[string]any {
 	if v == nil {
 		return nil
-	}
-	if m, ok := v.(map[string]any); ok {
-		return m
 	}
 	b, err := json.Marshal(v)
 	if err != nil {
@@ -124,27 +142,62 @@ func (t *Transport) renderExpanded(w io.Writer, data map[string]any) {
 
 func (t *Transport) writeMap(w io.Writer, m map[string]any, indent int) {
 	prefix := strings.Repeat("  ", indent)
-	for _, k := range sortedKeys(m) {
+	keys := sortedKeys(m)
+	// Pad keys at this level to the longest key's width, but only count
+	// keys whose values render on the same line (scalars and empty
+	// containers). Map/slice values that recurse onto new lines don't
+	// participate in alignment.
+	maxKey := 0
+	for _, k := range keys {
+		if !sameLineValue(m[k]) {
+			continue
+		}
+		if len(k) > maxKey {
+			maxKey = len(k)
+		}
+	}
+	for _, k := range keys {
 		v := m[k]
 		switch val := v.(type) {
 		case map[string]any:
 			if len(val) == 0 {
-				fmt.Fprintf(w, "%s%s: %s\n", prefix, t.theme.DataKey(k), t.theme.DataValue("{}"))
+				t.writeAlignedScalar(w, prefix, k, maxKey, "{}")
 				continue
 			}
 			fmt.Fprintf(w, "%s%s:\n", prefix, t.theme.DataKey(k))
 			t.writeMap(w, val, indent+1)
 		case []any:
 			if len(val) == 0 {
-				fmt.Fprintf(w, "%s%s: %s\n", prefix, t.theme.DataKey(k), t.theme.DataValue("[]"))
+				t.writeAlignedScalar(w, prefix, k, maxKey, "[]")
 				continue
 			}
 			fmt.Fprintf(w, "%s%s:\n", prefix, t.theme.DataKey(k))
 			t.writeSlice(w, val, indent+1)
 		default:
-			fmt.Fprintf(w, "%s%s: %s\n", prefix, t.theme.DataKey(k),
-				t.theme.DataValue(t.formatScalarExpanded(v)))
+			t.writeAlignedScalar(w, prefix, k, maxKey, t.formatScalarExpanded(v))
 		}
+	}
+}
+
+// writeAlignedScalar emits "<prefix><key>:<padding> <value>\n" so values
+// line up with the longest sibling key at the same level. The padding
+// goes between the colon and the value (after the theme styling has
+// wrapped the key) so coloring stays localized to the key text.
+func (t *Transport) writeAlignedScalar(w io.Writer, prefix, key string, maxKey int, value string) {
+	pad := strings.Repeat(" ", maxKey-len(key))
+	fmt.Fprintf(w, "%s%s:%s %s\n", prefix, t.theme.DataKey(key), pad, t.theme.DataValue(value))
+}
+
+// sameLineValue reports whether v renders on the same line as its key
+// (scalars and empty containers do; non-empty maps and slices recurse).
+func sameLineValue(v any) bool {
+	switch val := v.(type) {
+	case map[string]any:
+		return len(val) == 0
+	case []any:
+		return len(val) == 0
+	default:
+		return true
 	}
 }
 

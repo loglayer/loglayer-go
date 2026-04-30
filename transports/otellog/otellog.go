@@ -80,12 +80,6 @@ type Config struct {
 	// takes precedence over LoggerProvider/Name/Version/SchemaURL. Useful
 	// for tests and when callers want full control over Logger options.
 	Logger otellog.Logger
-
-	// MetadataFieldName is the attribute key under which non-map
-	// metadata values (structs, scalars, slices) are emitted. Map
-	// metadata is always merged at the root as individual attributes.
-	// Defaults to "metadata".
-	MetadataFieldName string
 }
 
 // Transport sends log entries to an OpenTelemetry log.Logger.
@@ -111,9 +105,6 @@ func New(cfg Config) *Transport {
 // configuration loaded from environment variables) so the failure mode
 // is recoverable.
 func Build(cfg Config) (*Transport, error) {
-	if cfg.MetadataFieldName == "" {
-		cfg.MetadataFieldName = "metadata"
-	}
 	logger := cfg.Logger
 	if logger == nil {
 		if cfg.Name == "" {
@@ -167,19 +158,26 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 		for k, v := range params.Data {
 			attrs = append(attrs, otellog.KeyValue{Key: k, Value: toValue(v)})
 		}
-		if m, ok := transport.MetadataAsRootMap(params.Metadata); ok {
-			for k, v := range m {
-				attrs = append(attrs, otellog.KeyValue{Key: k, Value: toValue(v)})
+		if params.Metadata != nil {
+			if key := params.Schema.MetadataFieldName; key != "" {
+				// Whole metadata value nests under the key. Roundtrip non-map
+				// values so structs land as a nested MapValue; map values
+				// pass through unchanged.
+				if m, ok := transport.MetadataAsRootMap(params.Metadata); ok {
+					attrs = append(attrs, otellog.KeyValue{Key: key, Value: toValue(m)})
+				} else if m := transport.MetadataAsMap(params.Metadata); m != nil {
+					attrs = append(attrs, otellog.KeyValue{Key: key, Value: toValue(m)})
+				}
+			} else if m, ok := transport.MetadataAsRootMap(params.Metadata); ok {
+				for k, v := range m {
+					attrs = append(attrs, otellog.KeyValue{Key: k, Value: toValue(v)})
+				}
+			} else if m := transport.MetadataAsMap(params.Metadata); m != nil {
+				// JSON-roundtrip non-map metadata so structs land as a
+				// nested MapValue. Metadata that JSON can't marshal
+				// (channels, funcs, etc.) is dropped.
+				attrs = append(attrs, otellog.KeyValue{Key: "metadata", Value: toValue(m)})
 			}
-		} else if m := transport.MetadataAsMap(params.Metadata); m != nil {
-			// JSON-roundtrip non-map metadata so structs land as a
-			// nested MapValue. Metadata that JSON can't marshal
-			// (channels, funcs, etc.) is dropped: fmt.Sprintf-stringifying
-			// it would lose the structure the user intended anyway.
-			attrs = append(attrs, otellog.KeyValue{
-				Key:   t.cfg.MetadataFieldName,
-				Value: toValue(m),
-			})
 		}
 		rec.AddAttributes(attrs...)
 	}

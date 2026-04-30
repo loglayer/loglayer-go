@@ -13,6 +13,30 @@ Sends log entries to Datadog's [Logs HTTP intake API](https://docs.datadoghq.com
 go get go.loglayer.dev/transports/datadog
 ```
 
+## Getting an API Key and Site
+
+Datadog identifies your account with an **API Key** and a **Site** code (the region your account lives in). You need both.
+
+To get the API key:
+
+1. Sign in at the URL that matches your Datadog account (see the Site table below).
+2. Bottom-left **Personal** menu (the avatar) → **Organization Settings** → **API Keys**. Direct link: `https://app.<your-site>/organization-settings/api-keys`.
+3. Either copy an existing key or click **+ New Key** and name it. Datadog hides the value after creation, so save it immediately.
+
+To pick the Site:
+
+| Site code | Sign-in URL | API hostname |
+|---|---|---|
+| `SiteUS1` *(default)* | `app.datadoghq.com` | `api.datadoghq.com` |
+| `SiteUS3` | `us3.datadoghq.com` | `api.us3.datadoghq.com` |
+| `SiteUS5` | `us5.datadoghq.com` | `api.us5.datadoghq.com` |
+| `SiteEU` | `app.datadoghq.eu` | `api.datadoghq.eu` |
+| `SiteAP1` | `ap1.datadoghq.com` | `api.ap1.datadoghq.com` |
+
+If you signed up at the bare `datadoghq.com`, you're on `SiteUS1`. If you had to pick a region during signup, match that to the Site code above.
+
+The API key is a secret. Treat it like a password: load it from an environment variable or secret manager rather than hard-coding it in source.
+
 ## Basic Usage
 
 ```go
@@ -152,7 +176,7 @@ Each log entry becomes one object in a JSON array:
 ]
 ```
 
-Map metadata merges at the root; non-map metadata (struct, scalar, slice) lands under the `metadata` key. Persistent fields (`WithFields`) merge at the root.
+Persistent fields (`WithFields`) and metadata (`WithMetadata`) follow the [core placement rules](/configuration#fieldskey): when `FieldsKey` is empty, fields merge at the root of each Datadog log object; when `MetadataFieldName` is empty, map metadata merges at the root and non-map metadata nests under `metadata`. Set either knob on `loglayer.Config` to nest under a configured key instead.
 
 ## Level → Status Mapping
 

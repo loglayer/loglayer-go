@@ -25,6 +25,30 @@ type Transport interface {
 	GetLoggerInstance() any
 }
 
+// Schema is the resolved assembly shape for an entry. The core publishes
+// it to transports and dispatch-time plugin hooks so they can navigate
+// [TransportParams.Data] precisely (e.g. find the error map at
+// Schema.ErrorFieldName) and decide their own metadata placement.
+//
+// All four fields are populated from the matching keys on [Config]:
+// FieldsKey, MetadataFieldName, ErrorFieldName, Source.FieldName.
+type Schema struct {
+	// FieldsKey is non-empty when the persistent fields are nested under
+	// this key inside Data. When empty, fields are merged at root.
+	FieldsKey string
+	// MetadataFieldName is non-empty when the entry's metadata should
+	// nest under this key uniformly (both map and non-map values).
+	// When empty, each transport applies its default placement policy.
+	MetadataFieldName string
+	// ErrorFieldName is the key under which the serialized error map
+	// lives in Data. Always populated; defaults to "err".
+	ErrorFieldName string
+	// SourceFieldName is the key under which call-site source info lives
+	// in Data when [Config.Source.Enabled] is true. Always populated;
+	// defaults to "source".
+	SourceFieldName string
+}
+
 // TransportParams is the fully assembled log entry passed to each transport.
 //
 // Data contains the assembled fields and error.
@@ -51,6 +75,10 @@ type TransportParams struct {
 	// Routing has already consumed the slice before this point; it's
 	// exposed so transports can include it in the wire payload.
 	Groups []string
+	// Schema is the resolved assembly shape (FieldsKey, MetadataFieldName,
+	// ErrorFieldName, SourceFieldName). Use it to navigate Data and to
+	// decide metadata placement.
+	Schema Schema
 }
 
 // transportSet is an immutable snapshot of the transport list and the

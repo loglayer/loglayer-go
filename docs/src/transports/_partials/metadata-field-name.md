@@ -1,0 +1,1 @@
+The placement key for non-map metadata is controlled by the core via [`MetadataFieldName`](/configuration#metadatafieldname). When unset, this transport defaults to nesting non-map metadata under `"metadata"`.

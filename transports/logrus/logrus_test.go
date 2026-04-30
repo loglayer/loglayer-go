@@ -18,13 +18,11 @@ func factory(opts transporttest.FactoryOpts) (*loglayer.LogLayer, *bytes.Buffer)
 	base.Out = buf
 	base.Formatter = &logrusbase.JSONFormatter{}
 	base.Level = logrusbase.TraceLevel
-	cfg := lllogrus.Config{
-		BaseConfig:        transport.BaseConfig{ID: "logrus", Level: opts.Level},
-		Logger:            base,
-		MetadataFieldName: opts.MetadataFieldName,
-	}
-	tr := lllogrus.New(cfg)
-	return loglayer.New(loglayer.Config{DisableFatalExit: true, Transport: tr}), buf
+	tr := lllogrus.New(lllogrus.Config{
+		BaseConfig: transport.BaseConfig{ID: "logrus", Level: opts.Level},
+		Logger:     base,
+	})
+	return transporttest.NewLogger(tr, opts), buf
 }
 
 func TestLogrusContract(t *testing.T) {

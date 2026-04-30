@@ -11,6 +11,7 @@ Wraps an existing `*logrus.Logger`. Map metadata flattens via `Entry.WithFields`
 
 ```sh
 go get go.loglayer.dev/transports/logrus
+go get github.com/sirupsen/logrus
 ```
 
 ## Basic Usage
@@ -45,9 +46,8 @@ If you don't pass a `Logger`, the transport constructs one writing to `Writer` (
 type Config struct {
     transport.BaseConfig
 
-    Logger            *logrus.Logger // wrap an existing logger
-    Writer            io.Writer      // used only when Logger is nil
-    MetadataFieldName string         // key for non-map metadata; default "metadata"
+    Logger *logrus.Logger // wrap an existing logger
+    Writer io.Writer      // used only when Logger is nil
 }
 ```
 
@@ -64,6 +64,8 @@ The core then decides whether `os.Exit(1)` is called after dispatch. See [Fatal 
 
 ## Metadata Handling
 
+<!--@include: ./_partials/metadata-field-name.md-->
+
 ### Map metadata → individual fields
 
 ```go
@@ -73,7 +75,7 @@ log.WithMetadata(loglayer.Metadata{"requestId": "xyz", "n": 42}).Info("served")
 
 Each map entry becomes a key in `logrus.Fields` passed to `WithFields`.
 
-### Struct metadata → nested under `MetadataFieldName`
+### Struct metadata nests under the metadata key
 
 ```go
 type User struct {
@@ -91,11 +93,11 @@ To use a different key per call, wrap in a map:
 log.WithMetadata(loglayer.Metadata{"user": User{ID: 7, Name: "Alice"}}).Info("user")
 ```
 
-Or globally via `MetadataFieldName`:
+Or globally via the core's `MetadataFieldName` (which also nests map metadata under the same key):
 
 ```go
-lllogrus.New(lllogrus.Config{
-    Logger:            l,
+loglayer.New(loglayer.Config{
+    Transport:         lllogrus.New(lllogrus.Config{Logger: l}),
     MetadataFieldName: "payload",
 })
 ```

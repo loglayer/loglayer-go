@@ -51,12 +51,15 @@ For wrapper transports (those that hand entries off to a third-party logger), as
 func factory(opts transporttest.FactoryOpts) (*loglayer.LogLayer, *bytes.Buffer) {
     buf := &bytes.Buffer{}
     cfg := mytransport.Config{
-        BaseConfig:        transport.BaseConfig{ID: "mywrap", Level: opts.Level},
-        Logger:            buildBackend(buf),
-        MetadataFieldName: opts.MetadataFieldName,
+        BaseConfig: transport.BaseConfig{ID: "mywrap", Level: opts.Level},
+        Logger:     buildBackend(buf),
     }
     tr := mytransport.New(cfg)
-    return loglayer.New(loglayer.Config{DisableFatalExit: true, Transport: tr}), buf
+    return loglayer.New(loglayer.Config{
+        DisableFatalExit:  true,
+        Transport:         tr,
+        MetadataFieldName: opts.MetadataFieldName,
+    }), buf
 }
 
 func TestMyWrapperContract(t *testing.T) {

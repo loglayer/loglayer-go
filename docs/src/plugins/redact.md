@@ -25,7 +25,8 @@ import (
 )
 
 log := loglayer.New(loglayer.Config{
-    Transport: structured.New(structured.Config{}),
+    Transport:         structured.New(structured.Config{}),
+    MetadataFieldName: "metadata",
 })
 
 log.AddPlugin(redact.New(redact.Config{
@@ -39,7 +40,7 @@ log.WithMetadata(loglayer.Metadata{
 ```
 
 ```json
-{"level":"info","time":"...","msg":"login","password":"[REDACTED]","userId":42}
+{"level":"info","time":"...","msg":"login","metadata":{"password":"[REDACTED]","userId":42}}
 ```
 
 ## Type Preservation

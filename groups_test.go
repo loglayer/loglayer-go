@@ -609,3 +609,83 @@ func TestGroups_PropagatedToTransportParams(t *testing.T) {
 		})
 	}
 }
+
+// TransportParams.Schema carries the resolved assembly-shape knobs
+// (FieldsKey, MetadataFieldName, ErrorFieldName, SourceFieldName) so
+// transports and plugins can navigate Data and decide their own metadata
+// placement.
+func TestSchema_PropagatedToTransportParams(t *testing.T) {
+	tr, libs := twoTransports("a")
+	log := loglayer.New(loglayer.Config{
+		DisableFatalExit:  true,
+		Transports:        tr,
+		FieldsKey:         "context",
+		MetadataFieldName: "metadata",
+		ErrorFieldName:    "error",
+		// Source.FieldName not set → defaults to "source"
+	})
+	log.Info("hi")
+
+	line := libs[0].PopLine()
+	if line == nil {
+		t.Fatal("expected line")
+	}
+	want := loglayer.Schema{
+		FieldsKey:         "context",
+		MetadataFieldName: "metadata",
+		ErrorFieldName:    "error",
+		SourceFieldName:   "source",
+	}
+	if line.Schema != want {
+		t.Errorf("Schema: got %+v, want %+v", line.Schema, want)
+	}
+}
+
+func TestSchema_DefaultErrorFieldName(t *testing.T) {
+	tr, libs := twoTransports("a")
+	log := loglayer.New(loglayer.Config{DisableFatalExit: true, Transports: tr})
+	log.Info("hi")
+
+	line := libs[0].PopLine()
+	if line == nil {
+		t.Fatal("expected line")
+	}
+	// ErrorFieldName defaults to "err"; SourceFieldName defaults to "source".
+	if line.Schema.ErrorFieldName != "err" {
+		t.Errorf("ErrorFieldName default: got %q, want %q", line.Schema.ErrorFieldName, "err")
+	}
+	if line.Schema.SourceFieldName != "source" {
+		t.Errorf("SourceFieldName default: got %q, want %q", line.Schema.SourceFieldName, "source")
+	}
+	if line.Schema.FieldsKey != "" {
+		t.Errorf("FieldsKey default: got %q, want empty", line.Schema.FieldsKey)
+	}
+	if line.Schema.MetadataFieldName != "" {
+		t.Errorf("MetadataFieldName default: got %q, want empty", line.Schema.MetadataFieldName)
+	}
+}
+
+// When Config.MetadataFieldName is set, transports nest both map and
+// non-map metadata under that key uniformly. This is the core symmetric-
+// API behavior; per-transport shape verification lives in each transport's
+// own tests.
+func TestSchema_MetadataFieldNameNestsBothMapAndNonMap(t *testing.T) {
+	tr, libs := twoTransports("a")
+	log := loglayer.New(loglayer.Config{
+		DisableFatalExit:  true,
+		Transports:        tr,
+		MetadataFieldName: "payload",
+	})
+	log.WithMetadata(loglayer.Metadata{"k": "v"}).Info("map")
+	log.WithMetadata(struct{ X int }{X: 1}).Info("struct")
+
+	lines := libs[0].Lines()
+	if len(lines) != 2 {
+		t.Fatalf("expected 2 lines, got %d", len(lines))
+	}
+	for i, line := range lines {
+		if line.Schema.MetadataFieldName != "payload" {
+			t.Errorf("line %d MetadataFieldName: got %q", i, line.Schema.MetadataFieldName)
+		}
+	}
+}

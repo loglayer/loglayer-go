@@ -98,6 +98,13 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 		rawMetadata = metadata
 	}
 
+	schema := Schema{
+		FieldsKey:         cfg.FieldsKey,
+		MetadataFieldName: cfg.MetadataFieldName,
+		ErrorFieldName:    cfg.ErrorFieldName,
+		SourceFieldName:   cfg.Source.FieldName,
+	}
+
 	if plugins.anyDispatchHook {
 		d = plugins.runOnBeforeDataOut(BeforeDataOutParams{
 			LogLevel: level,
@@ -107,12 +114,14 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 			Err:      err,
 			Ctx:      goCtx,
 			Groups:   entryGroups,
+			Schema:   schema,
 		})
 		messages = plugins.runOnBeforeMessageOut(BeforeMessageOutParams{
 			LogLevel: level,
 			Messages: messages,
 			Ctx:      goCtx,
 			Groups:   entryGroups,
+			Schema:   schema,
 		})
 		level = plugins.runTransformLogLevel(TransformLogLevelParams{
 			LogLevel: level,
@@ -123,6 +132,7 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 			Err:      err,
 			Ctx:      goCtx,
 			Groups:   entryGroups,
+			Schema:   schema,
 		})
 	}
 
@@ -135,6 +145,7 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 		Fields:   fields,
 		Ctx:      goCtx,
 		Groups:   entryGroups,
+		Schema:   schema,
 	}
 
 	hasShouldSend := plugins.hasSendGate
@@ -158,6 +169,7 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 			Err:         err,
 			Ctx:         goCtx,
 			Groups:      entryGroups,
+			Schema:      schema,
 		}) {
 			continue
 		}

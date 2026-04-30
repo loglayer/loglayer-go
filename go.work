@@ -14,6 +14,7 @@ use (
 	./transports/otellog
 	./transports/phuslu
 	./transports/pretty
+	./transports/sentry
 	./transports/slog
 	./transports/structured
 	./transports/testing
@@ -36,4 +37,5 @@ use (
 	./examples/http-server
 	./examples/multi-transport
 	./examples/otel-end-to-end
+	./examples/pretty-modes
 )

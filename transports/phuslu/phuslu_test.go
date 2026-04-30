@@ -18,13 +18,11 @@ func factory(opts transporttest.FactoryOpts) (*loglayer.LogLayer, *bytes.Buffer)
 		Level:  plog.TraceLevel,
 		Writer: &plog.IOWriter{Writer: buf},
 	}
-	cfg := llphuslu.Config{
-		BaseConfig:        transport.BaseConfig{ID: "phuslu", Level: opts.Level},
-		Logger:            pl,
-		MetadataFieldName: opts.MetadataFieldName,
-	}
-	tr := llphuslu.New(cfg)
-	return loglayer.New(loglayer.Config{DisableFatalExit: true, Transport: tr}), buf
+	tr := llphuslu.New(llphuslu.Config{
+		BaseConfig: transport.BaseConfig{ID: "phuslu", Level: opts.Level},
+		Logger:     pl,
+	})
+	return transporttest.NewLogger(tr, opts), buf
 }
 
 func TestPhusluContract(t *testing.T) {

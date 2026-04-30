@@ -26,14 +26,15 @@ import (
 )
 
 log := loglayer.New(loglayer.Config{
-    Transport: pretty.New(pretty.Config{}),
+    Transport:         pretty.New(pretty.Config{}),
+    MetadataFieldName: "metadata",
 })
 
 log.WithMetadata(loglayer.Metadata{"user": "alice", "n": 42}).Info("served")
 ```
 
 ```
-12:34:56.789 ▶ INFO served n=42 user=alice
+12:34:56.789 ▶ INFO served metadata={n=42, user=alice}
 ```
 
 (With colors applied by the default Moonlight theme.)
@@ -199,9 +200,13 @@ Doesn't affect expanded mode; it always shows the full tree.
 
 ## Metadata Handling
 
+When [`MetadataFieldName`](/configuration#metadatafieldname) is empty (the default), the breakdown by metadata shape is:
+
 - **Maps** merge at the root, alongside fields and error fields.
 - **Structs** are JSON-roundtripped into a map (so `json:"foo"` tags determine the rendered key) and merged at the root.
 - **Scalars / unknown types** fall back to `_metadata` as the key.
+
+When `MetadataFieldName` is set on `loglayer.Config`, every metadata value (map, struct, scalar) nests under the configured key instead.
 
 ```go
 type User struct {

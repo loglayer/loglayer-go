@@ -25,11 +25,6 @@ type Config struct {
 
 	// Writer is used only when Logger is nil. Defaults to os.Stderr.
 	Writer io.Writer
-
-	// MetadataFieldName is the key under which non-map metadata values are
-	// emitted (structs, scalars, slices, etc.). Map metadata is always merged
-	// at the root via individual slog attributes. Defaults to "metadata".
-	MetadataFieldName string
 }
 
 // Transport sends log entries to a *slog.Logger.
@@ -41,9 +36,6 @@ type Transport struct {
 
 // New creates a slog Transport from the given Config.
 func New(cfg Config) *Transport {
-	if cfg.MetadataFieldName == "" {
-		cfg.MetadataFieldName = "metadata"
-	}
 	logger := cfg.Logger
 	if logger == nil {
 		logger = slog.New(slog.NewJSONHandler(transport.WriterOrStderr(cfg.Writer), nil))
@@ -76,12 +68,14 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 	}
 
 	if params.Metadata != nil {
-		if m, ok := transport.MetadataAsRootMap(params.Metadata); ok {
+		if key := params.Schema.MetadataFieldName; key != "" {
+			attrs = append(attrs, slog.Any(key, params.Metadata))
+		} else if m, ok := transport.MetadataAsRootMap(params.Metadata); ok {
 			for k, v := range m {
 				attrs = append(attrs, slog.Any(k, v))
 			}
 		} else {
-			attrs = append(attrs, slog.Any(t.cfg.MetadataFieldName, params.Metadata))
+			attrs = append(attrs, slog.Any("metadata", params.Metadata))
 		}
 	}
 

@@ -15,13 +15,11 @@ import (
 func factory(opts transporttest.FactoryOpts) (*loglayer.LogLayer, *bytes.Buffer) {
 	buf := &bytes.Buffer{}
 	z := zlog.New(buf).Level(zlog.TraceLevel)
-	cfg := llzero.Config{
-		BaseConfig:        transport.BaseConfig{ID: "zerolog", Level: opts.Level},
-		Logger:            &z,
-		MetadataFieldName: opts.MetadataFieldName,
-	}
-	tr := llzero.New(cfg)
-	return loglayer.New(loglayer.Config{DisableFatalExit: true, Transport: tr}), buf
+	tr := llzero.New(llzero.Config{
+		BaseConfig: transport.BaseConfig{ID: "zerolog", Level: opts.Level},
+		Logger:     &z,
+	})
+	return transporttest.NewLogger(tr, opts), buf
 }
 
 func TestZerologContract(t *testing.T) {

@@ -51,7 +51,9 @@ import (
 
 func main() {
     log := loglayer.New(loglayer.Config{
-        Transport: structured.New(structured.Config{}),
+        Transport:         structured.New(structured.Config{}),
+        FieldsKey:         "context",
+        MetadataFieldName: "metadata",
     })
 
     // WithFields returns a NEW logger; assign it.
@@ -68,8 +70,8 @@ func main() {
   "level": "error",
   "time": "2026-04-25T12:00:00Z",
   "msg": "user action failed",
-  "service": "api",
-  "userId": "1234",
+  "context": { "service": "api" },
+  "metadata": { "userId": "1234" },
   "err": { "message": "something went wrong" }
 }
 ```

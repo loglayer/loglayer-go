@@ -18,7 +18,25 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"go.loglayer.dev"
 )
+
+// NewLogger wraps the supplied transport in a *loglayer.LogLayer with
+// the contract-suite defaults: DisableFatalExit set, and the
+// FactoryOpts.MetadataFieldName threaded into the core config so the
+// CustomMetadataFieldName / MapMetadataNestsUnderFieldName cases work.
+//
+// FactoryOpts.Level applies to the transport's BaseConfig (not the core),
+// so each factory is still responsible for wiring it on the transport
+// it constructs.
+func NewLogger(tr loglayer.Transport, opts FactoryOpts) *loglayer.LogLayer {
+	return loglayer.New(loglayer.Config{
+		Transport:         tr,
+		DisableFatalExit:  true,
+		MetadataFieldName: opts.MetadataFieldName,
+	})
+}
 
 // ParseJSONLine parses the trimmed contents of buf as a single JSON object.
 // Fails the test if the contents are not valid JSON.

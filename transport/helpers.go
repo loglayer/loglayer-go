@@ -3,6 +3,7 @@ package transport
 import (
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"strings"
 
@@ -77,10 +78,16 @@ func MetadataAsMap(v any) map[string]any {
 // to a flat structure. Returns nil when both inputs are empty so callers can
 // short-circuit.
 //
-// Metadata policy: map metadata merges at the root; non-map metadata is
-// JSON-roundtripped via MetadataAsMap and spread at the root (or dropped if
-// the roundtrip fails). For "nest non-map metadata under a `metadata` key"
-// semantics use MergeIntoMap instead.
+// Metadata policy is driven by [loglayer.Schema.MetadataFieldName] on the
+// params:
+//   - Empty (default): map metadata merges at the root; non-map metadata is
+//     JSON-roundtripped via MetadataAsMap and spread at the root (or dropped
+//     if the roundtrip fails).
+//   - Non-empty: the entire metadata value (map or non-map) nests under the
+//     configured key. No roundtrip; encoders downstream get the raw value.
+//
+// For "nest non-map metadata under a fixed key" semantics in encoders without
+// access to TransportParams, use MergeIntoMap with an explicit metadataKey.
 //
 // Pretty has its own local variant that uses a richer metadata extractor
 // (preserves a _metadata fallback for slices/scalars). Other transports
@@ -90,12 +97,12 @@ func MergeFieldsAndMetadata(p loglayer.TransportParams) map[string]any {
 		return nil
 	}
 	out := make(map[string]any, FieldEstimate(p))
-	for k, v := range p.Data {
-		out[k] = v
-	}
+	maps.Copy(out, p.Data)
 	if p.Metadata != nil {
-		for k, v := range MetadataAsMap(p.Metadata) {
-			out[k] = v
+		if key := p.Schema.MetadataFieldName; key != "" {
+			out[key] = p.Metadata
+		} else {
+			maps.Copy(out, MetadataAsMap(p.Metadata))
 		}
 	}
 	if len(out) == 0 {
@@ -109,24 +116,28 @@ func MergeFieldsAndMetadata(p loglayer.TransportParams) map[string]any {
 // have already seeded dst with their own protocol fields (level/time/msg,
 // ddsource/...) and want to layer user data on top.
 //
-// Metadata policy: map metadata merges at the root; non-map metadata (struct,
-// scalar, slice, ...) lands under the `metadata` key without a JSON roundtrip,
-// so encoders downstream get the raw value. For "spread non-map metadata at
-// root via JSON roundtrip" semantics use MergeFieldsAndMetadata instead.
+// metadataKey controls placement: when empty, the legacy default applies
+// (map metadata merges at root; non-map nests under the literal "metadata"
+// key without roundtrip). When non-empty, the entire metadata value nests
+// under that key uniformly. Callers with access to [loglayer.TransportParams]
+// should pass params.Schema.MetadataFieldName.
 //
 // Pretty has its own variant with an `_metadata` fallback for non-roundtrippable
 // values (see transports/pretty/render.go); it doesn't use this helper.
-func MergeIntoMap(dst map[string]any, data map[string]any, metadata any) map[string]any {
-	for k, v := range data {
-		dst[k] = v
+func MergeIntoMap(dst map[string]any, data map[string]any, metadata any, metadataKey string) map[string]any {
+	maps.Copy(dst, data)
+	if metadata == nil {
+		return dst
+	}
+	if metadataKey != "" {
+		dst[metadataKey] = metadata
+		return dst
 	}
 	if m, ok := MetadataAsRootMap(metadata); ok {
-		for k, v := range m {
-			dst[k] = v
-		}
-	} else if metadata != nil {
-		dst["metadata"] = metadata
+		maps.Copy(dst, m)
+		return dst
 	}
+	dst["metadata"] = metadata
 	return dst
 }
 

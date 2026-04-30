@@ -209,7 +209,7 @@ func newEncoder(cfg Config) httptr.Encoder {
 			if cfg.Tags != "" {
 				obj["ddtags"] = cfg.Tags
 			}
-			transport.MergeIntoMap(obj, e.Data, e.Metadata)
+			transport.MergeIntoMap(obj, e.Data, e.Metadata, e.Schema.MetadataFieldName)
 			objs[i] = obj
 		}
 		body, err := json.Marshal(objs)

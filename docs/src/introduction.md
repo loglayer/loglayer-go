@@ -22,6 +22,11 @@ LogLayer is that layer. It sits on top of whichever logging library you already 
 If your service is small and you only need "log to stdout in JSON," the stdlib is fine. The friction LogLayer fixes shows up later: when you add a second destination, redact a field across every log site, or want to wire in OpenTelemetry without rewriting how you log everywhere.
 
 ```go
+log := loglayer.New(loglayer.Config{
+    Transport:         structured.New(structured.Config{}),
+    MetadataFieldName: "metadata",
+})
+
 log.
     WithMetadata(loglayer.Metadata{"userId": "1234"}).
     WithError(errors.New("something went wrong")).
@@ -31,7 +36,7 @@ log.
 ```json
 {
   "msg": "user action failed",
-  "userId": "1234",
+  "metadata": { "userId": "1234" },
   "err": { "message": "something went wrong" }
 }
 ```
@@ -78,6 +83,12 @@ This separation provides several benefits:
 - **Better debugging**: errors are serialized consistently via a configurable `ErrorSerializer`.
 
 ```go
+log := loglayer.New(loglayer.Config{
+    Transport:         structured.New(structured.Config{}),
+    FieldsKey:         "context",
+    MetadataFieldName: "metadata",
+})
+
 log.
     WithFields(loglayer.Fields{"requestId": "abc-123"}). // persists
     WithMetadata(loglayer.Metadata{"duration": 150}).    // this log only
@@ -88,8 +99,8 @@ log.
 ```json
 {
   "msg": "Request failed",
-  "requestId": "abc-123",
-  "duration": 150,
+  "context": { "requestId": "abc-123" },
+  "metadata": { "duration": 150 },
   "err": { "message": "timeout" }
 }
 ```

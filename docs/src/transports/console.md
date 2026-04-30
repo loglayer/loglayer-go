@@ -28,7 +28,8 @@ import (
 )
 
 log := loglayer.New(loglayer.Config{
-    Transport: console.New(console.Config{}),
+    Transport:         console.New(console.Config{}),
+    MetadataFieldName: "metadata",
 })
 
 log.Info("hello world")
@@ -37,7 +38,7 @@ log.WithMetadata(loglayer.Metadata{"id": 42, "user": "alice"}).Info("logged in")
 
 ```
 hello world
-logged in id=42 user=alice
+logged in metadata="{\"id\":42,\"user\":\"alice\"}"
 ```
 
 ## Output Routing
