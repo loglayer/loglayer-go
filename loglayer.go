@@ -1,9 +1,8 @@
-// Package loglayer provides a transport-agnostic logging abstraction that routes
-// structured log entries to one or more backend transports.
 package loglayer
 
 import (
 	"context"
+	"maps"
 	"sync"
 	"sync/atomic"
 )
@@ -278,8 +277,6 @@ func copyFields(src Fields) Fields {
 		return nil
 	}
 	dst := make(Fields, len(src))
-	for k, v := range src {
-		dst[k] = v
-	}
+	maps.Copy(dst, src)
 	return dst
 }
