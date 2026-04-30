@@ -29,6 +29,18 @@ go.work.sum
 # env file
 .env
 
+# Built example binaries. `go run` and `go build` inside an example
+# module produce a binary named after the directory (Go's default).
+# When adding a new example, append its binary path here.
+/examples/custom-plugin/custom-plugin
+/examples/custom-transport/custom-transport
+/examples/custom-transport-attribute/custom-transport-attribute
+/examples/datadog-shipping/datadog-shipping
+/examples/http-server/http-server
+/examples/multi-transport/multi-transport
+/examples/otel-end-to-end/otel-end-to-end
+/examples/pretty-modes/pretty-modes
+
 # Editor/IDE
 .idea/
 # .vscode/
