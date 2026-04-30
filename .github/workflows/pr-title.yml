@@ -23,11 +23,15 @@ jobs:
           types: |
             feat
             fix
+            perf
+            revert
+            refactor
+            deps
             docs
             chore
-            refactor
+            style
             test
-            perf
+            build
             ci
           # Scopes are encouraged (e.g. feat(plugins): ...) but not
           # required, since changes to the core have no obvious scope.
