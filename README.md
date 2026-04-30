@@ -20,18 +20,18 @@ Requires **Go 1.25+** for the main module.
 For full documentation, read the [docs](https://go.loglayer.dev).
 
 ```go
-// Example using the Pretty terminal transport.
+// Example using the Structured (JSON) transport.
 // You can start out with one transport and swap to another later
 // without touching application code.
 import (
     "errors"
 
     "go.loglayer.dev"
-    "go.loglayer.dev/transports/pretty"
+    "go.loglayer.dev/transports/structured"
 )
 
 log := loglayer.New(loglayer.Config{
-    Transport: pretty.New(pretty.Config{}),
+    Transport: structured.New(structured.Config{}),
     // Put fields under "context" and metadata under "metadata"
     // (defaults are flattened to the root).
     FieldsKey:         "context",
