@@ -95,6 +95,19 @@ log.MetadataOnly(loglayer.Metadata{"status": "warn"}, loglayer.MetadataOnlyOpts{
 
 `MetadataOnly` is a **terminal call**, not a builder. It dispatches the entry immediately. You cannot chain `WithError` or `WithContext` onto it; for that, use `log.WithMetadata(...).Info(...)` etc.
 
+## Lazy values in Fields (defer expensive computation)
+
+```go
+log = log.WithFields(loglayer.Fields{
+    "heap_kb": loglayer.Lazy(func() any {
+        var m runtime.MemStats; runtime.ReadMemStats(&m)
+        return m.HeapAlloc / 1024
+    }),
+})
+```
+
+`loglayer.Lazy(fn)` wraps a `WithFields` value that runs at dispatch time, after the level filter, on every emission. A panic substitutes `loglayer.LazyEvalError`. See [Lazy Evaluation](/logging-api/lazy-evaluation).
+
 ## Errors
 
 ```go

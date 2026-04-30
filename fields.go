@@ -24,6 +24,7 @@ func (l *LogLayer) WithFields(f Fields) *LogLayer {
 	for k, v := range f {
 		out.fields[k] = v
 	}
+	out.hasLazyFields.Store(mapHasLazy(out.fields))
 	return out
 }
 
@@ -34,11 +35,13 @@ func (l *LogLayer) WithoutFields(keys ...string) *LogLayer {
 	out := l.Child()
 	if len(keys) == 0 {
 		out.fields = make(Fields)
-	} else {
-		for _, k := range keys {
-			delete(out.fields, k)
-		}
+		out.hasLazyFields.Store(false)
+		return out
 	}
+	for _, k := range keys {
+		delete(out.fields, k)
+	}
+	out.hasLazyFields.Store(mapHasLazy(out.fields))
 	return out
 }
 

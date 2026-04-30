@@ -376,7 +376,7 @@ These exist in upstream loglayer but are not in the Go v1:
 
 - Field managers (TS calls these "context managers": Linked / Isolated / Default. Fields behave as a flat copied map here)
 - Log level managers (LinkedLogLevelManager / etc.; level state is per-instance, copied on `Child()`)
-- Lazy / async lazy evaluation
+- Async lazy evaluation (the sync form ships as `loglayer.Lazy`; async has no Go equivalent for `Promise<T>`)
 - Mixins (the `useLogLayerMixin` augmentation pattern)
 
 If you're asked to add one of these, propose the design first, do not silently start implementing.

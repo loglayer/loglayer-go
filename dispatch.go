@@ -21,7 +21,11 @@ func (l *LogLayer) formatLog(level LogLevel, messages []any, goCtx context.Conte
 	if goCtx == nil {
 		goCtx = l.boundCtx
 	}
-	l.processLog(level, messages, l.fields, goCtx, metadata, err, source, l.assignedGroups, plugins)
+	fields := l.fields
+	if !l.muteFields.Load() && l.hasLazyFields.Load() {
+		fields = resolveLazyFields(fields)
+	}
+	l.processLog(level, messages, fields, goCtx, metadata, err, source, l.assignedGroups, plugins)
 }
 
 // processLog assembles Data from fields + error, builds TransportParams, and

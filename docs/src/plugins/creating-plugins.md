@@ -138,6 +138,10 @@ loglayer.NewFieldsHook("uppercase-keys", func(fields loglayer.Fields) loglayer.F
 })
 ```
 
+::: warning OnFieldsCalled sees `*LazyValue` wrappers
+If a caller attached a value via [`loglayer.Lazy`](/logging-api/lazy-evaluation), `OnFieldsCalled` receives the raw `*LazyValue` (not the resolved value). The callback runs at dispatch time, after this hook. If your plugin needs the resolved value (a redact plugin, a sampler that inspects payload content), put the logic in a dispatch-time hook such as `DataHook` instead, where `Data` already holds the resolved values.
+:::
+
 ### `MetadataHook`
 
 ```go

@@ -74,6 +74,21 @@ log.WithMetadata(Event{OrderID: "o-1", Path: "/checkout"}).Info("event")
 log.MetadataOnly(loglayer.M{"queueDepth": 17})
 ```
 
+## Lazy Evaluation
+
+Defer expensive `Fields` computation until dispatch time. The callback runs only when the level passes, on every emission. Recognized only as the direct value of a `Fields` (or `RawLogEntry.Fields`) key.
+
+```go
+log = log.WithFields(loglayer.Fields{
+    "heap_kb": loglayer.Lazy(func() any {
+        var m runtime.MemStats; runtime.ReadMemStats(&m)
+        return m.HeapAlloc / 1024
+    }),
+})
+```
+
+A panicking callback substitutes `loglayer.LazyEvalError` and the rest of the entry still emits. Callbacks may run concurrently across goroutines; they must be thread-safe.
+
 ## Fields (persistent data across all log entries)
 
 Fields ride on every emission from the logger they're set on. Always assign the result — `WithFields` returns a new `*LogLayer`.

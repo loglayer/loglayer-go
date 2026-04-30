@@ -294,12 +294,36 @@ Every transport doc page must have a `## Fatal Behavior` section. The shape:
 - "first-party" / "First-party": every transport, plugin, and integration in the loglayer-go module is part of the same module; calling them "first-party" implies a tier that doesn't exist. Just say "built-in" if a qualifier is needed at all, or drop the qualifier entirely (e.g. "the redact plugin", not "the first-party redact plugin").
 - Em dashes anywhere.
 
+## "What's new" page format (`docs/src/whats-new.md`)
+
+Mirrors the [TypeScript `loglayer` whats-new page](https://loglayer.dev/whats-new.html). Distinct from the auto-generated root `CHANGELOG.md` (release-please owns that); maintained manually.
+
+```markdown
+## MMM DD, YYYY
+
+`module-or-version`:
+
+- **Title**: brief description of the change. See [Doc Page](/path).
+```
+
+Rules:
+
+- **Top of page**: a one-bullet intro pointing at the root `CHANGELOG.md`. Nothing else.
+- **`## MMM DD, YYYY`** date sections (e.g. `## Apr 29, 2026`), reverse chronological. The date is when the entries landed on `main`. If the date already exists, add to the existing section.
+- Inside a date, group bullets by **scope** as a backticked plain paragraph followed by a colon (not a heading):
+  - For the main module's API changes: `` `loglayer`: ``.
+  - For sub-module changes: the import path in backticks: `` `transports/lumberjack`: ``, `` `plugins/fmtlog`: ``.
+  - For cross-cutting work tied to a specific release: `` `vX.Y.Z`: `` (e.g. `` `v1.1.0`: ``, `` `v1.0.0`: ``).
+- Bullets format: `- **Title**: prose ending with a `See [Page Name](/path).` link if applicable.` Sentence case after the colon, 1–3 sentences, lead with the conclusion. Don't paraphrase the doc page.
+- Code or diff blocks belong indented under their bullet so they stay attached to it.
+- Apply the project's general docs-style rules: no em dashes, no comma splices, no filler.
+
 ## When You Add a New Feature or Make an API Change
 
 Update all of these:
 
 1. **`docs/src/cheatsheet.md`**: add the new method/field to the quick reference.
-2. **`docs/src/whats-new.md`**: add a bullet under the current date heading. If the date doesn't exist yet, add it at the top.
+2. **`docs/src/whats-new.md`**: add a bullet under today's `## MMM DD, YYYY` date section, beneath the appropriate `` `module-or-version`: `` paragraph (creating the section and/or paragraph if they don't exist). Format per the rules above.
 3. **`docs/src/public/llms.txt`**: concise LLM-facing reference. Add a link or bullet for the new surface.
 4. **`docs/src/public/llms-full.txt`**: comprehensive LLM-facing reference. Add a section or bullet describing the new surface.
 5. **`CHANGELOG.md`** (repo root): add an entry under `## [Unreleased]` in the appropriate component subsection. Format follows [Keep a Changelog](https://keepachangelog.com).
