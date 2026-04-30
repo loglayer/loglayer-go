@@ -256,8 +256,8 @@ func TestWithContext_ChildInheritsAndIsolates(t *testing.T) {
 func TestWithContext_NilClears(t *testing.T) {
 	log, lib := setup(t)
 	bound := log.WithContext(context.Background())
-	//lint:ignore SA1012 nil is intentional: test the clears-binding path.
-	cleared := bound.WithContext(nil)
+	var nilCtx context.Context // typed nil; tests the clears-binding path
+	cleared := bound.WithContext(nilCtx)
 
 	cleared.Info("no ctx")
 	line := lib.PopLine()
