@@ -14,6 +14,8 @@
 // message is a string and there are extra arguments is rewritten to
 // fmt.Sprintf(messages[0], messages[1:]...) before downstream
 // MessageHooks run.
+//
+// See https://go.loglayer.dev for usage guides and the full API reference.
 package fmtlog
 
 import (
