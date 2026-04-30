@@ -358,6 +358,7 @@ lines := lib.Lines()  // []lltest.LogLine — assert on Level, Messages, Data, M
 
 **Cloud** (managed log services):
 - `transports/datadog` — Datadog Logs HTTP intake
+- `transports/gcplogging` — wraps a caller-supplied `*logging.Logger` from `cloud.google.com/go/logging`
 - `transports/sentry` — wraps a caller-supplied `sentry.Logger`
 
 **Other transports**:

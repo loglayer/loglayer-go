@@ -9,6 +9,10 @@ description: Latest features and improvements in LogLayer for Go.
 
 ## Apr 30, 2026
 
+`transports/gcplogging`:
+
+- **Initial release**: new transport that forwards entries to a caller-supplied [`*logging.Logger`](https://pkg.go.dev/cloud.google.com/go/logging#Logger) from `cloud.google.com/go/logging`. Severity mapping (Trace/Debug → `Debug`, Info → `Info`, Warn → `Warning`, Error → `Error`, Fatal → `Critical`, Panic → `Alert`), root-level `Entry` skeleton (`Resource`, `Labels`, `HTTPRequest`, ...), per-entry `EntryFn` hook for lifting metadata onto typed Entry fields, async or sync dispatch, and `Close()` flushes via `Logger.Flush`. See [Google Cloud Logging Transport](/transports/gcplogging).
+
 `loglayer`:
 
 - **`MetadataFieldName` at the core, plus `Schema` on `TransportParams` and dispatch hook params**: `loglayer.Config.MetadataFieldName` joins `FieldsKey` and `ErrorFieldName` as a core knob. When non-empty, both map and non-map metadata nest under the configured key uniformly across every transport. The resolved assembly shape (`FieldsKey`, `MetadataFieldName`, `ErrorFieldName`, `SourceFieldName`) is published as `loglayer.Schema` on `TransportParams` and the four dispatch-time plugin hook param structs (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`), so plugins can navigate `params.Data` precisely without guessing the key. The per-transport `Config.MetadataFieldName` field is removed from every wrapper (zerolog, zap, charmlog, phuslu, logrus, slog, otellog, sentry); set the core knob instead. See [`MetadataFieldName`](/configuration#metadatafieldname).

@@ -30,6 +30,7 @@ go get go.loglayer.dev/transports/charmlog
 
 # Cloud (managed log services)
 go get go.loglayer.dev/transports/datadog
+go get go.loglayer.dev/transports/gcplogging
 go get go.loglayer.dev/transports/sentry
 
 # Other transports
@@ -812,6 +813,34 @@ tr := otellog.New(otellog.Config{
 ```
 
 Forwards `WithContext` to `Logger.Emit` so SDK processors correlate logs with the active trace span automatically.
+
+### `transports/gcplogging`
+
+Forwards each entry to a caller-supplied `*logging.Logger` from `cloud.google.com/go/logging` (Google Cloud Logging, formerly Stackdriver).
+
+```go
+import (
+    "context"
+
+    "cloud.google.com/go/logging"
+
+    "go.loglayer.dev/transports/gcplogging"
+)
+
+ctx := context.Background()
+client, _ := logging.NewClient(ctx, "my-gcp-project")
+defer client.Close()
+
+tr := gcplogging.New(gcplogging.Config{
+    Logger: client.Logger("my-log"),
+    RootEntry: logging.Entry{
+        Labels: map[string]string{"env": "prod"},
+    },
+    Sync: false, // default async; set true for short-lived processes
+})
+```
+
+Severity mapping: Trace/Debug → `Debug`, Info → `Info`, Warn → `Warning`, Error → `Error`, Fatal → `Critical`, Panic → `Alert`. Map metadata merges at the JSON payload root; non-map metadata nests under `"metadata"`. Use `Config.EntryFn` to lift values from `params.Metadata` onto typed Entry fields (`Trace`, `SpanID`, `Labels`, `HTTPRequest`, ...). The transport implements `io.Closer`; `Close()` calls `Logger.Flush` to drain pending async entries.
 
 ### `transports/sentry`
 
