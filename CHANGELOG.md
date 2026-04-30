@@ -16,6 +16,13 @@ from conventional commits. From v1.0.0 forward, this file is maintained
 automatically; the `[Unreleased]` section below describes the initial
 release at a high level.
 
+## [1.4.0](https://github.com/loglayer/loglayer-go/compare/v1.3.0...v1.4.0) (2026-04-30)
+
+
+### Features
+
+* Add Lazy() for deferred Fields evaluation ([#19](https://github.com/loglayer/loglayer-go/issues/19)) ([3fc3c13](https://github.com/loglayer/loglayer-go/commit/3fc3c137eabc17e70de996e9e39d506c1e88205b))
+
 ## [1.3.0](https://github.com/loglayer/loglayer-go/compare/v1.2.0...v1.3.0) (2026-04-29)
 
 
