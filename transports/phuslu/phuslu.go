@@ -1,4 +1,6 @@
 // Package phuslu provides a LogLayer transport backed by github.com/phuslu/log.
+//
+// See https://go.loglayer.dev for usage guides and the full API reference.
 package phuslu
 
 import (
