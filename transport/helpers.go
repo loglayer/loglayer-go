@@ -116,11 +116,11 @@ func MergeFieldsAndMetadata(p loglayer.TransportParams) map[string]any {
 // have already seeded dst with their own protocol fields (level/time/msg,
 // ddsource/...) and want to layer user data on top.
 //
-// metadataKey controls placement: when empty, the legacy default applies
-// (map metadata merges at root; non-map nests under the literal "metadata"
-// key without roundtrip). When non-empty, the entire metadata value nests
-// under that key uniformly. Callers with access to [loglayer.TransportParams]
-// should pass params.Schema.MetadataFieldName.
+// metadataKey controls placement: when non-empty, the entire metadata
+// value nests under that key uniformly. When empty, map metadata merges
+// at root and non-map nests under the literal "metadata" key without
+// roundtrip. Callers with access to [loglayer.TransportParams] should
+// pass params.Schema.MetadataFieldName.
 //
 // Pretty has its own variant with an `_metadata` fallback for non-roundtrippable
 // values (see transports/pretty/render.go); it doesn't use this helper.
