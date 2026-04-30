@@ -7,13 +7,13 @@
 commit-msg:
   commands:
     # Lint the commit message with the same parser release-please uses
-    # (@conventional-commits/parser). Catches body-parse errors that the
+    # (@conventional-commits/parser). Catches body-parse errors the
     # PR-title workflow can't see (which only checks the title).
     #
-    # Missing tooling is a hard fail (was previously fail-open with an
-    # "CI will catch it" hint, but that defeated the purpose of the
-    # local hook). Skip per-commit with --no-verify if you genuinely
-    # need to bypass it.
+    # Missing tooling is a hard fail: the local hook only matters if it
+    # actually runs, and a silent skip ships "works on my machine"
+    # commits that fail in CI on someone else's box. Bypass per-commit
+    # with --no-verify if you genuinely need to.
     conventional-commits:
       run: |
         if ! command -v bun >/dev/null 2>&1; then
@@ -39,10 +39,9 @@ pre-commit:
       glob: "*.go"
       run: go vet ./...
     # Mirror what CI runs so a clean pre-commit means a clean CI run.
-    # Hard-fails if staticcheck isn't installed (was previously fail-open
-    # with a hint, but that meant first-time clones could land breaking
-    # changes that only failed on CI). Skip per-commit with --no-verify
-    # if you need to.
+    # Hard-fails if staticcheck isn't installed: the lint should actually
+    # run before the commit lands, not be deferred to CI on a clone where
+    # the tool happens to be missing. Bypass per-commit with --no-verify.
     staticcheck:
       glob: "*.go"
       run: |

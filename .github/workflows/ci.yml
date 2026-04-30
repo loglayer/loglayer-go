@@ -38,7 +38,7 @@ jobs:
         run: scripts/foreach-module.sh tidy
 
       - name: Build
-        run: go build ./...
+        run: scripts/foreach-module.sh build
 
       - name: gofmt
         run: scripts/foreach-module.sh fmt
@@ -101,7 +101,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/go/bin/staticcheck
-          key: staticcheck-${{ runner.os }}-go1.26-${{ env.STATICCHECK_VERSION }}
+          key: staticcheck-${{ runner.os }}-${{ env.STATICCHECK_VERSION }}
       - name: Install staticcheck
         if: steps.cache-staticcheck.outputs.cache-hit != 'true'
         run: go install honnef.co/go/tools/cmd/staticcheck@${{ env.STATICCHECK_VERSION }}
@@ -135,7 +135,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/go/bin/govulncheck
-          key: govulncheck-${{ runner.os }}-go1.26-${{ env.GOVULNCHECK_VERSION }}
+          key: govulncheck-${{ runner.os }}-${{ env.GOVULNCHECK_VERSION }}
       - name: Install govulncheck
         if: steps.cache-govulncheck.outputs.cache-hit != 'true'
         run: go install golang.org/x/vuln/cmd/govulncheck@${{ env.GOVULNCHECK_VERSION }}
