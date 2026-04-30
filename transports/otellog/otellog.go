@@ -34,6 +34,8 @@
 //	    Version:        "1.2.3",
 //	    LoggerProvider: provider,
 //	})
+//
+// See https://go.loglayer.dev for usage guides and the full API reference.
 package otellog
 
 import (
