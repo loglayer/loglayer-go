@@ -285,7 +285,7 @@ func TestMergeIntoMap(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			got := transport.MergeIntoMap(c.dst, c.data, c.metadata)
+			got := transport.MergeIntoMap(c.dst, c.data, c.metadata, "")
 			if !reflect.DeepEqual(got, c.want) {
 				t.Errorf("got %v, want %v", got, c.want)
 			}

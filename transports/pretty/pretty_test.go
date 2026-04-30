@@ -133,6 +133,67 @@ func TestExpandedModeNoData(t *testing.T) {
 	}
 }
 
+// Three-level nesting renders as YAML at every depth, with column
+// alignment applied per level (each level pads to its own longest
+// same-line key).
+func TestExpandedModeDeeplyNested(t *testing.T) {
+	log, buf := newLogger(pretty.Config{ViewMode: pretty.ViewModeExpanded})
+	log.WithMetadata(map[string]any{
+		"user": map[string]any{
+			"id": 42,
+			"address": map[string]any{
+				"city": "Brooklyn",
+				"zip":  "11201",
+			},
+		},
+	}).Info("served")
+	got := buf.String()
+	// At each level, sibling keys with same-line values pad to the longest:
+	//  level 1: only "user" (multi-line, no padding needed)
+	//  level 2: "address" (multi-line) + "id" (same-line; alone, no pad)
+	//  level 3: "city" (len 4) and "zip" (len 3); maxKey = 4, "zip" pads.
+	want := "" +
+		"12:34:56.789 ▶ INFO served\n" +
+		"  user:\n" +
+		"    address:\n" +
+		"      city: Brooklyn\n" +
+		"      zip:  11201\n" +
+		"    id: 42\n"
+	if got != want {
+		t.Errorf("got %q\nwant %q", got, want)
+	}
+}
+
+// Column alignment: same-level scalar keys pad to the longest sibling
+// so their values line up. Multi-line keys (whose values render on
+// their own lines) don't participate in the alignment width.
+func TestExpandedModeAlignedColumns(t *testing.T) {
+	log, buf := newLogger(pretty.Config{ViewMode: pretty.ViewModeExpanded})
+	log.WithMetadata(map[string]any{
+		"a":           1,
+		"longerKey":   "v",
+		"middle":      true,
+		"nested":      map[string]any{"x": 1}, // multi-line, doesn't count
+		"alsoIgnored": []any{"a", "b"},        // multi-line, doesn't count
+	}).Info("aligned")
+	got := buf.String()
+	// Sorted keys: a, alsoIgnored (multi-line), longerKey, middle, nested (multi-line).
+	// Among same-line keys: a (1), longerKey (9), middle (6). maxKey = 9.
+	want := "" +
+		"12:34:56.789 ▶ INFO aligned\n" +
+		"  a:         1\n" +
+		"  alsoIgnored:\n" +
+		"    - a\n" +
+		"    - b\n" +
+		"  longerKey: v\n" +
+		"  middle:    true\n" +
+		"  nested:\n" +
+		"    x: 1\n"
+	if got != want {
+		t.Errorf("got %q\nwant %q", got, want)
+	}
+}
+
 func TestLevels(t *testing.T) {
 	cases := []struct {
 		fn    func(*loglayer.LogLayer)

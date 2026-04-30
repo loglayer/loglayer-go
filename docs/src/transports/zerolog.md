@@ -11,6 +11,7 @@ Wraps an existing `*zerolog.Logger`. Map metadata merges as fields; struct metad
 
 ```sh
 go get go.loglayer.dev/transports/zerolog
+go get github.com/rs/zerolog
 ```
 
 ## Basic Usage
@@ -42,13 +43,14 @@ If you don't pass a `Logger`, the transport constructs one writing to `Writer` (
 type Config struct {
     transport.BaseConfig
 
-    Logger            *zerolog.Logger // wrap an existing logger
-    Writer            io.Writer       // used only when Logger is nil
-    MetadataFieldName string          // key for non-map metadata; default "metadata"
+    Logger *zerolog.Logger // wrap an existing logger
+    Writer io.Writer       // used only when Logger is nil
 }
 ```
 
 ## Metadata Handling
+
+<!--@include: ./_partials/metadata-field-name.md-->
 
 ### Map metadata → fields at root
 
@@ -57,7 +59,7 @@ log.WithMetadata(loglayer.Metadata{"requestId": "abc", "n": 42}).Info("served")
 // {"level":"info","time":"...","message":"served","requestId":"abc","n":42}
 ```
 
-### Struct metadata → nested under `MetadataFieldName`
+### Struct metadata nests under the metadata key
 
 ```go
 type User struct {
@@ -69,7 +71,7 @@ log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
 // {"level":"info","time":"...","message":"user","metadata":{"id":7,"name":"Alice"}}
 ```
 
-This avoids the JSON roundtrip the structured transport does. Zerolog's `Interface` field handler reflects directly into the struct, which is faster.
+Zerolog's `Interface` field handler reflects directly into the struct, so the value is encoded once at write time without an extra JSON roundtrip.
 
 Use a different key per call by wrapping in a map:
 
@@ -77,11 +79,11 @@ Use a different key per call by wrapping in a map:
 log.WithMetadata(loglayer.Metadata{"user": User{ID: 7, Name: "Alice"}}).Info("user")
 ```
 
-Or globally with `MetadataFieldName`:
+Or globally via the core's `MetadataFieldName` (which also nests map metadata under the same key):
 
 ```go
-llzero.New(llzero.Config{
-    Logger:            &z,
+loglayer.New(loglayer.Config{
+    Transport:         llzero.New(llzero.Config{Logger: &z}),
     MetadataFieldName: "payload",
 })
 ```

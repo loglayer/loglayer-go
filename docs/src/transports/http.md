@@ -116,7 +116,7 @@ The default `JSONArrayEncoder` produces:
 ]
 ```
 
-Map metadata merges at the root; non-map metadata (struct, scalar, slice) lands under the `metadata` key.
+Persistent fields (`WithFields`) and metadata (`WithMetadata`) follow the [core placement rules](/configuration#fieldskey): when `FieldsKey` is empty, fields merge at the root; when `MetadataFieldName` is empty, map metadata merges at the root and non-map metadata nests under `metadata`. Set either knob on `loglayer.Config` to nest under a configured key instead.
 
 ### `Client`
 

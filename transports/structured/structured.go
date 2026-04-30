@@ -147,11 +147,20 @@ func (s *Transport) SendToLogger(params loglayer.TransportParams) {
 		}
 	}
 	if params.Metadata != nil {
-		for k, v := range transport.MetadataAsMap(params.Metadata) {
+		if key := params.Schema.MetadataFieldName; key != "" {
+			// Whole metadata value nests under the configured key.
 			buf.WriteByte(',')
-			if err := writeKeyValue(buf, k, v); err != nil {
+			if err := writeKeyValue(buf, key, params.Metadata); err != nil {
 				s.writeMarshalError(err)
 				return
+			}
+		} else {
+			for k, v := range transport.MetadataAsMap(params.Metadata) {
+				buf.WriteByte(',')
+				if err := writeKeyValue(buf, k, v); err != nil {
+					s.writeMarshalError(err)
+					return
+				}
 			}
 		}
 	}

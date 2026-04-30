@@ -22,7 +22,9 @@ import (
 )
 
 log := loglayer.New(loglayer.Config{
-    Transport: structured.New(structured.Config{}),
+    Transport:         structured.New(structured.Config{}),
+    FieldsKey:         "context",
+    MetadataFieldName: "metadata",
 })
 
 log.Info("hello")
@@ -31,7 +33,7 @@ log.Info("hello")
 log.WithFields(loglayer.Fields{"requestId": "abc"}).
     WithMetadata(loglayer.Metadata{"user": "alice"}).
     Info("served")
-// {"level":"info","time":"...","msg":"served","requestId":"abc","user":"alice"}
+// {"level":"info","time":"...","msg":"served","context":{"requestId":"abc"},"metadata":{"user":"alice"}}
 ```
 
 ## Config

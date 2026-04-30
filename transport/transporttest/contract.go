@@ -62,6 +62,7 @@ func RunContract(t *testing.T, c ContractCase) {
 	t.Run(c.Name+"/MapMetadataMerged", func(t *testing.T) { t.Parallel(); testMapMetadataMerged(t, c) })
 	t.Run(c.Name+"/StructMetadataNested", func(t *testing.T) { t.Parallel(); testStructMetadataNested(t, c) })
 	t.Run(c.Name+"/CustomMetadataFieldName", func(t *testing.T) { t.Parallel(); testCustomMetadataFieldName(t, c) })
+	t.Run(c.Name+"/MapMetadataNestsUnderFieldName", func(t *testing.T) { t.Parallel(); testMapMetadataNestsUnderFieldName(t, c) })
 	t.Run(c.Name+"/FieldsMerged", func(t *testing.T) { t.Parallel(); testFieldsMerged(t, c) })
 	t.Run(c.Name+"/WithError", func(t *testing.T) { t.Parallel(); testWithError(t, c) })
 	t.Run(c.Name+"/LevelFiltering", func(t *testing.T) { t.Parallel(); testLevelFiltering(t, c) })
@@ -206,6 +207,28 @@ func testCustomMetadataFieldName(t *testing.T, c ContractCase) {
 	out := buf.String()
 	if !strings.Contains(out, "user") {
 		t.Errorf("expected 'user' key in output, got %q", out)
+	}
+}
+
+// When Config.MetadataFieldName is set, MAP metadata must also nest under
+// that key (not flatten at root). This is the symmetric-API behavior:
+// both map and non-map metadata land under the configured key.
+func testMapMetadataNestsUnderFieldName(t *testing.T, c ContractCase) {
+	log, buf := c.Factory(FactoryOpts{MetadataFieldName: "payload"})
+	log.WithMetadata(loglayer.Metadata{"requestId": "xyz"}).Info("req")
+	out := buf.String()
+	if !strings.Contains(out, "payload") {
+		t.Errorf("expected 'payload' key in output, got %q", out)
+	}
+	// requestId must NOT be at the root; it should be nested inside payload.
+	obj, err := tryParseJSONLine(buf)
+	if err != nil {
+		// charmlog renders as keyval, not JSON; the substring check above
+		// is the contract for that case.
+		return
+	}
+	if _, atRoot := obj["requestId"]; atRoot {
+		t.Errorf("requestId should be nested under 'payload', not at root; got %v", obj)
 	}
 }
 

@@ -82,6 +82,13 @@
       "include-component-in-tag": true,
       "changelog-path": "CHANGELOG.md"
     },
+    "transports/sentry": {
+      "release-type": "go",
+      "package-name": "go.loglayer.dev/transports/sentry",
+      "component": "transports/sentry",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
     "transports/zap": {
       "release-type": "go",
       "package-name": "go.loglayer.dev/transports/zap",

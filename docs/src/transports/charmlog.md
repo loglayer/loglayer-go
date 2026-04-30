@@ -11,6 +11,7 @@ Wraps an existing `*charmbracelet/log.Logger`. Map metadata flattens to alternat
 
 ```sh
 go get go.loglayer.dev/transports/charmlog
+go get github.com/charmbracelet/log
 ```
 
 The package name is `charmlog` (since both the import path's last element and the package itself are `log`, which would collide with the stdlib).
@@ -48,9 +49,8 @@ If you don't pass a `Logger`, the transport constructs one writing to `Writer` (
 type Config struct {
     transport.BaseConfig
 
-    Logger            *charmbracelet/log.Logger // wrap an existing logger
-    Writer            io.Writer                 // used only when Logger is nil
-    MetadataFieldName string                    // key for non-map metadata; default "metadata"
+    Logger *charmbracelet/log.Logger // wrap an existing logger
+    Writer io.Writer                 // used only when Logger is nil
 }
 ```
 
@@ -59,6 +59,8 @@ type Config struct {
 charmbracelet's `Logger.Fatal()` calls `os.Exit(1)`, but `Logger.Log(FatalLevel, msg, keyvals...)` does not. This wrapper always dispatches via `Log(level, ...)`, so charmbracelet writes the fatal entry and returns. The core then decides whether `os.Exit(1)` is called after dispatch. See [Fatal Exits the Process](/logging-api/basic-logging#fatal-exits-the-process).
 
 ## Metadata Handling
+
+<!--@include: ./_partials/metadata-field-name.md-->
 
 ### Map metadata → individual key/value pairs
 
@@ -69,7 +71,7 @@ log.WithMetadata(loglayer.Metadata{"requestId": "xyz", "n": 42}).Info("served")
 
 Each map entry becomes a `(key, value)` pair in the variadic `keyvals` argument to `Log`.
 
-### Struct metadata → nested under `MetadataFieldName`
+### Struct metadata nests under the metadata key
 
 ```go
 type User struct {
@@ -89,11 +91,11 @@ To use a different key per call, wrap in a map:
 log.WithMetadata(loglayer.Metadata{"user": User{ID: 7, Name: "Alice"}}).Info("user")
 ```
 
-Or globally via `MetadataFieldName`:
+Or globally via the core's `MetadataFieldName` (which also nests map metadata under the same key):
 
 ```go
-llcharm.New(llcharm.Config{
-    Logger:            cl,
+loglayer.New(loglayer.Config{
+    Transport:         llcharm.New(llcharm.Config{Logger: cl}),
     MetadataFieldName: "payload",
 })
 ```

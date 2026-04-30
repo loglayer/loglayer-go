@@ -81,6 +81,17 @@ type Config struct {
 	// FieldsKey nests all persistent fields under this key. If empty, fields are merged at root.
 	FieldsKey string
 
+	// MetadataFieldName nests the per-call metadata value under this key in
+	// the assembled output. If empty, transports use their default placement
+	// policy (renderer transports flatten map metadata at root; wrapper
+	// transports flatten map metadata to attributes and nest non-map metadata
+	// under a transport-specific default key, typically "metadata").
+	//
+	// When non-empty, the entry's metadata (whether a map, struct, scalar,
+	// or slice) is nested under this single key uniformly, and transports
+	// honor that placement.
+	MetadataFieldName string
+
 	// MuteFields disables inclusion of persistent fields in log output.
 	MuteFields bool
 

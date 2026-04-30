@@ -126,12 +126,11 @@ func TestEmits(t *testing.T) {
 type Config struct {
     transport.BaseConfig
 
-    Name              string                  // instrumentation scope name; required when Logger is nil
-    Version           string                  // optional scope version
-    SchemaURL         string                  // optional schema URL
-    LoggerProvider    log.LoggerProvider      // defaults to global.GetLoggerProvider()
-    Logger            log.Logger              // pre-built logger; takes precedence over the above
-    MetadataFieldName string                  // attribute key for non-map metadata; default "metadata"
+    Name           string             // instrumentation scope name; required when Logger is nil
+    Version        string             // optional scope version
+    SchemaURL      string             // optional schema URL
+    LoggerProvider log.LoggerProvider // defaults to global.GetLoggerProvider()
+    Logger         log.Logger         // pre-built logger; takes precedence over the above
 }
 ```
 
@@ -161,6 +160,8 @@ The original LogLayer level name (`"info"`, `"error"`, etc.) is also set as `Sev
 
 ## Metadata Handling
 
+<!--@include: ./_partials/metadata-field-name.md-->
+
 ### Map metadata flattens to attributes
 
 ```go
@@ -170,7 +171,7 @@ log.WithMetadata(loglayer.Metadata{"requestId": "abc", "n": 42}).Info("served")
 
 Each map entry becomes a typed `log.KeyValue`: strings → `StringValue`, ints → `Int64Value`, bools → `BoolValue`, and so on. Nested maps and slices recurse into `MapValue` / `SliceValue`.
 
-### Struct metadata nests under `MetadataFieldName`
+### Struct metadata nests under the metadata key
 
 ```go
 type User struct {
@@ -182,11 +183,13 @@ log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
 // log.Record attribute: metadata=Map{id=7, name="Alice"}
 ```
 
-The struct is JSON-roundtripped (so `json:` tags apply) then converted to a nested `MapValue` under the `MetadataFieldName` attribute (default `"metadata"`).
+The struct is JSON-roundtripped (so `json:` tags apply) then converted to a nested `MapValue` under the metadata attribute (default `"metadata"`).
+
+Override the key globally via the core's `MetadataFieldName` (which also nests map metadata under the same key):
 
 ```go
-otellog.New(otellog.Config{
-    Name:              "checkout-api",
+loglayer.New(loglayer.Config{
+    Transport:         otellog.New(otellog.Config{Name: "checkout-api"}),
     MetadataFieldName: "user",
 })
 

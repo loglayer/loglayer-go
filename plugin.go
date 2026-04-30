@@ -106,6 +106,8 @@ type BeforeDataOutParams struct {
 	Ctx context.Context
 	// Groups mirrors [TransportParams.Groups].
 	Groups []string
+	// Schema mirrors [TransportParams.Schema].
+	Schema Schema
 }
 
 // BeforeMessageOutParams is the input to [MessageHook.OnBeforeMessageOut].
@@ -116,6 +118,8 @@ type BeforeMessageOutParams struct {
 	Ctx context.Context
 	// Groups mirrors [TransportParams.Groups].
 	Groups []string
+	// Schema mirrors [TransportParams.Schema].
+	Schema Schema
 }
 
 // TransformLogLevelParams is the input to [LevelHook.TransformLogLevel].
@@ -130,6 +134,8 @@ type TransformLogLevelParams struct {
 	Ctx context.Context
 	// Groups mirrors [TransportParams.Groups].
 	Groups []string
+	// Schema mirrors [TransportParams.Schema].
+	Schema Schema
 }
 
 // ShouldSendParams is the input to [SendGate.ShouldSend].
@@ -148,6 +154,8 @@ type ShouldSendParams struct {
 	Ctx context.Context
 	// Groups mirrors [TransportParams.Groups].
 	Groups []string
+	// Schema mirrors [TransportParams.Schema].
+	Schema Schema
 }
 
 // inner is a private hook the framework uses to see through a wrapper

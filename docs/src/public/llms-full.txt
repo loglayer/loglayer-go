@@ -27,14 +27,15 @@ go get go.loglayer.dev/transports/slog
 go get go.loglayer.dev/transports/phuslu
 go get go.loglayer.dev/transports/logrus
 go get go.loglayer.dev/transports/charmlog
-go get go.loglayer.dev/transports/otellog
 
 # Cloud (managed log services)
 go get go.loglayer.dev/transports/datadog
+go get go.loglayer.dev/transports/sentry
 
 # Other transports
 go get go.loglayer.dev/transports/http
 go get go.loglayer.dev/transports/lumberjack
+go get go.loglayer.dev/transports/otellog
 
 # Plugins
 go get go.loglayer.dev/plugins/redact
@@ -62,7 +63,8 @@ import (
 
 func main() {
     log := loglayer.New(loglayer.Config{
-        Transport: structured.New(structured.Config{}),
+        Transport:         structured.New(structured.Config{}),
+        MetadataFieldName: "metadata",
     })
 
     log.Info("hello world")
@@ -141,11 +143,11 @@ log.MetadataOnly(loglayer.M{"queueDepth": 17}, loglayer.MetadataOnlyOpts{
 
 ### Nested Metadata Field
 
-Each transport that supports it has a `MetadataFieldName` config (default `"metadata"`) that controls the key for non-map metadata. For map metadata: keys flatten at root unless the transport is configured otherwise.
+`loglayer.Config.MetadataFieldName` (a single core knob) nests both map and non-map metadata under one configurable key uniformly across every transport. When unset, each transport keeps its default policy: renderers flatten map metadata at root, wrappers flatten map metadata as individual attributes and nest non-map values under a hardcoded `"metadata"` key.
 
 ```go
-otellog.New(otellog.Config{
-    Name:              "checkout-api",
+loglayer.New(loglayer.Config{
+    Transport:         otellog.New(otellog.Config{Name: "checkout-api"}),
     MetadataFieldName: "user",
 })
 ```
@@ -810,6 +812,26 @@ tr := otellog.New(otellog.Config{
 ```
 
 Forwards `WithContext` to `Logger.Emit` so SDK processors correlate logs with the active trace span automatically.
+
+### `transports/sentry`
+
+Forwards each entry to a caller-supplied `sentry.Logger` (Sentry's structured-logs API).
+
+```go
+import (
+    "github.com/getsentry/sentry-go"
+
+    sentrytransport "go.loglayer.dev/transports/sentry"
+)
+
+sentry.Init(sentry.ClientOptions{Dsn: "...", EnableLogs: true})
+
+tr := sentrytransport.New(sentrytransport.Config{
+    Logger: sentry.NewLogger(ctx),
+})
+```
+
+Map fields and metadata flatten as typed Sentry attributes; non-map metadata stringifies under the metadata key (default `"metadata"`, overridable via `loglayer.Config.MetadataFieldName`). Routes `LogLevelFatal` and `LogLevelPanic` through `LFatal()` so loglayer's core controls termination; Sentry's `Fatal()`/`Panic()` (which would `os.Exit`/`panic`) are never called by this transport.
 
 ## Creating Custom Transports
 

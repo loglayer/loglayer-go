@@ -143,7 +143,17 @@ func TestStructMetadataNested(t *testing.T) {
 
 func TestCustomMetadataFieldName(t *testing.T) {
 	type user struct{ ID int }
-	log, rec := newLogger(t, otellog.Config{MetadataFieldName: "user"})
+	rec := logtest.NewRecorder()
+	tr := otellog.New(otellog.Config{
+		BaseConfig:     transport.BaseConfig{ID: "otellog"},
+		Name:           "otellog-test",
+		LoggerProvider: rec,
+	})
+	log := loglayer.New(loglayer.Config{
+		Transport:         tr,
+		DisableFatalExit:  true,
+		MetadataFieldName: "user",
+	})
 	log.WithMetadata(user{ID: 9}).Info("hi")
 	a := attrs(lastRecord(t, rec))
 	if a["user"].Kind() != otelapi.KindMap {

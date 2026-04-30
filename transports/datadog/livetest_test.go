@@ -24,13 +24,14 @@
 package datadog_test
 
 import (
+	"cmp"
 	"errors"
 	"os"
 	"sync"
 	"testing"
 	"time"
 
-	"go.loglayer.dev"
+	"go.loglayer.dev/transport/transporttest"
 	"go.loglayer.dev/transports/datadog"
 	httptr "go.loglayer.dev/transports/http"
 	"go.loglayer.dev/utils/idgen"
@@ -43,11 +44,11 @@ func TestLive_Datadog_SendsLog(t *testing.T) {
 	}
 
 	site := datadog.Site(os.Getenv("DD_SITE"))
-	source := envOr("DD_SOURCE", "go-loglayer-livetest")
-	service := envOr("DD_SERVICE", "loglayer-go-livetest")
+	source := cmp.Or(os.Getenv("DD_SOURCE"), "go-loglayer-livetest")
+	service := cmp.Or(os.Getenv("DD_SERVICE"), "loglayer-go-livetest")
 	hostname := os.Getenv("DD_HOSTNAME")
-	tags := envOr("DD_TAGS", "env:livetest")
-	livetestID := idgen.Random("")
+	tags := cmp.Or(os.Getenv("DD_TAGS"), "env:livetest")
+	baseID := idgen.Random("")
 
 	var (
 		errMu    sync.Mutex
@@ -75,18 +76,7 @@ func TestLive_Datadog_SendsLog(t *testing.T) {
 		},
 	})
 
-	log := loglayer.New(loglayer.Config{Transport: tr, DisableFatalExit: true})
-	log = log.WithFields(loglayer.Fields{
-		"livetest_id": livetestID,
-		"sent_at":     time.Now().UTC().Format(time.RFC3339Nano),
-	})
-
-	log.Info("loglayer-go datadog livetest")
-	log.WithMetadata(loglayer.Metadata{
-		"step":     "with-metadata",
-		"runner":   "go test",
-		"checksum": livetestID,
-	}).Warn("loglayer-go datadog livetest with metadata")
+	ids := transporttest.SendLivetestVariants(tr, baseID)
 
 	if err := tr.Close(); err != nil {
 		t.Fatalf("Close: %v", err)
@@ -109,12 +99,7 @@ func TestLive_Datadog_SendsLog(t *testing.T) {
 	}
 
 	t.Logf("Sent livetest entries to Datadog (%s).", site.IntakeURL())
-	t.Logf("Verify in Datadog Logs Explorer: source:%s @livetest_id:%s", source, livetestID)
-}
-
-func envOr(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
+	for i, v := range transporttest.LivetestVariants {
+		t.Logf("  %s: source:%s @livetest_id:%s", v.Name, source, ids[i])
 	}
-	return fallback
 }

@@ -340,17 +340,17 @@ func TestCentral_ErrorOnly_NoContext(t *testing.T) {
 }
 
 // When the loglayer core is configured with a non-default ErrorFieldName,
-// the central transport's ErrorFieldName must match for the split to work.
+// the central transport reads it from Schema and lifts the error out of
+// Data correctly.
 func TestCentral_CustomErrorFieldName(t *testing.T) {
 	cap := &capture{}
 	srv := httptest.NewServer(http.HandlerFunc(cap.handler))
 	t.Cleanup(srv.Close)
 
 	tr := central.New(central.Config{
-		Service:        "svc",
-		BaseURL:        srv.URL,
-		ErrorFieldName: "error_obj",
-		HTTP:           httptr.Config{BatchSize: 10, BatchInterval: time.Hour},
+		Service: "svc",
+		BaseURL: srv.URL,
+		HTTP:    httptr.Config{BatchSize: 10, BatchInterval: time.Hour},
 	})
 	log := loglayer.New(loglayer.Config{
 		Transport:        tr,

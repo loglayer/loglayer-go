@@ -28,9 +28,6 @@ const DefaultBaseURL = "http://localhost:9800"
 // IntakePath is the path appended to the base URL for log ingestion.
 const IntakePath = "/api/logs"
 
-// defaultErrorFieldName mirrors loglayer.Config.ErrorFieldName's default.
-const defaultErrorFieldName = "err"
-
 // Config holds Central transport configuration.
 type Config struct {
 	transport.BaseConfig
@@ -52,12 +49,6 @@ type Config struct {
 	// key:value strings (e.g. []string{"env:prod", "region:us-east"}).
 	// Optional.
 	Tags []string
-
-	// ErrorFieldName is the key the loglayer core uses for the assembled
-	// error map inside Data. Must match loglayer.Config.ErrorFieldName so
-	// the encoder can lift the error out of "context" and into the
-	// payload's top-level "error" field. Defaults to "err".
-	ErrorFieldName string
 
 	// HTTP overrides batching, client, error handling, and any other
 	// transports/http settings. The URL and Encoder are set by this
@@ -94,10 +85,6 @@ func Build(cfg Config) (*Transport, error) {
 		return nil, ErrHTTPOverrideForbidden
 	}
 
-	if cfg.ErrorFieldName == "" {
-		cfg.ErrorFieldName = defaultErrorFieldName
-	}
-
 	httpCfg := cfg.HTTP
 	httpCfg.BaseConfig = cfg.BaseConfig
 	httpCfg.URL = strings.TrimRight(cmp.Or(cfg.BaseURL, DefaultBaseURL), "/") + IntakePath
@@ -113,7 +100,6 @@ func Build(cfg Config) (*Transport, error) {
 // newEncoder produces the JSON-array encoder for Central's intake format.
 // See TestCentral_PayloadShape for the full per-entry shape.
 func newEncoder(cfg Config) httptr.Encoder {
-	errKey := cfg.ErrorFieldName
 	return httptr.EncoderFunc(func(entries []httptr.Entry) ([]byte, string, error) {
 		objs := make([]map[string]any, len(entries))
 		for i, e := range entries {
@@ -133,6 +119,11 @@ func newEncoder(cfg Config) httptr.Encoder {
 				obj["tags"] = cfg.Tags
 			}
 
+			// Lift the error out of Data into the top-level "error" field;
+			// the remaining Data lands as "context". The error key is
+			// whatever loglayer.Config.ErrorFieldName resolved to, exposed
+			// via Schema.
+			errKey := e.Schema.ErrorFieldName
 			if errVal, ok := e.Data[errKey]; ok {
 				obj["error"] = errVal
 				if len(e.Data) > 1 {

@@ -358,13 +358,15 @@ lines := lib.Lines()  // []lltest.LogLine — assert on Level, Messages, Data, M
 
 **Cloud** (managed log services):
 - `transports/datadog` — Datadog Logs HTTP intake
+- `transports/sentry` — wraps a caller-supplied `sentry.Logger`
 
 **Other transports**:
 - `transports/http` — generic batched HTTP POST
 - `transports/lumberjack` — one JSON object per line, rotating file via `lumberjack.v2`
+- `transports/otellog` — emits to an OTel `log.Logger`; forwards `WithContext` for trace correlation
 
 **Wrappers around third-party loggers**:
-- `transports/zerolog`, `transports/zap`, `transports/slog`, `transports/phuslu`, `transports/logrus`, `transports/charmlog`, `transports/otellog`
+- `transports/zerolog`, `transports/zap`, `transports/slog`, `transports/phuslu`, `transports/logrus`, `transports/charmlog`
 
 ## Available Plugins
 

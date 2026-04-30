@@ -22,6 +22,7 @@ type Config struct {
     ErrorFieldName        string          // key for serialized error (default: "err")
     CopyMsgOnOnlyError    bool            // copy err.Error() into the message in ErrorOnly
     FieldsKey             string          // nest fields under this key (default: merged at root)
+    MetadataFieldName     string          // nest metadata under this key (default: each transport's policy)
     MuteFields            bool            // disable fields in output
     MuteMetadata          bool            // disable metadata in output
     DisableFatalExit      bool            // skip os.Exit(1) after a Fatal log
@@ -177,6 +178,50 @@ log.WithFields(loglayer.Fields{"requestId": "abc"}).Info("ok")
 ```
 
 See [Fields](/logging-api/fields).
+
+## MetadataFieldName
+
+By default, transports use their own placement policy for metadata: renderer transports (`structured`, `console`) flatten map metadata at the root and JSON-roundtrip non-map values; wrapper transports (`zap`, `zerolog`, `charmlog`, `phuslu`, `logrus`, `slog`, `otellog`, `sentry`) flatten map metadata as individual attributes and nest non-map values under a hardcoded `"metadata"` key.
+
+Set `MetadataFieldName` to nest **both** map and non-map metadata under a single configurable key uniformly:
+
+```go
+loglayer.New(loglayer.Config{
+    Transport:         structured.New(structured.Config{}),
+    MetadataFieldName: "metadata",
+})
+
+log.WithMetadata(loglayer.Metadata{"userId": 1234}).Info("served")
+// {"msg":"served","metadata":{"userId":1234}}
+
+log.WithMetadata(struct{ ID int }{ID: 7}).Info("user")
+// {"msg":"user","metadata":{"ID":7}}
+```
+
+This produces the symmetric three-knob shape alongside `FieldsKey` and `ErrorFieldName`:
+
+```go
+loglayer.New(loglayer.Config{
+    FieldsKey:         "context",
+    MetadataFieldName: "metadata",
+    ErrorFieldName:    "error",
+})
+
+log = log.WithFields(loglayer.Fields{"service": "api"})
+log.WithMetadata(loglayer.Metadata{"userId": "1234"}).
+    WithError(errors.New("boom")).
+    Error("user action failed")
+// {
+//   "msg":     "user action failed",
+//   "context": {"service": "api"},
+//   "metadata":{"userId": "1234"},
+//   "error":   {"message": "boom"}
+// }
+```
+
+When empty (default), each transport keeps its existing default placement. The setting is published to every transport (and dispatch-time plugin hooks) via `loglayer.Schema`; transports honor it uniformly.
+
+See [Metadata](/logging-api/metadata).
 
 ## DisableFatalExit
 

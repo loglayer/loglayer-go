@@ -26,6 +26,7 @@ ALL_MODULES=(
   transports/otellog
   transports/phuslu
   transports/pretty
+  transports/sentry
   transports/slog
   transports/structured
   transports/testing
@@ -45,6 +46,7 @@ ALL_MODULES=(
   examples/http-server
   examples/multi-transport
   examples/otel-end-to-end
+  examples/pretty-modes
 )
 
 # Modules that ship as importable code (skip the example/livetest-only
@@ -63,6 +65,7 @@ SHIPPED_MODULES=(
   transports/otellog
   transports/phuslu
   transports/pretty
+  transports/sentry
   transports/slog
   transports/structured
   transports/testing
@@ -153,6 +156,7 @@ case "$op" in
       transports/otellog \
       transports/phuslu \
       transports/pretty \
+      transports/sentry \
       transports/slog \
       transports/structured \
       transports/testing \

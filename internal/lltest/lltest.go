@@ -29,6 +29,8 @@ type LogLine struct {
 	Ctx context.Context
 	// Groups mirrors [loglayer.TransportParams.Groups].
 	Groups []string
+	// Schema mirrors [loglayer.TransportParams.Schema].
+	Schema loglayer.Schema
 }
 
 // TestLoggingLibrary captures log lines for assertion in tests.
@@ -141,5 +143,6 @@ func (t *TestTransport) SendToLogger(params loglayer.TransportParams) {
 		Metadata: params.Metadata,
 		Ctx:      params.Ctx,
 		Groups:   params.Groups,
+		Schema:   params.Schema,
 	})
 }

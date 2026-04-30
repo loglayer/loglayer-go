@@ -29,7 +29,9 @@ import (
 
 func main() {
     log := loglayer.New(loglayer.Config{
-        Transport: structured.New(structured.Config{}),
+        Transport:         structured.New(structured.Config{}),
+        FieldsKey:         "context",
+        MetadataFieldName: "metadata",
     })
 
     // Basic logging
@@ -38,18 +40,20 @@ func main() {
 
     // With metadata (loglayer.Metadata is an alias for map[string]any)
     log.WithMetadata(loglayer.Metadata{"user": "alice"}).Info("User logged in")
-    // {"level":"info","time":"...","msg":"User logged in","user":"alice"}
+    // {"level":"info","time":"...","msg":"User logged in","metadata":{"user":"alice"}}
 
     // With persistent fields (WithFields returns a NEW logger; assign it)
     reqLog := log.WithFields(loglayer.Fields{"requestId": "123"})
     reqLog.Info("Processing request")
-    // {"level":"info","time":"...","msg":"Processing request","requestId":"123"}
+    // {"level":"info","time":"...","msg":"Processing request","context":{"requestId":"123"}}
 
     // With an error
     log.WithError(errors.New("something went wrong")).Error("Failed")
     // {"level":"error","time":"...","msg":"Failed","err":{"message":"something went wrong"}}
 }
 ```
+
+The example above sets `FieldsKey` and `MetadataFieldName` to nest fields and metadata under their own keys. See [Configuration](/configuration) for every knob on `loglayer.Config`: error serialization, field/metadata placement, prefix, source capture, group routing, fatal-exit control, and more.
 
 ::: tip Pretty terminal output
 For local development, the [Pretty Transport](/transports/pretty) gives you colorized, theme-aware output with three view modes. Much easier to scan than raw JSON or the basic [Console Transport](/transports/console).

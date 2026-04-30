@@ -19,13 +19,11 @@ func factory(opts transporttest.FactoryOpts) (*loglayer.LogLayer, *bytes.Buffer)
 		ReportTimestamp: false,
 		Formatter:       clog.JSONFormatter,
 	})
-	cfg := llcharm.Config{
-		BaseConfig:        transport.BaseConfig{ID: "charmlog", Level: opts.Level},
-		Logger:            cl,
-		MetadataFieldName: opts.MetadataFieldName,
-	}
-	tr := llcharm.New(cfg)
-	return loglayer.New(loglayer.Config{DisableFatalExit: true, Transport: tr}), buf
+	tr := llcharm.New(llcharm.Config{
+		BaseConfig: transport.BaseConfig{ID: "charmlog", Level: opts.Level},
+		Logger:     cl,
+	})
+	return transporttest.NewLogger(tr, opts), buf
 }
 
 func TestCharmContract(t *testing.T) {

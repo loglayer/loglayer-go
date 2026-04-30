@@ -11,6 +11,7 @@ Wraps a `*zap.Logger`. Map metadata becomes individual zap fields; struct metada
 
 ```sh
 go get go.loglayer.dev/transports/zap
+go get go.uber.org/zap
 ```
 
 ## Basic Usage
@@ -41,13 +42,14 @@ If you don't pass a `Logger`, the transport constructs one with a JSON encoder w
 type Config struct {
     transport.BaseConfig
 
-    Logger            *zap.Logger // wrap an existing logger
-    Writer            io.Writer   // used only when Logger is nil
-    MetadataFieldName string      // key for non-map metadata; default "metadata"
+    Logger *zap.Logger // wrap an existing logger
+    Writer io.Writer   // used only when Logger is nil
 }
 ```
 
 ## Metadata Handling
+
+<!--@include: ./_partials/metadata-field-name.md-->
 
 ### Map metadata → individual fields
 
@@ -58,7 +60,7 @@ log.WithMetadata(loglayer.Metadata{"requestId": "abc", "n": 42}).Info("served")
 
 Each map entry becomes a `zap.Any(k, v)` call, so zap renders it however its encoder is configured.
 
-### Struct metadata → nested under `MetadataFieldName`
+### Struct metadata nests under the metadata key
 
 ```go
 type User struct {
@@ -78,11 +80,11 @@ To use a different key per call, wrap in a map:
 log.WithMetadata(loglayer.Metadata{"user": User{ID: 7, Name: "Alice"}}).Info("user")
 ```
 
-Or globally via `MetadataFieldName`:
+Or globally via the core's `MetadataFieldName` (which also nests map metadata under the same key):
 
 ```go
-llzap.New(llzap.Config{
-    Logger:            z,
+loglayer.New(loglayer.Config{
+    Transport:         llzap.New(llzap.Config{Logger: z}),
     MetadataFieldName: "payload",
 })
 ```

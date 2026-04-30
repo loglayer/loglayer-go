@@ -75,10 +75,11 @@ type TransportParams struct {
     Fields   Fields
     Ctx      context.Context // per-call WithContext value, or nil
     Groups   []string        // merged persistent + per-call WithGroup tags, or nil
+    Schema   Schema           // resolved assembly shape: FieldsKey, MetadataFieldName, ErrorFieldName, SourceFieldName
 }
 ```
 
-`Data` is the convenience map combining fields + error. `Metadata` is `any`, you choose how to render it. `Err` and `Fields` are also exposed raw if you want to inspect them directly. `Groups` is the merged set of persistent (`WithGroup` on the logger) and per-call (`WithGroup` on the builder) group tags for this entry; it's `nil` when no groups apply.
+`Data` is the convenience map combining fields + error. `Metadata` is `any`, you choose how to render it. `Err` and `Fields` are also exposed raw if you want to inspect them directly. `Groups` is the merged set of persistent (`WithGroup` on the logger) and per-call (`WithGroup` on the builder) group tags for this entry; it's `nil` when no groups apply. `Schema` carries the keys the core wants used for placement (`FieldsKey`, `MetadataFieldName`, `ErrorFieldName`, `SourceFieldName`); read it before falling back to your transport's defaults.
 
 ## Handling `any` Metadata
 
@@ -93,10 +94,10 @@ The `transport` package exposes helpers that encode each policy. Reach for them 
 
 | Helper | What it does | Use when |
 |--------|--------------|----------|
-| `transport.MetadataAsRootMap(v) (map[string]any, bool)` | Returns the map directly if `v` is `loglayer.Metadata` or `map[string]any`; otherwise `nil, false`. No allocation, no roundtrip. | Deciding whether to flatten or nest. The wrapper transports (zap, zerolog, slog, logrus, charmlog, phuslu) call this first, then nest non-map values under `MetadataFieldName`. |
+| `transport.MetadataAsRootMap(v) (map[string]any, bool)` | Returns the map directly if `v` is `loglayer.Metadata` or `map[string]any`; otherwise `nil, false`. No allocation, no roundtrip. | Deciding whether to flatten or nest. The wrapper transports (zap, zerolog, slog, logrus, charmlog, phuslu) call this first, then nest non-map values under the metadata key supplied via `params.Schema.MetadataFieldName` (or a transport-specific default like `"metadata"` when unset). |
 | `transport.MetadataAsMap(v) map[string]any` | Map fast path; non-map values are JSON-roundtripped into a map. Returns nil on roundtrip failure (channels, cycles, marshalers producing a non-object). | Renderers that flatten everything at the root, used by `structured` and (via `MergeFieldsAndMetadata`) by `console`. |
-| `transport.MergeFieldsAndMetadata(p) map[string]any` | Combines `p.Data` and metadata into a single root-flat map. Map metadata merges at root; non-map is roundtripped via `MetadataAsMap` and dropped if the roundtrip fails. | Renderers that emit a single flat object. |
-| `transport.MergeIntoMap(dst, data, metadata)` | Mutates `dst` in place. Map metadata merges at root; non-map metadata lands raw under the `metadata` key (no JSON roundtrip). | Encoders that have already seeded `dst` with their own protocol fields (level, time, msg, ddsource, ...) and want to layer user data on top. Used by HTTP `JSONArrayEncoder` and Datadog. |
+| `transport.MergeFieldsAndMetadata(p) map[string]any` | Combines `p.Data` and metadata into a single map. Honors `p.Schema.MetadataFieldName`: when set, the entire metadata value nests under that key; when empty, map metadata merges at root and non-map roundtrips via `MetadataAsMap` (dropped if the roundtrip fails). | Renderers that emit a single flat object. |
+| `transport.MergeIntoMap(dst, data, metadata, metadataKey)` | Mutates `dst` in place. When `metadataKey` is non-empty, the entire metadata value nests under that key; when empty, map metadata merges at root and non-map lands raw under `"metadata"`. Encoders with access to `TransportParams` should pass `params.Schema.MetadataFieldName`. | Encoders that have already seeded `dst` with their own protocol fields (level, time, msg, ddsource, ...) and want to layer user data on top. Used by HTTP `JSONArrayEncoder` and Datadog. |
 | `transport.FieldEstimate(p) int` | Counts the eventual root-level fields. | Pre-sizing slices/maps in attribute-style backends (zap, charmlog, otellog). |
 
 ### Picking a policy
@@ -117,10 +118,10 @@ Worked example: [`examples/custom-transport`](https://github.com/loglayer/loglay
 
 #### Wrapper / "attribute-forwarding" policy
 
-Use this when your backend already has an attribute API (zap's `zap.Any`, zerolog's `Event.Interface`, OTel's `KeyValue`, slog's `Attr`, ...). Branch on metadata shape via `MetadataAsRootMap`:
+Use this when your backend already has an attribute API (zap's `zap.Any`, zerolog's `Event.Interface`, OTel's `KeyValue`, slog's `Attr`, ...). Read `params.Schema.MetadataFieldName` first: when non-empty, nest the raw value (map or otherwise) under that single key uniformly. Otherwise branch on metadata shape via `MetadataAsRootMap`:
 
 - If it's a map, flatten each entry into its own attribute call.
-- If it's not, forward the raw value as a single attribute under `MetadataFieldName` and let the backend's marshaler render it natively. **Skip the JSON roundtrip**, the backend will encode the value at write time.
+- If it's not, forward the raw value as a single attribute under your transport's default key (typically `"metadata"`) and let the backend's marshaler render it natively. **Skip the JSON roundtrip**, the backend will encode the value at write time.
 
 This is what every wrapper transport in the repo does (zap, zerolog, slog, logrus, charmlog, phuslu, OpenTelemetry).
 

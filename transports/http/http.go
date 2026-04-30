@@ -59,6 +59,8 @@ type Entry struct {
 	Metadata any
 	// Groups mirrors [loglayer.TransportParams.Groups].
 	Groups []string
+	// Schema mirrors [loglayer.TransportParams.Schema].
+	Schema loglayer.Schema
 }
 
 // Config holds HTTP transport configuration.
@@ -212,6 +214,7 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 		Messages: params.Messages,
 		Metadata: params.Metadata,
 		Groups:   params.Groups,
+		Schema:   params.Schema,
 	}
 	if len(params.Data) > 0 {
 		entry.Data = params.Data
@@ -390,7 +393,7 @@ func jsonArrayEncode(entries []Entry) ([]byte, string, error) {
 		obj["level"] = e.Level.String()
 		obj["time"] = e.Time.UTC().Format(time.RFC3339Nano)
 		obj["msg"] = transport.JoinMessages(e.Messages)
-		transport.MergeIntoMap(obj, e.Data, e.Metadata)
+		transport.MergeIntoMap(obj, e.Data, e.Metadata, e.Schema.MetadataFieldName)
 		objs[i] = obj
 	}
 	body, err := json.Marshal(objs)

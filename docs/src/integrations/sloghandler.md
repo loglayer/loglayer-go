@@ -35,13 +35,14 @@ import (
 
 log := loglayer.New(loglayer.Config{
     Transport: structured.New(structured.Config{}),
+    FieldsKey: "context",
 })
 log.AddPlugin(redact.New(redact.Config{Keys: []string{"password"}}))
 
 slog.SetDefault(slog.New(sloghandler.New(log)))
 
 slog.Info("user signed in", "userId", 42, "password", "hunter2")
-// {"level":"info","time":"...","msg":"user signed in","userId":42,"password":"[REDACTED]"}
+// {"level":"info","time":"...","msg":"user signed in","context":{"userId":42,"password":"[REDACTED]"}}
 ```
 
 The redact plugin runs even though the call site is `slog.Info(...)`. Same for `oteltrace`, `datadogtrace`, fan-out across multiple transports, group routing, and runtime level mutation.
@@ -86,15 +87,17 @@ The `context.Context` passed to `slog.InfoContext(ctx, ...)` (and the handler's 
 Persistent fields set on the loglayer logger (via `log.WithFields(...)` before installing the handler) are preserved on every emission that comes through the handler:
 
 ```go
-log := loglayer.New(loglayer.Config{Transport: ...}).
-    WithFields(loglayer.Fields{"service": "api"})
+log := loglayer.New(loglayer.Config{
+    Transport: ...,
+    FieldsKey: "context",
+}).WithFields(loglayer.Fields{"service": "api"})
 slog.SetDefault(slog.New(sloghandler.New(log)))
 
 slog.Info("hi")
-// {"...","msg":"hi","service":"api"}
+// {"...","msg":"hi","context":{"service":"api"}}
 
 slog.Info("with-attr", "k", "v")
-// {"...","msg":"with-attr","service":"api","k":"v"}
+// {"...","msg":"with-attr","context":{"service":"api","k":"v"}}
 ```
 
 ## Mixing slog and Loglayer Call Sites

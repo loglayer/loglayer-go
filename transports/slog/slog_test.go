@@ -17,13 +17,11 @@ func factory(opts transporttest.FactoryOpts) (*loglayer.LogLayer, *bytes.Buffer)
 	logger := stdlibslog.New(stdlibslog.NewJSONHandler(buf, &stdlibslog.HandlerOptions{
 		Level: stdlibslog.LevelDebug - 4, // allow LogLevelTrace through
 	}))
-	cfg := llslog.Config{
-		BaseConfig:        transport.BaseConfig{ID: "slog", Level: opts.Level},
-		Logger:            logger,
-		MetadataFieldName: opts.MetadataFieldName,
-	}
-	tr := llslog.New(cfg)
-	return loglayer.New(loglayer.Config{Transport: tr, DisableFatalExit: true}), buf
+	tr := llslog.New(llslog.Config{
+		BaseConfig: transport.BaseConfig{ID: "slog", Level: opts.Level},
+		Logger:     logger,
+	})
+	return transporttest.NewLogger(tr, opts), buf
 }
 
 func TestSlogContract(t *testing.T) {

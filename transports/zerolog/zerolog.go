@@ -27,11 +27,6 @@ type Config struct {
 
 	// Writer is used only when Logger is nil. Defaults to os.Stderr.
 	Writer io.Writer
-
-	// MetadataFieldName is the key under which non-map metadata values are
-	// emitted (structs, scalars, slices, etc.). Map metadata is always merged
-	// at the root. Defaults to "metadata".
-	MetadataFieldName string
 }
 
 // Transport sends log entries to a zerolog.Logger.
@@ -43,9 +38,6 @@ type Transport struct {
 
 // New creates a zerolog Transport from the given Config.
 func New(cfg Config) *Transport {
-	if cfg.MetadataFieldName == "" {
-		cfg.MetadataFieldName = "metadata"
-	}
 	var logger zlog.Logger
 	if cfg.Logger != nil {
 		logger = *cfg.Logger
@@ -78,10 +70,12 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 	}
 
 	if params.Metadata != nil {
-		if m, ok := transport.MetadataAsRootMap(params.Metadata); ok {
+		if key := params.Schema.MetadataFieldName; key != "" {
+			event = event.Interface(key, params.Metadata)
+		} else if m, ok := transport.MetadataAsRootMap(params.Metadata); ok {
 			event = event.Fields(m)
 		} else {
-			event = event.Interface(t.cfg.MetadataFieldName, params.Metadata)
+			event = event.Interface("metadata", params.Metadata)
 		}
 	}
 

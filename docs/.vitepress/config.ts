@@ -158,6 +158,7 @@ gtag('config', '${gaMeasurementId}');`,
             text: 'Cloud',
             items: [
               { text: 'Datadog', link: '/transports/datadog' },
+              { text: 'Sentry', link: '/transports/sentry' },
             ],
           },
           {
@@ -165,6 +166,7 @@ gtag('config', '${gaMeasurementId}');`,
             items: [
               { text: 'HTTP', link: '/transports/http' },
               { text: 'File (Lumberjack)', link: '/transports/lumberjack' },
+              { text: 'OpenTelemetry Logs', link: '/transports/otellog' },
             ],
           },
           {
@@ -176,7 +178,6 @@ gtag('config', '${gaMeasurementId}');`,
               { text: 'phuslu/log', link: '/transports/phuslu' },
               { text: 'logrus', link: '/transports/logrus' },
               { text: 'charmbracelet/log', link: '/transports/charmlog' },
-              { text: 'OpenTelemetry Logs', link: '/transports/otellog' },
             ],
           },
         ],

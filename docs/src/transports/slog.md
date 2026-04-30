@@ -43,9 +43,8 @@ If you don't pass a `Logger`, the transport constructs one with `slog.NewJSONHan
 type Config struct {
     transport.BaseConfig
 
-    Logger            *slog.Logger // wrap an existing logger
-    Writer            io.Writer    // used only when Logger is nil
-    MetadataFieldName string       // key for non-map metadata; default "metadata"
+    Logger *slog.Logger // wrap an existing logger
+    Writer io.Writer    // used only when Logger is nil
 }
 ```
 
@@ -54,6 +53,8 @@ type Config struct {
 slog has no fatal level. This transport maps `LogLevelFatal` to `slog.LevelError + 4` so it sorts above Error in any handler that filters by level. The actual `os.Exit(1)` decision is made by the LogLayer core based on `Config.DisableFatalExit`. See [Fatal Exits the Process](/logging-api/basic-logging#fatal-exits-the-process).
 
 ## Metadata Handling
+
+<!--@include: ./_partials/metadata-field-name.md-->
 
 ### Map metadata → individual `slog.Attr`s
 
@@ -64,7 +65,7 @@ log.WithMetadata(loglayer.Metadata{"requestId": "abc", "n": 42}).Info("served")
 
 Each map entry becomes a `slog.Any(k, v)` attribute, so slog renders it via the configured handler (JSON, text, or anything custom).
 
-### Struct metadata → nested under `MetadataFieldName`
+### Struct metadata nests under the metadata key
 
 ```go
 type User struct {
