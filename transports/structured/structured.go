@@ -1,5 +1,7 @@
 // Package structured provides a Transport that always outputs a single
 // JSON object per log entry with msg, level, and time fields by default.
+//
+// See https://go.loglayer.dev for usage guides and the full API reference.
 package structured
 
 import (
