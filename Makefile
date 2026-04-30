@@ -28,16 +28,16 @@ help: ## Print this help.
 ##@ Build & Test
 
 .PHONY: build
-build: ## Compile every package (sanity check; library has no binary).
-	$(GO) build ./...
+build: ## Build every module (mirrors CI's build step across all sub-modules).
+	scripts/foreach-module.sh build
 
 .PHONY: test
-test: ## Run all tests.
+test: ## Fast main-module tests (no race, no sub-modules). Inner-loop only.
 	$(GO) test ./...
 
 .PHONY: test-race
-test-race: ## Run all tests with the race detector.
-	$(GO) test -race -timeout 60s ./...
+test-race: ## Race tests across every module, parallelized. Mirrors pre-push.
+	scripts/foreach-module.sh test
 
 .PHONY: bench
 bench: ## Run all benchmarks (no tests).
@@ -46,26 +46,31 @@ bench: ## Run all benchmarks (no tests).
 ##@ Lint & Format
 
 .PHONY: vet
-vet: ## go vet over every package.
-	$(GO) vet ./...
+vet: ## go vet across every module.
+	scripts/foreach-module.sh vet
 
 .PHONY: fmt
 fmt: ## Format every Go file in place with gofmt.
 	$(GOFMT) -w $(GO_FILES)
 
 .PHONY: fmt-check
-fmt-check: ## Fail if any Go file is not gofmt-clean.
-	@unformatted="$$($(GOFMT) -l $(GO_FILES))"; \
-	if [ -n "$$unformatted" ]; then \
-		echo "These files are not gofmt-clean:"; \
-		echo "$$unformatted"; \
-		echo; \
-		echo "Run: make fmt"; \
-		exit 1; \
-	fi
+fmt-check: ## Fail if any module has files that aren't gofmt-clean.
+	scripts/foreach-module.sh fmt
+
+.PHONY: tidy
+tidy: ## go mod tidy across every module + diff check (fails on drift).
+	scripts/foreach-module.sh tidy
+
+.PHONY: staticcheck
+staticcheck: ## staticcheck across every shipped module. Same set CI runs.
+	scripts/foreach-module.sh staticcheck
+
+.PHONY: vuln
+vuln: ## govulncheck across every shipped module.
+	scripts/foreach-module.sh vuln
 
 .PHONY: lint
-lint: vet fmt-check ## vet + fmt-check.
+lint: vet fmt-check staticcheck ## vet + fmt-check + staticcheck across every module.
 
 ##@ Docs
 
@@ -92,4 +97,4 @@ livetest-datadog: ## Send a real log to Datadog. Requires DD_API_KEY.
 ##@ CI
 
 .PHONY: ci
-ci: lint test-race ## What CI runs: lint + test-race. Mirror locally before pushing.
+ci: tidy lint test-race ## Full CI gauntlet: tidy + lint + multi-module race tests. Mirror locally before pushing.
