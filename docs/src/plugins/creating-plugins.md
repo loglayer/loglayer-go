@@ -300,6 +300,56 @@ Use it to:
 
 If you need context-aware behavior, use one of the dispatch-time hooks. They fire after every `With*` chain method has run, so the ctx they receive is the same one the transport will see.
 
+## Per-call groups
+
+All four dispatch-time hooks (`DataHook`, `MessageHook`, `LevelHook`, `SendGate`) receive a `Groups []string` field on their params. See [Reading params.Groups](/transports/creating-transports#reading-params-groups) for the slice shape and how routing relates to it; the same rules apply here. Hooks read `Groups` to drive transformations that depend on group membership rather than to make routing choices themselves.
+
+Use it to:
+
+- Promote level for entries in a sensitive group:
+
+  ```go
+  loglayer.NewLevelHook("audit-promotes-warn", func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) {
+      for _, g := range p.Groups {
+          if g == "audit" && p.LogLevel < loglayer.LogLevelWarn {
+              return loglayer.LogLevelWarn, true
+          }
+      }
+      return 0, false
+  })
+  ```
+
+- Tag the outgoing data with the group set:
+
+  ```go
+  loglayer.NewDataHook("tag-groups", func(p loglayer.BeforeDataOutParams) loglayer.Data {
+      if len(p.Groups) == 0 {
+          return nil
+      }
+      return loglayer.Data{"groups": p.Groups}
+  })
+  ```
+
+- Refine `ShouldSend` beyond what `Routing.Groups` already gates. The dispatch layer drops entries that don't route to a transport before `ShouldSend` runs, so a `SendGate` reading `Groups` is for finer-grained logic (e.g. sample 10% of `audit`-group entries on the shipping transport):
+
+  ```go
+  loglayer.NewSendGate("sample-audit", func(p loglayer.ShouldSendParams) bool {
+      if p.TransportID != "shipping" {
+          return true
+      }
+      for _, g := range p.Groups {
+          if g == "audit" {
+              return rand.Intn(10) == 0
+          }
+      }
+      return true
+  })
+  ```
+
+`MetadataHook` and `FieldsHook` do **not** receive groups. Same reason as `Ctx`: they fire at builder time, before the chain (and the per-call `WithGroup`) is finalized. Group membership isn't determined yet.
+
+`Groups` is shared with the dispatch path; don't mutate it in place.
+
 ## Walking arbitrary inputs
 
 `MetadataHook.OnMetadataCalled` receives `any`. Real call sites pass maps, structs, pointers, slices, and scalars interchangeably. Any plugin that wants to "look inside" the value (redact, sanitize, rename, audit) faces the same problem: handle every shape uniformly without mutating the caller's input.

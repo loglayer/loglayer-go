@@ -57,6 +57,8 @@ type Entry struct {
 	// Metadata is the raw value the caller passed to WithMetadata. May be a
 	// map, a struct, a scalar, or nil. Encoders decide how to render it.
 	Metadata any
+	// Groups mirrors [loglayer.TransportParams.Groups].
+	Groups []string
 }
 
 // Config holds HTTP transport configuration.
@@ -209,6 +211,7 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 		Time:     time.Now(),
 		Messages: params.Messages,
 		Metadata: params.Metadata,
+		Groups:   params.Groups,
 	}
 	if len(params.Data) > 0 {
 		entry.Data = params.Data

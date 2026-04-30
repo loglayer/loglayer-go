@@ -44,9 +44,12 @@ jobs:
             echo "to=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
           else
             BEFORE="${{ github.event.before }}"
-            # github.event.before is all-zeros on a force-push or first push;
-            # in that case lint just the latest commit.
-            if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            # github.event.before is all-zeros on a first push, and after a
+            # force-push it points at an orphaned SHA that's no longer in
+            # the repo (so `git log BEFORE..HEAD` fails with "Invalid
+            # revision range"). Fall back to HEAD~1 in either case.
+            if [ "$BEFORE" = "0000000000000000000000000000000000000000" ] \
+               || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
               echo "from=HEAD~1" >> "$GITHUB_OUTPUT"
             else
               echo "from=$BEFORE" >> "$GITHUB_OUTPUT"

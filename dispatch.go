@@ -106,11 +106,13 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 			Metadata: rawMetadata,
 			Err:      err,
 			Ctx:      goCtx,
+			Groups:   entryGroups,
 		})
 		messages = plugins.runOnBeforeMessageOut(BeforeMessageOutParams{
 			LogLevel: level,
 			Messages: messages,
 			Ctx:      goCtx,
+			Groups:   entryGroups,
 		})
 		level = plugins.runTransformLogLevel(TransformLogLevelParams{
 			LogLevel: level,
@@ -120,6 +122,7 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 			Metadata: rawMetadata,
 			Err:      err,
 			Ctx:      goCtx,
+			Groups:   entryGroups,
 		})
 	}
 
@@ -131,6 +134,7 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 		Err:      err,
 		Fields:   fields,
 		Ctx:      goCtx,
+		Groups:   entryGroups,
 	}
 
 	hasShouldSend := plugins.hasSendGate
@@ -153,6 +157,7 @@ func (l *LogLayer) processLog(level LogLevel, messages []any, fields Fields, goC
 			Metadata:    rawMetadata,
 			Err:         err,
 			Ctx:         goCtx,
+			Groups:      entryGroups,
 		}) {
 			continue
 		}

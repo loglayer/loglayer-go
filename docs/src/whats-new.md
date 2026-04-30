@@ -12,6 +12,7 @@ description: Latest features and improvements in LogLayer for Go.
 `loglayer`:
 
 - **Lazy evaluation**: `loglayer.Lazy(fn)` defers value computation in `WithFields` until log dispatch time. The callback runs only when the level passes and re-evaluates on every emission, so expensive work (memory stats, request summaries, large struct serialization) costs nothing on filtered-out entries. Adapted from [LogTape's lazy evaluation](https://logtape.org/manual/lazy). See [Lazy Evaluation](/logging-api/lazy-evaluation).
+- **Groups exposed to transports and plugin hooks**: `TransportParams.Groups` and the four dispatch-time hook param structs (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`) now carry the merged set of persistent and per-call `WithGroup` tags for the entry. Routing decisions still happen before any hook fires; the slice is exposed so transports can ship groups in the wire payload and plugins can drive group-aware data, message, level, or send-gate transformations. Matches the TypeScript loglayer's surface (`LogLayerTransportParams.groups`, `PluginShouldSendToLoggerParams.groups`) and goes beyond it for the other dispatch-time hooks. See [Reading params.Groups](/transports/creating-transports#reading-params-groups) and [Per-call groups](/plugins/creating-plugins#per-call-groups).
 
 `transports/lumberjack`:
 

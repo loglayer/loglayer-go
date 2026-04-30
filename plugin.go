@@ -104,6 +104,8 @@ type BeforeDataOutParams struct {
 	Err error
 	// Ctx is the per-call context.Context attached via WithContext, or nil.
 	Ctx context.Context
+	// Groups mirrors [TransportParams.Groups].
+	Groups []string
 }
 
 // BeforeMessageOutParams is the input to [MessageHook.OnBeforeMessageOut].
@@ -112,6 +114,8 @@ type BeforeMessageOutParams struct {
 	Messages []any
 	// Ctx is the per-call context.Context attached via WithContext, or nil.
 	Ctx context.Context
+	// Groups mirrors [TransportParams.Groups].
+	Groups []string
 }
 
 // TransformLogLevelParams is the input to [LevelHook.TransformLogLevel].
@@ -124,6 +128,8 @@ type TransformLogLevelParams struct {
 	Err      error
 	// Ctx is the per-call context.Context attached via WithContext, or nil.
 	Ctx context.Context
+	// Groups mirrors [TransportParams.Groups].
+	Groups []string
 }
 
 // ShouldSendParams is the input to [SendGate.ShouldSend].
@@ -140,6 +146,8 @@ type ShouldSendParams struct {
 	Err         error
 	// Ctx is the per-call context.Context attached via WithContext, or nil.
 	Ctx context.Context
+	// Groups mirrors [TransportParams.Groups].
+	Groups []string
 }
 
 // inner is a private hook the framework uses to see through a wrapper
@@ -358,53 +366,40 @@ func (s *pluginSet) runOnBeforeDataOut(p BeforeDataOutParams) Data {
 	if !s.hasData {
 		return p.Data
 	}
-	out := p.Data
+	// p is by-value; mutate p.Data so each plugin sees the running merge.
 	for i := range s.entries {
 		e := &s.entries[i]
 		if e.onData == nil {
 			continue
 		}
-		patch := callBeforeDataOut(e, BeforeDataOutParams{
-			LogLevel: p.LogLevel,
-			Data:     out,
-			Fields:   p.Fields,
-			Metadata: p.Metadata,
-			Err:      p.Err,
-			Ctx:      p.Ctx,
-		})
-		if patch == nil {
+		patch := callBeforeDataOut(e, p)
+		if len(patch) == 0 {
 			continue
 		}
-		if out == nil {
-			out = make(Data, len(patch))
+		if p.Data == nil {
+			p.Data = make(Data, len(patch))
 		}
 		for k, v := range patch {
-			out[k] = v
+			p.Data[k] = v
 		}
 	}
-	return out
+	return p.Data
 }
 
 func (s *pluginSet) runOnBeforeMessageOut(p BeforeMessageOutParams) []any {
 	if !s.hasMessage {
 		return p.Messages
 	}
-	msgs := p.Messages
 	for i := range s.entries {
 		e := &s.entries[i]
 		if e.onMessage == nil {
 			continue
 		}
-		next := callBeforeMessageOut(e, BeforeMessageOutParams{
-			LogLevel: p.LogLevel,
-			Messages: msgs,
-			Ctx:      p.Ctx,
-		})
-		if next != nil {
-			msgs = next
+		if next := callBeforeMessageOut(e, p); next != nil {
+			p.Messages = next
 		}
 	}
-	return msgs
+	return p.Messages
 }
 
 func (s *pluginSet) runTransformLogLevel(p TransformLogLevelParams) LogLevel {

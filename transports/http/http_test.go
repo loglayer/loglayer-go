@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -577,5 +578,48 @@ func TestHTTP_DefaultClient_RefusesCrossHostRedirect(t *testing.T) {
 	case got := <-receivedAuth:
 		t.Errorf("X-API-Key leaked to redirected host: %q", got)
 	default:
+	}
+}
+
+// Entry.Groups round-trips from loglayer.TransportParams.Groups so wrapper
+// transports (datadog, central, etc.) can ship groups in the wire payload.
+func TestHTTP_EntryCarriesGroups(t *testing.T) {
+	cap := newCaptureServer()
+	srv := httptest.NewServer(http.HandlerFunc(cap.handler))
+	defer srv.Close()
+
+	var captured [][]string
+	var mu sync.Mutex
+	encoder := httptr.EncoderFunc(func(entries []httptr.Entry) ([]byte, string, error) {
+		mu.Lock()
+		for _, e := range entries {
+			captured = append(captured, append([]string(nil), e.Groups...))
+		}
+		mu.Unlock()
+		return []byte("[]"), "application/json", nil
+	})
+
+	log, tr := newLogger(t, httptr.Config{
+		BatchSize:     10,
+		BatchInterval: time.Hour,
+		Encoder:       encoder,
+	}, srv)
+	log.WithGroup("payments", "critical").Info("charged")
+	log.Info("plain")
+	if err := tr.Close(); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+	if len(captured) != 2 {
+		t.Fatalf("expected 2 captured entries, got %d", len(captured))
+	}
+	want := []string{"payments", "critical"}
+	if !slices.Equal(captured[0], want) {
+		t.Errorf("entry 0 Groups: got %v, want %v", captured[0], want)
+	}
+	if len(captured[1]) != 0 {
+		t.Errorf("entry 1 Groups: got %v, want nil", captured[1])
 	}
 }

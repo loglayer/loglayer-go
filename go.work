@@ -4,6 +4,7 @@ use (
 	.
 
 	./transports/blank
+	./transports/central
 	./transports/charmlog
 	./transports/console
 	./transports/datadog
