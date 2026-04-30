@@ -9,9 +9,18 @@ description: Latest features and improvements in LogLayer for Go.
 
 ## Apr 30, 2026
 
+`loglayer`:
+
+- **`MetadataFieldName` at the core, plus `Schema` on `TransportParams` and dispatch hook params**: `loglayer.Config.MetadataFieldName` joins `FieldsKey` and `ErrorFieldName` as a core knob. When non-empty, both map and non-map metadata nest under the configured key uniformly across every transport. The resolved assembly shape (`FieldsKey`, `MetadataFieldName`, `ErrorFieldName`, `SourceFieldName`) is published as `loglayer.Schema` on `TransportParams` and the four dispatch-time plugin hook param structs (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`), so plugins can navigate `params.Data` precisely without guessing the key. The per-transport `Config.MetadataFieldName` field is removed from every wrapper (zerolog, zap, charmlog, phuslu, logrus, slog, otellog, sentry); set the core knob instead. See [`MetadataFieldName`](/configuration#metadatafieldname).
+
 `transports/sentry`:
 
-- **Initial release**: new transport that forwards entries to a caller-supplied [`sentry.Logger`](https://pkg.go.dev/github.com/getsentry/sentry-go#Logger). Routes fatal/panic through `LFatal()` so loglayer's core controls termination (Sentry's `Fatal()` and `Panic()` are never called). Map fields and metadata flatten as typed Sentry attributes; non-map metadata stringifies under `MetadataFieldName`. See [Sentry Transport](/transports/sentry).
+- **Initial release**: new transport that forwards entries to a caller-supplied [`sentry.Logger`](https://pkg.go.dev/github.com/getsentry/sentry-go#Logger). Routes fatal/panic through `LFatal()` so loglayer's core controls termination (Sentry's `Fatal()` and `Panic()` are never called). Map fields and metadata flatten as typed Sentry attributes; non-typed values JSON-encode into a single `String` attribute so structure is preserved in Sentry's UI. See [Sentry Transport](/transports/sentry).
+
+`transports/pretty`:
+
+- **Column-aligned YAML in expanded mode**: same-level scalar keys pad to the longest sibling so values line up, matching the [TypeScript `simple-pretty-terminal`](https://loglayer.dev/transports/simple-pretty-terminal.html) shape. Multi-line keys (nested maps, slices) don't participate in the alignment width.
+- **Nested rendering for keyed metadata**: when `Config.MetadataFieldName` is set, the metadata value JSON-roundtrips into a nested map and renders as YAML under the configured key (was previously a single JSON-encoded string).
 
 ## Apr 29, 2026
 

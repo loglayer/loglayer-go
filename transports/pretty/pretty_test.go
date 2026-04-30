@@ -151,7 +151,7 @@ func TestExpandedModeDeeplyNested(t *testing.T) {
 	// At each level, sibling keys with same-line values pad to the longest:
 	//  level 1: only "user" (multi-line, no padding needed)
 	//  level 2: "address" (multi-line) + "id" (same-line; alone, no pad)
-	//  level 3: "city" and "zip", both length 3 and 4 respectively
+	//  level 3: "city" (len 4) and "zip" (len 3); maxKey = 4, "zip" pads.
 	want := "" +
 		"12:34:56.789 ▶ INFO served\n" +
 		"  user:\n" +
