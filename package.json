@@ -5,9 +5,11 @@
   "description": "Repo-level tooling that isn't tied to the docs site (which has its own package.json under docs/). Currently: a commit-message linter that uses the same parser release-please uses, so a commit that breaks release-please's parser fails CI before it can land on main.",
   "type": "module",
   "scripts": {
-    "lint-commits": "node scripts/lint-commit.mjs"
+    "lint-commits": "node scripts/lint-commit.mjs",
+    "toc": "doctoc README.md --github --title '## Table of contents'"
   },
   "devDependencies": {
-    "@conventional-commits/parser": "^0.4.1"
+    "@conventional-commits/parser": "^0.4.1",
+    "doctoc": "^2.2.1"
   }
 }

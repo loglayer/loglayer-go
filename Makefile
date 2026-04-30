@@ -88,6 +88,10 @@ docs-dev: ## Run the VitePress dev server with live reload.
 hooks: ## Install git pre-commit/pre-push hooks via lefthook.
 	$(LEFTHOOK) install
 
+.PHONY: toc
+toc: ## Regenerate the README table of contents (auto-run by pre-commit).
+	$(BUN) run toc
+
 ##@ Live integration tests
 
 .PHONY: livetest-datadog

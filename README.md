@@ -69,6 +69,27 @@ log.WithPrefix("[my-app]").
 }
 ```
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Table of contents
+
+- [Install](#install)
+- [Documentation](#documentation)
+- [TypeScript counterpart](#typescript-counterpart)
+- [Contributing](#contributing)
+  - [Prerequisites](#prerequisites)
+  - [One-time setup](#one-time-setup)
+  - [Repository layout](#repository-layout)
+  - [Common Make targets](#common-make-targets)
+  - [Workflow](#workflow)
+  - [Versioning and stability](#versioning-and-stability)
+  - [Adding a new transport, plugin, or integration](#adding-a-new-transport-plugin-or-integration)
+  - [Docs work](#docs-work)
+- [Issues and questions](#issues-and-questions)
+- [License](#license)
+
+<!-- END doctoc -->
+
 ## Install
 
 ```sh

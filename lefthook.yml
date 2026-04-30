@@ -52,6 +52,22 @@ pre-commit:
           exit 1
         fi
         staticcheck ./...
+    # Keep the README's auto-generated TOC in sync. Same pattern as the
+    # gofmt step: regenerate, re-stage, don't fail. doctoc is a no-op when
+    # the TOC is already current.
+    doctoc:
+      glob: "README.md"
+      run: |
+        if ! command -v bun >/dev/null 2>&1; then
+          echo "lefthook: bun not on PATH. Install bun (https://bun.sh) or skip with: git commit --no-verify" >&2
+          exit 1
+        fi
+        if [ ! -d node_modules ]; then
+          echo "lefthook: node_modules missing. Run 'bun install' or skip with: git commit --no-verify" >&2
+          exit 1
+        fi
+        bun run toc
+      stage_fixed: true
 
 pre-push:
   commands:
