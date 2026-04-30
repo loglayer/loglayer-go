@@ -1,5 +1,7 @@
 // Package console provides a Transport that writes log entries to stdout/stderr
 // using logfmt-style output (key=value pairs after the message).
+//
+// See https://go.loglayer.dev for usage guides and the full API reference.
 package console
 
 import (
