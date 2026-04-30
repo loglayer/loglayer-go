@@ -74,10 +74,11 @@ type TransportParams struct {
     Err      error
     Fields   Fields
     Ctx      context.Context // per-call WithContext value, or nil
+    Groups   []string        // merged persistent + per-call WithGroup tags, or nil
 }
 ```
 
-`Data` is the convenience map combining fields + error. `Metadata` is `any`, you choose how to render it. `Err` and `Fields` are also exposed raw if you want to inspect them directly.
+`Data` is the convenience map combining fields + error. `Metadata` is `any`, you choose how to render it. `Err` and `Fields` are also exposed raw if you want to inspect them directly. `Groups` is the merged set of persistent (`WithGroup` on the logger) and per-call (`WithGroup` on the builder) group tags for this entry; it's `nil` when no groups apply.
 
 ## Handling `any` Metadata
 
@@ -156,6 +157,27 @@ Two patterns built-in transports follow:
 - **Self-contained renderers usually ignore it.** Pretty, structured, and console don't read context values themselves; that's a [plugin's](/plugins/creating-plugins) job. If you find yourself extracting trace IDs in a transport, prefer writing a plugin and pairing it with the transport: the plugin runs once per entry and feeds every transport, while transport-side extraction repeats per transport and bypasses the dispatch-time hook ordering.
 
 If your transport extracts values from the context (rather than just forwarding it), test that path with a context that carries a sentinel value and assert the transport surfaced it.
+
+## Reading `params.Groups`
+
+`params.Groups` carries the merged set of group tags for this entry: persistent ones from `log.WithGroup(...)` on the logger, plus per-call ones from `log.WithGroup(...)` on the builder. Persistent tags come first; per-call tags are appended (deduped). The slice is `nil` when no groups apply.
+
+Routing decisions consume groups before the transport sees them: the dispatch layer uses `Groups` to pick which transports an entry goes to, and the slice arrives only after that decision has been made. Read it when your transport ships to a group-aware aggregator that wants the tags as part of the wire payload.
+
+```go
+func (t *Transport) SendToLogger(p loglayer.TransportParams) {
+    if !t.ShouldProcess(p.LogLevel) {
+        return
+    }
+    payload := t.buildPayload(p)
+    if len(p.Groups) > 0 {
+        payload["groups"] = p.Groups
+    }
+    t.send(payload)
+}
+```
+
+`Groups` is shared with the dispatching `*LogLayer`. Don't mutate the slice in place. If you need to reorder, dedupe further, or filter, copy first.
 
 ## Level Filtering
 

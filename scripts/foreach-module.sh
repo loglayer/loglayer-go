@@ -16,6 +16,7 @@ set -euo pipefail
 ALL_MODULES=(
   .
   transports/blank
+  transports/central
   transports/charmlog
   transports/console
   transports/datadog
@@ -52,6 +53,7 @@ ALL_MODULES=(
 SHIPPED_MODULES=(
   .
   transports/blank
+  transports/central
   transports/charmlog
   transports/console
   transports/datadog
@@ -141,6 +143,7 @@ case "$op" in
     for mod in \
       . \
       transports/blank \
+      transports/central \
       transports/charmlog \
       transports/console \
       transports/datadog \

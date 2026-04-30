@@ -27,6 +27,8 @@ type LogLine struct {
 	Metadata any
 	// Ctx is the per-call context.Context attached via WithContext. Nil if not set.
 	Ctx context.Context
+	// Groups mirrors [loglayer.TransportParams.Groups].
+	Groups []string
 }
 
 // TestLoggingLibrary captures log lines for assertion in tests.
@@ -138,5 +140,6 @@ func (t *TestTransport) SendToLogger(params loglayer.TransportParams) {
 		Data:     params.Data,
 		Metadata: params.Metadata,
 		Ctx:      params.Ctx,
+		Groups:   params.Groups,
 	})
 }

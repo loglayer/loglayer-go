@@ -3,6 +3,7 @@ package loglayer_test
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -388,6 +389,42 @@ func TestPlugin_DispatchHooksReceiveCtx(t *testing.T) {
 	}
 }
 
+func TestPlugin_DispatchHooksReceiveGroups(t *testing.T) {
+	cases := []struct {
+		name string
+		emit func(log *loglayer.LogLayer)
+		want []string // nil = expect Groups to be nil
+	}{
+		{"with WithGroup", func(log *loglayer.LogLayer) { log.WithGroup("payments", "critical").Info("x") }, []string{"payments", "critical"}},
+		{"without WithGroup", func(log *loglayer.LogLayer) { log.Info("x") }, nil},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			var dataGroups, msgGroups, lvlGroups, sendGroups []string
+			log, _ := setup(t)
+			log.AddPlugin(&allHooksGroupsCapture{
+				dataGroups: &dataGroups, msgGroups: &msgGroups,
+				lvlGroups: &lvlGroups, sendGroups: &sendGroups,
+			})
+			c.emit(log)
+
+			for _, h := range []struct {
+				name string
+				got  []string
+			}{
+				{"OnBeforeDataOut", dataGroups},
+				{"OnBeforeMessageOut", msgGroups},
+				{"TransformLogLevel", lvlGroups},
+				{"ShouldSend", sendGroups},
+			} {
+				if !slices.Equal(h.got, c.want) {
+					t.Errorf("%s: Groups got %v, want %v", h.name, h.got, c.want)
+				}
+			}
+		})
+	}
+}
+
 func TestPlugin_ConcurrentAddAndEmit(t *testing.T) {
 	log, _ := setup(t)
 	log.AddPlugin(loglayer.NewMessageHook("always", func(p loglayer.BeforeMessageOutParams) []any {
@@ -752,6 +789,29 @@ func (a *allHooksCtxCapture) TransformLogLevel(p loglayer.TransformLogLevelParam
 }
 func (a *allHooksCtxCapture) ShouldSend(p loglayer.ShouldSendParams) bool {
 	*a.sendCtx = p.Ctx
+	return true
+}
+
+// allHooksGroupsCapture is the Groups counterpart to allHooksCtxCapture.
+type allHooksGroupsCapture struct {
+	dataGroups, msgGroups, lvlGroups, sendGroups *[]string
+}
+
+func (a *allHooksGroupsCapture) ID() string { return "groups-capture" }
+func (a *allHooksGroupsCapture) OnBeforeDataOut(p loglayer.BeforeDataOutParams) loglayer.Data {
+	*a.dataGroups = p.Groups
+	return nil
+}
+func (a *allHooksGroupsCapture) OnBeforeMessageOut(p loglayer.BeforeMessageOutParams) []any {
+	*a.msgGroups = p.Groups
+	return nil
+}
+func (a *allHooksGroupsCapture) TransformLogLevel(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) {
+	*a.lvlGroups = p.Groups
+	return 0, false
+}
+func (a *allHooksGroupsCapture) ShouldSend(p loglayer.ShouldSendParams) bool {
+	*a.sendGroups = p.Groups
 	return true
 }
 

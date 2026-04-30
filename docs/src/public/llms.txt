@@ -239,6 +239,8 @@ loglayer.New(loglayer.Config{
 })
 ```
 
+The merged group slice for an entry is also surfaced to transports as `TransportParams.Groups` and to all four dispatch-time plugin hooks (`BeforeDataOutParams.Groups`, `BeforeMessageOutParams.Groups`, `TransformLogLevelParams.Groups`, `ShouldSendParams.Groups`). Use it to ship groups in a transport's wire payload, or to drive group-aware transformations.
+
 ## Child Loggers
 
 ```go

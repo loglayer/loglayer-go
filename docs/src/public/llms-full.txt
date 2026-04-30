@@ -845,6 +845,8 @@ func (t *myTransport) SendToLogger(p loglayer.TransportParams) {
 }
 ```
 
+`TransportParams` carries: `LogLevel`, `Messages` (already prefix-applied), `Data` (assembled fields + error map; nil when both absent — use `len(Data) > 0`), `Metadata` (raw `WithMetadata` value; transport decides serialization), `Err`, `Fields` (raw persistent bag), `Ctx` (per-call `WithContext`, nil when unset), `Groups` (merged persistent + per-call `WithGroup` tags; nil when no groups apply — routing has already consumed it before this point, so the slice is exposed for wire-payload tagging only).
+
 The `transport/transporttest` package exports `RunContract(t, ContractCase{...})` — a 14-test contract suite that verifies the wrapper-transport conventions (level filtering, struct vs map metadata, error serialization, fatal handling, etc.).
 
 ## Plugins
@@ -861,6 +863,8 @@ Six lifecycle hooks. A plugin implements any subset of these interfaces:
 | `ShouldSend`        | Per-transport gate; returning false skips that transport for this emission| Sampling, group filtering |
 
 Hook panics are recovered centrally — each hook returns its no-op value on panic, and `ShouldSend` fails open. Set `Plugin.OnError` to observe recovered panics.
+
+The four dispatch-time hook param structs (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`) all carry a `Ctx context.Context` (per-call `WithContext` value, nil if unset) and a `Groups []string` (merged persistent + per-call `WithGroup` tags, nil when none apply). Routing decisions consume `Groups` before any hook fires; the slice is exposed so plugins can drive group-aware transformations. `OnFieldsCalled` and `OnMetadataCalled` fire at builder time (before the chain is finalized) so they don't see either field.
 
 ```go
 log.AddPlugin(loglayer.NewDataHook("tagger", func(p loglayer.BeforeDataOutParams) loglayer.Data {

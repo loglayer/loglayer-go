@@ -248,6 +248,8 @@ loglayer.ActiveGroupsFromEnv("LOGLAYER_GROUPS") // returns []string for Routing.
 
 See [Groups](/logging-api/groups) for the eight-rule routing precedence (defined-but-disabled vs undefined groups, per-group level filtering, ungrouped fallback) and a worked multi-service example.
 
+The merged group set is also surfaced to transports via `TransportParams.Groups` and to all four dispatch-time plugin hooks (`BeforeDataOutParams.Groups`, `BeforeMessageOutParams.Groups`, `TransformLogLevelParams.Groups`, `ShouldSendParams.Groups`) so transports and plugins can read group membership for transformations or wire-payload tagging.
+
 ## Plugins
 
 ```go

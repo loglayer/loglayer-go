@@ -3,6 +3,7 @@ package loglayer_test
 import (
 	"errors"
 	"os"
+	"slices"
 	"testing"
 
 	"go.loglayer.dev"
@@ -558,5 +559,53 @@ func TestGroups_WithErrorAndGroupsCompose(t *testing.T) {
 	}
 	if line.Data["err"] == nil {
 		t.Errorf("error should still be present: %v", line.Data)
+	}
+}
+
+// TransportParams.Groups carries the merged persistent + per-call WithGroup
+// tags so transports shipping to a group-aware aggregator can include them
+// in the wire payload.
+func TestGroups_PropagatedToTransportParams(t *testing.T) {
+	cases := []struct {
+		name string
+		emit func(log *loglayer.LogLayer)
+		want [][]string // one slice per emitted line, nil = expect nil Groups
+	}{
+		{
+			name: "per-call",
+			emit: func(log *loglayer.LogLayer) { log.WithGroup("payments", "critical").Info("x") },
+			want: [][]string{{"payments", "critical"}},
+		},
+		{
+			name: "persistent then per-call",
+			emit: func(log *loglayer.LogLayer) {
+				scoped := log.WithGroup("payments")
+				scoped.Info("first")
+				scoped.WithGroup("critical").Warn("second")
+			},
+			want: [][]string{{"payments"}, {"payments", "critical"}},
+		},
+		{
+			name: "nil when WithGroup never called",
+			emit: func(log *loglayer.LogLayer) { log.Info("x") },
+			want: [][]string{nil},
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			tr, libs := twoTransports("a")
+			log := loglayer.New(loglayer.Config{DisableFatalExit: true, Transports: tr})
+			c.emit(log)
+
+			lines := libs[0].Lines()
+			if len(lines) != len(c.want) {
+				t.Fatalf("expected %d lines, got %d", len(c.want), len(lines))
+			}
+			for i, want := range c.want {
+				if !slices.Equal(lines[i].Groups, want) {
+					t.Errorf("line %d Groups: got %v, want %v", i, lines[i].Groups, want)
+				}
+			}
+		})
 	}
 }

@@ -46,6 +46,11 @@ type TransportParams struct {
 	// Transports can use it to extract trace IDs, span context, deadlines, etc.
 	// Nil when no Go context was attached.
 	Ctx context.Context
+	// Groups holds the entry's group tags (persistent WithGroup first,
+	// per-call WithGroup appended, deduped). Nil when no groups apply.
+	// Routing has already consumed the slice before this point; it's
+	// exposed so transports can include it in the wire payload.
+	Groups []string
 }
 
 // transportSet is an immutable snapshot of the transport list and the
