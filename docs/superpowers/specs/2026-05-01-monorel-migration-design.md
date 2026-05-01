@@ -34,7 +34,7 @@ Confirmed every release-please feature loglayer-go uses has a monorel equivalent
 | Per-sub-module CHANGELOG.md | `changelog-path` per-package | `changelog` per-package |
 | `exclude-paths` for the root | Required (commits to `.claude/`, `.github/`, `docs/`, etc. shouldn't bump root) | Not needed: changesets are the only release signal |
 | `release-as: "1.0.0"` for new packages | One-shot override per package, must remove later | Not needed: monorel reads existing tags. New packages with no tag history use initial-release rules (major→1.0.0, minor→0.1.0, patch→0.0.1) |
-| Bot anti-recursion for docs deploy | `release-please.yml` calls `docs.yml` via `workflow_call` | `release.yml` calls `docs.yml` via `workflow_call` (same mechanism) |
+| Bot anti-recursion for docs deploy | `release-please.yml` calls `docs.yml` via `workflow_call` | `release.yml` calls `docs.yml` via `workflow_call` — same `GITHUB_TOKEN` anti-recursion constraint applies to monorel-created Releases. monorel itself doesn't exercise this pattern in its own repo (its `docs.yml` deploys on every push to main); loglayer-go is the first to verify it. Listed in "Open questions / future work" as a smoke-test item. |
 | Always-open release PR | release-please-action's permanent `release-please--branches--main` | `monorel preview --upsert` orchestrator |
 | Pre-release windows (rc / beta) | `prerelease: true` in config + commit footers | `monorel pre enter <channel>` / `pre exit` (not used by this migration; available if needed later) |
 | Conventional-commit linting | `pr-title.yml` + `commit-lint.yml` use `@conventional-commits/parser` | Same parser, kept as a hygiene tool. monorel doesn't depend on commit messages, so the lint stands on its own. |
@@ -94,6 +94,8 @@ jobs:
       - uses: disaresta-org/monorel/ci/github@v0.1.0
         with: { command: pr }
 ```
+
+The `if` filter mirrors monorel's own `release-pr.yml` — skip the workflow on the release PR's merge commit so we don't churn the just-merged PR. Known limitation: a hand-authored PR titled `chore(release): ...` (e.g. a doc cleanup) would also skip, since the message-prefix filter is a heuristic. Acceptable for this repo (the `chore(release):` prefix is monorel-bot's by convention; we don't use it for hand-authored commits). If a false-skip ever bites, switch to filtering by `github.event.head_commit.author.username == 'monorel-bot[automation]'` per monorel's own author config.
 
 #### `release.yml` (new)
 
@@ -155,7 +157,11 @@ Three sections rewrite, one deletes:
 
 - **Delete "Release-please gotchas"** entirely. All three documented gotchas (full-history `Release-As:` scan leakage, squash-merge stripping footers, `exclude-paths` completeness) are impossible by construction in monorel: the only release signal is `.changeset/*.md` files in the merged PR.
 
-- **Keep unchanged:** the thread-safety contract, the "Performance: Attempted and Rejected" log, the "CI / Release Workflows" overview (with workflow names swapped: `release-please.yml` → `release-pr.yml` + `release.yml`), the "Currently Out of Scope" list, "Vulnerability scanning", the "Git Hooks (lefthook)" section minus the `release-please-state` reference.
+- **Update AGENTS.md:58** ("Key Design Decisions" → "Multi-module layout" bullet): change "`.release-please-manifest.json` is the canonical list" to "`monorel.toml`'s `[packages]` map is the canonical list".
+
+- **Update AGENTS.md:138** (Git Hooks lefthook section, commit-msg hook description): drop the "the same parser release-please uses" framing. The hook keeps working unchanged; only the framing comment changes. Same applies to the lefthook config file (line 9) — covered separately under "lefthook + scripts cleanup."
+
+- **Keep unchanged:** the thread-safety contract, the "Performance: Attempted and Rejected" log, the "Currently Out of Scope" list, "Vulnerability scanning". The "CI / Release Workflows" overview gets a workflow-name swap (`release-please.yml` → `release-pr.yml` + `release.yml`); the "Git Hooks (lefthook)" section gets the `release-please-state` hook removed and the commit-msg framing fixed per the bullets above.
 
 #### README.md
 
@@ -168,6 +174,36 @@ Swap the `.release-please-manifest.json` link to `monorel.toml`. The historical 
 #### docs/src/public/llms-full.txt (lines 53, 1113)
 
 Same link swap.
+
+#### CONTRIBUTING.md (line 35)
+
+Drop the "release-please uses" framing on the conventional-commits parser description. The hygiene value of the parser stands on its own.
+
+#### package.json (description string)
+
+The package description references the parser as "the same parser release-please uses." Rewrite to describe the linter on its own terms (e.g. "Conventional-commit linter for `loglayer-go` git hooks and CI").
+
+#### `.claude/rules/documentation.md` (line 299)
+
+Rewrite the parenthetical "(release-please owns that)" framing for `CHANGELOG.md` ownership. With monorel, the CHANGELOG is still auto-maintained, just by `monorel release` instead of release-please. The agent rule about not hand-editing CHANGELOG entries below `[Unreleased]` stays the same.
+
+#### `scripts/lint-commit.mjs` (lines 3, 8, 86)
+
+Three comments frame the parser as release-please's. Rewrite to describe the parser independently (it's just `@conventional-commits/parser`).
+
+#### Per-package CHANGELOG.md preambles
+
+13 of the 26 CHANGELOG.md files (root + the older sub-modules whose preamble we hand-wrote) start with a multi-paragraph "Releases are managed by Release Please…" preamble that references release-please by name and links to `.release-please-manifest.json`. The other 13 (the ones release-please created with no preamble; just `# Changelog` and entries) need no preamble change.
+
+For the 13 that have a preamble, replace the preamble with a monorel-equivalent paragraph. Body of the new preamble (root and sub-modules differ slightly):
+
+> *Root* (`./CHANGELOG.md`): "All notable changes to this project are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows [SemVer](https://semver.org/spec/v2.0.0.html). `go.loglayer.dev` is the main module — every transport, plugin, and integration ships as its own sub-module under its own tag (`<path>/v<X.Y.Z>`); the canonical list lives in `monorel.toml`. See `AGENTS.md` for the layout and release flow. From v1.0.0 forward, this file is maintained automatically by [monorel](https://monorel.disaresta.com)."
+
+> *Sub-module* (e.g. `transports/zerolog/CHANGELOG.md`): "All notable changes to `go.loglayer.dev/transports/zerolog` are documented here. Format follows Keep a Changelog; versioning follows SemVer. Tags use the prefixed form `transports/zerolog/v<X.Y.Z>`. Maintained automatically by [monorel](https://monorel.disaresta.com)."
+
+The historical version entries below the preamble stay verbatim. The implementation plan owns the per-file diff; the spec only specifies the new preamble shape.
+
+The 13 preamble-less CHANGELOGs (release-please-generated) get no edits in this PR. They'll naturally accumulate Keep-a-Changelog-shaped monorel entries above the existing release-please-shaped entries on the next release.
 
 ### 5. Migration PR commit shape
 
@@ -183,39 +219,82 @@ The `.changeset/` directory itself ships as part of the migration PR with a `REA
 
 1. `go install monorel.disaresta.com/cmd/monorel@v0.1.0` — verify the binary installs and runs.
 2. `monorel plan` — must print "No pending changesets. Nothing to release." (no error, no spurious package release).
-3. For all 26 packages, scripted-check that `git tag --list "<prefix>v*" | sort -V | tail -1` matches the value in `.release-please-manifest.json`. The check exits non-zero on any mismatch. A mismatch means monorel's planner would pick the wrong "from" version after merge — investigate before opening the PR. The implementation plan owns the exact script.
+3. For all 26 packages, scripted-check that the latest tag matches the value in `.release-please-manifest.json`. The glob is `<prefix>/v*` for prefixed packages and bare `v*` for the root (where `tag_prefix = ""`); concretely:
+   - Root: `git tag --list 'v*' | grep -E '^v[0-9]' | sort -V | tail -1` — compare to manifest `.`.
+   - Sub-module: `git tag --list "<path>/v*" | sort -V | tail -1` — compare to manifest `<path>` (e.g. `transports/zerolog`).
+
+   The check exits non-zero on any mismatch. A mismatch can mean two things:
+   - **Manifest is stale, latest tag is correct** (most common — happens when release-please errored and a tag was published anyway, or when bootstrapping a sub-module manually). monorel will pick the correct tag-derived version on the first `monorel plan` run, which is the right behavior. Migration is safe to proceed; flag in the PR description so reviewers know.
+   - **Manifest is correct, latest tag is wrong** (rare — would require a manually-pushed tag that release-please refused). monorel will pick the spurious tag. Either delete the spurious tag from origin first, or document the intent and bump intentionally.
+
+   The implementation plan owns the exact script and the decision matrix for each finding.
 4. `monorel preview` (no `--upsert`) — should render an empty plan markdown.
-5. `grep -rIE "release-please|release_please|releasePlease" --exclude-dir=.git --exclude-dir=node_modules .` — any hit outside of:
-   - per-package `CHANGELOG.md` files (historical entries stay verbatim);
-   - `docs/src/whats-new.md` "Multi-module split" entry (historical context);
-   - `docs/src/public/llms-full.txt` historical references;
+5. `grep -rIE "release-please|release_please|releasePlease" --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=docs/.vitepress/cache .` — any hit outside of:
+   - per-package `CHANGELOG.md` historical version entries (the entries below the preamble stay verbatim; the preambles themselves get rewritten per section 4);
+   - `docs/src/whats-new.md` "Multi-module split" entry (historical context, with the link target swapped to `monorel.toml`);
+   - `docs/src/public/llms-full.txt` historical references (link targets swapped);
+   - this design spec itself (`docs/superpowers/specs/2026-05-01-monorel-migration-design.md`) — references release-please by name throughout, by design.
 
    …is a stale reference and gets removed.
 
 #### Post-merge (CI + follow-up PR)
 
 1. The `release-pr` workflow fires once on the merge commit, completes green, opens no spurious release PR.
-2. In a follow-up PR, add a trivial `.changeset/<name>.md` targeting one transport at `:patch` with a body line documenting the migration (e.g. "Smoke test of the monorel migration."). The PR doesn't need a real code change — the changeset alone exercises the planner + orchestrator end-to-end.
+2. In a follow-up PR, add a trivial `.changeset/<name>.md` targeting **`transports/blank` at `:patch`** with a body line documenting the migration (e.g. "Smoke test of the monorel migration."). `transports/blank` is the canonical no-op transport (used as a template / placeholder); a `:patch` bump from `v1.6.1` → `v1.6.2` on it is the lowest-stakes real release the repo can produce. Avoid using a heavily-imported transport (zerolog, zap) for the smoke test, since the version bump propagates to dependents on pkg.go.dev with no functional change.
 3. After the follow-up PR merges, confirm the always-open release PR opens correctly.
-4. Either merge the release PR (cuts a real `transports/<name>/v1.6.2` tag and GitHub Release) or close it without merging (validates the orchestrator's close path).
+4. Step 4 is a deliberate trade-off; pick one explicitly:
+   - **Merge the release PR** — cuts a real `transports/blank/v1.6.2` tag and GitHub Release. Validates the full pipeline end-to-end including: release commit, tag push, `monorel publish` Release creation, downstream `build-release-binaries`-style workflows (none for loglayer-go itself, but the `deploy-docs` `workflow_call` chain is exercised). Cost: a real version bump on `transports/blank` with no functional change.
+   - **Close the release PR without merging** — validates only the orchestrator's close path and the `release-pr` workflow. Does NOT exercise: `monorel release`, the tag push, `monorel publish`, the `release.yml` workflow, or the `deploy-docs` chain. Cost: lower confidence in the full pipeline; first real release after migration is the first time `release.yml` runs in this repo.
+
+   Recommendation: **merge**, accepting the no-op version bump as the cost of validating the full chain. The alternative defers risk to whenever the next real changeset lands, which could be days or weeks later under different conditions.
+
+5. **If the merge path is chosen**, additionally verify after `release.yml` completes: (a) the tag `transports/blank/v1.6.2` exists on origin, (b) a corresponding GitHub Release was created with the rendered changelog body, (c) the `deploy-docs` job ran and updated GitHub Pages (if any docs changes were in the PR; if not, the build job runs but produces no visible diff). Failure at (c) means the `workflow_call` anti-recursion claim from the audit table doesn't hold and needs a separate fix (likely a Personal Access Token instead of `GITHUB_TOKEN` for the `monorel publish` step).
 
 ### 7. Rollback
 
-If the migration PR merges and the release pipeline misbehaves on the follow-up release-PR merge, rollback is:
+Rollback complexity depends on whether monorel cut any real tags before the rollback fires. Two distinct cases:
+
+#### Case A: Rollback before any monorel-driven release fires (cheap, non-destructive)
+
+If the migration PR merges but is reverted before the post-merge follow-up smoke-test PR cuts a real tag, rollback is non-destructive:
 
 1. Revert the migration PR.
-2. Restore `.release-please-config.json` and `.release-please-manifest.json` from the revert.
-3. Restore the two release-please workflows from the revert.
-4. The follow-up release PR (created by monorel) closes when its branch's `monorel.toml` no longer exists (or just close it manually).
-5. Tags created by monorel before rollback stay — they're git tags, the same shape release-please would have produced. release-please reads existing tags as authoritative, so it picks up where monorel left off.
+2. The revert restores `.release-please-config.json`, `.release-please-manifest.json`, and the two release-please workflows.
+3. The auto-opened release PR (if any was opened by monorel from the migration PR alone, which it shouldn't be — there are no changesets — but defensively) gets closed manually.
+4. release-please's next run on the next push to main picks up where it left off, since neither tags nor manifest have moved.
 
-The rollback is non-destructive: existing tags, existing CHANGELOGs, existing GitHub Releases are all preserved either way.
+Existing tags, existing CHANGELOGs, existing GitHub Releases are all preserved.
+
+#### Case B: Rollback after monorel cut a tag (requires manual reconciliation)
+
+If monorel-driven releases have already produced new tags (e.g. `transports/zerolog/v1.7.0`), rollback is **not** non-destructive. The reconciliation steps:
+
+1. Identify every package whose tag advanced during the monorel period: `git diff <pre-migration-sha>..HEAD -- '*/CHANGELOG.md' CHANGELOG.md` and cross-reference with `git tag --list` for tags created since the pre-migration SHA.
+
+2. For each such package, **hand-edit `.release-please-manifest.json`** to match the new tag's version. This is required because release-please's source of truth is the manifest, not git tags. Without this step, release-please will read the manifest's stale value, compute commit ranges from there, and either:
+   - Try to re-create a tag that already exists (fails with a CI error you'll have to manually intervene on), or
+   - Compute a smaller bump than the existing tag and silently produce a divergent tag namespace (`v1.6.2` co-existing with `v1.7.0` on the same module).
+
+3. Commit the manifest reconciliation alongside the migration revert (single PR is fine).
+
+4. Optionally close any GitHub Releases monorel created if they should be hidden — but the underlying tags must stay (deleting them would break `go get` for anyone who's already pinned).
+
+5. release-please picks up from the reconciled manifest on the next push.
+
+The "no destructive operations" property of the migration PR itself stands; what's destructive is the **interaction** of (monorel-cut tags) + (release-please reading a stale manifest) — and that requires the manual manifest patch to resolve.
+
+#### Rollback decision gate
+
+Before reverting, run: `git tag --list --contains <pre-migration-sha>` to enumerate any tags created since migration. If the list is empty, Case A applies. Otherwise, Case B.
 
 ## Open questions / future work
 
 - **`@v0.1.0` exact pin** keeps loglayer-go on a specific monorel version. Each monorel patch release requires a manual loglayer-go workflow bump. Once monorel ships a moving `@v1` (post-v1.0.0) or `@v0` major-track tag, switch loglayer-go's pin.
 - **Pre-release windows** (`monorel pre enter rc`) aren't used by this migration but are available. Document the workflow when first needed.
 - **CHANGELOG format hard-cut** means the per-package CHANGELOGs will visually have two formats: Keep-a-Changelog at the top (new entries), release-please format below (historical). Both render correctly on GitHub. If consistency matters more than preservation, a one-time format conversion could happen later as a separate PR; not in scope here.
+- **`workflow_call` docs-deploy verification.** monorel's own repo doesn't exercise the `release.yml` → `docs.yml` `workflow_call` chain (its `docs.yml` deploys on every push). loglayer-go is the first to verify that monorel's `GITHUB_TOKEN`-created Releases trigger the same anti-recursion behavior release-please-created Releases do. Smoke-tested in section 6 post-merge step 5; if it fails, the fix is likely a Personal Access Token for the `monorel publish` step.
+- **monorel-side recipe update.** `monorel/docs/src/recipes/loglayer-go.md` currently has a `::: warning Pending` block — it's a placeholder for the actual loglayer-go migration. Once this migration lands and the smoke-test release is cut, the recipe should be updated with real commit-by-commit details (PR link, manifest-vs-tag mismatch findings if any, smoke-test outcome, deploy-docs verification result). This is a follow-up PR on the monorel repo, not this one.
+- **Initial-vs-stale manifest classification (section 6 step 3).** The decision matrix between "manifest is stale" and "tag is wrong" is currently described in prose. If the spot-check script finds many mismatches at implementation time, codify the decision tree as part of the script's output (e.g. emit the recommended action per mismatch).
 
 ## Files changed (summary)
 
@@ -233,13 +312,18 @@ The rollback is non-destructive: existing tags, existing CHANGELOGs, existing Gi
 - `scripts/check-release-please-state.sh`
 
 **Modified:**
-- `AGENTS.md` (rewrite "Versioning and Changelog", "Adding a new transport, plugin, or integration"; delete "Release-please gotchas"; small swaps elsewhere)
-- `lefthook.yml` (remove `release-please-state` hook)
+- `AGENTS.md` (rewrite "Versioning and Changelog" + "Adding a new transport, plugin, or integration"; delete "Release-please gotchas"; update line 58 in "Key Design Decisions"; update line 138 in "Git Hooks (lefthook)" framing; workflow-name swap in "CI / Release Workflows" overview)
+- `lefthook.yml` (remove `release-please-state` hook + update line 9 framing comment)
 - `.github/workflows/docs.yml` (header comment only)
 - `.github/workflows/pr-title.yml` (header comment only)
 - `.github/workflows/commit-lint.yml` (header comment only)
 - `README.md` (link + release procedure)
+- `CONTRIBUTING.md` (line 35 framing)
+- `package.json` (description string)
+- `.claude/rules/documentation.md` (line 299 framing)
+- `scripts/lint-commit.mjs` (lines 3, 8, 86 framing)
 - `docs/src/whats-new.md` (link)
 - `docs/src/public/llms-full.txt` (link)
+- 13 per-package CHANGELOG.md preamble rewrites (root + the older sub-modules with hand-written preambles): `./CHANGELOG.md`, `transports/{zerolog,otellog,lumberjack,zap,http,datadog,charmlog,phuslu,pretty,logrus,gcplogging}/CHANGELOG.md`, `plugins/oteltrace/CHANGELOG.md`. The other 13 CHANGELOGs (release-please-generated, no preamble) stay untouched.
 
-Total: 4 added files, 5 deleted files, 8 modified files.
+Total: 4 added files, 5 deleted files, 25 modified files (12 prose + 13 CHANGELOG preambles).
