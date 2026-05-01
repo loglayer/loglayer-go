@@ -4,10 +4,10 @@
 # Layout: bare vX.Y.Z tags for the root module (go.loglayer.dev),
 # <path>/vX.Y.Z tags for every sub-module.
 
-[forge]
-provider = "github"
-owner    = "loglayer"
-repo     = "loglayer-go"
+[provider]
+name  = "github"
+owner = "loglayer"
+repo  = "loglayer-go"
 
 [packages."go.loglayer.dev"]
 tag_prefix = ""

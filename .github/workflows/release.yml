@@ -8,11 +8,15 @@ name: release
 #   workflow_dispatch — manual escape hatch.
 #
 # Pipeline (inside disaresta-org/monorel/ci/github with command:release):
-#   1. monorel release       — write CHANGELOGs, delete consumed
-#                              .changeset/*.md, create the release
-#                              commit, create per-package tags locally.
-#   2. git push --follow-tags — push commit + tags to the remote so
-#                              the forge can validate them.
+#   1. monorel tag           — read HEAD's monorel-Release: trailers
+#                              (written upstream by `monorel apply` on
+#                              the staging branch — see release-pr.yml)
+#                              and create per-package tags locally.
+#                              The merge already brought the file
+#                              changes (CHANGELOGs + changeset deletions)
+#                              onto main from the release PR.
+#   2. git push --follow-tags — push the new tags to the remote so
+#                              the provider can validate them.
 #   3. monorel publish       — create one GitHub Release per tag, body
 #                              sourced from each tag's CHANGELOG entry.
 #
@@ -38,7 +42,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: disaresta-org/monorel/ci/github@v0.1.2
+      - uses: disaresta-org/monorel/ci/github@v0.4.0
         with:
           command: release
 

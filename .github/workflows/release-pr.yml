@@ -33,6 +33,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: disaresta-org/monorel/ci/github@v0.1.2
+      - uses: disaresta-org/monorel/ci/github@v0.4.0
         with:
           command: pr
