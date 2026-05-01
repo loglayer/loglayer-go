@@ -167,6 +167,8 @@ Three sections rewrite, one deletes:
 
 Find any `.release-please-manifest.json` link and replace with `monorel.toml`. Update the "to cut a release" snippet from "merge the release-please PR" to "merge the always-open release PR".
 
+Also fix the pre-existing inaccuracy at README.md:167 — the line "release-please rewrites those replaces to real versions at release time, so you don't manage them by hand" is wrong even today. Neither release-please nor monorel rewrites `replace` directives; the project's actual policy is that `replace` directives stay in `go.mod` and are kept current by hand (or via `go mod tidy`) when sub-module versions change. Rewrite that sentence to describe the actual workflow: `replace` directives are committed pointing at `../..` (development); a sub-module's tagged release does not modify them; consumers of the sub-module install via `go get` and don't see the `replace` at all because Go ignores `replace` directives in non-main modules.
+
 #### docs/src/whats-new.md (line 46)
 
 Swap the `.release-please-manifest.json` link to `monorel.toml`. The historical "Multi-module split" entry stays — it documents what happened at the time, just with a refreshed link target.
