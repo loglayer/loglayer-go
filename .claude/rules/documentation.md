@@ -296,7 +296,7 @@ Every transport doc page must have a `## Fatal Behavior` section. The shape:
 
 ## "What's new" page format (`docs/src/whats-new.md`)
 
-Mirrors the [TypeScript `loglayer` whats-new page](https://loglayer.dev/whats-new.html). Distinct from the auto-generated root `CHANGELOG.md` (release-please owns that); maintained manually.
+Mirrors the [TypeScript `loglayer` whats-new page](https://loglayer.dev/whats-new.html). Distinct from the auto-generated root `CHANGELOG.md` (monorel writes that on release from `.changeset/*.md` files); maintained manually.
 
 ```markdown
 ## MMM DD, YYYY

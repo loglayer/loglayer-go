@@ -43,7 +43,7 @@ Initial release. New [rotating-file transport](/transports/lumberjack).
 
 `v1.1.0`:
 
-**Multi-module split.** Every transport (`transports/*`), plugin (`plugins/*`), and integration (`integrations/*`) now ships as its own independently-versioned Go module. Import paths are unchanged; you may need `go mod tidy` to pick up the new sub-module entries. Future breaking changes in any sub-package bump only that module's tag namespace, leaving `go.loglayer.dev` itself stable on v1. Full module list in [`.release-please-manifest.json`](https://github.com/loglayer/loglayer-go/blob/main/.release-please-manifest.json).
+**Multi-module split.** Every transport (`transports/*`), plugin (`plugins/*`), and integration (`integrations/*`) now ships as its own independently-versioned Go module. Import paths are unchanged; you may need `go mod tidy` to pick up the new sub-module entries. Future breaking changes in any sub-package bump only that module's tag namespace, leaving `go.loglayer.dev` itself stable on v1. Full module list in [`monorel.toml`](https://github.com/loglayer/loglayer-go/blob/main/monorel.toml).
 
 **`fmtlog` import path moved.** The plugin moved from `go.loglayer.dev/fmtlog` to `go.loglayer.dev/plugins/fmtlog` for consistency with every other plugin. Update imports:
 

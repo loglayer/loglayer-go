@@ -6,9 +6,10 @@
 
 commit-msg:
   commands:
-    # Lint the commit message with the same parser release-please uses
-    # (@conventional-commits/parser). Catches body-parse errors the
-    # PR-title workflow can't see (which only checks the title).
+    # Lint the commit message with @conventional-commits/parser. Catches
+    # typo'd types and body-parse errors the PR-title workflow can't see
+    # (which only checks the title). Releases are driven by changesets,
+    # not commit messages — this lint is for git-history hygiene.
     #
     # Missing tooling is a hard fail: the local hook only matters if it
     # actually runs, and a silent skip ships "works on my machine"
@@ -70,13 +71,6 @@ pre-commit:
 
 pre-push:
   commands:
-    # Validate release-please config / manifest invariants. Catches the
-    # two gotchas documented in AGENTS.md → "Release-please gotchas":
-    # a 0.0.0 manifest entry without a matching `release-as` (initial
-    # release would leak old footers), and a non-zero entry with a
-    # leftover `release-as` (subsequent releases would be pinned).
-    release-please-state:
-      run: scripts/check-release-please-state.sh
     # Catches go.mod / go.sum drift before the push reaches CI. CI
     # runs the same check; this just shifts the failure left so devs
     # don't push, fail, fix, push again per drifted module.

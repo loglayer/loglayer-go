@@ -8,13 +8,12 @@ follows [SemVer](https://semver.org/spec/v2.0.0.html).
 core, the shared `transport/` package, and the `utils/*` helpers. Every
 transport, plugin, and integration ships as its own sub-module under
 its own tag (`<path>/v<X.Y.Z>`); the canonical list lives in
-`.release-please-manifest.json`. See `AGENTS.md` for the layout and
-release flow.
+`monorel.toml`. See `AGENTS.md` for the layout and release flow.
 
-Releases are managed by [Release Please](https://github.com/googleapis/release-please)
-from conventional commits. From v1.0.0 forward, this file is maintained
-automatically; the `[Unreleased]` section below describes the initial
-release at a high level.
+This file is maintained automatically by [monorel](https://monorel.disaresta.com)
+from `.changeset/*.md` files. New entries land above the first `## `
+heading; older entries (released under release-please before the
+migration) stay verbatim below.
 
 ## [1.6.2](https://github.com/loglayer/loglayer-go/compare/v1.6.1...v1.6.2) (2026-05-01)
 

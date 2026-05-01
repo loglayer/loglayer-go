@@ -55,7 +55,7 @@ loglayer-go/
 - **No `Logger` interface in core**: Go convention is "consumer defines the interface."
   Application code accepts the concrete `*loglayer.LogLayer`; `loglayer.NewMock()` returns
   the same type for test injection.
-- **Multi-module layout**: the main `go.loglayer.dev` module hosts only the framework core (loglayer/builder/dispatch/plugin/level/etc.), the shared `transport/` package (BaseTransport, helpers, transporttest, benchtest), the `utils/*` helpers, and `internal/lltest` (a private capture transport so main's own tests don't have to require `transports/testing`). Every transport, plugin, and integration ships as its own independently-versioned Go module; `.release-please-manifest.json` is the canonical list.
+- **Multi-module layout**: the main `go.loglayer.dev` module hosts only the framework core (loglayer/builder/dispatch/plugin/level/etc.), the shared `transport/` package (BaseTransport, helpers, transporttest, benchtest), the `utils/*` helpers, and `internal/lltest` (a private capture transport so main's own tests don't have to require `transports/testing`). Every transport, plugin, and integration ships as its own independently-versioned Go module; `monorel.toml`'s `[packages]` map is the canonical list.
 
   The split is the whole point: a breaking change in any single sub-module bumps only that sub-module's major version, so `go.loglayer.dev` itself never has to migrate to `/v2` because of a downstream rename. Pre-split, every breaking refactor cascaded into a main-module path migration.
 
@@ -135,8 +135,8 @@ missing install doesn't break commits).
 
 What runs:
 
-- **commit-msg**: lints the commit message against the same conventional-commits
-  parser release-please uses. Hard-fails if `bun` isn't on PATH or
+- **commit-msg**: lints the commit message against `@conventional-commits/parser`
+  for git-history hygiene. Hard-fails if `bun` isn't on PATH or
   `node_modules` is missing; install bun (https://bun.sh) and run `bun install`.
 - **pre-commit** (parallel): `gofmt -l` on staged Go files (fails if anything
   needs formatting; run `gofmt -w <file>` to fix), `go vet ./...`, and
@@ -162,31 +162,29 @@ multi-core box.
 
 ## Versioning and Changelog
 
-Releases are managed by [Release Please](https://github.com/googleapis/release-please).
-Conventional commits on `main` drive an always-open "release-please" PR
-that proposes the next version + changelog entries; merging that PR
-creates the tag(s) and the GitHub Release(s). Don't `git tag` manually.
+Releases are managed by [monorel](https://monorel.disaresta.com), a changesets-style release tool built specifically for the layout this repo uses (bare `vX.Y.Z` for the root, `<path>/vX.Y.Z` for sub-modules). The release signal is explicit per-PR: `.changeset/<name>.md` files declare which packages release at what bump level. Don't `git tag` manually.
 
 - **Main module** tags as `v1.X.Y`. Sub-modules tag as
   `transports/otellog/v1.X.Y`, `plugins/oteltrace/v1.X.Y` (Go module
-  convention). Configured in `.release-please-config.json` and
-  `.release-please-manifest.json`.
-- Standard SemVer applies from v1.0.0 forward: `feat:` → minor, `fix:` →
-  patch, `feat!:` or any commit body containing `BREAKING CHANGE:` →
-  major.
-- `CHANGELOG.md` at repo root is **maintained by Release Please** from
-  v1.0.0 forward. The hand-written `[Unreleased]` section describes the
-  initial release at a high level; later sections come from the
-  conventional commits Release Please reads.
+  convention). Configured in `monorel.toml` at the repo root.
+- Standard SemVer: `:major` bump, `:minor` bump, `:patch` bump per changeset frontmatter. The maximum bump across all changesets naming a package wins.
+- Per-package `CHANGELOG.md` is **maintained by `monorel release`** from
+  v1.0.0 forward. New entries land above the first `## ` heading in
+  Keep-a-Changelog format; existing entries (release-please-formatted,
+  for the historical period before the migration) stay verbatim.
 - User-facing release notes also land in `docs/src/whats-new.md` for
   the docs site. Currently maintained manually; follow the Keep a
   Changelog shape.
-- Conventional commits with package scope drive the release:
-  `feat(pretty): ...`, `fix(zap): ...`, `docs(transports): ...`.
-  Allowed types (also enforced by `pr-title.yml`): feat, fix, docs,
-  chore, refactor, test, perf, ci. Scopes that match a sub-module's
-  component name (`transports/otellog`, `plugins/oteltrace`) trigger
-  a release of that sub-module specifically.
+- A changeset can name multiple packages with different bumps. Use
+  `monorel add --package "<name>:<level>"` to write one (or hand-roll
+  the file). Package keys match the `[packages."<key>"]` lines in
+  `monorel.toml`: `go.loglayer.dev` for the root, `<path>` for
+  sub-modules (e.g. `transports/zerolog`, `plugins/oteltrace`).
+- Conventional commits are still required for PR titles + commit
+  messages, but **only as a hygiene check**. `pr-title.yml` and the
+  lefthook commit-msg hook validate the format; the parser doesn't
+  drive any release decision. A release happens iff a PR contributes
+  a `.changeset/*.md` file to main.
 
 ### Adding a new transport, plugin, or integration
 
@@ -208,44 +206,22 @@ To add `<path>` (e.g. `transports/foo` or `plugins/bar`):
    ```
 
    Adjust the `replace` depth (`../..` for `transports/foo`, `../../..` for `plugins/foo/livetest`, etc.). If the package depends on other split sub-modules (e.g. `plugins/plugintest`), add corresponding `replace` and `require` lines following the existing siblings as a template.
-3. Register the module in `.release-please-config.json` (`packages` map with the right `package-name` and `component`) **including `"release-as": "1.0.0"`** to force the initial version. See the "Release-please gotchas" section below for why this is required.
-4. Add the module to `.release-please-manifest.json` with initial version `"0.0.0"` (release-please's "never released" sentinel).
-5. Add the path to `scripts/foreach-module.sh` (`ALL_MODULES`, `SHIPPED_MODULES`, and the `test` op's hardcoded list).
-6. Add the path to `go.work`'s `use` block.
-7. Run `bash scripts/foreach-module.sh tidy` to settle indirect deps and `bash scripts/foreach-module.sh test` to confirm.
-8. Open the PR. After it merges, release-please opens a release PR proposing `<path>/v1.0.0`. Merge that.
-9. After the v1.0.0 tag lands, `.github/workflows/release-please-cleanup.yml` automatically opens a follow-up PR removing the now-stale `"release-as": "1.0.0"` from the config. Merge that PR. (`release-as` is a one-shot override; if it stayed in place, every subsequent release of the package would be pinned to v1.0.0.)
+3. Register the module in `monorel.toml` with a `[packages."<path>"]` block following the existing siblings as a template (`tag_prefix`, `path`, `changelog` all set to the path-derived values).
+4. Add the path to `scripts/foreach-module.sh` (`ALL_MODULES`, `SHIPPED_MODULES`, and the `test` op's hardcoded list).
+5. Add the path to `go.work`'s `use` block.
+6. Run `bash scripts/foreach-module.sh tidy` to settle indirect deps and `bash scripts/foreach-module.sh test` to confirm.
+7. Open the PR. **No release happens from this PR** — `monorel.toml` registers the package but registration alone doesn't trigger a release.
+8. Cut the first release in a follow-up PR by adding a changeset:
 
-Two safety nets back the cleanup:
+   ```sh
+   monorel add --package "<path>:major" --message "Initial release."
+   ```
 
-- **`scripts/check-release-please-state.sh`** runs in pre-push. It catches a `0.0.0` manifest entry without a matching `release-as`, a stale `release-as` whose value equals the manifest version, and a dead `release-as` whose value is lower than the manifest version. Forgetting step 9 manually would be flagged on the next push.
-- **`.github/workflows/release-please-cleanup.yml`** runs in CI on every push to `main`. It detects `release-as <= manifest` and opens (or refreshes) the cleanup PR for you, so step 9 is automatic in steady state.
+   When that follow-up PR merges, the always-open release PR updates with `<path>/v1.0.0` (or `:minor` → `v0.1.0`, `:patch` → `v0.0.1`); merging that release PR creates the tag.
 
-Tags are auto-generated by release-please from conventional commits scoped to the module (`feat(transports/foo): ...` triggers a release of `transports/foo`). The post-merge tag form is `<path>/v<X.Y.Z>` — release-please handles that via `tag-separator: "/"` in the config.
+Tags are created by `monorel release` from changesets scoped to the module. The post-merge tag form is `<path>/v<X.Y.Z>`. CI runs `go test` and the other checks per-module via `scripts/foreach-module.sh`. Adding the new module to that script's arrays in step 4 is what makes CI / pre-push pick it up.
 
-CI runs `go test` and the other checks per-module via `scripts/foreach-module.sh`. Adding the new module to that script's arrays in step 5 is what makes CI / pre-push pick it up.
-
-### Release-please gotchas
-
-We use [release-please](https://github.com/googleapis/release-please) because it natively handles the "main module at root with bare `vX.Y.Z` tags + sub-modules with `<path>/vX.Y.Z` tags" scheme that Go requires. The alternatives we evaluated (changesets, knope) either require bridge code or don't support the bare-tag root case. But release-please has three sharp edges that bit us in the past; document them so they don't bite again.
-
-**1. Initial-release version: use `release-as` in config, not a `Release-As:` footer.**
-
-When a new sub-module's manifest entry is `0.0.0` (never released), release-please scans the entire repo history for `Release-As:` footers that might apply to it. The package has no prior release boundary to stop the scan, so old footers from unrelated commits leak in and force a wrong initial version (we hit this with `bbcd772`'s `Release-As: 1.1.0` leaking into `transports/gcplogging`'s initial release).
-
-The fix is **per-package `release-as` in `.release-please-config.json`**, not a `Release-As:` footer. The config-level field is package-scoped; a footer is project-wide and leaks both ways. Add `release-as: "1.0.0"` to the new package's block at registration time (step 3 above), then remove it after the first tag lands (step 9 above).
-
-**2. Squash-merge strips conventional-commit footers.**
-
-GitHub squash-merges use the PR title as the commit subject and the PR body as the commit body. `Release-As:`, `BREAKING CHANGE:`, and other Conventional Commits footers in a feature branch's individual commits are *not* preserved by the squash. If you genuinely need a `Release-As:` footer (rare; prefer the config-level `release-as` field above), put it at the bottom of the PR body, not in a pre-merge commit.
-
-**3. Adding root-level files / dirs may need an `exclude-paths` update.**
-
-Release-please attributes commits to packages by file path. The root package (`.`) claims everything not claimed by a sub-module's path. Without filtering, every PR that touches `docs/`, `scripts/`, `go.work`, etc. would bump the main module, even when adding a new sub-module that doesn't change root code at all.
-
-The root config has an `exclude-paths` list precisely to filter these out. Current entries: `.claude`, `.github`, `.release-please-config.json`, `.release-please-manifest.json`, `docs`, `go.work`, `Makefile`, `lefthook.yml`, `scripts`. **If you add a new top-level directory or file that's not actual root-module Go source**, decide whether changes there should trigger a main release. If not, add it to the root's `exclude-paths`.
-
-The "main stays on v1 forever" property of this repo depends on this list staying complete. Steady-state main releases happen only when actual Go code at the repo root or in `transport/`, `utils/`, or `internal/` changes.
+The release-please-era gotchas (`release-as` initial-version dance, squash-merge stripping `Release-As:` footers, `exclude-paths` completeness) are gone. Changesets are explicit per-PR file artifacts; nothing is inferred from commit messages, so none of those failure modes can recur.
 
 ## CI / Release Workflows
 
@@ -255,23 +231,33 @@ The "main stays on v1 forever" property of this repo depends on this list stayin
   Matrix tests Go 1.25 and 1.26. Calls `scripts/foreach-module.sh`
   for the per-module operations so the same checks run locally.
 - **docs.yml**: build vitepress docs on PR (verify clean), deploy to
-  GitHub Pages on main push.
-- **release-please.yml**: triggered on push to `main`. Maintains the
-  always-open release PR; merging it creates the tag(s) and GitHub
-  Release(s). Do not `git tag` manually.
-- **pr-title.yml**: validates that PR titles follow the conventional
-  commit prefixes Release Please reads. Allowed types match the
-  scoped-commit convention above.
+  GitHub Pages on main push, also called by `release.yml` after a
+  monorel-driven release (workflow_call sidesteps GitHub's anti-recursion
+  for `GITHUB_TOKEN`-created releases).
+- **release-pr.yml**: triggered on push to `main`. Runs `monorel preview --upsert`
+  to maintain the always-open release PR.
+- **release.yml**: triggered on push to `main` for the `chore(release):`
+  merge commit (or via `workflow_dispatch`). Runs the release pipeline:
+  `monorel release` → `git push --follow-tags` → `monorel publish`.
+  Then calls `docs.yml` via `workflow_call`.
+- **pr-title.yml**: validates that PR titles follow Conventional Commits
+  for git-history hygiene. Allowed types match the scoped-commit
+  convention above.
 
 To cut a release:
 
-1. Land the changes you want in `main` using conventional commits.
-2. Wait for the release-please PR to update with the proposed bump
-   and changelog. (It runs on every push to `main`; usually <1 minute.)
+1. Land changes on `main` via PRs that include a `.changeset/<name>.md`
+   file when a release is desired. Use `monorel add --package "<name>:<level>"`
+   to author one, or hand-roll the file.
+2. The release-pr workflow updates the always-open release PR after each
+   push to `main`. The PR body shows the rendered plan (per-package
+   `from`/`to` versions plus the changelog body for each).
 3. Edit `docs/src/whats-new.md` to add the user-facing summary if
-   relevant — Release Please doesn't touch this file.
-4. Merge the release-please PR. Tags + GitHub Releases are created
-   automatically.
+   relevant — monorel doesn't touch this file.
+4. Merge the release PR. The release.yml workflow runs the pipeline:
+   writes per-package CHANGELOG entries, deletes the consumed
+   `.changeset/*.md` files, creates per-package tags, pushes, and
+   creates one GitHub Release per tag.
 
 ## Vulnerability scanning (advisory, not gating)
 

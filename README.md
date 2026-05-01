@@ -164,7 +164,7 @@ loglayer-go/
 └── .claude/rules/      Doc / Go / benchmarking conventions
 ```
 
-`go.work` is committed and stitches every sub-module together for `gopls` and root-level `go test ./...`. You don't need to run `go work sync` after cloning; everything resolves out of the box. Each sub-module's `go.mod` carries a `replace go.loglayer.dev => ../..` directive (and similar replaces for any sibling sub-modules it depends on) so local edits to the core flow into the sub-modules without publishing. release-please rewrites those replaces to real versions at release time, so you don't manage them by hand. CI runs each sub-module in isolation through `scripts/foreach-module.sh` so deps don't leak between modules.
+`go.work` is committed and stitches every sub-module together for `gopls` and root-level `go test ./...`. You don't need to run `go work sync` after cloning; everything resolves out of the box. Each sub-module's `go.mod` carries a `replace go.loglayer.dev => ../..` directive (and similar replaces for any sibling sub-modules it depends on) so local edits to the core flow into the sub-modules without publishing. The `replace` directives stay in `go.mod` permanently — they're how the workspace points at sibling modules during local development. Go's toolchain ignores `replace` directives in non-main modules, so consumers of a sub-module via `go get` get the real published versions of its dependencies, not the local replacements. CI runs each sub-module in isolation through `scripts/foreach-module.sh` so deps don't leak between modules.
 
 To run an example app:
 
@@ -193,18 +193,18 @@ Behind the scenes, anything multi-module routes through `scripts/foreach-module.
 ### Workflow
 
 - Branch off `main` as `<type>/<short-slug>` (e.g. `feat/zerolog-id`, `docs/getting-started-fixes`).
-- Use [Conventional Commits](https://www.conventionalcommits.org/) with the package as the scope: `feat(transports/zap): add ID field`. The `commit-msg` hook lints with the same parser release-please uses.
+- Use [Conventional Commits](https://www.conventionalcommits.org/) with the package as the scope: `feat(transports/zap): add ID field`. The `commit-msg` hook lints with `@conventional-commits/parser` for git-history hygiene; releases are driven by changesets, not commit messages.
 - Hooks run on every commit and push. Don't `--no-verify` past failures; fix the underlying issue. The full pre-push (`make test-race`) finishes in well under 10 seconds on a multi-core box.
 
 ### Versioning and stability
 
 Each module follows SemVer from `v1.0.0` onward. The framework core (`go.loglayer.dev`) and every transport / plugin / integration are versioned independently, so a breaking change in (say) `transports/zap` bumps that module's tag namespace alone (`transports/zap/v2.0.0`) and doesn't force you off the latest core. `feat:` → minor, `fix:` → patch, `feat!:` or a body containing `BREAKING CHANGE:` → major.
 
-Releases are cut by merging the always-open release-please PR; tags + GitHub Releases happen automatically. Don't `git tag` manually. Full policy: [AGENTS.md → Versioning and Changelog](AGENTS.md).
+Releases are cut by adding a `.changeset/<name>.md` file to a PR (via `monorel add` or by hand) declaring the affected packages and bump levels, then merging the always-open release PR; tags + GitHub Releases happen automatically. Don't `git tag` manually. Full policy: [AGENTS.md → Versioning and Changelog](AGENTS.md).
 
 ### Adding a new transport, plugin, or integration
 
-Every transport / plugin / integration ships as its own Go module from day one (no "bundle in main, split later"). `transports/blank/` is a copyable template. The full recipe (go.mod, replace directives, release-please registration, foreach-module updates, docs page) lives in [AGENTS.md → Adding a new transport, plugin, or integration](AGENTS.md). Doc-site conventions for the new page are in [`.claude/rules/documentation.md`](.claude/rules/documentation.md).
+Every transport / plugin / integration ships as its own Go module from day one (no "bundle in main, split later"). `transports/blank/` is a copyable template. The full recipe (go.mod, replace directives, monorel.toml registration, foreach-module updates, docs page) lives in [AGENTS.md → Adding a new transport, plugin, or integration](AGENTS.md). Doc-site conventions for the new page are in [`.claude/rules/documentation.md`](.claude/rules/documentation.md).
 
 ### Docs work
 

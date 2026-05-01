@@ -50,7 +50,7 @@ go get go.loglayer.dev/integrations/loghttp
 go get go.loglayer.dev/integrations/sloghandler
 ```
 
-The full module list is in [`.release-please-manifest.json`](https://github.com/loglayer/loglayer-go/blob/main/.release-please-manifest.json).
+The full module list is in [`monorel.toml`](https://github.com/loglayer/loglayer-go/blob/main/monorel.toml).
 
 ## Quick Start
 
@@ -1110,7 +1110,7 @@ require.Equal(t, "[REDACTED]", md["pw"])
 
 `go.loglayer.dev` is the main module; every transport, plugin, and integration ships as its own Go module. Tags use the prefix form (`transports/<name>/v<X.Y.Z>`, `plugins/<name>/v<X.Y.Z>`). A breaking change in any one sub-module bumps only that sub-module's major version — `go.loglayer.dev`'s import path stays stable.
 
-Full module list: [`.release-please-manifest.json`](https://github.com/loglayer/loglayer-go/blob/main/.release-please-manifest.json).
+Full module list: [`monorel.toml`](https://github.com/loglayer/loglayer-go/blob/main/monorel.toml).
 
 ## Documentation
 

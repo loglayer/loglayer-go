@@ -3,11 +3,10 @@
 All notable changes to `go.loglayer.dev/plugins/oteltrace` are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning follows [SemVer](https://semver.org/spec/v2.0.0.html).
-
-Releases are managed by [Release Please](https://github.com/googleapis/release-please)
-from conventional commits scoped to `plugins/oteltrace`. Tags use the
-prefixed form `plugins/oteltrace/v<X.Y.Z>` so this module versions
-independently of the framework core.
+Tags use the prefixed form `plugins/oteltrace/v<X.Y.Z>` so this module
+versions independently of the framework core. Maintained
+automatically by [monorel](https://monorel.disaresta.com) from
+`.changeset/*.md` files.
 
 ## [1.6.1](https://github.com/loglayer/loglayer-go/compare/plugins/oteltrace/v1.1.1...plugins/oteltrace/v1.6.1) (2026-04-30)
 

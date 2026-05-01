@@ -31,11 +31,13 @@ Allowed types: `feat`, `fix`, `perf`, `revert`, `refactor`, `deps`, `docs`,
 - `fix(integrations/loghttp): preserve trailers when wrapping ResponseWriter`
 - `docs: clarify Fields vs Metadata`
 
-The `commit-msg` git hook lints every message with the same parser
-release-please uses (`@conventional-commits/parser`). CI re-runs the
-same check on every PR and on push to main. Run `bun install` once
-after cloning to enable the local hook; without it the hook skips and
-CI is the only safety net.
+The `commit-msg` git hook lints every message with
+`@conventional-commits/parser` for git-history hygiene. CI re-runs
+the same check on every PR and on push to main. Run `bun install`
+once after cloning to enable the local hook; without it the hook
+skips and CI is the only safety net. Note: releases are driven by
+`.changeset/*.md` files, not commit messages — the lint catches
+malformed messages without affecting whether a release fires.
 
 ## Tests
 
