@@ -70,6 +70,13 @@ pre-commit:
 
 pre-push:
   commands:
+    # Validate release-please config / manifest invariants. Catches the
+    # two gotchas documented in AGENTS.md → "Release-please gotchas":
+    # a 0.0.0 manifest entry without a matching `release-as` (initial
+    # release would leak old footers), and a non-zero entry with a
+    # leftover `release-as` (subsequent releases would be pinned).
+    release-please-state:
+      run: scripts/check-release-please-state.sh
     # Catches go.mod / go.sum drift before the push reaches CI. CI
     # runs the same check; this just shifts the failure left so devs
     # don't push, fail, fix, push again per drifted module.
