@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.6.2] - 2026-05-01
+
+### Patch Changes
+
+- Smoke test of the monorel migration. No functional change; this changeset
+  exists only to exercise the full release pipeline (release-pr orchestrator →
+  release.yml → tag push → publish → deploy-docs workflow_call) end-to-end
+  on `transports/blank`, the lowest-blast-radius package in the repo.
+
+  After this lands, `transports/blank/v1.6.2` is the first monorel-driven tag
+  in this repo. Future releases follow the same path; this one verifies the
+  chain works.
+
 ## [1.6.1](https://github.com/loglayer/loglayer-go/compare/transports/blank/v1.1.0...transports/blank/v1.6.1) (2026-04-30)
 
 
