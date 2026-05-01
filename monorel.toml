@@ -2,8 +2,7 @@
 # See https://monorel.disaresta.com/configuration for the schema.
 #
 # Layout: bare vX.Y.Z tags for the root module (go.loglayer.dev),
-# <path>/vX.Y.Z tags for every sub-module. Order mirrors the
-# previous .release-please-manifest.json for review-time diffability.
+# <path>/vX.Y.Z tags for every sub-module.
 
 [forge]
 provider = "github"
