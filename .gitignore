@@ -63,3 +63,6 @@ go.work.sum
 *.sublime-workspace
 .DS_Store
 Thumbs.db
+
+# Claude Code runtime state
+.claude/scheduled_tasks.lock

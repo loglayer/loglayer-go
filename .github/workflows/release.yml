@@ -38,7 +38,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: disaresta-org/monorel/ci/github@v0.1.0
+      - uses: disaresta-org/monorel/ci/github@v0.1.2
         with:
           command: release
 
