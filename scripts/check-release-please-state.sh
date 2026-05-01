@@ -5,18 +5,22 @@
 #
 # Two invariants:
 #
-#   1. A package whose manifest version is "0.0.0" (never released)
-#      must have "release-as" set on its config block. Without this,
-#      release-please's full-history scan can leak old `Release-As:`
-#      footers into the package's initial release.
+#   1. manifest "0.0.0" (never released) requires "release-as" on the
+#      config block. Without it, release-please's full-history scan
+#      can leak old `Release-As:` footers into the initial release.
 #
-#   2. A package whose manifest version is non-zero (already released)
-#      must NOT have "release-as" set. `release-as` is a one-shot
-#      override; if it's left in place after the first tag, every
-#      subsequent release of the package is forced back to that
-#      version.
+#   2. "release-as" equal to the manifest version is stale: the
+#      one-shot override has been applied and now pins every future
+#      release at the same version. Pending overrides (release-as
+#      higher than manifest) are legitimate mid-life uses and not
+#      flagged.
 #
-# This script also reports any package in one file but not the other.
+#   3. "release-as" lower than the manifest version is dead config:
+#      release-please will silently ignore a downgrade, so the config
+#      contributes nothing. Most likely a stale override that wasn't
+#      cleaned up after a normal release advanced past it.
+#
+# Also reports any package in one file but not the other.
 #
 # Hard-fails if jq isn't on PATH; install with the system package
 # manager (apt: jq, brew: jq, etc.).
@@ -77,8 +81,14 @@ while IFS=$'\t' read -r pkg in_config in_manifest version release_as; do
   if [ "$version" = "0.0.0" ] && [ -z "$release_as" ]; then
     err "$pkg: manifest is 0.0.0 (never released) but config has no \"release-as\". Add \"release-as\": \"1.0.0\" to force the initial version. See AGENTS.md → Release-please gotchas."
   fi
-  if [ "$version" != "0.0.0" ] && [ -n "$release_as" ]; then
-    err "$pkg: manifest is $version but config still has \"release-as\": \"$release_as\". Remove the leftover \"release-as\" so subsequent releases use conventional commits. See AGENTS.md → Release-please gotchas."
+  if [ -n "$release_as" ] && [ "$version" = "$release_as" ]; then
+    err "$pkg: manifest is $version and config has \"release-as\": \"$release_as\". Remove the leftover \"release-as\" so subsequent releases use conventional commits. See AGENTS.md → Release-please gotchas."
+  fi
+  if [ -n "$release_as" ] && [ "$version" != "$release_as" ]; then
+    lower="$(printf '%s\n%s\n' "$version" "$release_as" | sort -V | head -1)"
+    if [ "$lower" = "$release_as" ]; then
+      err "$pkg: manifest is $version but config has \"release-as\": \"$release_as\" (lower than manifest, dead config). release-please ignores downgrades; remove the stale override. See AGENTS.md → Release-please gotchas."
+    fi
   fi
 done <<<"$rows"
 
