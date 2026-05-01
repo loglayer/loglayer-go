@@ -1,5 +1,5 @@
 {
-  ".": "1.6.1",
+  ".": "1.6.2",
   "transports/charmlog": "1.6.1",
   "transports/datadog": "1.6.1",
   "transports/gcplogging": "1.0.0",
