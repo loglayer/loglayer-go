@@ -25,7 +25,6 @@
       "package-name": "go.loglayer.dev",
       "include-component-in-tag": false,
       "changelog-path": "CHANGELOG.md",
-      "release-as": "1.6.2",
       "exclude-paths": [
         ".claude",
         ".github",
