@@ -8,12 +8,13 @@ name: Docs
 #   pull_request    — build only (no deploy), to verify the site still
 #                     builds when docs change.
 #   release         — covers manually-created GitHub Releases. Releases
-#                     created by release-please via GITHUB_TOKEN don't
-#                     propagate this event (anti-recursion); those flow
-#                     through workflow_call from release-please.yml.
+#                     created by monorel via GITHUB_TOKEN don't propagate
+#                     this event (GitHub anti-recursion); those flow
+#                     through workflow_call from release.yml's deploy-docs
+#                     job.
 #   workflow_dispatch — manual escape hatch.
-#   workflow_call   — invoked from release-please.yml after a release-
-#                     please-driven release is cut.
+#   workflow_call   — invoked from release.yml after a monorel-driven
+#                     release is cut.
 
 on:
   pull_request:

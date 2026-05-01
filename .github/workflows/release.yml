@@ -1,0 +1,52 @@
+name: release
+
+# Cuts the release after the always-open release PR is merged.
+# Triggers:
+#   push (main, "chore(release):") — the standard path; the merge
+#       commit of the release PR carries that subject by monorel
+#       convention.
+#   workflow_dispatch — manual escape hatch.
+#
+# Pipeline (inside disaresta-org/monorel/ci/github with command:release):
+#   1. monorel release       — write CHANGELOGs, delete consumed
+#                              .changeset/*.md, create the release
+#                              commit, create per-package tags locally.
+#   2. git push --follow-tags — push commit + tags to the remote so
+#                              the forge can validate them.
+#   3. monorel publish       — create one GitHub Release per tag, body
+#                              sourced from each tag's CHANGELOG entry.
+#
+# Then deploy-docs runs as a workflow_call. Releases created via
+# secrets.GITHUB_TOKEN do not propagate `release: published` events
+# (GitHub anti-recursion), so docs.yml's release trigger never fires
+# from a monorel-driven release; we call docs.yml directly here.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'chore(release):')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: disaresta-org/monorel/ci/github@v0.1.0
+        with:
+          command: release
+
+  deploy-docs:
+    needs: release
+    if: ${{ needs.release.result == 'success' }}
+    uses: ./.github/workflows/docs.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write

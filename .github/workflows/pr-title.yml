@@ -1,8 +1,9 @@
 name: PR Title
 
 # Validates that the PR title follows Conventional Commits, since that's
-# what AGENTS.md mandates for the commit-message style and what
-# Release Please uses to derive the next version. Allowed types are
+# what AGENTS.md mandates for commit-message style. Releases are driven
+# by changesets in monorel (not by PR titles), so this check is purely
+# a hygiene gate on the merged commit's subject line. Allowed types are
 # the same set documented in AGENTS.md "Versioning and Changelog".
 
 on:

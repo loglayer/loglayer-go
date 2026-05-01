@@ -1,12 +1,10 @@
 #!/usr/bin/env node
-// Lints commit messages with @conventional-commits/parser, the exact
-// parser release-please uses. Catches body-parse errors that
-// type-prefix-only checks (and commitlint's default parser) miss.
-//
-// We hit one of those silent skips on PR #19: a backtick-wrapped Go
-// signature in the commit body parsed fine for type detection but
-// blew up release-please's parser, which treated the commit as having
-// no release impact. This script prevents that class of bug.
+// Lints commit messages with @conventional-commits/parser. Catches
+// body-parse errors that type-prefix-only checks (and commitlint's
+// default parser) miss — typo'd types, malformed scopes, and bodies
+// the parser can't handle (e.g. backtick-wrapped Go signatures with
+// parens). Pure git-history hygiene; releases are driven by
+// .changeset/*.md files, not commit messages.
 //
 // Usage:
 //   node scripts/lint-commit.mjs --range FROM..TO
@@ -83,9 +81,8 @@ if (failed > 0) {
   console.error(
     `\n${failed} commit(s) failed conventional-commits parse.\n` +
       `\n` +
-      `release-please uses this same parser. A commit that fails here will\n` +
-      `silently NOT trigger a release, even if its type (feat/fix/etc.) would\n` +
-      `normally bump a version.\n` +
+      `Conventional-commits format is required for git-history hygiene.\n` +
+      `(Releases are driven by .changeset/*.md files, not commit messages.)\n` +
       `\n` +
       `Common cause: backtick-wrapped function signatures in the commit body\n` +
       `containing parens, e.g.\n` +

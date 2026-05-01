@@ -1,12 +1,12 @@
 name: Commit Lint
 
-# Lints every commit message with the SAME parser release-please uses
-# (@conventional-commits/parser). This catches commits whose body has
-# something the parser can't handle (e.g. a backtick-wrapped function
-# signature with parens) — release-please would silently skip such a
-# commit, so a `feat:` that should trigger a release would land on main
-# without one. The CI failure here surfaces the issue before merge or
-# (on push) immediately after.
+# Lints every commit message with @conventional-commits/parser. This
+# is a hygiene check: catches typo'd types (e.g. `feaT:`), missing
+# colons, and bodies the parser can't handle (e.g. a backtick-wrapped
+# function signature with parens). Releases are driven by changesets
+# in monorel, not commit messages, so a malformed message no longer
+# silently swallows a release; this lint stands on its own as a
+# git-history-quality tool.
 #
 # Local pre-commit equivalent: lefthook's `commit-msg` hook runs the
 # same script on the message you're about to commit.

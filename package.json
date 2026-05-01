@@ -2,7 +2,7 @@
   "name": "loglayer-go-tools",
   "version": "0.0.0",
   "private": true,
-  "description": "Repo-level tooling that isn't tied to the docs site (which has its own package.json under docs/). Currently: a commit-message linter that uses the same parser release-please uses, so a commit that breaks release-please's parser fails CI before it can land on main.",
+  "description": "Repo-level tooling that isn't tied to the docs site (which has its own package.json under docs/). Currently: a Conventional-Commits message linter for git hooks and CI, so malformed commit messages fail before they land on main.",
   "type": "module",
   "scripts": {
     "lint-commits": "node scripts/lint-commit.mjs",

@@ -1,0 +1,38 @@
+name: release-pr
+
+# Maintains the always-open release PR. Fires on every push to main
+# except the chore(release): merge commit (which is the merge of the
+# release PR itself; reprocessing it would churn the just-merged PR).
+#
+# The PR aggregates pending .changeset/*.md files into a rendered plan
+# and updates / opens / closes itself based on whether any changesets
+# remain after each push.
+#
+# Drives every release end-to-end together with release.yml.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-pr:
+    # Skip on the release PR's own merge commit. Heuristic: subject
+    # begins with "chore(release):" by monorel-bot convention. If a
+    # human ever authors a hand-titled "chore(release):" commit, the
+    # workflow will skip there too — switch to filtering by
+    # github.event.head_commit.author.username == 'monorel-bot[automation]'
+    # if that becomes a problem.
+    if: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: disaresta-org/monorel/ci/github@v0.1.0
+        with:
+          command: pr
