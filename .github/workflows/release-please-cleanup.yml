@@ -1,0 +1,107 @@
+name: Release-please Cleanup
+
+# Removes stale "release-as" overrides from .release-please-config.json
+# automatically. Runs on every push to main; opens (or refreshes) a
+# cleanup PR when it finds packages whose configured "release-as" value
+# is at or below the manifest version.
+#
+# Why: "release-as" is a one-shot override release-please uses to force
+# a specific next version. Once release-please has tagged that version
+# (manifest now matches release-as) or the manifest has otherwise
+# advanced past it, the override is dead config. Leaving it in place
+# pins every future release of that package to the same version.
+#
+# This Action automates the cleanup PR that AGENTS.md → "Adding a new
+# transport, plugin, or integration" used to require contributors to
+# open by hand. The pre-push validator (scripts/check-release-please-
+# state.sh) catches stale overrides locally; this Action fixes them
+# centrally so contributors don't have to.
+
+on:
+  push:
+    branches: [main]
+
+# Serialize runs so two near-simultaneous pushes don't race on the
+# automation branch.
+concurrency:
+  group: release-please-cleanup
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: scan
+        run: |
+          set -euo pipefail
+
+          rows="$(jq -r -n \
+            --slurpfile c .release-please-config.json \
+            --slurpfile m .release-please-manifest.json '
+            ($c[0].packages // {}) as $cfg |
+            ($m[0] // {}) as $man |
+            ($cfg | to_entries[] |
+              select(.value["release-as"] != null) |
+              [.key, $man[.key], .value["release-as"]] | @tsv
+            )')"
+
+          stale=()
+          while IFS=$'\t' read -r pkg version release_as; do
+            [ -z "$pkg" ] && continue
+            # release-as <= manifest version is stale-or-dead.
+            lower="$(printf '%s\n%s\n' "$version" "$release_as" | sort -V | head -1)"
+            if [ "$lower" = "$release_as" ]; then
+              stale+=("$pkg")
+            fi
+          done <<<"$rows"
+
+          {
+            echo "count=${#stale[@]}"
+            echo "stale=${stale[*]:-}"
+          } >> "$GITHUB_OUTPUT"
+
+      - if: steps.scan.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # Strip "release-as" from each stale package's config block.
+          for pkg in ${{ steps.scan.outputs.stale }}; do
+            jq --arg p "$pkg" 'del(.packages[$p]["release-as"])' \
+              .release-please-config.json > /tmp/c.json
+            mv /tmp/c.json .release-please-config.json
+          done
+
+          branch="automation/cleanup-stale-release-as"
+          git checkout -B "$branch"
+          git add .release-please-config.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          packages_list="$(printf -- '- %s\n' ${{ steps.scan.outputs.stale }})"
+          git commit -m "$(printf 'chore(release-please): remove stale release-as overrides\n\nrelease-as <= manifest version means the override has been applied (or\nis otherwise dead config). Leaving it in place pins every future\nrelease of the package to that version. Auto-cleanup by\n.github/workflows/release-please-cleanup.yml.\n\nPackages cleaned:\n%s\n\nSee AGENTS.md → Release-please gotchas.' "$packages_list")"
+          git push --force origin "$branch"
+
+          existing="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty')"
+          if [ -z "$existing" ]; then
+            gh pr create \
+              --title "chore(release-please): remove stale release-as overrides" \
+              --body "Auto-cleanup of stale \`release-as\` entries in \`.release-please-config.json\`.
+
+This PR is opened automatically by [\`.github/workflows/release-please-cleanup.yml\`](../blob/main/.github/workflows/release-please-cleanup.yml) when one or more packages have a \`release-as\` value at or below the manifest version. The override has been applied (or is dead config); leaving it in place would pin every future release of those packages to the same version.
+
+**Packages cleaned in this PR:**
+
+$packages_list
+
+See [AGENTS.md → Release-please gotchas](../blob/main/AGENTS.md#release-please-gotchas) for the full context." \
+              --base main \
+              --head "$branch"
+          fi
