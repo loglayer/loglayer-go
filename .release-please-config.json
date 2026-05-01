@@ -25,6 +25,7 @@
       "package-name": "go.loglayer.dev",
       "include-component-in-tag": false,
       "changelog-path": "CHANGELOG.md",
+      "bootstrap-sha": "df9073d15860114115efe3ab57bfd4915b84e43a",
       "exclude-paths": [
         ".claude",
         ".github",
