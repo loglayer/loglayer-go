@@ -8,6 +8,7 @@ use (
 	./transports/charmlog
 	./transports/console
 	./transports/datadog
+	./transports/gcplogging
 	./transports/lumberjack
 	./transports/http
 	./transports/logrus

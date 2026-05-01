@@ -35,6 +35,7 @@ ALL_MODULES=(
   transports/charmlog
   transports/console
   transports/datadog
+  transports/gcplogging
   transports/lumberjack
   transports/http
   transports/logrus
@@ -74,6 +75,7 @@ SHIPPED_MODULES=(
   transports/charmlog
   transports/console
   transports/datadog
+  transports/gcplogging
   transports/lumberjack
   transports/http
   transports/logrus
@@ -165,6 +167,7 @@ case "$op" in
       transports/charmlog
       transports/console
       transports/datadog
+      transports/gcplogging
       transports/lumberjack
       transports/http
       transports/logrus
