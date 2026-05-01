@@ -24,7 +24,18 @@
       "release-type": "go",
       "package-name": "go.loglayer.dev",
       "include-component-in-tag": false,
-      "changelog-path": "CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md",
+      "exclude-paths": [
+        ".claude",
+        ".github",
+        ".release-please-config.json",
+        ".release-please-manifest.json",
+        "docs",
+        "go.work",
+        "Makefile",
+        "lefthook.yml",
+        "scripts"
+      ]
     },
     "transports/charmlog": {
       "release-type": "go",
