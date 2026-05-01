@@ -16,6 +16,18 @@ from conventional commits. From v1.0.0 forward, this file is maintained
 automatically; the `[Unreleased]` section below describes the initial
 release at a high level.
 
+## [1.0.0](https://github.com/loglayer/loglayer-go/compare/v1.6.1...v1.0.0) (2026-05-01)
+
+
+### Features
+
+* **transports/gcplogging:** Initial release ([#33](https://github.com/loglayer/loglayer-go/issues/33)) ([dbe7ac3](https://github.com/loglayer/loglayer-go/commit/dbe7ac3176648de330813c90feb301aa3338c489))
+
+
+### Miscellaneous Chores
+
+* **release-please:** Scope root component, force gcplogging v1.0.0 ([#35](https://github.com/loglayer/loglayer-go/issues/35)) ([b5c9ef5](https://github.com/loglayer/loglayer-go/commit/b5c9ef5b4fc51983b8b0f62faf756bf919708c5d))
+
 ## [1.6.1](https://github.com/loglayer/loglayer-go/compare/v1.6.0...v1.6.1) (2026-04-30)
 
 
