@@ -17,6 +17,7 @@ LogLayer is multi-module: most transports, plugins, and integrations ship as the
 go get go.loglayer.dev/transports/structured/v2
 go get go.loglayer.dev/transports/console/v2
 go get go.loglayer.dev/transports/pretty/v2
+go get go.loglayer.dev/transports/cli/v2
 go get go.loglayer.dev/transports/testing/v2
 go get go.loglayer.dev/transports/blank/v2
 
@@ -97,8 +98,8 @@ Seven levels, integer-typed, in priority order:
 - `loglayer.LogLevelInfo` (20)
 - `loglayer.LogLevelWarn` (30)
 - `loglayer.LogLevelError` (40)
-- `loglayer.LogLevelFatal` (50) — dispatches then `os.Exit(1)` unless `DisableFatalExit` is set
-- `loglayer.LogLevelPanic` (60) — dispatches then panics with the joined message string (recoverable; matches zerolog/zap/logrus)
+- `loglayer.LogLevelFatal` (50): dispatches then `os.Exit(1)` unless `DisableFatalExit` is set
+- `loglayer.LogLevelPanic` (60): dispatches then panics with the joined message string (recoverable; matches zerolog/zap/logrus)
 
 ```go
 log.Trace("detailed debugging")
@@ -189,7 +190,7 @@ Callbacks may be invoked concurrently across goroutines if the same `*LogLayer` 
 
 ## Fields (persistent data across all log entries)
 
-Fields ride on every emission from the logger they're set on. `WithFields` returns a new `*LogLayer` — always assign the result.
+Fields ride on every emission from the logger they're set on. `WithFields` returns a new `*LogLayer`; always assign the result.
 
 ```go
 log = log.WithFields(loglayer.Fields{
@@ -366,7 +367,7 @@ prefixed.Info("login")  // "[Auth] login"
 parent := loglayer.New(loglayer.Config{Transport: t})
 parent = parent.WithFields(loglayer.F{"service": "api"})
 
-// Independent clone — mutations don't bleed back to parent
+// Independent clone (mutations don't bleed back to parent)
 child := parent.Child()
 child = child.WithFields(loglayer.F{"handler": "users"})
 child.Info("request received")  // emits with service AND handler
@@ -378,9 +379,9 @@ child.Info("request received")  // emits with service AND handler
 
 Three independent tiers; a log must pass all that apply:
 
-1. **LogLayer (global)** — `SetLevel`, `EnableLevel`, `DisableLevel`, `EnableLogging`, `DisableLogging`. Checked first, before any processing.
-2. **Group** — `Routing.Groups[name].Level`. Only applies to grouped logs.
-3. **Transport** — `transport.BaseConfig{Level: ...}` per transport, checked at dispatch time.
+1. **LogLayer (global)**: `SetLevel`, `EnableLevel`, `DisableLevel`, `EnableLogging`, `DisableLogging`. Checked first, before any processing.
+2. **Group**: `Routing.Groups[name].Level`. Only applies to grouped logs.
+3. **Transport**: `transport.BaseConfig{Level: ...}` per transport, checked at dispatch time.
 
 ```go
 log.SetLevel(loglayer.LogLevelWarn)        // raise threshold; only Warn+ logs
@@ -391,7 +392,7 @@ log.DisableLogging()
 log.IsLevelEnabled(loglayer.LogLevelDebug)
 ```
 
-Lock-free internally — safe to call concurrently with emission. Mirrors `zap.AtomicLevel`.
+Lock-free internally; safe to call concurrently with emission. Mirrors `zap.AtomicLevel`.
 
 ## Raw Logging
 
@@ -485,7 +486,7 @@ A group's `Level` filters out entries below that level for that group's transpor
 
 ```go
 Ungrouped: loglayer.UngroupedRouting{
-    Mode: loglayer.UngroupedToAll,        // default — every transport gets ungrouped logs
+    Mode: loglayer.UngroupedToAll,        // default: every transport gets ungrouped logs
     // Mode: loglayer.UngroupedToNone,    // drop ungrouped logs entirely
     // Mode: loglayer.UngroupedToTransports, Transports: []string{"console"},
 }
@@ -550,7 +551,7 @@ log.Info("hi")
 // {"level":"info","msg":"hi","source":{"function":"main.foo","file":"foo.go","line":42}}
 ```
 
-`*loglayer.Source` has `json` tags matching slog convention plus `String()` and `slog.LogValuer` so non-JSON transports render readably. `loglayer.SourceFromPC(pc)` builds a Source from a captured PC. The `integrations/sloghandler` forwards `slog.Record.PC` automatically — no `Source.Enabled` needed on the loglayer side.
+`*loglayer.Source` has `json` tags matching slog convention plus `String()` and `slog.LogValuer` so non-JSON transports render readably. `loglayer.SourceFromPC(pc)` builds a Source from a captured PC. The `integrations/sloghandler` forwards `slog.Record.PC` automatically; no `Source.Enabled` needed on the loglayer side.
 
 ## Stdlib log Bridge
 
@@ -636,9 +637,23 @@ pretty.New(pretty.Config{
 })
 ```
 
-### Testing Transport (lltest)
+### CLI Transport
 
-In-memory capture for assertion tests.
+Tuned for command-line application output rather than diagnostic logging. Short cargo/eslint-style level prefixes (`warning:`, `error:`, `fatal:`), stdout for info/debug and stderr for warn+, TTY-detected ANSI color, no timestamps. Renders the `WithPrefix` value in dim grey, separate from the level color. Fields/metadata dropped by default; opt in via `Config.ShowFields`.
+
+```go
+import "go.loglayer.dev/transports/cli/v2"
+
+cli.New(cli.Config{
+    // Writer:     os.Stdout,            // override (defaults: stdout for info/debug, stderr for warn+)
+    // Color:      cli.ColorAuto,        // ColorNever / ColorAlways
+    // ShowFields: false,                 // append fields/metadata after the message
+})
+```
+
+### Testing Transport
+
+In-memory capture for assertion tests. Public package is `transports/testing`; `lltest` is the conventional import alias.
 
 ```go
 import lltest "go.loglayer.dev/transports/testing/v2"
@@ -649,7 +664,7 @@ log := loglayer.New(loglayer.Config{
 })
 
 log.Info("hello", loglayer.F{"k": "v"})
-lines := lib.Lines()  // []lltest.LogLine — assert on Level, Messages, Data, Metadata, Ctx
+lines := lib.Lines()  // []lltest.LogLine; assert on Level, Messages, Data, Metadata, Ctx
 last := lib.GetLastLine()
 popped := lib.PopLine()
 ```
@@ -721,7 +736,7 @@ defer tr.Close()  // flush pending entries
 
 ### File (Lumberjack)
 
-One JSON object per log entry written to a rotating file. Render path matches `transports/structured`. Rotation delegated to `lumberjack.v2`. The package name `lumberjack` shadows the upstream `gopkg.in/natefinch/lumberjack.v2`; alias one of them when both are imported. The shorter `transports/file` import path is reserved for a future rolled-our-own implementation.
+One JSON object per log entry written to a rotating file. Render path matches `transports/structured`. Rotation delegated to `lumberjack.v2`. The package name `lumberjack` shadows the upstream `gopkg.in/natefinch/lumberjack.v2`; alias one of them when both are imported. The shorter `transports/file` import path is reserved for a future roll-our-own implementation.
 
 ```go
 import "go.loglayer.dev/transports/lumberjack/v2"
@@ -741,7 +756,7 @@ _ = tr.Rotate()
 
 `lumberjack.Build` returns `ErrFilenameRequired` instead of panicking when `Filename` is empty.
 
-To pretty-print to a file, plug `*lumberjack.Logger` directly into the pretty/console transport's `Writer` field — no need for the file transport.
+To pretty-print to a file, plug `*lumberjack.Logger` directly into the pretty/console transport's `Writer` field; no need for the file transport.
 
 ## Wrapper Transports
 
@@ -898,7 +913,7 @@ func (t *myTransport) SendToLogger(p loglayer.TransportParams) {
 
 `TransportParams` carries: `LogLevel`, `Messages` (the raw message slice; the prefix is exposed separately on `Prefix` below), `Data` (assembled fields + error map; nil when both absent, use `len(Data) > 0`), `Metadata` (raw `WithMetadata` value; transport decides serialization), `Err`, `Fields` (raw persistent bag), `Ctx` (per-call `WithContext`, nil when unset), `Groups` (merged persistent + per-call `WithGroup` tags; nil when no groups apply, routing has already consumed it before this point, so the slice is exposed for wire-payload tagging only), `Schema` (resolved assembly shape: FieldsKey, MetadataFieldName, ErrorFieldName, SourceFieldName), `Prefix` (the value attached via `WithPrefix` or `Config.Prefix`, exposed verbatim so transports can render it independently from the message text; empty when no prefix was set). Transports that want a "prefix folded into Messages[0]" rendering call `transport.JoinPrefixAndMessages(p.Prefix, p.Messages)` at the top of `SendToLogger`.
 
-The `transport/transporttest` package exports `RunContract(t, ContractCase{...})` — a 14-test contract suite that verifies the wrapper-transport conventions (level filtering, struct vs map metadata, error serialization, fatal handling, etc.).
+The `transport/transporttest` package exports `RunContract(t, ContractCase{...})`: a 14-test contract suite that verifies the wrapper-transport conventions (level filtering, struct vs map metadata, error serialization, fatal handling, etc.).
 
 ## Plugins
 
@@ -913,7 +928,7 @@ Six lifecycle hooks. A plugin implements any subset of these interfaces:
 | `TransformLogLevel` | Decide whether to override the entry's level                              | Log-level escalation      |
 | `ShouldSend`        | Per-transport gate; returning false skips that transport for this emission| Sampling, group filtering |
 
-Hook panics are recovered centrally — each hook returns its no-op value on panic, and `ShouldSend` fails open. Set `Plugin.OnError` to observe recovered panics.
+Hook panics are recovered centrally: each hook returns its no-op value on panic, and `ShouldSend` fails open. Set `Plugin.OnError` to observe recovered panics.
 
 The four dispatch-time hook param structs (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`) all carry a `Ctx context.Context` (per-call `WithContext` value, nil if unset) and a `Groups []string` (merged persistent + per-call `WithGroup` tags, nil when none apply). Routing decisions consume `Groups` before any hook fires; the slice is exposed so plugins can drive group-aware transformations. `OnFieldsCalled` and `OnMetadataCalled` fire at builder time (before the chain is finalized) so they don't see either field.
 
@@ -962,7 +977,7 @@ log.AddPlugin(sampling.FixedRatePerLevel(map[loglayer.LogLevel]float64{
 // Burst limiting: keep the first N per rolling window, drop the rest
 log.AddPlugin(sampling.Burst(100, time.Second))
 
-// Strategies compose — every gate must pass for emission
+// Strategies compose: every gate must pass for emission
 ```
 
 ### Format Strings Plugin (fmtlog)
@@ -979,7 +994,7 @@ log.Info("user %d logged in from %s", 42, "1.2.3.4")
 
 ### Datadog APM Trace Injector
 
-Tracer-agnostic — supply a small `Extract` function for your tracer (dd-trace-go v1 or v2).
+Tracer-agnostic: supply a small `Extract` function for your tracer (dd-trace-go v1 or v2).
 
 ```go
 import (
@@ -1016,13 +1031,13 @@ import "go.loglayer.dev/plugins/oteltrace/v2"
 log.AddPlugin(oteltrace.New(oteltrace.Config{
     TraceIDKey:       "trace_id",       // default
     SpanIDKey:        "span_id",        // default
-    TraceFlagsKey:    "",               // optional — omit to skip
+    TraceFlagsKey:    "",               // optional; omit to skip
     TraceStateKey:    "",               // optional W3C trace_state
     BaggageKeyPrefix: "",               // optional W3C baggage; e.g. "baggage."
 }))
 ```
 
-Baggage rides independently of the span — contexts with baggage but no span still surface baggage attributes. `transports/otellog` does trace correlation natively, so this plugin is mainly for non-OTel transports.
+Baggage rides independently of the span: contexts with baggage but no span still surface baggage attributes. `transports/otellog` does trace correlation natively, so this plugin is mainly for non-OTel transports.
 
 ## Integrations
 
@@ -1058,18 +1073,18 @@ slog.SetDefault(slog.New(sloghandler.New(log)))
 slog.Info("from somewhere deep", "userId", 42)
 ```
 
-Levels above `slog.LevelError` pin to `LogLevelError` (slog can't trigger Fatal exit through this handler). `slog.Record.PC` becomes a `*loglayer.Source` automatically — no `Source.Enabled` needed.
+Levels above `slog.LevelError` pin to `LogLevelError` (slog can't trigger Fatal exit through this handler). `slog.Record.PC` becomes a `*loglayer.Source` automatically; no `Source.Enabled` needed.
 
 ## Testing / Mocking
 
-### NewMock — silent logger
+### NewMock: silent logger
 
 ```go
 log := loglayer.NewMock()  // same API, emits nothing, Fatal does not exit
 log.Info("invisible")
 ```
 
-### Capture entries with lltest
+### Capture entries with the testing transport
 
 ```go
 import lltest "go.loglayer.dev/transports/testing/v2"
@@ -1108,7 +1123,7 @@ require.Equal(t, "[REDACTED]", md["pw"])
 
 ## Multi-Module Versioning
 
-`go.loglayer.dev/v2` is the main module; every transport, plugin, and integration ships as its own Go module. Tags use the prefix form (`transports/<name>/v<X.Y.Z>`, `plugins/<name>/v<X.Y.Z>`). A breaking change in any one sub-module bumps only that sub-module's major version — `go.loglayer.dev/v2`'s import path stays stable.
+`go.loglayer.dev/v2` is the main module; every transport, plugin, and integration ships as its own Go module. Tags use the prefix form (`transports/<name>/v<X.Y.Z>`, `plugins/<name>/v<X.Y.Z>`). A breaking change in any one sub-module bumps only that sub-module's major version, so `go.loglayer.dev/v2`'s import path stays stable.
 
 Full module list: [`monorel.toml`](https://github.com/loglayer/loglayer-go/blob/main/monorel.toml).
 

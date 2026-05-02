@@ -176,6 +176,8 @@ Send logs directly to any HTTP endpoint without a third-party logging library, w
 Built-in mocks make testing painless:
 
 ```go
+import lltest "go.loglayer.dev/transports/testing/v2"
+
 // Silent mock for tests that don't care about output
 log := loglayer.NewMock()
 

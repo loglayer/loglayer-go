@@ -8,7 +8,7 @@
 go get go.loglayer.dev/v2
 ```
 
-Most transports and plugins ship as their own modules — install only what you import:
+Most transports and plugins ship as their own modules. Install only what you import:
 
 ```sh
 go get go.loglayer.dev/transports/structured/v2
@@ -91,7 +91,7 @@ A panicking callback substitutes `loglayer.LazyEvalError` and the rest of the en
 
 ## Fields (persistent data across all log entries)
 
-Fields ride on every emission from the logger they're set on. Always assign the result — `WithFields` returns a new `*LogLayer`.
+Fields ride on every emission from the logger they're set on. Always assign the result; `WithFields` returns a new `*LogLayer`.
 
 ```go
 log = log.WithFields(loglayer.Fields{
@@ -164,7 +164,7 @@ log := loglayer.New(loglayer.Config{
     Transports: []loglayer.Transport{t1, t2},            // multi-transport (mutually exclusive with Transport)
 
     // Optional
-    Prefix:           "[auth]",                          // prepended to every message
+    Prefix:           "[auth]",                          // surfaced to transports as TransportParams.Prefix
     Disabled:         false,                             // master on/off
     ErrorSerializer:  loglayer.UnwrappingErrorSerializer,
     ErrorFieldName:   "err",                             // default
@@ -249,7 +249,7 @@ The `WithPrefix` value (or `Config.Prefix`) is surfaced to transports as `Transp
 parent := loglayer.New(loglayer.Config{Transport: structured.New(structured.Config{})})
 parent = parent.WithFields(loglayer.F{"service": "api"})
 
-// Independent clone — mutations don't affect the parent
+// Independent clone (mutations don't affect the parent)
 child := parent.Child()
 child = child.WithFields(loglayer.F{"handler": "users"})
 child.Info("request received")  // emits with both service and handler
@@ -273,9 +273,9 @@ prefixed.Info("login")  // "[Auth] login"
 
 Three independent tiers; a log must pass all that apply:
 
-1. **LogLayer (global)** — `SetLevel`, `EnableLevel`, `DisableLevel`, `EnableLogging`, `DisableLogging`
-2. **Group** — `Routing.Groups[name].Level` for grouped logs only
-3. **Transport** — `transport.BaseConfig{Level: ...}` per transport, checked at dispatch
+1. **LogLayer (global)**: `SetLevel`, `EnableLevel`, `DisableLevel`, `EnableLogging`, `DisableLogging`
+2. **Group**: `Routing.Groups[name].Level` for grouped logs only
+3. **Transport**: `transport.BaseConfig{Level: ...}` per transport, checked at dispatch
 
 ```go
 log.SetLevel(loglayer.LogLevelWarn)        // only Warn+ will log
@@ -304,7 +304,7 @@ log.SetTransports(t1, t2)
 
 ## Go context.Context
 
-Distinct from "context" in TS LogLayer — Go's `context.Context` carries trace IDs, deadlines, request-scoped values. Use `WithContext` to attach it; transports and plugins read it via `TransportParams.Ctx`.
+Distinct from "context" in TS LogLayer: Go's `context.Context` carries trace IDs, deadlines, request-scoped values. Use `WithContext` to attach it; transports and plugins read it via `TransportParams.Ctx`.
 
 ```go
 // Per-call attachment
@@ -334,7 +334,7 @@ The slog handler (`integrations/sloghandler`) forwards `slog.Record.PC` automati
 ## Testing / Mocking
 
 ```go
-// Silent mock — same API, emits nothing, Fatal does not exit
+// Silent mock: same API, emits nothing, Fatal does not exit
 log := loglayer.NewMock()
 
 // Capture entries for assertion
@@ -346,43 +346,44 @@ log := loglayer.New(loglayer.Config{
 })
 log.Info("hello", loglayer.F{"k": "v"})
 
-lines := lib.Lines()  // []lltest.LogLine — assert on Level, Messages, Data, Metadata, Ctx
+lines := lib.Lines()  // []lltest.LogLine; assert on Level, Messages, Data, Metadata, Ctx
 ```
 
 ## Available Transports
 
 **Renderers** (format and write to an `io.Writer`):
-- `transports/console` — plain `fmt.Println`-style
-- `transports/structured` — one JSON object per entry (production)
-- `transports/pretty` — colorized terminal output (local dev)
-- `transports/testing` — in-memory capture for tests
-- `transports/blank` — user-supplied dispatch function
+- `transports/console`: plain `fmt.Println`-style
+- `transports/structured`: one JSON object per entry (production)
+- `transports/pretty`: colorized terminal output (local dev)
+- `transports/cli`: tuned for command-line apps (short level prefixes, stdout/stderr routing, TTY-detected color, no timestamps)
+- `transports/testing`: in-memory capture for tests
+- `transports/blank`: user-supplied dispatch function
 
 **Cloud** (managed log services):
-- `transports/datadog` — Datadog Logs HTTP intake
-- `transports/gcplogging` — wraps a caller-supplied `*logging.Logger` from `cloud.google.com/go/logging`
-- `transports/sentry` — wraps a caller-supplied `sentry.Logger`
+- `transports/datadog`: Datadog Logs HTTP intake
+- `transports/gcplogging`: wraps a caller-supplied `*logging.Logger` from `cloud.google.com/go/logging`
+- `transports/sentry`: wraps a caller-supplied `sentry.Logger`
 
 **Other transports**:
-- `transports/http` — generic batched HTTP POST
-- `transports/lumberjack` — one JSON object per line, rotating file via `lumberjack.v2`
-- `transports/otellog` — emits to an OTel `log.Logger`; forwards `WithContext` for trace correlation
+- `transports/http`: generic batched HTTP POST
+- `transports/lumberjack`: one JSON object per line, rotating file via `lumberjack.v2`
+- `transports/otellog`: emits to an OTel `log.Logger`; forwards `WithContext` for trace correlation
 
 **Wrappers around third-party loggers**:
 - `transports/zerolog`, `transports/zap`, `transports/slog`, `transports/phuslu`, `transports/logrus`, `transports/charmlog`
 
 ## Available Plugins
 
-- `plugins/redact` — replace values for configured keys/patterns
-- `plugins/sampling` — drop a fraction of emissions (`FixedRate`, `FixedRatePerLevel`, `Burst`)
-- `plugins/fmtlog` — `fmt.Sprintf` semantics for multi-arg messages
-- `plugins/datadogtrace` — inject `dd.trace_id` / `dd.span_id` (tracer-agnostic; bring your own dd-trace-go)
-- `plugins/oteltrace` — inject OTel `trace_id` / `span_id` / `trace_flags` / W3C `trace_state` and baggage
+- `plugins/redact`: replace values for configured keys/patterns
+- `plugins/sampling`: drop a fraction of emissions (`FixedRate`, `FixedRatePerLevel`, `Burst`)
+- `plugins/fmtlog`: `fmt.Sprintf` semantics for multi-arg messages
+- `plugins/datadogtrace`: inject `dd.trace_id` / `dd.span_id` (tracer-agnostic; bring your own dd-trace-go)
+- `plugins/oteltrace`: inject OTel `trace_id` / `span_id` / `trace_flags` / W3C `trace_state` and baggage
 
 ## Available Integrations
 
-- `integrations/loghttp` — HTTP middleware. Per-request logger with `requestId`/`method`/`path`, auto request-completed log, request-context binding. Works with chi, gorilla, gin, echo, stdlib.
-- `integrations/sloghandler` — `log/slog.Handler` backed by a loglayer logger. `slog.SetDefault(slog.New(sloghandler.New(log)))` makes every `slog.Info(...)` flow through loglayer's plugin pipeline and group routing.
+- `integrations/loghttp`: HTTP middleware. Per-request logger with `requestId`/`method`/`path`, auto request-completed log, request-context binding. Works with chi, gorilla, gin, echo, stdlib.
+- `integrations/sloghandler`: `log/slog.Handler` backed by a loglayer logger. `slog.SetDefault(slog.New(sloghandler.New(log)))` makes every `slog.Info(...)` flow through loglayer's plugin pipeline and group routing.
 
 ## Documentation
 

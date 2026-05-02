@@ -7,7 +7,7 @@
 //
 // Run:
 //
-//	go run go.loglayer.dev/examples/pretty-modes
+//	go run go.loglayer.dev/v2/examples/pretty-modes
 //
 // Or from a clone:
 //
