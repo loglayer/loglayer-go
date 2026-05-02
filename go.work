@@ -6,6 +6,7 @@ use (
 	./transports/blank
 	./transports/central
 	./transports/charmlog
+	./transports/cli
 	./transports/console
 	./transports/datadog
 	./transports/gcplogging
