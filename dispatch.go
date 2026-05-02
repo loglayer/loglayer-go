@@ -13,8 +13,8 @@ var osExit = os.Exit
 // formatLog hands the entry to processLog using the logger's
 // persistent fields. The prefix is propagated through
 // TransportParams.Prefix; transports decide how to render it (most
-// call transport.JoinPrefixAndMessages to preserve the v1 prepended-
-// into-messages shape).
+// call transport.JoinPrefixAndMessages to fold it into the first
+// message string).
 //
 // Per-call goCtx overrides the logger's bound ctx (when one is
 // provided), otherwise the bound ctx is passed through. source

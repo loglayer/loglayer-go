@@ -43,9 +43,9 @@ func (exampleTransport) SendToLogger(p loglayer.TransportParams) {
 	parts = append(parts, fmt.Sprintf(`"level":%q`, p.LogLevel.String()))
 	parts = append(parts, fmt.Sprintf(`"time":%q`, fixedTime()))
 
-	// Preserve the v1 "prefix folded into the message" rendering
-	// for these examples; in v2 the prefix arrives on p.Prefix and
-	// each transport decides how to render it.
+	// Fold the prefix into the message so the examples render as
+	// one blob; transports decide their own rendering, this one
+	// goes through the helper.
 	msgs := transport.JoinPrefixAndMessages(p.Prefix, p.Messages)
 	msg := ""
 	if len(msgs) > 0 {

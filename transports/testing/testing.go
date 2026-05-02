@@ -130,10 +130,9 @@ func (t *TestTransport) SendToLogger(params loglayer.TransportParams) {
 	if !t.ShouldProcess(params.LogLevel) {
 		return
 	}
-	// Preserve the v1 "prefix folded into Messages[0]" rendering so
-	// existing test fixtures keep their assertions. The Prefix field
-	// is also exposed on LogLine for tests that want the unmangled
-	// signal.
+	// Fold the prefix into Messages[0] so test fixtures see one
+	// rendered message string. The unmangled signal is also exposed
+	// on LogLine.Prefix for tests that want it separately.
 	src := transport.JoinPrefixAndMessages(params.Prefix, params.Messages)
 	messages := make([]any, len(src))
 	copy(messages, src)

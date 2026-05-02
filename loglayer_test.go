@@ -127,10 +127,10 @@ func TestPrefixDoesNotAffectParent(t *testing.T) {
 }
 
 func TestPrefixSurfacedOnTransportParams(t *testing.T) {
-	// v2: Prefix is exposed verbatim on TransportParams.Prefix and
-	// is NO LONGER prepended into Messages[0]. Transports that
-	// want the v1 "prefix prepended into the message" behavior
-	// call transport.JoinPrefixAndMessages explicitly.
+	// Prefix is exposed verbatim on TransportParams.Prefix and is
+	// NOT folded into Messages[0] by the core. Transports that
+	// want a "prefix folded into the message" rendering call
+	// transport.JoinPrefixAndMessages explicitly.
 	log, lib := setup(t)
 	prefixed := log.WithPrefix("[auth]")
 	prefixed.Info("starting")

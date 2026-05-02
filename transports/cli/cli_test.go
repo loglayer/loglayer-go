@@ -640,8 +640,8 @@ func TestNilElementBailsTableFastPath(t *testing.T) {
 }
 
 func TestWithPrefixRendersInline(t *testing.T) {
-	// v2 contract: WithPrefix renders between the level prefix
-	// and the message body, plain text when ColorNever.
+	// WithPrefix renders between the level prefix and the message
+	// body, plain text when ColorNever.
 	log, stdout, stderr := makeLogger(t, clitr.Config{})
 
 	prefixed := log.WithPrefix("[auth]")
