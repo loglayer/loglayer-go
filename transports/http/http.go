@@ -210,10 +210,14 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 		t.cfg.OnError(ErrClosed, nil)
 		return
 	}
+	// Preserve the v1 "prefix folded into Messages[0]" rendering;
+	// the core no longer mutates messages, transports own it now.
+	// Encoders that want the prefix as a separate field can read
+	// it from params.Prefix in a future Entry.Prefix addition.
 	entry := Entry{
 		Level:    params.LogLevel,
 		Time:     time.Now(),
-		Messages: params.Messages,
+		Messages: transport.JoinPrefixAndMessages(params.Prefix, params.Messages),
 		Metadata: params.Metadata,
 		Groups:   params.Groups,
 		Schema:   params.Schema,

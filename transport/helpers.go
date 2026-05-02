@@ -29,6 +29,45 @@ func WriterOrStdout(w io.Writer) io.Writer {
 	return os.Stdout
 }
 
+// JoinPrefixAndMessages preserves the legacy "prefix folded into the
+// first message" rendering for transports that don't have a smart
+// place to surface params.Prefix on its own. Returns messages
+// unchanged when prefix is empty or messages[0] is not a string;
+// otherwise returns a fresh slice whose first element is
+// `prefix + " " + messages[0]`.
+//
+// Use case: most renderer/wrapper transports just want the v1
+// behavior where every log line shows `[prefix] message` in one
+// blob. Pre-v2 the loglayer core mutated messages[0] before
+// dispatch; from v2 onward it's the transport's job. Call this
+// helper at the top of SendToLogger to keep the same user-visible
+// output:
+//
+//	func (t *Transport) SendToLogger(p loglayer.TransportParams) {
+//	    if !t.ShouldProcess(p.LogLevel) { return }
+//	    p.Messages = transport.JoinPrefixAndMessages(p.Prefix, p.Messages)
+//	    // ... existing rendering logic ...
+//	}
+//
+// Transports that want to render the prefix differently (cli's
+// dim-color treatment, structured's separate JSON field, wrapper
+// transports forwarding to the underlying logger's structured-field
+// API) should NOT call this helper; instead consume p.Prefix
+// directly and emit messages without the prefix prepended.
+func JoinPrefixAndMessages(prefix string, messages []any) []any {
+	if prefix == "" || len(messages) == 0 {
+		return messages
+	}
+	s, ok := messages[0].(string)
+	if !ok {
+		return messages
+	}
+	out := make([]any, len(messages))
+	copy(out, messages)
+	out[0] = prefix + " " + s
+	return out
+}
+
 // JoinMessages concatenates a slice of values into a single space-separated
 // string. Strings are passed through; other types use fmt.Sprintf("%v", ...).
 //

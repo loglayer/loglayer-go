@@ -110,6 +110,9 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 	if !t.ShouldProcess(params.LogLevel) {
 		return
 	}
+	// Preserve the v1 "prefix folded into Messages[0]" rendering;
+	// the core no longer mutates messages, transports own it now.
+	params.Messages = transport.JoinPrefixAndMessages(params.Prefix, params.Messages)
 	combined := combineData(params)
 
 	timestamp := t.formatTimestamp()

@@ -108,7 +108,14 @@ func TestPrefix(t *testing.T) {
 	log, lib := setup(t)
 	prefixed := log.WithPrefix("[app]")
 	prefixed.Info("started")
-	assertLine(t, lib, loglayer.LogLevelInfo, "[app] started")
+	// v2: the prefix is no longer mutated into Messages[0]; it
+	// flows through TransportParams.Prefix and the transport
+	// renders it however it likes. Assert the message arrives
+	// untouched plus the prefix is exposed on params.Prefix.
+	line := assertLine(t, lib, loglayer.LogLevelInfo, "started")
+	if line.Prefix != "[app]" {
+		t.Errorf("Prefix = %q, want %q", line.Prefix, "[app]")
+	}
 }
 
 func TestPrefixDoesNotAffectParent(t *testing.T) {
@@ -120,10 +127,10 @@ func TestPrefixDoesNotAffectParent(t *testing.T) {
 }
 
 func TestPrefixSurfacedOnTransportParams(t *testing.T) {
-	// Prefix is exposed verbatim on TransportParams.Prefix so
-	// transports can render it independently. The legacy
-	// "messages[0] has prefix prepended" behavior is retained for
-	// backwards compatibility; both signals must be present.
+	// v2: Prefix is exposed verbatim on TransportParams.Prefix and
+	// is NO LONGER prepended into Messages[0]. Transports that
+	// want the v1 "prefix prepended into the message" behavior
+	// call transport.JoinPrefixAndMessages explicitly.
 	log, lib := setup(t)
 	prefixed := log.WithPrefix("[auth]")
 	prefixed.Info("starting")
@@ -132,8 +139,8 @@ func TestPrefixSurfacedOnTransportParams(t *testing.T) {
 	if line.Prefix != "[auth]" {
 		t.Errorf("Prefix = %q, want %q", line.Prefix, "[auth]")
 	}
-	if got, _ := line.Messages[0].(string); got != "[auth] starting" {
-		t.Errorf("Messages[0] = %q, want %q (legacy compat)", got, "[auth] starting")
+	if got, _ := line.Messages[0].(string); got != "starting" {
+		t.Errorf("Messages[0] = %q, want %q (prefix no longer auto-prepended)", got, "starting")
 	}
 }
 

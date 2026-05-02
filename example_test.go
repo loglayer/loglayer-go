@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"go.loglayer.dev"
+	"go.loglayer.dev/transport"
 )
 
 // fixedTime returns a deterministic timestamp for example output.
@@ -42,10 +43,14 @@ func (exampleTransport) SendToLogger(p loglayer.TransportParams) {
 	parts = append(parts, fmt.Sprintf(`"level":%q`, p.LogLevel.String()))
 	parts = append(parts, fmt.Sprintf(`"time":%q`, fixedTime()))
 
+	// Preserve the v1 "prefix folded into the message" rendering
+	// for these examples; in v2 the prefix arrives on p.Prefix and
+	// each transport decides how to render it.
+	msgs := transport.JoinPrefixAndMessages(p.Prefix, p.Messages)
 	msg := ""
-	if len(p.Messages) > 0 {
-		bits := make([]string, len(p.Messages))
-		for i, m := range p.Messages {
+	if len(msgs) > 0 {
+		bits := make([]string, len(msgs))
+		for i, m := range msgs {
 			bits[i] = fmt.Sprint(m)
 		}
 		msg = strings.Join(bits, " ")

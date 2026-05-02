@@ -275,15 +275,6 @@ func (l *LogLayer) WithPrefix(prefix string) *LogLayer {
 	return child
 }
 
-func applyPrefix(prefix string, messages []any) {
-	if prefix == "" || len(messages) == 0 {
-		return
-	}
-	if s, ok := messages[0].(string); ok {
-		messages[0] = prefix + " " + s
-	}
-}
-
 // copyFields returns a shallow copy of src, or nil when src is empty.
 // Returning nil saves an allocation per Child() call on loggers that
 // haven't accumulated any fields yet (the dominant case for fresh

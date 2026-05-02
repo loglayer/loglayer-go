@@ -167,7 +167,11 @@ func (b *LogBuilder) Panic(messages ...any) {
 }
 
 func (b *LogBuilder) dispatch(level LogLevel, messages []any, source *Source) {
-	applyPrefix(b.layer.prefix, messages)
+	// Prefix is no longer prepended into messages here — it flows
+	// through TransportParams.Prefix and each transport renders it
+	// however it wants (most call transport.JoinPrefixAndMessages
+	// to preserve the v1 prepended-into-messages shape).
+	//
 	// Hot path: builder has no per-call groups, so pass the layer's
 	// assigned groups straight through. mergeGroups is out-of-line and
 	// would be a measurable hit per emission for the dominant case.

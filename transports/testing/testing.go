@@ -23,6 +23,10 @@ type LogLine struct {
 	Metadata any
 	// Ctx is the per-call context.Context attached via WithContext. Nil if not set.
 	Ctx context.Context
+	// Prefix mirrors [loglayer.TransportParams.Prefix]: the value
+	// attached via WithPrefix or Config.Prefix. Empty when none was
+	// set on the emitting logger.
+	Prefix string
 }
 
 // TestLoggingLibrary captures log lines for assertion in tests.
@@ -126,13 +130,19 @@ func (t *TestTransport) SendToLogger(params loglayer.TransportParams) {
 	if !t.ShouldProcess(params.LogLevel) {
 		return
 	}
-	messages := make([]any, len(params.Messages))
-	copy(messages, params.Messages)
+	// Preserve the v1 "prefix folded into Messages[0]" rendering so
+	// existing test fixtures keep their assertions. The Prefix field
+	// is also exposed on LogLine for tests that want the unmangled
+	// signal.
+	src := transport.JoinPrefixAndMessages(params.Prefix, params.Messages)
+	messages := make([]any, len(src))
+	copy(messages, src)
 	t.Library.Log(LogLine{
 		Level:    params.LogLevel,
 		Messages: messages,
 		Data:     params.Data,
 		Metadata: params.Metadata,
 		Ctx:      params.Ctx,
+		Prefix:   params.Prefix,
 	})
 }
