@@ -269,7 +269,9 @@ If multiple plugins implement `SendGate`, the entry goes only when **every** plu
 
 Every dispatch-time hook param struct (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`) carries the value attached via `WithPrefix` on the emitting logger (or set on `Config.Prefix` at construction) as `params.Prefix`. Empty string when no prefix was set.
 
-The prefix is intentionally read-only from the plugin's perspective: hooks that return modified data / messages / level / send-decision can act on the prefix value, but they don't propagate a modified prefix back to downstream hooks. Plugins that want to mutate the user-visible prefix today have to do it via `OnBeforeMessageOut` (rewriting `Messages[0]`); a future major version may expose the prefix as a writable signal once the legacy auto-prepend is removed.
+The prefix is intentionally read-only from the plugin's perspective: hooks that return modified data / messages / level / send-decision can act on the prefix value, but they don't propagate a modified prefix back to downstream hooks. Plugins that want to mutate the user-visible prefix have to do it via `OnBeforeMessageOut` (rewriting `Messages[0]`).
+
+In v2, `params.Messages[0]` no longer carries the prefix — it's only on `params.Prefix`. Plugins reading the message string directly should be aware that the prefix won't be there.
 
 Use cases:
 

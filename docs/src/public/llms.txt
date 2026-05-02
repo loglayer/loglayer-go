@@ -241,7 +241,7 @@ loglayer.New(loglayer.Config{
 
 The merged group slice for an entry is also surfaced to transports as `TransportParams.Groups` and to all four dispatch-time plugin hooks (`BeforeDataOutParams.Groups`, `BeforeMessageOutParams.Groups`, `TransformLogLevelParams.Groups`, `ShouldSendParams.Groups`). Use it to ship groups in a transport's wire payload, or to drive group-aware transformations.
 
-The `WithPrefix` value (or `Config.Prefix`) is also surfaced to transports as `TransportParams.Prefix` and to the same four dispatch-time plugin hooks. Transports can render the prefix independently from the message body (e.g. tinted differently, emitted as a structured field). The core also prepends `prefix + " "` into `Messages[0]` for backwards compatibility; that auto-prepend will be removed in a future major version.
+The `WithPrefix` value (or `Config.Prefix`) is surfaced to transports as `TransportParams.Prefix` and to the same four dispatch-time plugin hooks. Transports can render the prefix independently from the message body (e.g. tinted differently, emitted as a structured field). As of v2 the core does NOT prepend the prefix into `Messages[0]`; transports that want the v1 "prefix folded into the message" rendering call `transport.JoinPrefixAndMessages(p.Prefix, p.Messages)` at the top of `SendToLogger`.
 
 ## Child Loggers
 
