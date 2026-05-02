@@ -64,11 +64,11 @@ type Config struct {
 
 	// Prefix is exposed verbatim on TransportParams.Prefix and on
 	// every dispatch-time plugin hook param struct. Transports
-	// decide how to render it (most call
-	// transport.JoinPrefixAndMessages to preserve v1 "prefix
-	// folded into the message" behavior; cli renders the prefix
-	// in dim grey separate from the level color). Equivalent to
-	// calling WithPrefix on the freshly-constructed logger.
+	// decide how to render it: most call
+	// transport.JoinPrefixAndMessages to fold it into the first
+	// message string; cli renders it in dim grey separate from
+	// the level color. Equivalent to calling WithPrefix on the
+	// freshly-constructed logger.
 	Prefix string
 
 	// Disabled suppresses all log output when true. Defaults to false

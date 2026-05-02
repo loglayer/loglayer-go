@@ -185,12 +185,12 @@ The "At a Glance" example shows the typical chain. Two things to know:
 
 ```go
 child := log.Child()                       // copy of fields + level state
-prefixed := log.WithPrefix("[auth]")       // child with a prefix prepended
+prefixed := log.WithPrefix("[auth]")       // child with a Prefix value
 ```
 
 Mutations on the child do not affect the parent.
 
-The prefix is surfaced to transports via `TransportParams.Prefix` and to all four dispatch-time plugin hooks (`BeforeDataOutParams.Prefix`, `BeforeMessageOutParams.Prefix`, `TransformLogLevelParams.Prefix`, `ShouldSendParams.Prefix`) so transports and plugins can render or react to the prefix independently from the message text. As of v2 the prefix is NOT folded into `Messages[0]`; transports that want the v1 "prefix folded into message" rendering call `transport.JoinPrefixAndMessages(params.Prefix, params.Messages)`.
+The prefix is surfaced to transports via `TransportParams.Prefix` and to all four dispatch-time plugin hooks (`BeforeDataOutParams.Prefix`, `BeforeMessageOutParams.Prefix`, `TransformLogLevelParams.Prefix`, `ShouldSendParams.Prefix`) so transports and plugins can render or react to the prefix independently from the message text. Transports that want a "prefix folded into the message" rendering call `transport.JoinPrefixAndMessages(params.Prefix, params.Messages)`.
 
 ## Level Control
 

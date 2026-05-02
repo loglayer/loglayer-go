@@ -29,19 +29,14 @@ func WriterOrStdout(w io.Writer) io.Writer {
 	return os.Stdout
 }
 
-// JoinPrefixAndMessages preserves the legacy "prefix folded into the
-// first message" rendering for transports that don't have a smart
-// place to surface params.Prefix on its own. Returns messages
-// unchanged when prefix is empty or messages[0] is not a string;
-// otherwise returns a fresh slice whose first element is
-// `prefix + " " + messages[0]`.
+// JoinPrefixAndMessages folds prefix into the first message so the
+// rendered output reads as one blob (`"[prefix] message body"`).
+// Returns messages unchanged when prefix is empty or messages[0] is
+// not a string; otherwise returns a fresh slice whose first element
+// is `prefix + " " + messages[0]`.
 //
-// Use case: most renderer/wrapper transports just want the v1
-// behavior where every log line shows `[prefix] message` in one
-// blob. Pre-v2 the loglayer core mutated messages[0] before
-// dispatch; from v2 onward it's the transport's job. Call this
-// helper at the top of SendToLogger to keep the same user-visible
-// output:
+// Most renderer / wrapper transports want this rendering and call
+// the helper at the top of SendToLogger:
 //
 //	func (t *Transport) SendToLogger(p loglayer.TransportParams) {
 //	    if !t.ShouldProcess(p.LogLevel) { return }
@@ -50,10 +45,11 @@ func WriterOrStdout(w io.Writer) io.Writer {
 //	}
 //
 // Transports that want to render the prefix differently (cli's
-// dim-color treatment, structured's separate JSON field, wrapper
-// transports forwarding to the underlying logger's structured-field
-// API) should NOT call this helper; instead consume p.Prefix
-// directly and emit messages without the prefix prepended.
+// dim-color treatment, a structured transport's separate JSON
+// field, wrapper transports forwarding to the underlying logger's
+// structured-field API) should NOT call this helper; instead
+// consume p.Prefix directly and emit messages without the prefix
+// folded in.
 func JoinPrefixAndMessages(prefix string, messages []any) []any {
 	if prefix == "" || len(messages) == 0 {
 		return messages

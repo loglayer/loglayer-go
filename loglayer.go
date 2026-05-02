@@ -86,7 +86,7 @@ type TransportParams struct {
 	//
 	// Empty string when no prefix was set.
 	//
-	// Transports that want the v1 "prefix folded into Messages[0]"
+	// Transports that want a "prefix folded into Messages[0]"
 	// rendering call [transport.JoinPrefixAndMessages] at the top
 	// of SendToLogger; the helper has fast-path early returns for
 	// the no-prefix case, so the per-call cost on a logger that
@@ -129,11 +129,11 @@ type LogLayer struct {
 	// prefix is the WithPrefix value for this logger, propagated to
 	// every emission via TransportParams.Prefix and the dispatch-
 	// time plugin hook param structs. Transports decide how to
-	// render it (most call transport.JoinPrefixAndMessages to
-	// preserve v1 "prefix folded into the message" behavior).
-	// Initialized from Config.Prefix at build time; WithPrefix
-	// mutates this field on a fresh child only. Same lifecycle as
-	// assignedGroups/boundCtx: never mutated post-publish.
+	// render it; most call transport.JoinPrefixAndMessages to
+	// fold it into the first message string. Initialized from
+	// Config.Prefix at build time; WithPrefix mutates this field
+	// on a fresh child only. Same lifecycle as assignedGroups /
+	// boundCtx: never mutated post-publish.
 	prefix string
 	// txMu serializes transport mutators (AddTransport / RemoveTransport /
 	// SetTransports) so two concurrent admin operations on the same

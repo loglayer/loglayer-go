@@ -78,8 +78,8 @@ func (c *Transport) SendToLogger(params loglayer.TransportParams) {
 	if !c.ShouldProcess(params.LogLevel) {
 		return
 	}
-	// Preserve the v1 "prefix folded into Messages[0]" rendering;
-	// the core no longer mutates messages, transports own it now.
+	// Fold the prefix into Messages[0] for the rendered output;
+	// transports own this rendering choice.
 	params.Messages = transport.JoinPrefixAndMessages(params.Prefix, params.Messages)
 	messages := buildMessages(params, c.cfg)
 	fmt.Fprintln(c.writer(params.LogLevel), messages...)

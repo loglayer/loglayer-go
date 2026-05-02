@@ -130,7 +130,7 @@ log.Error("failed")     // → "error: [auth] failed"       (level red, prefix g
 
 The level prefix and message body share the level color (yellow / red / etc.); the user prefix gets `color.FgHiBlack` (dim grey) regardless of level. The visual layering reads as "this is a warning. [auth context] retrying": three signals stacked rather than blended.
 
-This is a behavior change vs. v1, where the user prefix arrived already folded into the message string and inherited the level color. If you upgrade from v1.x and want the old monochrome rendering back, set `Color: ColorNever` (drops all color) or read [Migrating to v2](/migrating-to-v2) for the wider migration story.
+If you want monochrome rendering, set `Color: ColorNever` to drop all color (the user prefix and the level prefix both render as plain text).
 
 ## Verbose Mode (`-v` / `--debug`)
 

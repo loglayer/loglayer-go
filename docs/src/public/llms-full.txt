@@ -896,7 +896,7 @@ func (t *myTransport) SendToLogger(p loglayer.TransportParams) {
 }
 ```
 
-`TransportParams` carries: `LogLevel`, `Messages` (the raw message slice; the prefix is NOT prepended in v2 — see `Prefix` below), `Data` (assembled fields + error map; nil when both absent, use `len(Data) > 0`), `Metadata` (raw `WithMetadata` value; transport decides serialization), `Err`, `Fields` (raw persistent bag), `Ctx` (per-call `WithContext`, nil when unset), `Groups` (merged persistent + per-call `WithGroup` tags; nil when no groups apply, routing has already consumed it before this point, so the slice is exposed for wire-payload tagging only), `Schema` (resolved assembly shape: FieldsKey, MetadataFieldName, ErrorFieldName, SourceFieldName), `Prefix` (the value attached via `WithPrefix` or `Config.Prefix`, exposed verbatim so transports can render it independently from the message text; empty when no prefix was set). Transports that want the v1 "prefix folded into Messages[0]" behavior call `transport.JoinPrefixAndMessages(p.Prefix, p.Messages)` at the top of `SendToLogger`.
+`TransportParams` carries: `LogLevel`, `Messages` (the raw message slice; the prefix is exposed separately on `Prefix` below), `Data` (assembled fields + error map; nil when both absent, use `len(Data) > 0`), `Metadata` (raw `WithMetadata` value; transport decides serialization), `Err`, `Fields` (raw persistent bag), `Ctx` (per-call `WithContext`, nil when unset), `Groups` (merged persistent + per-call `WithGroup` tags; nil when no groups apply, routing has already consumed it before this point, so the slice is exposed for wire-payload tagging only), `Schema` (resolved assembly shape: FieldsKey, MetadataFieldName, ErrorFieldName, SourceFieldName), `Prefix` (the value attached via `WithPrefix` or `Config.Prefix`, exposed verbatim so transports can render it independently from the message text; empty when no prefix was set). Transports that want a "prefix folded into Messages[0]" rendering call `transport.JoinPrefixAndMessages(p.Prefix, p.Messages)` at the top of `SendToLogger`.
 
 The `transport/transporttest` package exports `RunContract(t, ContractCase{...})` — a 14-test contract suite that verifies the wrapper-transport conventions (level filtering, struct vs map metadata, error serialization, fatal handling, etc.).
 
@@ -1099,7 +1099,7 @@ require.Equal(t, "[REDACTED]", md["pw"])
 
 `plugintest.AssertNoMutation` and `plugintest.AssertPanicRecovered` are available for common patterns.
 
-## What Out of Scope (v1)
+## Currently out of scope
 
 - Lazy evaluation in fields/metadata (TS LogLayer has `lazy()`; not in Go yet)
 - Async lazy values

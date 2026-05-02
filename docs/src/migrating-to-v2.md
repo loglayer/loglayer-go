@@ -13,7 +13,7 @@ This page is the upgrade checklist.
 
 Not immediately. v1.x continues to work; the v1 module path (`go.loglayer.dev`) keeps resolving to its last v1 tag and the auto-prepend behavior stays intact there. Future feature work and bug fixes ship at v2 (`go.loglayer.dev/v2`), so the migration is the path forward but it's not on a deadline.
 
-You can migrate one module at a time: a project that uses several `loglayer-go` sub-modules can have v1 imports for some and v2 for others (Go treats `go.loglayer.dev` and `go.loglayer.dev/v2` as separate modules). The catch is that fields shared between modules (e.g. `loglayer.Config` from main) won't bridge between v1 and v2 — pick one main module per project.
+You can migrate one module at a time: a project that uses several `loglayer-go` sub-modules can have v1 imports for some and v2 for others (Go treats `go.loglayer.dev` and `go.loglayer.dev/v2` as separate modules). The catch is that fields shared between modules (e.g. `loglayer.Config` from main) won't bridge between v1 and v2; pick one main module per project.
 
 ## Why this change
 

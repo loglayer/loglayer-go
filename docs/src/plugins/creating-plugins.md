@@ -271,7 +271,7 @@ Every dispatch-time hook param struct (`BeforeDataOutParams`, `BeforeMessageOutP
 
 The prefix is intentionally read-only from the plugin's perspective: hooks that return modified data / messages / level / send-decision can act on the prefix value, but they don't propagate a modified prefix back to downstream hooks. Plugins that want to mutate the user-visible prefix have to do it via `OnBeforeMessageOut` (rewriting `Messages[0]`).
 
-In v2, `params.Messages[0]` no longer carries the prefix — it's only on `params.Prefix`. Plugins reading the message string directly should be aware that the prefix won't be there.
+`params.Messages[0]` does NOT carry the prefix; `params.Prefix` is the only signal. Plugins reading the message string can ignore the prefix, or read it from `params.Prefix` directly when needed.
 
 Use cases:
 
