@@ -53,6 +53,52 @@ func TestJoinMessages(t *testing.T) {
 	}
 }
 
+func TestJoinPrefixAndMessages(t *testing.T) {
+	t.Run("empty prefix returns input slice unchanged (identity)", func(t *testing.T) {
+		in := []any{"hello", "world"}
+		got := transport.JoinPrefixAndMessages("", in)
+		// Identity: same backing array, no allocation.
+		if len(got) != len(in) || &got[0] != &in[0] {
+			t.Errorf("expected identity passthrough; got fresh slice")
+		}
+	})
+	t.Run("nil messages returns input nil", func(t *testing.T) {
+		got := transport.JoinPrefixAndMessages("[p]", nil)
+		if got != nil {
+			t.Errorf("expected nil, got %v", got)
+		}
+	})
+	t.Run("empty messages slice returns input identity", func(t *testing.T) {
+		in := []any{}
+		got := transport.JoinPrefixAndMessages("[p]", in)
+		if len(got) != 0 {
+			t.Errorf("expected empty, got %v", got)
+		}
+	})
+	t.Run("non-string messages[0] returns input slice unchanged", func(t *testing.T) {
+		in := []any{42, "rest"}
+		got := transport.JoinPrefixAndMessages("[p]", in)
+		if len(got) != len(in) || got[0] != 42 || got[1] != "rest" {
+			t.Errorf("non-string first arg should pass through: %v", got)
+		}
+	})
+	t.Run("normal case prepends prefix and returns fresh slice", func(t *testing.T) {
+		in := []any{"hello", "world"}
+		got := transport.JoinPrefixAndMessages("[p]", in)
+		if got[0] != "[p] hello" {
+			t.Errorf("got[0] = %v, want %q", got[0], "[p] hello")
+		}
+		if got[1] != "world" {
+			t.Errorf("got[1] = %v, want %q", got[1], "world")
+		}
+		// Mutating the result must not affect the input.
+		got[0] = "mutated"
+		if in[0] != "hello" {
+			t.Errorf("input slice mutated through aliasing: in[0] = %v", in[0])
+		}
+	})
+}
+
 type metaUser struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`

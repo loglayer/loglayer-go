@@ -69,7 +69,7 @@ The new `transport.JoinPrefixAndMessages` helper has fast-path early returns whe
 
 ## Plugin authors
 
-Plugin hooks (`OnBeforeDataOut`, `OnBeforeMessageOut`, `TransformLogLevel`, `ShouldSend`) gained a `Prefix string` field on their respective params structs (was added additively in v1.7.0). The field is read-only from the plugin's perspective. With v2, `params.Messages[0]` no longer carries the prefix — plugins that read messages directly should be aware that the prefix is now ONLY on `params.Prefix`.
+Plugin hooks (`OnBeforeDataOut`, `OnBeforeMessageOut`, `TransformLogLevel`, `ShouldSend`) gained a `Prefix string` field on their respective params structs (was added additively in v1.7.0). The field is read-only from the plugin's perspective. With v2, `params.Messages[0]` no longer carries the prefix; plugins that read messages directly should be aware that the prefix is now ONLY on `params.Prefix`.
 
 ## See also
 

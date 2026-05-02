@@ -9,6 +9,16 @@ description: "Upgrade guide for loglayer-go v2: import paths bump to /v2, the pr
 
 This page is the upgrade checklist.
 
+## Do I have to migrate?
+
+Not immediately. v1.x continues to work; the v1 module path (`go.loglayer.dev`) keeps resolving to its last v1 tag and the auto-prepend behavior stays intact there. Future feature work and bug fixes ship at v2 (`go.loglayer.dev/v2`), so the migration is the path forward but it's not on a deadline.
+
+You can migrate one module at a time: a project that uses several `loglayer-go` sub-modules can have v1 imports for some and v2 for others (Go treats `go.loglayer.dev` and `go.loglayer.dev/v2` as separate modules). The catch is that fields shared between modules (e.g. `loglayer.Config` from main) won't bridge between v1 and v2 — pick one main module per project.
+
+## Why this change
+
+`v1.x` folded the prefix into `Messages[0]` from the core so transports that didn't know about prefixes got the right behavior for free. The downside: transports that DID want to render the prefix differently (separate color, separate JSON field, structured forwarding to underlying loggers) couldn't, because by the time they saw the message it was already mangled. Pulling the prefix into a first-class field unblocks every smarter rendering, at the cost of a one-time import-path migration.
+
 ## Step 1: bump every import path to `/v2`
 
 The main module and every sub-module are now versioned at `v2`. Update your `go.mod` requires and your source-file imports.
@@ -43,7 +53,7 @@ For users of the built-in transports who don't write custom transports, nothing 
 The exceptions to "nothing else changes":
 
 - The **cli transport** opts into smart prefix rendering: the user prefix renders in dim grey while the level prefix and message body keep the level color. If you were using cli with `WithPrefix`, the rendered output is now visually layered. See the [cli transport doc](/transports/cli) for an example.
-- The **blank transport** intentionally passes raw v2 params through to your `ShipToLogger` function — so the prefix is on `params.Prefix`, not in `Messages[0]`. If you were extracting the prefix from `Messages[0]`, switch to reading `params.Prefix`.
+- The **blank transport** intentionally passes raw v2 params through to your `ShipToLogger` function. The prefix is on `params.Prefix`, not in `Messages[0]`; if you were extracting the prefix from `Messages[0]`, switch to reading `params.Prefix`.
 
 ## Step 3: custom transports
 
@@ -77,13 +87,9 @@ Read `params.Prefix` directly and render it however suits your transport:
 
 ## Step 4: custom plugins
 
-The dispatch-time plugin hook param structs (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`) gained a `Prefix string` field in v1.7.0 — that part is unchanged in v2. The only difference: in v1, `params.Messages[0]` carried the prefix folded in; in v2 it doesn't. Plugins that read the message string directly should be aware.
+The dispatch-time plugin hook param structs (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`) gained a `Prefix string` field in v1.7.0; that part is unchanged in v2. The only difference: in v1, `params.Messages[0]` carried the prefix folded in; in v2 it doesn't. Plugins that read the message string directly should be aware.
 
 The prefix is read-only from the plugin's perspective; hooks that return modified data / messages / level / send-decision can act on the prefix value but don't propagate a modified prefix back to downstream hooks.
-
-## Why
-
-`v0.x.x` and `v1.x.x` of loglayer-go folded the prefix into `Messages[0]` so transports that didn't know about the prefix concept got the right behavior for free. The downside: transports that DID want to render the prefix differently (different color, separate field, structured forwarding) couldn't, because by the time they saw the message it was already mangled. Pulling the prefix into a first-class field unblocks that, at the cost of a one-time import-path migration.
 
 ## See also
 

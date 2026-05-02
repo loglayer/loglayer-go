@@ -201,7 +201,7 @@ func (t *Transport) SendToLogger(p loglayer.TransportParams) {
 }
 ```
 
-::: tip Pre-v1.7.0 readers
+::: tip Pre-v2 readers
 Pre-v2 versions of loglayer auto-prepended the prefix into `Messages[0]` from the core. Transports that haven't migrated will see `Messages[0]` arrive WITHOUT the prefix in v2; if you want the v1 user-visible output, you must call the helper as shown above.
 :::
 

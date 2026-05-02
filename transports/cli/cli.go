@@ -253,7 +253,12 @@ func (t *Transport) format(params loglayer.TransportParams) string {
 
 	userPrefix := ""
 	if params.Prefix != "" {
-		userPrefix = params.Prefix + " "
+		// Sanitize the prefix in-line so a Config.Prefix /
+		// WithPrefix value loaded from env or config can't
+		// smuggle ANSI / CRLF through cli's smart-rendering
+		// path. Mirrors the sanitize call applied to messages,
+		// logfmt values, table cells, and LevelPrefix.
+		userPrefix = sanitize.Message(params.Prefix) + " "
 	}
 
 	// Append optional logfmt or capture a table.

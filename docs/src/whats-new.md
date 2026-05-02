@@ -15,7 +15,7 @@ description: Latest features and improvements in LogLayer for Go.
 
 `loglayer`:
 
-`Prefix` is now exposed as a separate field on `TransportParams` and on every dispatch-time plugin hook param struct (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`). Transports and plugins can render or react to the prefix independently from the message string. The legacy "prepend prefix into `Messages[0]`" behavior is preserved unchanged for backwards compatibility; a future major version will remove the auto-prepend in favor of the field.
+`Prefix` is now exposed as a separate field on `TransportParams` and on every dispatch-time plugin hook param struct (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`). Transports and plugins can render or react to the prefix independently from the message string. The legacy "prepend prefix into `Messages[0]`" behavior is preserved unchanged for backwards compatibility (and removed in v2.0.0).
 
 `transports/cli`:
 
