@@ -3,17 +3,17 @@ module go.loglayer.dev/plugins/datadogtrace/livetest/v2
 go 1.25.0
 
 replace (
-	go.loglayer.dev/v2 => ../../..
 	go.loglayer.dev/plugins/datadogtrace/v2 => ..
 	go.loglayer.dev/plugins/plugintest/v2 => ../../plugintest
 	go.loglayer.dev/transports/testing/v2 => ../../../transports/testing
+	go.loglayer.dev/v2 => ../../..
 )
 
 require (
 	github.com/DataDog/dd-trace-go/v2 v2.7.3
-	go.loglayer.dev/v2 v2.0.0-00010101000000-000000000000
 	go.loglayer.dev/plugins/datadogtrace/v2 v2.0.0-00010101000000-000000000000
 	go.loglayer.dev/transports/testing/v2 v2.0.0-00010101000000-000000000000
+	go.loglayer.dev/v2 v2.0.0-00010101000000-000000000000
 )
 
 require (

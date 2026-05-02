@@ -7,8 +7,8 @@ replace go.loglayer.dev/v2 => ../..
 replace go.loglayer.dev/transports/structured/v2 => ../structured
 
 require (
-	go.loglayer.dev/v2 v2.0.0-00010101000000-000000000000
 	go.loglayer.dev/transports/structured/v2 v2.0.0-00010101000000-000000000000
+	go.loglayer.dev/v2 v2.0.0-00010101000000-000000000000
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
