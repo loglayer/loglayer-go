@@ -1,53 +1,53 @@
 # LogLayer for Go: Comprehensive LLM Reference
 
-> Transport-agnostic structured logging for Go. A fluent API on top of zerolog, zap, logrus, phuslu/log, charmbracelet/log, log/slog, OpenTelemetry, or any custom transport. Module path: `go.loglayer.dev`. GitHub: `github.com/loglayer/loglayer-go`.
+> Transport-agnostic structured logging for Go. A fluent API on top of zerolog, zap, logrus, phuslu/log, charmbracelet/log, log/slog, OpenTelemetry, or any custom transport. Module path: `go.loglayer.dev/v2`. GitHub: `github.com/loglayer/loglayer-go`.
 
 This is the comprehensive reference. For the concise index see [llms.txt](https://go.loglayer.dev/llms.txt).
 
 ## Installation
 
 ```sh
-go get go.loglayer.dev
+go get go.loglayer.dev/v2
 ```
 
 LogLayer is multi-module: most transports, plugins, and integrations ship as their own Go modules. Install only what you import.
 
 ```sh
 # Renderer transports
-go get go.loglayer.dev/transports/structured
-go get go.loglayer.dev/transports/console
-go get go.loglayer.dev/transports/pretty
-go get go.loglayer.dev/transports/testing
-go get go.loglayer.dev/transports/blank
+go get go.loglayer.dev/transports/structured/v2
+go get go.loglayer.dev/transports/console/v2
+go get go.loglayer.dev/transports/pretty/v2
+go get go.loglayer.dev/transports/testing/v2
+go get go.loglayer.dev/transports/blank/v2
 
 # Wrappers around third-party loggers
-go get go.loglayer.dev/transports/zerolog
-go get go.loglayer.dev/transports/zap
-go get go.loglayer.dev/transports/slog
-go get go.loglayer.dev/transports/phuslu
-go get go.loglayer.dev/transports/logrus
-go get go.loglayer.dev/transports/charmlog
+go get go.loglayer.dev/transports/zerolog/v2
+go get go.loglayer.dev/transports/zap/v2
+go get go.loglayer.dev/transports/slog/v2
+go get go.loglayer.dev/transports/phuslu/v2
+go get go.loglayer.dev/transports/logrus/v2
+go get go.loglayer.dev/transports/charmlog/v2
 
 # Cloud (managed log services)
-go get go.loglayer.dev/transports/datadog
-go get go.loglayer.dev/transports/gcplogging
-go get go.loglayer.dev/transports/sentry
+go get go.loglayer.dev/transports/datadog/v2
+go get go.loglayer.dev/transports/gcplogging/v2
+go get go.loglayer.dev/transports/sentry/v2
 
 # Other transports
-go get go.loglayer.dev/transports/http
-go get go.loglayer.dev/transports/lumberjack
-go get go.loglayer.dev/transports/otellog
+go get go.loglayer.dev/transports/http/v2
+go get go.loglayer.dev/transports/lumberjack/v2
+go get go.loglayer.dev/transports/otellog/v2
 
 # Plugins
-go get go.loglayer.dev/plugins/redact
-go get go.loglayer.dev/plugins/sampling
-go get go.loglayer.dev/plugins/fmtlog
-go get go.loglayer.dev/plugins/datadogtrace
-go get go.loglayer.dev/plugins/oteltrace
+go get go.loglayer.dev/plugins/redact/v2
+go get go.loglayer.dev/plugins/sampling/v2
+go get go.loglayer.dev/plugins/fmtlog/v2
+go get go.loglayer.dev/plugins/datadogtrace/v2
+go get go.loglayer.dev/plugins/oteltrace/v2
 
 # Integrations
-go get go.loglayer.dev/integrations/loghttp
-go get go.loglayer.dev/integrations/sloghandler
+go get go.loglayer.dev/integrations/loghttp/v2
+go get go.loglayer.dev/integrations/sloghandler/v2
 ```
 
 The full module list is in [`monorel.toml`](https://github.com/loglayer/loglayer-go/blob/main/monorel.toml).
@@ -58,8 +58,8 @@ The full module list is in [`monorel.toml`](https://github.com/loglayer/loglayer
 package main
 
 import (
-    "go.loglayer.dev"
-    "go.loglayer.dev/transports/structured"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/transports/structured/v2"
 )
 
 func main() {
@@ -579,7 +579,7 @@ type BaseConfig struct {
 Pattern across all transports:
 
 ```go
-import "go.loglayer.dev/transport"
+import "go.loglayer.dev/v2/transport"
 
 structured.New(structured.Config{
     BaseConfig: transport.BaseConfig{ID: "main", Level: loglayer.LogLevelInfo},
@@ -594,7 +594,7 @@ structured.New(structured.Config{
 Plain text, logfmt-style key/value pairs after the message. Writes to stdout (info/debug) or stderr (warn+) by default.
 
 ```go
-import "go.loglayer.dev/transports/console"
+import "go.loglayer.dev/transports/console/v2"
 
 console.New(console.Config{
     Writer: os.Stdout,             // single writer for all levels
@@ -610,7 +610,7 @@ console.New(console.Config{
 One JSON object per entry. Recommended for production.
 
 ```go
-import "go.loglayer.dev/transports/structured"
+import "go.loglayer.dev/transports/structured/v2"
 
 structured.New(structured.Config{
     Writer: os.Stdout,
@@ -626,7 +626,7 @@ structured.New(structured.Config{
 Colorized terminal output. Theme-aware (Moonlight, Sunlight, Neon, Nature, Pastel) with three view modes (inline, message-only, expanded).
 
 ```go
-import "go.loglayer.dev/transports/pretty"
+import "go.loglayer.dev/transports/pretty/v2"
 
 pretty.New(pretty.Config{
     Writer:   os.Stdout,
@@ -641,7 +641,7 @@ pretty.New(pretty.Config{
 In-memory capture for assertion tests.
 
 ```go
-import lltest "go.loglayer.dev/transports/testing"
+import lltest "go.loglayer.dev/transports/testing/v2"
 
 lib := &lltest.TestLoggingLibrary{}
 log := loglayer.New(loglayer.Config{
@@ -659,7 +659,7 @@ popped := lib.PopLine()
 Delegates dispatch to a user-supplied function. For prototyping, metrics counters, message queues.
 
 ```go
-import "go.loglayer.dev/transports/blank"
+import "go.loglayer.dev/transports/blank/v2"
 
 blank.New(blank.Config{
     BaseConfig: transport.BaseConfig{ID: "metrics"},
@@ -680,7 +680,7 @@ Managed log services. Async + batched; site-aware where applicable.
 Datadog Logs HTTP intake. Site-aware URL, `DD-API-KEY` header, level→status mapping. Built on the HTTP transport.
 
 ```go
-import "go.loglayer.dev/transports/datadog"
+import "go.loglayer.dev/transports/datadog/v2"
 
 tr := datadog.New(datadog.Config{
     APIKey:           os.Getenv("DD_API_KEY"),  // required
@@ -703,7 +703,7 @@ Generic shippers and on-disk sinks.
 Generic batched HTTP POST to any endpoint. Pluggable Encoder.
 
 ```go
-import httptr "go.loglayer.dev/transports/http"
+import httptr "go.loglayer.dev/transports/http/v2"
 
 tr := httptr.New(httptr.Config{
     URL:           "https://logs.example.com/ingest",
@@ -724,7 +724,7 @@ defer tr.Close()  // flush pending entries
 One JSON object per log entry written to a rotating file. Render path matches `transports/structured`. Rotation delegated to `lumberjack.v2`. The package name `lumberjack` shadows the upstream `gopkg.in/natefinch/lumberjack.v2`; alias one of them when both are imported. The shorter `transports/file` import path is reserved for a future rolled-our-own implementation.
 
 ```go
-import "go.loglayer.dev/transports/lumberjack"
+import "go.loglayer.dev/transports/lumberjack/v2"
 
 tr := lumberjack.New(lumberjack.Config{
     Filename:   "/var/log/myapp/app.log",  // required
@@ -752,7 +752,7 @@ Wrap an existing third-party logger so loglayer's API sits on top of your establ
 ```go
 import (
     zlog "github.com/rs/zerolog"
-    llzero "go.loglayer.dev/transports/zerolog"
+    llzero "go.loglayer.dev/transports/zerolog/v2"
 )
 
 z := zlog.New(os.Stderr).With().Timestamp().Logger()
@@ -766,7 +766,7 @@ log := loglayer.New(loglayer.Config{
 ```go
 import (
     "go.uber.org/zap"
-    llzap "go.loglayer.dev/transports/zap"
+    llzap "go.loglayer.dev/transports/zap/v2"
 )
 
 z, _ := zap.NewProduction()
@@ -782,7 +782,7 @@ Fatal-level entries are written through a custom hook that prevents zap's defaul
 ```go
 import (
     "log/slog"
-    llslog "go.loglayer.dev/transports/slog"
+    llslog "go.loglayer.dev/transports/slog/v2"
 )
 
 handler := slog.NewJSONHandler(os.Stderr, nil)
@@ -803,7 +803,7 @@ Same wrapping pattern; see [transports overview](https://go.loglayer.dev/transpo
 Emits each entry as an OTel `log.Record` on a `go.opentelemetry.io/otel/log.Logger`.
 
 ```go
-import "go.loglayer.dev/transports/otellog"
+import "go.loglayer.dev/transports/otellog/v2"
 
 tr := otellog.New(otellog.Config{
     Name:           "checkout-api",            // instrumentation scope name
@@ -824,7 +824,7 @@ import (
 
     "cloud.google.com/go/logging"
 
-    "go.loglayer.dev/transports/gcplogging"
+    "go.loglayer.dev/transports/gcplogging/v2"
 )
 
 ctx := context.Background()
@@ -850,7 +850,7 @@ Forwards each entry to a caller-supplied `sentry.Logger` (Sentry's structured-lo
 import (
     "github.com/getsentry/sentry-go"
 
-    sentrytransport "go.loglayer.dev/transports/sentry"
+    sentrytransport "go.loglayer.dev/transports/sentry/v2"
 )
 
 sentry.Init(sentry.ClientOptions{Dsn: "...", EnableLogs: true})
@@ -934,7 +934,7 @@ log.PluginCount()
 ### Redact Plugin
 
 ```go
-import "go.loglayer.dev/plugins/redact"
+import "go.loglayer.dev/plugins/redact/v2"
 
 log.AddPlugin(redact.New(redact.Config{
     Keys:     []string{"password", "apiKey", "ssn"},
@@ -948,7 +948,7 @@ Walks structs, maps, slices, and pointers via reflection at any depth; preserves
 ### Sampling Plugin
 
 ```go
-import "go.loglayer.dev/plugins/sampling"
+import "go.loglayer.dev/plugins/sampling/v2"
 
 // Independent Bernoulli draw per emission
 log.AddPlugin(sampling.FixedRate(0.01))  // 1% kept
@@ -970,7 +970,7 @@ log.AddPlugin(sampling.Burst(100, time.Second))
 Opt the logger into `fmt.Sprintf` semantics for multi-arg messages.
 
 ```go
-import "go.loglayer.dev/plugins/fmtlog"
+import "go.loglayer.dev/plugins/fmtlog/v2"
 
 log.AddPlugin(fmtlog.New())
 log.Info("user %d logged in from %s", 42, "1.2.3.4")
@@ -984,7 +984,7 @@ Tracer-agnostic — supply a small `Extract` function for your tracer (dd-trace-
 ```go
 import (
     ddtracer "github.com/DataDog/dd-trace-go/v2/ddtrace/tracer"
-    "go.loglayer.dev/plugins/datadogtrace"
+    "go.loglayer.dev/plugins/datadogtrace/v2"
 )
 
 log.AddPlugin(datadogtrace.New(datadogtrace.Config{
@@ -1011,7 +1011,7 @@ log.WithContext(r.Context()).Info("served")
 Inject `trace_id`, `span_id`, optional `trace_flags`, W3C `trace_state`, and W3C baggage members.
 
 ```go
-import "go.loglayer.dev/plugins/oteltrace"
+import "go.loglayer.dev/plugins/oteltrace/v2"
 
 log.AddPlugin(oteltrace.New(oteltrace.Config{
     TraceIDKey:       "trace_id",       // default
@@ -1029,7 +1029,7 @@ Baggage rides independently of the span — contexts with baggage but no span st
 ### loghttp (HTTP middleware)
 
 ```go
-import "go.loglayer.dev/integrations/loghttp"
+import "go.loglayer.dev/integrations/loghttp/v2"
 
 mux := http.NewServeMux()
 handler := loghttp.Middleware(log, loghttp.Config{})(mux)
@@ -1049,7 +1049,7 @@ Auto-emits a "request completed" log on response with status, bytes written, dur
 ```go
 import (
     "log/slog"
-    "go.loglayer.dev/integrations/sloghandler"
+    "go.loglayer.dev/integrations/sloghandler/v2"
 )
 
 slog.SetDefault(slog.New(sloghandler.New(log)))
@@ -1072,7 +1072,7 @@ log.Info("invisible")
 ### Capture entries with lltest
 
 ```go
-import lltest "go.loglayer.dev/transports/testing"
+import lltest "go.loglayer.dev/transports/testing/v2"
 
 lib := &lltest.TestLoggingLibrary{}
 log := loglayer.New(loglayer.Config{Transport: lltest.New(lltest.Config{Library: lib})})
@@ -1087,7 +1087,7 @@ lines := lib.Lines()  // []lltest.LogLine
 ### Plugin testing helpers
 
 ```go
-import "go.loglayer.dev/plugins/plugintest"
+import "go.loglayer.dev/plugins/plugintest/v2"
 
 // Wires plugin into a logger backed by lltest, returns the lib for assertions
 log, lib := plugintest.Install(t, redact.New(redact.Config{Keys: []string{"pw"}}))
@@ -1108,7 +1108,7 @@ require.Equal(t, "[REDACTED]", md["pw"])
 
 ## Multi-Module Versioning
 
-`go.loglayer.dev` is the main module; every transport, plugin, and integration ships as its own Go module. Tags use the prefix form (`transports/<name>/v<X.Y.Z>`, `plugins/<name>/v<X.Y.Z>`). A breaking change in any one sub-module bumps only that sub-module's major version — `go.loglayer.dev`'s import path stays stable.
+`go.loglayer.dev/v2` is the main module; every transport, plugin, and integration ships as its own Go module. Tags use the prefix form (`transports/<name>/v<X.Y.Z>`, `plugins/<name>/v<X.Y.Z>`). A breaking change in any one sub-module bumps only that sub-module's major version — `go.loglayer.dev/v2`'s import path stays stable.
 
 Full module list: [`monorel.toml`](https://github.com/loglayer/loglayer-go/blob/main/monorel.toml).
 

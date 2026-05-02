@@ -10,15 +10,15 @@ description: "One JSON object per log entry written to a rotating file. Backed b
 The `lumberjack` transport writes one JSON object per log entry to a rotating file on disk. Rotation is handled by [lumberjack.v2](https://github.com/natefinch/lumberjack): size-triggered rollover, configurable backup retention, age-based cleanup, and optional gzip compression. The on-disk format matches [`transports/structured`](/transports/structured) exactly.
 
 ```sh
-go get go.loglayer.dev/transports/lumberjack
+go get go.loglayer.dev/transports/lumberjack/v2
 ```
 
 ## Basic Usage
 
 ```go
 import (
-    "go.loglayer.dev"
-    "go.loglayer.dev/transports/lumberjack"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/transports/lumberjack/v2"
 )
 
 log := loglayer.New(loglayer.Config{
@@ -162,8 +162,8 @@ If you keep a reference to the transport, get it directly. The upstream library 
 import (
     lj "gopkg.in/natefinch/lumberjack.v2"
 
-    "go.loglayer.dev"
-    "go.loglayer.dev/transports/lumberjack"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/transports/lumberjack/v2"
 )
 
 tr := lumberjack.New(lumberjack.Config{
@@ -180,9 +180,9 @@ If you only have the `*loglayer.LogLayer` (e.g. inside a handler that received t
 import (
     lj "gopkg.in/natefinch/lumberjack.v2"
 
-    "go.loglayer.dev"
-    "go.loglayer.dev/transport"
-    "go.loglayer.dev/transports/lumberjack"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v2/transport"
+    "go.loglayer.dev/transports/lumberjack/v2"
 )
 
 log := loglayer.New(loglayer.Config{
@@ -207,9 +207,9 @@ Render colorized output to the terminal during interactive runs (via the [Pretty
 
 ```go
 import (
-    "go.loglayer.dev"
-    "go.loglayer.dev/transports/lumberjack"
-    "go.loglayer.dev/transports/pretty"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/transports/lumberjack/v2"
+    "go.loglayer.dev/transports/pretty/v2"
 )
 
 log := loglayer.New(loglayer.Config{
@@ -235,9 +235,9 @@ A common ops pattern: ship everything to `info.log` and ship errors-only to a sm
 
 ```go
 import (
-    "go.loglayer.dev"
-    "go.loglayer.dev/transport"
-    "go.loglayer.dev/transports/lumberjack"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v2/transport"
+    "go.loglayer.dev/transports/lumberjack/v2"
 )
 
 infoLog := lumberjack.New(lumberjack.Config{
@@ -268,7 +268,7 @@ lumberjack rotates on size, not on the clock. For a calendar-aligned roll-over (
 ```go
 import (
     "time"
-    "go.loglayer.dev/transports/lumberjack"
+    "go.loglayer.dev/transports/lumberjack/v2"
 )
 
 tr := lumberjack.New(lumberjack.Config{

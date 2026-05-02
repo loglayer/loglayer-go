@@ -12,7 +12,7 @@ description: One-line HTTP middleware that derives a per-request logger and stuf
 Mirrors the role that `hlog.NewHandler` plays for zerolog. Works with any `net/http`-compatible router: stdlib, chi, gorilla/mux, gin, echo, etc.
 
 ```sh
-go get go.loglayer.dev/integrations/loghttp
+go get go.loglayer.dev/integrations/loghttp/v2
 ```
 
 ## Basic Usage
@@ -21,9 +21,9 @@ go get go.loglayer.dev/integrations/loghttp
 import (
     "net/http"
 
-    "go.loglayer.dev"
-    "go.loglayer.dev/integrations/loghttp"
-    "go.loglayer.dev/transports/structured"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/integrations/loghttp/v2"
+    "go.loglayer.dev/transports/structured/v2"
 )
 
 var log = loglayer.New(loglayer.Config{

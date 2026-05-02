@@ -10,7 +10,7 @@ description: Wrap a *slog.Logger with LogLayer.
 Wraps a stdlib `*log/slog.Logger`. Map metadata flattens to `slog.Attr`s; struct metadata lands under a configurable key. Per-call `context.Context` attached via `WithContext` is passed through to `slog.Logger.LogAttrs` so handlers downstream (OpenTelemetry, structured shippers) can extract trace context.
 
 ```sh
-go get go.loglayer.dev/transports/slog
+go get go.loglayer.dev/transports/slog/v2
 ```
 
 ## Basic Usage
@@ -20,8 +20,8 @@ import (
     "log/slog"
     "os"
 
-    "go.loglayer.dev"
-    llslog "go.loglayer.dev/transports/slog"
+    "go.loglayer.dev/v2"
+    llslog "go.loglayer.dev/transports/slog/v2"
 )
 
 handler := slog.NewJSONHandler(os.Stderr, nil)

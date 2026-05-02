@@ -5,7 +5,7 @@ description: How to write a LogLayer plugin and which hook to reach for.
 
 # Creating Plugins
 
-A plugin is anything that satisfies the [`loglayer.Plugin`](https://pkg.go.dev/go.loglayer.dev#Plugin) interface, plus zero or more hook interfaces for the lifecycle points you want to participate in.
+A plugin is anything that satisfies the [`loglayer.Plugin`](https://pkg.go.dev/go.loglayer.dev/v2#Plugin) interface, plus zero or more hook interfaces for the lifecycle points you want to participate in.
 
 ```go
 type Plugin interface {
@@ -22,7 +22,7 @@ For the registration API see [Plugin Configuration](/plugins/configuration) and 
 **For single-hook inline plugins** use one of the adapter constructors:
 
 ```go
-import "go.loglayer.dev"
+import "go.loglayer.dev/v2"
 
 p := loglayer.NewMessageHook("prefix-msg", func(p loglayer.BeforeMessageOutParams) []any {
     if len(p.Messages) == 0 {
@@ -43,7 +43,7 @@ The full set: `NewFieldsHook`, `NewMetadataHook`, `NewDataHook`, `NewMessageHook
 ```go
 package mything
 
-import "go.loglayer.dev"
+import "go.loglayer.dev/v2"
 
 type Plugin struct {
     id  string
@@ -388,10 +388,10 @@ Simple, predictable, no reflection. The downside: a struct with a `Password` fie
 
 ### Recipe 2: walk every shape (preserve type)
 
-If your plugin needs to walk structs and nested values (recursively, honoring `json` tags), use [`maputil.Cloner`](https://pkg.go.dev/go.loglayer.dev/utils/maputil#Cloner). It produces a deep clone of any value with replacement predicates applied at any depth, preserving the runtime type.
+If your plugin needs to walk structs and nested values (recursively, honoring `json` tags), use [`maputil.Cloner`](https://pkg.go.dev/go.loglayer.dev/v2/utils/maputil#Cloner). It produces a deep clone of any value with replacement predicates applied at any depth, preserving the runtime type.
 
 ```go
-import "go.loglayer.dev/utils/maputil"
+import "go.loglayer.dev/v2/utils/maputil"
 
 cloner := &maputil.Cloner{
     MatchKey:   func(k string) bool { return k == "password" || k == "apiKey" },
@@ -410,10 +410,10 @@ The [`plugins/redact`](/plugins/redact) plugin is built on `Cloner`; [its source
 
 ### Recipe 3: normalize to a map first
 
-If the **shape** matters more than preserving the user's runtime type, use [`maputil.ToMap`](https://pkg.go.dev/go.loglayer.dev/utils/maputil#ToMap) to JSON-roundtrip the input, then walk the resulting map.
+If the **shape** matters more than preserving the user's runtime type, use [`maputil.ToMap`](https://pkg.go.dev/go.loglayer.dev/v2/utils/maputil#ToMap) to JSON-roundtrip the input, then walk the resulting map.
 
 ```go
-import "go.loglayer.dev/utils/maputil"
+import "go.loglayer.dev/v2/utils/maputil"
 
 loglayer.NewMetadataHook("normalize", func(metadata any) any {
     m := maputil.ToMap(metadata)
@@ -465,7 +465,7 @@ Every hook call is wrapped in a deferred recover. If your hook panics, the dispa
 | `LevelHook` | Level unchanged (`ok=false`) |
 | `SendGate` | Entry sent to the transport (fails open) |
 
-LogLayer writes a one-line description of the recovered panic to `os.Stderr` so the failure isn't silent. To observe the panic in your own code, implement [`ErrorReporter`](https://pkg.go.dev/go.loglayer.dev#ErrorReporter):
+LogLayer writes a one-line description of the recovered panic to `os.Stderr` so the failure isn't silent. To observe the panic in your own code, implement [`ErrorReporter`](https://pkg.go.dev/go.loglayer.dev/v2#ErrorReporter):
 
 ```go
 type ErrorReporter interface {

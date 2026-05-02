@@ -16,9 +16,9 @@ import (
     "bytes"
     "testing"
 
-    "go.loglayer.dev"
-    "go.loglayer.dev/transport"
-    "go.loglayer.dev/transport/transporttest"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v2/transport"
+    "go.loglayer.dev/v2/transport/transporttest"
 )
 
 func TestMyTransport_Basic(t *testing.T) {
@@ -45,7 +45,7 @@ For wrapper transports (those that hand entries off to a third-party logger), as
 
 ## The wrapper contract suite
 
-`transport/transporttest` ships a [`RunContract`](https://pkg.go.dev/go.loglayer.dev/transport/transporttest#RunContract) helper that drives 14 sub-tests against any wrapper-shaped transport (renders to a buffer in JSON-per-line). The same suite verifies every built-in wrapper. Wire it in with a `Factory` closure that builds a fresh `(*loglayer.LogLayer, *bytes.Buffer)` honoring per-test config overrides, plus an `Expectations` struct describing your wrapper's rendering quirks (message key, level rendering, fatal handling):
+`transport/transporttest` ships a [`RunContract`](https://pkg.go.dev/go.loglayer.dev/v2/transport/transporttest#RunContract) helper that drives 14 sub-tests against any wrapper-shaped transport (renders to a buffer in JSON-per-line). The same suite verifies every built-in wrapper. Wire it in with a `Factory` closure that builds a fresh `(*loglayer.LogLayer, *bytes.Buffer)` honoring per-test config overrides, plus an `Expectations` struct describing your wrapper's rendering quirks (message key, level rendering, fatal handling):
 
 ```go
 func factory(opts transporttest.FactoryOpts) (*loglayer.LogLayer, *bytes.Buffer) {

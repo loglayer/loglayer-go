@@ -31,8 +31,8 @@ log := loglayer.New(loglayer.Config{
 ```go
 import (
     "os"
-    "go.loglayer.dev"
-    "go.loglayer.dev/transports/structured"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/transports/structured/v2"
 )
 
 f, err := os.OpenFile("/var/log/app.log",
@@ -56,8 +56,8 @@ The dedicated [lumberjack](/transports/lumberjack) transport already does this f
 ```go
 import (
     "gopkg.in/natefinch/lumberjack.v2"
-    "go.loglayer.dev"
-    "go.loglayer.dev/transports/pretty"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/transports/pretty/v2"
 )
 
 rotator := &lumberjack.Logger{
@@ -103,8 +103,8 @@ A `*bytes.Buffer` works but isn't safe for concurrent writes. For real test asse
 ```go
 import (
     "bytes"
-    "go.loglayer.dev"
-    "go.loglayer.dev/transports/structured"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/transports/structured/v2"
 )
 
 var buf bytes.Buffer
@@ -124,8 +124,8 @@ Anything that satisfies `io.Writer` works, including `net.Conn`. The example bel
 ```go
 import (
     "net"
-    "go.loglayer.dev"
-    "go.loglayer.dev/transports/structured"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/transports/structured/v2"
 )
 
 conn, err := net.Dial("tcp", "logsink.local:514")
@@ -201,8 +201,8 @@ Wrapper transports ([Zerolog](/transports/zerolog), [Zap](/transports/zap), [log
 ```go
 import (
     "github.com/rs/zerolog"
-    "go.loglayer.dev"
-    llzero "go.loglayer.dev/transports/zerolog"
+    "go.loglayer.dev/v2"
+    llzero "go.loglayer.dev/transports/zerolog/v2"
 )
 
 // zerolog: configure on the *zerolog.Logger you build

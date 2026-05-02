@@ -71,7 +71,7 @@ loglayer.New(loglayer.Config{
 Plugins to register at construction time. Equivalent to calling `log.AddPlugin` for each entry after `New`; either form is fine.
 
 ```go
-import "go.loglayer.dev/plugins/redact"
+import "go.loglayer.dev/plugins/redact/v2"
 
 log := loglayer.New(loglayer.Config{
     Transport: structured.New(structured.Config{}),

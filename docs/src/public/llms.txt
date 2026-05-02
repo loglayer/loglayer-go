@@ -1,19 +1,19 @@
 # LogLayer for Go
 
-> Transport-agnostic structured logging for Go. A fluent API on top of zerolog, zap, logrus, phuslu/log, charmbracelet/log, log/slog, OpenTelemetry, or any custom transport. Module path: `go.loglayer.dev`. GitHub: `github.com/loglayer/loglayer-go`.
+> Transport-agnostic structured logging for Go. A fluent API on top of zerolog, zap, logrus, phuslu/log, charmbracelet/log, log/slog, OpenTelemetry, or any custom transport. Module path: `go.loglayer.dev/v2`. GitHub: `github.com/loglayer/loglayer-go`.
 
 ## Installation
 
 ```sh
-go get go.loglayer.dev
+go get go.loglayer.dev/v2
 ```
 
 Most transports and plugins ship as their own modules — install only what you import:
 
 ```sh
-go get go.loglayer.dev/transports/structured
-go get go.loglayer.dev/transports/zerolog
-go get go.loglayer.dev/plugins/redact
+go get go.loglayer.dev/transports/structured/v2
+go get go.loglayer.dev/transports/zerolog/v2
+go get go.loglayer.dev/plugins/redact/v2
 ```
 
 ## Quick Start
@@ -22,8 +22,8 @@ go get go.loglayer.dev/plugins/redact
 package main
 
 import (
-    "go.loglayer.dev"
-    "go.loglayer.dev/transports/structured"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/transports/structured/v2"
 )
 
 func main() {
@@ -338,7 +338,7 @@ The slog handler (`integrations/sloghandler`) forwards `slog.Record.PC` automati
 log := loglayer.NewMock()
 
 // Capture entries for assertion
-import lltest "go.loglayer.dev/transports/testing"
+import lltest "go.loglayer.dev/transports/testing/v2"
 
 lib := &lltest.TestLoggingLibrary{}
 log := loglayer.New(loglayer.Config{
@@ -401,7 +401,7 @@ lines := lib.Lines()  // []lltest.LogLine — assert on Level, Messages, Data, M
 - [Mocking](https://go.loglayer.dev/logging-api/mocking): `loglayer.NewMock()` and `transports/testing`
 - [Transport Overview](https://go.loglayer.dev/transports/): All transports
 - [Plugins Overview](https://go.loglayer.dev/plugins/): Plugin system and hooks
-- [For TypeScript Developers](https://go.loglayer.dev/for-typescript-developers): API mapping from `loglayer` (TS) to `go.loglayer.dev`
+- [For TypeScript Developers](https://go.loglayer.dev/for-typescript-developers): API mapping from `loglayer` (TS) to `go.loglayer.dev/v2`
 
 ## Optional
 
