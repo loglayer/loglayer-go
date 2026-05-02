@@ -8,6 +8,14 @@ versions independently of the framework core. Maintained
 automatically by [monorel](https://monorel.disaresta.com) from
 `.changeset/*.md` files.
 
+## [2.0.0] - 2026-05-02
+
+### Major Changes
+
+- **Breaking: import paths bump to `/v2`.** The loglayer core no longer folds the `WithPrefix` value into `Messages[0]`; the prefix flows through `TransportParams.Prefix` and each transport renders it. Built-in transports preserve their prior user-visible output via the new `transport.JoinPrefixAndMessages` helper. The `cli` transport opts into smart rendering (dim-grey user prefix separate from level color).
+
+  See [Migrating to v2](https://go.loglayer.dev/migrating-to-v2) for the upgrade checklist.
+
 ## [1.6.1](https://github.com/loglayer/loglayer-go/compare/transports/http/v1.3.0...transports/http/v1.6.1) (2026-04-30)
 
 
