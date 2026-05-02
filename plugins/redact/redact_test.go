@@ -5,9 +5,9 @@ import (
 	"regexp"
 	"testing"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/plugins/plugintest"
-	"go.loglayer.dev/plugins/redact"
+	"go.loglayer.dev/plugins/plugintest/v2"
+	"go.loglayer.dev/plugins/redact/v2"
+	"go.loglayer.dev/v2"
 )
 
 func TestRedact_MetadataMapKey(t *testing.T) {

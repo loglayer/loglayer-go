@@ -9,8 +9,8 @@
 // # Quickstart
 //
 //	import (
-//	    "go.loglayer.dev"
-//	    "go.loglayer.dev/transports/structured"
+//	    "go.loglayer.dev/v2"
+//	    "go.loglayer.dev/transports/structured/v2"
 //	)
 //
 //	log := loglayer.New(loglayer.Config{

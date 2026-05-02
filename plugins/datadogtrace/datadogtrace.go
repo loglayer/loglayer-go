@@ -18,9 +18,9 @@
 //	import (
 //	    "context"
 //	    ddtracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
-//	    "go.loglayer.dev"
-//	    "go.loglayer.dev/plugins/datadogtrace"
-//	    "go.loglayer.dev/transports/structured"
+//	    "go.loglayer.dev/v2"
+//	    "go.loglayer.dev/plugins/datadogtrace/v2"
+//	    "go.loglayer.dev/transports/structured/v2"
 //	)
 //
 //	ddtracer.Start(ddtracer.WithService("checkout-api"))
@@ -56,7 +56,7 @@ import (
 	"context"
 	"strconv"
 
-	"go.loglayer.dev"
+	"go.loglayer.dev/v2"
 )
 
 // Config holds plugin configuration.

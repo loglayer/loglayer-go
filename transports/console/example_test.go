@@ -3,8 +3,8 @@ package console_test
 import (
 	"os"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transports/console"
+	"go.loglayer.dev/transports/console/v2"
+	"go.loglayer.dev/v2"
 )
 
 // New builds a logfmt-style console transport. DateFn returns a fixed

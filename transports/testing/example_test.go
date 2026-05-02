@@ -3,8 +3,8 @@ package testing_test
 import (
 	"fmt"
 
-	"go.loglayer.dev"
-	lltesting "go.loglayer.dev/transports/testing"
+	lltesting "go.loglayer.dev/transports/testing/v2"
+	"go.loglayer.dev/v2"
 )
 
 // New builds an in-memory capture transport. Tests drive the logger,

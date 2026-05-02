@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"go.loglayer.dev"
+	"go.loglayer.dev/v2"
 )
 
 func TestWriterRouting(t *testing.T) {

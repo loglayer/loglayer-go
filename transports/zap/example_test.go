@@ -3,8 +3,8 @@ package zap_test
 import (
 	"io"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transports/zap"
+	"go.loglayer.dev/transports/zap/v2"
+	"go.loglayer.dev/v2"
 )
 
 // New wraps a *zap.Logger. When Logger is nil a default logger is

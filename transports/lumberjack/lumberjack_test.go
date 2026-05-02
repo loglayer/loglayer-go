@@ -10,10 +10,10 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	"go.loglayer.dev/transport/transporttest"
-	"go.loglayer.dev/transports/lumberjack"
+	"go.loglayer.dev/transports/lumberjack/v2"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v2/transport/transporttest"
 )
 
 // readFileBuffer reads path into a *bytes.Buffer so we can reuse the

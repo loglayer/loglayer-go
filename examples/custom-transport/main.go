@@ -20,8 +20,8 @@ import (
 	"strings"
 	"time"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 )
 
 // pipeTransport renders entries as `LEVEL | msg | k=v k=v ...`.

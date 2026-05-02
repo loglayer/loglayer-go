@@ -23,9 +23,9 @@ import (
 	"strings"
 	"time"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/utils/idgen"
-	"go.loglayer.dev/utils/sanitize"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/utils/idgen"
+	"go.loglayer.dev/v2/utils/sanitize"
 )
 
 // FieldNames customizes the keys emitted by the middleware. Empty values fall

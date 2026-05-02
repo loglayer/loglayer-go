@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/utils/maputil"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/utils/maputil"
 )
 
 // WriterOrStderr returns w if non-nil, otherwise os.Stderr. Used by wrapper

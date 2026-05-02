@@ -1,19 +1,19 @@
-module go.loglayer.dev/examples/datadog-shipping
+module go.loglayer.dev/examples/datadog-shipping/v2
 
 go 1.25.0
 
 replace (
-	go.loglayer.dev => ../..
-	go.loglayer.dev/transports/datadog => ../../transports/datadog
-	go.loglayer.dev/transports/http => ../../transports/http
-	go.loglayer.dev/transports/pretty => ../../transports/pretty
+	go.loglayer.dev/v2 => ../..
+	go.loglayer.dev/transports/datadog/v2 => ../../transports/datadog
+	go.loglayer.dev/transports/http/v2 => ../../transports/http
+	go.loglayer.dev/transports/pretty/v2 => ../../transports/pretty
 )
 
 require (
-	go.loglayer.dev v0.0.0-00010101000000-000000000000
-	go.loglayer.dev/transports/datadog v0.0.0-00010101000000-000000000000
-	go.loglayer.dev/transports/http v0.0.0-00010101000000-000000000000
-	go.loglayer.dev/transports/pretty v0.0.0-00010101000000-000000000000
+	go.loglayer.dev/v2 v2.0.0-00010101000000-000000000000
+	go.loglayer.dev/transports/datadog/v2 v2.0.0-00010101000000-000000000000
+	go.loglayer.dev/transports/http/v2 v2.0.0-00010101000000-000000000000
+	go.loglayer.dev/transports/pretty/v2 v2.0.0-00010101000000-000000000000
 )
 
 require (

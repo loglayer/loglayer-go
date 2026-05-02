@@ -25,9 +25,9 @@ import (
 	"log"
 	"os"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport/transporttest"
-	"go.loglayer.dev/transports/pretty"
+	"go.loglayer.dev/transports/pretty/v2"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport/transporttest"
 )
 
 func main() {

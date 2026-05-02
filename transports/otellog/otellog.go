@@ -15,8 +15,8 @@
 // Wiring with the global LoggerProvider (most common):
 //
 //	import (
-//	    "go.loglayer.dev"
-//	    "go.loglayer.dev/transports/otellog"
+//	    "go.loglayer.dev/v2"
+//	    "go.loglayer.dev/transports/otellog/v2"
 //	)
 //
 //	tr := otellog.New(otellog.Config{Name: "checkout-api"})
@@ -44,8 +44,8 @@ import (
 	"fmt"
 	"time"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 	otellog "go.opentelemetry.io/otel/log"
 	"go.opentelemetry.io/otel/log/global"
 )

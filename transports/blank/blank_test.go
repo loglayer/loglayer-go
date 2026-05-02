@@ -4,9 +4,9 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	"go.loglayer.dev/transports/blank"
+	"go.loglayer.dev/transports/blank/v2"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 )
 
 func TestBlank_CallsShipToLogger(t *testing.T) {

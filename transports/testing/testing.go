@@ -8,8 +8,8 @@ import (
 	"context"
 	"sync"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 )
 
 // LogLine is a single captured log entry. Fields are exposed directly so tests

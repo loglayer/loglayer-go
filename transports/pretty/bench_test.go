@@ -3,10 +3,10 @@ package pretty_test
 import (
 	"testing"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	"go.loglayer.dev/transport/benchtest"
-	"go.loglayer.dev/transports/pretty"
+	"go.loglayer.dev/transports/pretty/v2"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v2/transport/benchtest"
 )
 
 func newPrettyLogger() *loglayer.LogLayer {

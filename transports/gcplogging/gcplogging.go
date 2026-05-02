@@ -43,8 +43,8 @@ import (
 
 	"cloud.google.com/go/logging"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 )
 
 // Config holds configuration options for the GCP Cloud Logging transport.

@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	"go.loglayer.dev/transports/central"
-	httptr "go.loglayer.dev/transports/http"
+	"go.loglayer.dev/transports/central/v2"
+	httptr "go.loglayer.dev/transports/http/v2"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 )
 
 type capture struct {

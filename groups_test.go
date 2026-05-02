@@ -6,9 +6,9 @@ import (
 	"slices"
 	"testing"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/internal/lltest"
-	"go.loglayer.dev/transport"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/internal/lltest"
+	"go.loglayer.dev/v2/transport"
 )
 
 // twoTransports builds two named TestLoggingLibrary-backed transports for

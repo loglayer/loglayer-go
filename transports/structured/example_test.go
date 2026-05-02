@@ -1,8 +1,8 @@
 package structured_test
 
 import (
-	"go.loglayer.dev"
-	"go.loglayer.dev/transports/structured"
+	"go.loglayer.dev/transports/structured/v2"
+	"go.loglayer.dev/v2"
 )
 
 // New builds a structured-JSON transport. DateFn returns a fixed

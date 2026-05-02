@@ -5,8 +5,8 @@ package transport
 import (
 	"sync/atomic"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/utils/idgen"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/utils/idgen"
 )
 
 // BaseTransport provides common fields and level-filtering logic for transports.

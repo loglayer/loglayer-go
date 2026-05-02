@@ -3,7 +3,7 @@ package sanitize_test
 import (
 	"testing"
 
-	"go.loglayer.dev/utils/sanitize"
+	"go.loglayer.dev/v2/utils/sanitize"
 )
 
 // Message on a typical clean log string. The fast-path should short-circuit

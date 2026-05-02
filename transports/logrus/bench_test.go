@@ -5,10 +5,10 @@ import (
 
 	logrusbase "github.com/sirupsen/logrus"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	"go.loglayer.dev/transport/benchtest"
-	lllogrus "go.loglayer.dev/transports/logrus"
+	lllogrus "go.loglayer.dev/transports/logrus/v2"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v2/transport/benchtest"
 )
 
 func newDirect() *logrusbase.Logger {

@@ -1,8 +1,8 @@
 package lumberjack_test
 
 import (
-	"go.loglayer.dev"
-	"go.loglayer.dev/transports/lumberjack"
+	"go.loglayer.dev/transports/lumberjack/v2"
+	"go.loglayer.dev/v2"
 )
 
 // New writes one JSON object per entry to a rotating file. Filename is

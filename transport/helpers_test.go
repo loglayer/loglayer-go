@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 )
 
 func TestWriterOrStderr(t *testing.T) {

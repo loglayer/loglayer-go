@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	"go.loglayer.dev/transport/transporttest"
-	"go.loglayer.dev/transports/structured"
+	"go.loglayer.dev/transports/structured/v2"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v2/transport/transporttest"
 )
 
 func newLogger(cfg structured.Config) (*loglayer.LogLayer, *bytes.Buffer) {

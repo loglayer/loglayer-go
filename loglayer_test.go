@@ -11,10 +11,10 @@ package loglayer_test
 import (
 	"testing"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/internal/lltest"
-	"go.loglayer.dev/transport"
-	"go.loglayer.dev/transport/transporttest"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/internal/lltest"
+	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v2/transport/transporttest"
 )
 
 func setup(t *testing.T) (*loglayer.LogLayer, *lltest.TestLoggingLibrary) {

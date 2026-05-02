@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/plugins/plugintest"
+	"go.loglayer.dev/plugins/plugintest/v2"
+	"go.loglayer.dev/v2"
 )
 
 func TestInstall_PluginRunsAndCaptures(t *testing.T) {

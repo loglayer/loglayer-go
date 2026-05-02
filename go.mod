@@ -1,4 +1,4 @@
-module go.loglayer.dev
+module go.loglayer.dev/v2
 
 go 1.25.0
 

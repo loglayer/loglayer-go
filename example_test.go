@@ -22,8 +22,8 @@ import (
 	"sort"
 	"strings"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 )
 
 // fixedTime returns a deterministic timestamp for example output.
