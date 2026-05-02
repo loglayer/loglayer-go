@@ -68,7 +68,7 @@ That's the whole shape. From here it's a question of how you want to render the 
 ```go
 type TransportParams struct {
     LogLevel LogLevel
-    Messages []any   // already prefix-applied (see Prefix below)
+    Messages []any   // raw message slice; the prefix is exposed separately on Prefix below
     Data     Data    // assembled fields + error map; nil when both are absent. Use len(Data) > 0 to check.
     Metadata any     // raw value passed to WithMetadata, your transport decides serialization
     Err      error

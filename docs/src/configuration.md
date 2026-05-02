@@ -16,7 +16,7 @@ type Config struct {
     Transport             Transport       // single transport (mutually exclusive with Transports)
     Transports            []Transport     // multiple transports (mutually exclusive with Transport)
     Plugins               []Plugin        // plugins to register at construction time
-    Prefix                string          // prepended to first string message
+    Prefix                string          // surfaced to transports as TransportParams.Prefix
     Disabled              bool            // suppress all output (default: false)
     ErrorSerializer       ErrorSerializer // customize error rendering
     ErrorFieldName        string          // key for serialized error (default: "err")

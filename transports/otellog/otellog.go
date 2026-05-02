@@ -9,8 +9,8 @@
 // entry with the active span automatically).
 //
 // The package name is otellog (not otel) to avoid a name collision with
-// go.opentelemetry.io/otel. Import path remains
-// go.loglayer.dev/transports/otellog.
+// go.opentelemetry.io/otel. Import path is
+// go.loglayer.dev/transports/otellog/v2.
 //
 // Wiring with the global LoggerProvider (most common):
 //

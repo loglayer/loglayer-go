@@ -5,7 +5,7 @@ description: "Upgrade guide for loglayer-go v2: import paths bump to /v2, the pr
 
 # Migrating to v2
 
-`loglayer-go` v2 ships one breaking change: **the loglayer core no longer mutates `Messages[0]` to fold the `WithPrefix` value into the message text.** The prefix now flows through `TransportParams.Prefix` and each transport decides how to render it.
+`loglayer-go` v2 ships two breaking changes: **every import path bumps to `/v2`**, and **the loglayer core no longer mutates `Messages[0]` to fold the `WithPrefix` value into the message text.** The prefix now flows through `TransportParams.Prefix` and each transport decides how to render it.
 
 This page is the upgrade checklist.
 
@@ -19,16 +19,18 @@ You can migrate one module at a time: a project that uses several `loglayer-go` 
 
 `v1.x` folded the prefix into `Messages[0]` from the core so transports that didn't know about prefixes got the right behavior for free. The downside: transports that DID want to render the prefix differently (separate color, separate JSON field, structured forwarding to underlying loggers) couldn't, because by the time they saw the message it was already mangled. Pulling the prefix into a first-class field unblocks every smarter rendering, at the cost of a one-time import-path migration.
 
+The new contract also keeps the core out of the business of mutating caller-owned input: in v1, the prefix-prepend silently rewrote the user's `Messages` slice before any transport saw it; in v2, the core passes the slice through untouched and exposes the prefix on its own field.
+
 ## Step 1: bump every import path to `/v2`
 
 The main module and every sub-module are now versioned at `v2`. Update your `go.mod` requires and your source-file imports.
 
 ```sh
-go get go.loglayer.dev/v2 \
-       go.loglayer.dev/transports/cli/v2 \
-       go.loglayer.dev/transports/zerolog/v2 \
-       go.loglayer.dev/plugins/redact/v2
-       # ... whichever sub-modules you import
+# Run for each sub-module you import
+go get go.loglayer.dev/v2
+go get go.loglayer.dev/transports/cli/v2
+go get go.loglayer.dev/transports/zerolog/v2
+go get go.loglayer.dev/plugins/redact/v2
 ```
 
 In source files:
@@ -53,7 +55,8 @@ For users of the built-in transports who don't write custom transports, nothing 
 The exceptions to "nothing else changes":
 
 - The **cli transport** opts into smart prefix rendering: the user prefix renders in dim grey while the level prefix and message body keep the level color. If you were using cli with `WithPrefix`, the rendered output is now visually layered. See the [cli transport doc](/transports/cli) for an example.
-- The **blank transport** intentionally passes raw v2 params through to your `ShipToLogger` function. The prefix is on `params.Prefix`, not in `Messages[0]`; if you were extracting the prefix from `Messages[0]`, switch to reading `params.Prefix`.
+- The **blank transport** hands `params` straight to your `ShipToLogger` function. If your callback was reading the prefix out of `Messages[0]`, read `params.Prefix` instead.
+- If you assert on `testing.LogLine` in tests, the unmangled prefix is also available on `LogLine.Prefix` (new field in v2). Existing assertions on `Messages[0]` keep working because the testing transport calls `JoinPrefixAndMessages` internally.
 
 ## Step 3: custom transports
 
