@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-05-02
+
+### Major Changes
+
+- Promote to v1.0.0. The transports/cli API has been validated by the planned monorel migration and is ready to be SemVer-committed; v0.1.0 was an unintentional pre-1.0 release that the new `.claude/rules/release-versioning.md` rule guards against in the future.
+
 ## [0.1.0] - 2026-05-02
 
 ### Minor Changes
