@@ -116,10 +116,10 @@ TypeScript's `@loglayer/transport-pino`, `@loglayer/plugin-redaction`, etc. are 
 
 | TypeScript                       | Go                                            |
 |----------------------------------|-----------------------------------------------|
-| `loglayer`                       | `go.loglayer.dev` (core + stdlib renderers)   |
-| `@loglayer/transport-zerolog`    | `go.loglayer.dev/transports/zerolog`          |
-| `@loglayer/transport-datadog`    | `go.loglayer.dev/transports/datadog`          |
-| `@loglayer/integration-elysia`   | `go.loglayer.dev/integrations/loghttp` (etc.) |
+| `loglayer`                       | `go.loglayer.dev/v2` (core + stdlib renderers)   |
+| `@loglayer/transport-zerolog`    | `go.loglayer.dev/transports/zerolog/v2`          |
+| `@loglayer/transport-datadog`    | `go.loglayer.dev/transports/datadog/v2`          |
+| `@loglayer/integration-elysia`   | `go.loglayer.dev/integrations/loghttp/v2` (etc.) |
 
 `go get` each module you actually need; the dependency graph stays focused on whatever you imported.
 
@@ -149,7 +149,7 @@ The full set: `NewFieldsHook`, `NewMetadataHook`, `NewDataHook`, `NewMessageHook
 `plugins/redact` mirrors `@loglayer/plugin-redaction`. It supports key matching, regex value patterns, and json-tag-aware struct walking, all type-preserving:
 
 ```go
-import "go.loglayer.dev/plugins/redact"
+import "go.loglayer.dev/plugins/redact/v2"
 
 log.AddPlugin(redact.New(redact.Config{
     Keys:     []string{"password", "apiKey"},
@@ -157,7 +157,7 @@ log.AddPlugin(redact.New(redact.Config{
 }))
 ```
 
-See [Plugins](/plugins/) for the full lifecycle, hook ordering, and nil-return semantics. Third-party plugins can use [`utils/maputil`](https://pkg.go.dev/go.loglayer.dev/utils/maputil) for the same reflection-based deep-clone primitive that the redact plugin uses.
+See [Plugins](/plugins/) for the full lifecycle, hook ordering, and nil-return semantics. Third-party plugins can use [`utils/maputil`](https://pkg.go.dev/go.loglayer.dev/v2/utils/maputil) for the same reflection-based deep-clone primitive that the redact plugin uses.
 
 ## Groups
 
@@ -197,8 +197,8 @@ If any of these are blockers for your use case, open an issue at [github.com/log
 //   log.withMetadata({ duration: 42 }).withError(err).info('did the thing');
 
 import (
-    "go.loglayer.dev"
-    "go.loglayer.dev/transports/structured"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/transports/structured/v2"
 )
 
 log := loglayer.New(loglayer.Config{

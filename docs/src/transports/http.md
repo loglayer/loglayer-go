@@ -10,7 +10,7 @@ description: Generic batched HTTP POST transport with a pluggable encoder.
 The `http` transport ships log entries to an HTTP endpoint as JSON in async batches. Use it directly to talk to any log-ingestion API, or as the foundation for a service-specific wrapper (the [Datadog transport](/transports/datadog) is built on it).
 
 ```sh
-go get go.loglayer.dev/transports/http
+go get go.loglayer.dev/transports/http/v2
 ```
 
 The directory is `transports/http`; the package name is `httptransport` to avoid colliding with `net/http`.
@@ -19,8 +19,8 @@ The directory is `transports/http`; the package name is `httptransport` to avoid
 
 ```go
 import (
-    "go.loglayer.dev"
-    httptr "go.loglayer.dev/transports/http"
+    "go.loglayer.dev/v2"
+    httptr "go.loglayer.dev/transports/http/v2"
 )
 
 tr := httptr.New(httptr.Config{

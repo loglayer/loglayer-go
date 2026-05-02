@@ -5,15 +5,15 @@ description: Install LogLayer, pick a transport, and write your first structured
 
 # Getting Started
 
-LogLayer for Go targets **Go 1.25+** for the main module: `go.loglayer.dev`. Most transports are sub-packages of that module, so you only pull in dependencies for the transports you actually use. Individual transports and plugins call out any stricter requirement on their per-page docs.
+LogLayer for Go targets **Go 1.25+** for the main module: `go.loglayer.dev/v2`. Most transports are sub-packages of that module, so you only pull in dependencies for the transports you actually use. Individual transports and plugins call out any stricter requirement on their per-page docs.
 
 ## Installation
 
-LogLayer ships as a multi-module repo: the core lives at `go.loglayer.dev`, and every transport and plugin is its own independently-versioned sub-module. You install the core plus only the transports you actually use.
+LogLayer ships as a multi-module repo: the core lives at `go.loglayer.dev/v2`, and every transport and plugin is its own independently-versioned sub-module. You install the core plus only the transports you actually use.
 
 ```sh
-go get go.loglayer.dev
-go get go.loglayer.dev/transports/structured
+go get go.loglayer.dev/v2
+go get go.loglayer.dev/transports/structured/v2
 ```
 
 ## Basic Usage with the Structured Transport
@@ -26,8 +26,8 @@ package main
 import (
     "errors"
 
-    "go.loglayer.dev"
-    "go.loglayer.dev/transports/structured"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/transports/structured/v2"
 )
 
 func main() {
@@ -83,7 +83,7 @@ For stack traces, custom shapes, or other options, see [Error Handling](/logging
 If you already have an existing logging stack, LogLayer can wrap it so your call sites use the LogLayer API while emission goes through the underlying logger you've already configured. Here it is for `zerolog`:
 
 ```sh
-go get go.loglayer.dev/transports/zerolog github.com/rs/zerolog
+go get go.loglayer.dev/transports/zerolog/v2 github.com/rs/zerolog
 ```
 
 ```go
@@ -92,8 +92,8 @@ import (
 
     zlog "github.com/rs/zerolog"
 
-    "go.loglayer.dev"
-    llzero "go.loglayer.dev/transports/zerolog"
+    "go.loglayer.dev/v2"
+    llzero "go.loglayer.dev/transports/zerolog/v2"
 )
 
 z := zlog.New(os.Stderr).With().Timestamp().Logger()

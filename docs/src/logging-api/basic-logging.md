@@ -125,7 +125,7 @@ Drop the result into anything that takes the corresponding type:
 import (
     "net/http"
 
-    "go.loglayer.dev"
+    "go.loglayer.dev/v2"
 )
 
 srv := &http.Server{

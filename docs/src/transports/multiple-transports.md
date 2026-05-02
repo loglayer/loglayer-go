@@ -87,11 +87,11 @@ A realistic production setup. Pretty is colorized terminal output for the develo
 import (
     "os"
 
-    "go.loglayer.dev"
-    "go.loglayer.dev/transport"
-    "go.loglayer.dev/transports/datadog"
-    "go.loglayer.dev/transports/pretty"
-    "go.loglayer.dev/transports/structured"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v2/transport"
+    "go.loglayer.dev/transports/datadog/v2"
+    "go.loglayer.dev/transports/pretty/v2"
+    "go.loglayer.dev/transports/structured/v2"
 )
 
 logFile, err := os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)

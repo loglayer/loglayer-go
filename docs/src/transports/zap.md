@@ -10,7 +10,7 @@ description: Wrap a go.uber.org/zap logger with LogLayer.
 Wraps a `*zap.Logger`. Map metadata becomes individual zap fields; struct metadata lands under a configurable key. Fatal-level entries are written via a custom `CheckWriteHook` so the process is **not** terminated, regardless of zap's defaults.
 
 ```sh
-go get go.loglayer.dev/transports/zap
+go get go.loglayer.dev/transports/zap/v2
 go get go.uber.org/zap
 ```
 
@@ -20,8 +20,8 @@ go get go.uber.org/zap
 import (
     "go.uber.org/zap"
 
-    "go.loglayer.dev"
-    llzap "go.loglayer.dev/transports/zap"
+    "go.loglayer.dev/v2"
+    llzap "go.loglayer.dev/transports/zap/v2"
 )
 
 z, _ := zap.NewProduction()

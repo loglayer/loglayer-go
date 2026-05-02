@@ -9,8 +9,8 @@ description: One-page quick reference of the LogLayer for Go API.
 
 ```go
 import (
-    "go.loglayer.dev"
-    "go.loglayer.dev/transports/structured"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/transports/structured/v2"
 )
 
 log := loglayer.New(loglayer.Config{Transport: structured.New(structured.Config{})})
@@ -61,10 +61,10 @@ log.Panic("...") // calls panic(joined-message) after dispatch; recoverable
 
 Each method takes `...any`, joined with a space.
 
-For `fmt.Sprintf`-style format strings, register the optional [`fmtlog`](https://pkg.go.dev/go.loglayer.dev/plugins/fmtlog) plugin:
+For `fmt.Sprintf`-style format strings, register the optional [`fmtlog`](https://pkg.go.dev/go.loglayer.dev/plugins/fmtlog/v2) plugin:
 
 ```go
-import "go.loglayer.dev/plugins/fmtlog"
+import "go.loglayer.dev/plugins/fmtlog/v2"
 
 log.AddPlugin(fmtlog.New())
 
@@ -255,7 +255,7 @@ The merged group set is also surfaced to transports via `TransportParams.Groups`
 ## Plugins
 
 ```go
-import "go.loglayer.dev/plugins/redact"
+import "go.loglayer.dev/plugins/redact/v2"
 
 // Inline single-hook plugin via an adapter constructor
 log.AddPlugin(loglayer.NewDataHook("tag", func(p loglayer.BeforeDataOutParams) loglayer.Data {
@@ -323,7 +323,7 @@ Off by default. Costs ~100 ns / one runtime.Caller per emission when on. The slo
 ## slog Interop
 
 ```go
-import "go.loglayer.dev/integrations/sloghandler"
+import "go.loglayer.dev/integrations/sloghandler/v2"
 
 // Make every slog.Info(...) flow through your loglayer pipeline (plugins,
 // fan-out, groups, level state). slog.With / WithAttrs become persistent

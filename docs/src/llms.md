@@ -56,5 +56,5 @@ If you're not sure, start with `llms-full.txt`. It's the lower-friction option.
 ## Other ways to feed loglayer to an LLM
 
 - **Source code** at [github.com/loglayer/loglayer-go](https://github.com/loglayer/loglayer-go) is small enough to fit in most coding assistants' context.
-- **pkg.go.dev** (`pkg.go.dev/go.loglayer.dev`) renders all GoDoc, including type signatures and doc comments. Useful for fact-checking the model's output.
+- **pkg.go.dev** (`pkg.go.dev/go.loglayer.dev/v2`) renders all GoDoc, including type signatures and doc comments. Useful for fact-checking the model's output.
 - **This docs site** is itself indexed by most search-augmented assistants. Asking "from the loglayer.dev Go docs, ..." often works without any setup.

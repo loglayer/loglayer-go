@@ -9,10 +9,10 @@ description: "Forward LogLayer entries to Google Cloud Logging via cloud.google.
 
 Forwards each entry to a caller-supplied [`*logging.Logger`](https://pkg.go.dev/cloud.google.com/go/logging#Logger) from the official Google Cloud client library. Use this on Google Cloud Run, GKE, App Engine, Cloud Functions, or any environment where you want logs to land in Google Cloud Logging (formerly Stackdriver).
 
-Import path: `go.loglayer.dev/transports/gcplogging`. Package name: `gcplogging` (no collision with the SDK's `logging` package).
+Import path: `go.loglayer.dev/transports/gcplogging/v2`. Package name: `gcplogging` (no collision with the SDK's `logging` package).
 
 ```sh
-go get go.loglayer.dev/transports/gcplogging
+go get go.loglayer.dev/transports/gcplogging/v2
 go get cloud.google.com/go/logging
 ```
 
@@ -66,8 +66,8 @@ import (
 
     "cloud.google.com/go/logging"
 
-    "go.loglayer.dev"
-    "go.loglayer.dev/transports/gcplogging"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/transports/gcplogging/v2"
 )
 
 ctx := context.Background()

@@ -10,7 +10,7 @@ description: "Inject Datadog APM trace and span IDs into log entries for log/tra
 `plugins/datadogtrace` adds Datadog's [log/trace correlation](https://docs.datadoghq.com/tracing/other_telemetry/connect_logs_and_traces/) fields to every log entry that carries an active span via `WithContext`. Once your logs ship to Datadog, the UI will link each log line to the trace it originated in.
 
 ```sh
-go get go.loglayer.dev/plugins/datadogtrace
+go get go.loglayer.dev/plugins/datadogtrace/v2
 ```
 
 The plugin is **tracer-agnostic**: you wire up a small extractor function that pulls the trace and span IDs from a `context.Context`. This avoids forcing a specific dd-trace-go version (or any tracer dependency at all) on LogLayer's main module; your service already imports the tracer it uses.
@@ -27,9 +27,9 @@ import (
 
     ddtracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 
-    "go.loglayer.dev"
-    "go.loglayer.dev/plugins/datadogtrace"
-    "go.loglayer.dev/transports/structured"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/plugins/datadogtrace/v2"
+    "go.loglayer.dev/transports/structured/v2"
 )
 
 func main() {
@@ -176,7 +176,7 @@ The plugin is a no-op for log calls without `WithContext`, so untraced logs pay 
 
 The plugin ships with a live integration test against the real dd-trace-go v2 tracer (using its in-process `mocktracer`). It validates that the documented v2 extractor pattern produces IDs in the decimal-string format Datadog ingestion expects, including for nested spans.
 
-The livetest lives in **its own Go module** at `plugins/datadogtrace/livetest/` so that dd-trace-go's heavy transitive closure (datadog-agent internals, OTel collector pieces, sketches-go, msgp, ...) stays out of the main `go.loglayer.dev` module. Plugin users get the lean main module; livetest contributors get the full SDK they need.
+The livetest lives in **its own Go module** at `plugins/datadogtrace/livetest/` so that dd-trace-go's heavy transitive closure (datadog-agent internals, OTel collector pieces, sketches-go, msgp, ...) stays out of the main `go.loglayer.dev/v2` module. Plugin users get the lean main module; livetest contributors get the full SDK they need.
 
 Run it from the repo root:
 

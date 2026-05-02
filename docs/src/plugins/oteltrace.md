@@ -10,11 +10,11 @@ description: "Inject OpenTelemetry trace_id and span_id into log entries for log
 `plugins/oteltrace` adds the active OpenTelemetry span's `trace_id` and `span_id` to every log entry that carries a `context.Context`. Use it when your service runs OpenTelemetry tracing but ships logs to a destination other than the OTel logs pipeline (structured JSON to stdout, Datadog HTTP intake, Loki, custom transports).
 
 ```sh
-go get go.loglayer.dev/plugins/oteltrace
+go get go.loglayer.dev/plugins/oteltrace/v2
 ```
 
 ::: info Separate module
-`plugins/oteltrace` ships as its own Go module (`go.loglayer.dev/plugins/oteltrace`) so the OpenTelemetry API's Go-version requirement doesn't bind the main `go.loglayer.dev` module. Requires **Go 1.25+** because that's the floor of `go.opentelemetry.io/otel/trace` and `go.opentelemetry.io/otel/baggage` at current versions.
+`plugins/oteltrace` ships as its own Go module (`go.loglayer.dev/plugins/oteltrace/v2`) so the OpenTelemetry API's Go-version requirement doesn't bind the main `go.loglayer.dev/v2` module. Requires **Go 1.25+** because that's the floor of `go.opentelemetry.io/otel/trace` and `go.opentelemetry.io/otel/baggage` at current versions.
 :::
 
 ::: info When to use this vs `transports/otellog`
@@ -27,9 +27,9 @@ go get go.loglayer.dev/plugins/oteltrace
 
 ```go
 import (
-    "go.loglayer.dev"
-    "go.loglayer.dev/plugins/oteltrace"
-    "go.loglayer.dev/transports/structured"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/plugins/oteltrace/v2"
+    "go.loglayer.dev/transports/structured/v2"
 )
 
 log := loglayer.New(loglayer.Config{

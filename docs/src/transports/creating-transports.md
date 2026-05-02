@@ -27,8 +27,8 @@ import (
     "fmt"
     "io"
 
-    "go.loglayer.dev"
-    "go.loglayer.dev/transport"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v2/transport"
 )
 
 type Config struct {
@@ -270,8 +270,8 @@ If `New` can fail with a runtime-loaded value (URL from env, API key from secret
 package yourpkg
 
 import (
-    "go.loglayer.dev"
-    "go.loglayer.dev/transport"
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v2/transport"
 )
 
 type Config struct {
