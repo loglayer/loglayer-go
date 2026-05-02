@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/plugins/datadogtrace"
-	"go.loglayer.dev/plugins/plugintest"
+	"go.loglayer.dev/plugins/datadogtrace/v2"
+	"go.loglayer.dev/plugins/plugintest/v2"
+	"go.loglayer.dev/v2"
 )
 
 // fakeExtract returns a deterministic extractor for tests.

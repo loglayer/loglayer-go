@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"go.loglayer.dev"
+	"go.loglayer.dev/v2"
 )
 
 func TestSetLevel(t *testing.T) {

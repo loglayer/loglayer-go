@@ -9,9 +9,9 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/getsentry/sentry-go/attribute"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	sentrytransport "go.loglayer.dev/transports/sentry"
+	sentrytransport "go.loglayer.dev/transports/sentry/v2"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 )
 
 // fakeLogger satisfies sentry.Logger and records every entry built

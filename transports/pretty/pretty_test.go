@@ -9,9 +9,9 @@ import (
 
 	"github.com/fatih/color"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	"go.loglayer.dev/transports/pretty"
+	"go.loglayer.dev/transports/pretty/v2"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 )
 
 const fixedTime = "12:34:56.789"

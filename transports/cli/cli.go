@@ -53,9 +53,9 @@ import (
 	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	"go.loglayer.dev/utils/sanitize"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v2/utils/sanitize"
 )
 
 // ColorMode controls ANSI color output.
@@ -150,10 +150,11 @@ type Config struct {
 // Transport renders log entries as plain CLI output.
 type Transport struct {
 	transport.BaseTransport
-	cfg     Config
-	useANSI bool
-	prefix  map[loglayer.LogLevel]string
-	colors  map[loglayer.LogLevel]*color.Color
+	cfg             Config
+	useANSI         bool
+	prefix          map[loglayer.LogLevel]string
+	colors          map[loglayer.LogLevel]*color.Color
+	userPrefixColor *color.Color
 }
 
 // New constructs a Transport from cfg. The TTY detection for
@@ -161,10 +162,11 @@ type Transport struct {
 // cfg.Stdout is nil); subsequent writes don't re-check.
 func New(cfg Config) *Transport {
 	t := &Transport{
-		BaseTransport: transport.NewBaseTransport(cfg.BaseConfig),
-		cfg:           cfg,
-		prefix:        defaultPrefixes(),
-		colors:        defaultColors(),
+		BaseTransport:   transport.NewBaseTransport(cfg.BaseConfig),
+		cfg:             cfg,
+		prefix:          defaultPrefixes(),
+		colors:          defaultColors(),
+		userPrefixColor: color.New(color.FgHiBlack),
 	}
 	maps.Copy(t.prefix, cfg.LevelPrefix)
 	// Sanitize user-supplied prefixes once at construction so a
@@ -199,6 +201,16 @@ func New(cfg Config) *Transport {
 		}
 		t.colors[level] = &cp
 	}
+	// Same shallow-copy + per-instance flag dance for the user-
+	// prefix color so a transport with ColorAlways doesn't share
+	// the global NoColor with another transport.
+	upc := *t.userPrefixColor
+	if t.useANSI {
+		upc.EnableColor()
+	} else {
+		upc.DisableColor()
+	}
+	t.userPrefixColor = &upc
 	return t
 }
 
@@ -222,41 +234,69 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 	fmt.Fprintln(t.writer(params.LogLevel), body)
 }
 
-// format builds the line(s) to print: optional level prefix +
-// sanitized message + (table OR optional logfmt fields). Color is
-// applied to the headline (prefix + message + logfmt) only; a table
-// body, when present, renders neutral so its rows aren't tinted by
-// the level color.
+// format builds the line(s) to print:
+//
+//	[level prefix][user prefix from WithPrefix][message] [logfmt fields]
+//	[table body, if metadata is slice-of-map]
+//
+// Color: the level prefix and message share the level color
+// (yellow / red / etc.). The user prefix gets its own dim-grey
+// color so it reads as caller-context rather than urgency. Tables
+// render neutral.
 func (t *Transport) format(params loglayer.TransportParams) string {
 	msg := transport.JoinMessages(sanitizeMessages(params.Messages))
 
-	var head strings.Builder
+	levelPrefix := ""
 	if !t.cfg.DisableLevelPrefix {
-		if p := t.prefix[params.LogLevel]; p != "" {
-			head.WriteString(p)
-		}
+		levelPrefix = t.prefix[params.LogLevel]
 	}
-	head.WriteString(msg)
 
+	userPrefix := ""
+	if params.Prefix != "" {
+		// Sanitize the prefix in-line so a Config.Prefix /
+		// WithPrefix value loaded from env or config can't
+		// smuggle ANSI / CRLF through cli's smart-rendering
+		// path. Mirrors the sanitize call applied to messages,
+		// logfmt values, table cells, and LevelPrefix.
+		userPrefix = sanitize.Message(params.Prefix) + " "
+	}
+
+	// Append optional logfmt or capture a table.
+	body := msg
 	var table string
 	switch {
 	case isTableMetadata(params.Metadata):
 		table = renderTable(asTableRows(params.Metadata))
 	case t.cfg.ShowFields:
 		if fields := renderLogfmt(transport.MergeFieldsAndMetadata(params)); fields != "" {
-			if head.Len() > 0 {
-				head.WriteByte(' ')
+			if body != "" {
+				body = body + " " + fields
+			} else {
+				body = fields
 			}
-			head.WriteString(fields)
 		}
 	}
 
-	headline := head.String()
+	// Compose the headline. Level color tints the level prefix and
+	// the message body together; the user prefix gets dim-grey.
+	var levelPart, userPart, bodyPart string
 	if t.useANSI {
 		if c, ok := t.colors[params.LogLevel]; ok && c != nil {
-			headline = c.Sprint(headline)
+			levelPart = c.Sprint(levelPrefix)
+			bodyPart = c.Sprint(body)
+		} else {
+			levelPart = levelPrefix
+			bodyPart = body
 		}
+		if userPrefix != "" {
+			userPart = t.userPrefixColor.Sprint(userPrefix)
+		}
+	} else {
+		levelPart = levelPrefix
+		userPart = userPrefix
+		bodyPart = body
 	}
+	headline := levelPart + userPart + bodyPart
 
 	switch {
 	case table == "":

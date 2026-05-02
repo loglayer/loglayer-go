@@ -9,9 +9,13 @@ description: Latest features and improvements in LogLayer for Go.
 
 ## May 02, 2026
 
+`v2.0.0`:
+
+**Breaking: import paths bump to `/v2`.** The loglayer core no longer mutates `Messages[0]` to fold the `WithPrefix` value into the message text. The prefix flows through `TransportParams.Prefix` and each transport decides how to render it. Built-in transports preserve v1 user-visible output via the new `transport.JoinPrefixAndMessages` helper; the cli transport opts into smart rendering (dim-grey user prefix separate from level color). See [Migrating to v2](/migrating-to-v2) for the upgrade checklist.
+
 `loglayer`:
 
-`Prefix` is now exposed as a separate field on `TransportParams` and on every dispatch-time plugin hook param struct (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`). Transports and plugins can render or react to the prefix independently from the message string. The legacy "prepend prefix into `Messages[0]`" behavior is preserved unchanged for backwards compatibility; a future major version will remove the auto-prepend in favor of the field.
+`Prefix` is now exposed as a separate field on `TransportParams` and on every dispatch-time plugin hook param struct (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`). Transports and plugins can render or react to the prefix independently from the message string. The legacy "prepend prefix into `Messages[0]`" auto-mutation in v1.7.x stays in place for backwards compatibility within the v1 line; v2.0.0 removes it.
 
 `transports/cli`:
 

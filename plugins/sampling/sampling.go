@@ -22,7 +22,7 @@ import (
 	"sync"
 	"time"
 
-	"go.loglayer.dev"
+	"go.loglayer.dev/v2"
 )
 
 // FixedRate keeps the given fraction of emissions and drops the rest.

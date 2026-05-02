@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/internal/lltest"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/internal/lltest"
 )
 
 func newSourceLogger(t *testing.T, addSource bool) (*loglayer.LogLayer, *lltest.TestLoggingLibrary) {

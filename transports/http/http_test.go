@@ -13,9 +13,9 @@ import (
 	"testing"
 	"time"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	httptr "go.loglayer.dev/transports/http"
+	httptr "go.loglayer.dev/transports/http/v2"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 )
 
 // captureServer accumulates request bodies for assertion. It supports an

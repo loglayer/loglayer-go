@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/integrations/sloghandler"
-	lltest "go.loglayer.dev/transports/testing"
+	"go.loglayer.dev/integrations/sloghandler/v2"
+	lltest "go.loglayer.dev/transports/testing/v2"
+	"go.loglayer.dev/v2"
 )
 
 func newSlog(t *testing.T) (*slog.Logger, *lltest.TestLoggingLibrary, *loglayer.LogLayer) {

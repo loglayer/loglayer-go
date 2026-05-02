@@ -1,8 +1,8 @@
 package datadog_test
 
 import (
-	"go.loglayer.dev"
-	"go.loglayer.dev/transports/datadog"
+	"go.loglayer.dev/transports/datadog/v2"
+	"go.loglayer.dev/v2"
 )
 
 // New ships log entries to the Datadog Logs HTTP intake. APIKey is

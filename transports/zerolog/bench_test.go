@@ -5,10 +5,10 @@ import (
 
 	zlog "github.com/rs/zerolog"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	"go.loglayer.dev/transport/benchtest"
-	llzero "go.loglayer.dev/transports/zerolog"
+	llzero "go.loglayer.dev/transports/zerolog/v2"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v2/transport/benchtest"
 )
 
 func newWrapped() *loglayer.LogLayer {

@@ -23,9 +23,9 @@ import (
 
 	lj "gopkg.in/natefinch/lumberjack.v2"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	"go.loglayer.dev/transports/structured"
+	"go.loglayer.dev/transports/structured/v2"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 )
 
 // Config holds configuration options for Transport.

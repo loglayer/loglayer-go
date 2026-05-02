@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	"go.loglayer.dev/transports/otellog"
+	"go.loglayer.dev/transports/otellog/v2"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 	otelapi "go.opentelemetry.io/otel/log"
 	"go.opentelemetry.io/otel/log/logtest"
 )

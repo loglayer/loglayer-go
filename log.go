@@ -191,7 +191,6 @@ func (l *LogLayer) Raw(entry RawLogEntry) {
 	if !l.levels.isEnabled(entry.LogLevel) {
 		return
 	}
-	applyPrefix(l.prefix, entry.Messages)
 	fields := entry.Fields
 	fromLayer := false
 	if fields == nil {

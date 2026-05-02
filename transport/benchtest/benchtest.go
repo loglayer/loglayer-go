@@ -8,7 +8,7 @@ package benchtest
 import (
 	"testing"
 
-	"go.loglayer.dev"
+	"go.loglayer.dev/v2"
 )
 
 // Msg is the standard benchmark message. Use it as the argument to

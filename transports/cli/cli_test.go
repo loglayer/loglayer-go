@@ -7,8 +7,8 @@ import (
 
 	"github.com/fatih/color"
 
-	"go.loglayer.dev"
-	clitr "go.loglayer.dev/transports/cli"
+	clitr "go.loglayer.dev/transports/cli/v2"
+	"go.loglayer.dev/v2"
 )
 
 // makeLogger constructs a logger backed by a cli.Transport whose
@@ -636,6 +636,84 @@ func TestNilElementBailsTableFastPath(t *testing.T) {
 	}
 	if strings.Contains(got, "K\n") || strings.Contains(got, "K  ") {
 		t.Errorf("table should not render when slice contains nil; got %q", got)
+	}
+}
+
+func TestWithPrefixRendersInline(t *testing.T) {
+	// WithPrefix renders between the level prefix and the message
+	// body, plain text when ColorNever.
+	log, stdout, stderr := makeLogger(t, clitr.Config{})
+
+	prefixed := log.WithPrefix("[auth]")
+	prefixed.Info("starting")
+	prefixed.Warn("retrying")
+	prefixed.Error("failed")
+
+	if got := strings.TrimRight(stdout.String(), "\n"); got != "[auth] starting" {
+		t.Errorf("Info: got %q, want %q", got, "[auth] starting")
+	}
+	if !strings.Contains(stderr.String(), "warning: [auth] retrying") {
+		t.Errorf("Warn missing inline prefix: %q", stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "error: [auth] failed") {
+		t.Errorf("Error missing inline prefix: %q", stderr.String())
+	}
+}
+
+func TestWithPrefixGetsDimGreyAnsiSeparateFromLevel(t *testing.T) {
+	// With Color: ColorAlways and a warn-level entry, the level
+	// prefix and message body should carry the warn color (yellow,
+	// FgYellow = 33), while the user prefix should carry FgHiBlack
+	// (90). Both ANSI color codes appear in the line.
+	var stdout, stderr bytes.Buffer
+	log := loglayer.New(loglayer.Config{
+		Transport: clitr.New(clitr.Config{
+			Stdout: &stdout,
+			Stderr: &stderr,
+			Color:  clitr.ColorAlways,
+		}),
+	})
+	log.WithPrefix("[auth]").Warn("retrying")
+
+	out := stderr.String()
+	if !strings.Contains(out, "\x1b[33m") {
+		t.Errorf("expected yellow (33) ANSI for warn level/body; got %q", out)
+	}
+	if !strings.Contains(out, "\x1b[90m") {
+		t.Errorf("expected FgHiBlack (90) ANSI for user prefix; got %q", out)
+	}
+}
+
+func TestWithPrefixSanitizesAnsiSmuggling(t *testing.T) {
+	// A prefix loaded from env or config that carries ANSI escapes
+	// must not smuggle them through cli's smart-rendering path.
+	log, stdout, _ := makeLogger(t, clitr.Config{})
+
+	log.WithPrefix("\x1b[31mFAKE\x1b[0m").Info("ok")
+
+	got := stdout.String()
+	if strings.ContainsRune(got, 0x1b) {
+		t.Errorf("ANSI ESC in WithPrefix value leaked through: %q", got)
+	}
+}
+
+func TestWithPrefixWithNoLevelColorOnInfo(t *testing.T) {
+	// At info level the default level color is nil. With a user
+	// prefix, only the user prefix carries ANSI; the message body
+	// is unstyled.
+	var stdout, stderr bytes.Buffer
+	log := loglayer.New(loglayer.Config{
+		Transport: clitr.New(clitr.Config{
+			Stdout: &stdout,
+			Stderr: &stderr,
+			Color:  clitr.ColorAlways,
+		}),
+	})
+	log.WithPrefix("[auth]").Info("hi")
+
+	out := stdout.String()
+	if !strings.Contains(out, "\x1b[90m[auth] \x1b[0m") {
+		t.Errorf("user prefix should be wrapped in FgHiBlack ANSI; got %q", out)
 	}
 }
 

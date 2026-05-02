@@ -3,9 +3,9 @@ package fmtlog_test
 import (
 	"fmt"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/plugins/fmtlog"
-	lltesting "go.loglayer.dev/transports/testing"
+	"go.loglayer.dev/plugins/fmtlog/v2"
+	lltesting "go.loglayer.dev/transports/testing/v2"
+	"go.loglayer.dev/v2"
 )
 
 // New returns a plugin that rewrites multi-argument log messages via

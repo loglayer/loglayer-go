@@ -1,15 +1,15 @@
-module go.loglayer.dev/integrations/loghttp
+module go.loglayer.dev/integrations/loghttp/v2
 
 go 1.25.0
 
 replace (
-	go.loglayer.dev => ../..
-	go.loglayer.dev/transports/testing => ../../transports/testing
+	go.loglayer.dev/transports/testing/v2 => ../../transports/testing
+	go.loglayer.dev/v2 => ../..
 )
 
 require (
-	go.loglayer.dev v0.0.0-00010101000000-000000000000
-	go.loglayer.dev/transports/testing v0.0.0-00010101000000-000000000000
+	go.loglayer.dev/transports/testing/v2 v2.0.0-00010101000000-000000000000
+	go.loglayer.dev/v2 v2.0.0-00010101000000-000000000000
 )
 
 require github.com/goccy/go-json v0.10.6 // indirect

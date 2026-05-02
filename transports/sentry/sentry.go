@@ -21,8 +21,8 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/goccy/go-json"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 )
 
 // Config holds configuration options for the Sentry transport.
@@ -73,6 +73,9 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 	if !t.ShouldProcess(params.LogLevel) {
 		return
 	}
+	// Fold the prefix into Messages[0] for the rendered output;
+	// transports own this rendering choice.
+	params.Messages = transport.JoinPrefixAndMessages(params.Prefix, params.Messages)
 
 	entry := entryForLevel(t.cfg.Logger, params.LogLevel)
 	if params.Ctx != nil {

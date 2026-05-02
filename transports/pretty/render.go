@@ -9,7 +9,7 @@ import (
 
 	"github.com/goccy/go-json"
 
-	"go.loglayer.dev"
+	"go.loglayer.dev/v2"
 )
 
 // combineData merges Data (fields + error) and Metadata into a single map for

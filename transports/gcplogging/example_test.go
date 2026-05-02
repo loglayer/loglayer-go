@@ -3,8 +3,8 @@ package gcplogging_test
 import (
 	"cloud.google.com/go/logging"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transports/gcplogging"
+	"go.loglayer.dev/transports/gcplogging/v2"
+	"go.loglayer.dev/v2"
 )
 
 // New forwards entries to a caller-supplied *logging.Logger from

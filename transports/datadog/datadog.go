@@ -19,9 +19,9 @@ import (
 
 	"github.com/goccy/go-json"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	httptr "go.loglayer.dev/transports/http"
+	httptr "go.loglayer.dev/transports/http/v2"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 )
 
 // Site identifies the Datadog region. Affects only the intake URL.

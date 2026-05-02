@@ -1,8 +1,8 @@
 package httptransport_test
 
 import (
-	"go.loglayer.dev"
-	httptransport "go.loglayer.dev/transports/http"
+	httptransport "go.loglayer.dev/transports/http/v2"
+	"go.loglayer.dev/v2"
 )
 
 // New POSTs JSON batches to URL. The worker goroutine starts at

@@ -14,10 +14,10 @@ import (
 	"context"
 	"testing"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/plugins/oteltrace"
-	"go.loglayer.dev/plugins/plugintest"
-	lltest "go.loglayer.dev/transports/testing"
+	"go.loglayer.dev/plugins/oteltrace/v2"
+	"go.loglayer.dev/plugins/plugintest/v2"
+	lltest "go.loglayer.dev/transports/testing/v2"
+	"go.loglayer.dev/v2"
 	"go.opentelemetry.io/otel/baggage"
 	otrace "go.opentelemetry.io/otel/trace"
 

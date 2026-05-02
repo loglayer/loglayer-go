@@ -4,7 +4,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"go.loglayer.dev"
+	"go.loglayer.dev/v2"
 )
 
 // Lazy in WithFields resolves at emit time and the result lands in

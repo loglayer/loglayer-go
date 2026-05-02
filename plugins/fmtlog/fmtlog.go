@@ -21,7 +21,7 @@ package fmtlog
 import (
 	"fmt"
 
-	"go.loglayer.dev"
+	"go.loglayer.dev/v2"
 )
 
 // New returns a plugin that resolves multi-argument log messages via

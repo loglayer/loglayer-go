@@ -1,8 +1,8 @@
 package central_test
 
 import (
-	"go.loglayer.dev"
-	"go.loglayer.dev/transports/central"
+	"go.loglayer.dev/transports/central/v2"
+	"go.loglayer.dev/v2"
 )
 
 // New ships log entries to the LogLayer Central server's HTTP intake.

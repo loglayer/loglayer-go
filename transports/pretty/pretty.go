@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	"go.loglayer.dev/utils/sanitize"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v2/utils/sanitize"
 )
 
 // ViewMode controls how each log entry is rendered.
@@ -110,6 +110,9 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 	if !t.ShouldProcess(params.LogLevel) {
 		return
 	}
+	// Fold the prefix into Messages[0] for the rendered output;
+	// transports own this rendering choice.
+	params.Messages = transport.JoinPrefixAndMessages(params.Prefix, params.Messages)
 	combined := combineData(params)
 
 	timestamp := t.formatTimestamp()

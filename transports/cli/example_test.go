@@ -5,8 +5,8 @@ import (
 
 	"github.com/fatih/color"
 
-	"go.loglayer.dev"
-	clitr "go.loglayer.dev/transports/cli"
+	clitr "go.loglayer.dev/transports/cli/v2"
+	"go.loglayer.dev/v2"
 )
 
 // The package-level Example shows the canonical wiring: a CLI app's

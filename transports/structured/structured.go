@@ -12,8 +12,8 @@ import (
 
 	"github.com/goccy/go-json"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 )
 
 // Config holds configuration options for Transport.
@@ -125,6 +125,9 @@ func (s *Transport) SendToLogger(params loglayer.TransportParams) {
 	if !s.ShouldProcess(params.LogLevel) {
 		return
 	}
+	// Fold the prefix into Messages[0] for the rendered output;
+	// transports own this rendering choice.
+	params.Messages = transport.JoinPrefixAndMessages(params.Prefix, params.Messages)
 	messages := params.Messages
 	if s.cfg.MessageFn != nil {
 		messages = []any{s.cfg.MessageFn(params)}

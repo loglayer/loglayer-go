@@ -3,9 +3,9 @@ package testing_test
 import (
 	"testing"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	lltest "go.loglayer.dev/transports/testing"
+	lltest "go.loglayer.dev/transports/testing/v2"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 )
 
 func newLogger() (*loglayer.LogLayer, *lltest.TestLoggingLibrary) {

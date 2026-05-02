@@ -1,14 +1,14 @@
-module go.loglayer.dev/transports/lumberjack
+module go.loglayer.dev/transports/lumberjack/v2
 
 go 1.25.0
 
-replace go.loglayer.dev => ../..
+replace go.loglayer.dev/v2 => ../..
 
-replace go.loglayer.dev/transports/structured => ../structured
+replace go.loglayer.dev/transports/structured/v2 => ../structured
 
 require (
-	go.loglayer.dev v0.0.0-00010101000000-000000000000
-	go.loglayer.dev/transports/structured v0.0.0-00010101000000-000000000000
+	go.loglayer.dev/transports/structured/v2 v2.0.0-00010101000000-000000000000
+	go.loglayer.dev/v2 v2.0.0-00010101000000-000000000000
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 

@@ -8,8 +8,8 @@ import (
 
 	plog "github.com/phuslu/log"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 )
 
 // Config holds configuration options for the phuslu transport.
@@ -65,6 +65,9 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 	if !t.ShouldProcess(params.LogLevel) {
 		return
 	}
+	// Fold the prefix into Messages[0] for the rendered output;
+	// transports own this rendering choice.
+	params.Messages = transport.JoinPrefixAndMessages(params.Prefix, params.Messages)
 	entry := t.logger.WithLevel(toPhusluLevel(params.LogLevel))
 	if entry == nil {
 		return

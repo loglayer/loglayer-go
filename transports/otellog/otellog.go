@@ -15,8 +15,8 @@
 // Wiring with the global LoggerProvider (most common):
 //
 //	import (
-//	    "go.loglayer.dev"
-//	    "go.loglayer.dev/transports/otellog"
+//	    "go.loglayer.dev/v2"
+//	    "go.loglayer.dev/transports/otellog/v2"
 //	)
 //
 //	tr := otellog.New(otellog.Config{Name: "checkout-api"})
@@ -44,8 +44,8 @@ import (
 	"fmt"
 	"time"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 	otellog "go.opentelemetry.io/otel/log"
 	"go.opentelemetry.io/otel/log/global"
 )
@@ -148,6 +148,9 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 	if !t.ShouldProcess(params.LogLevel) {
 		return
 	}
+	// Fold the prefix into Messages[0] for the rendered output;
+	// transports own this rendering choice.
+	params.Messages = transport.JoinPrefixAndMessages(params.Prefix, params.Messages)
 
 	var rec otellog.Record
 	rec.SetTimestamp(time.Now())

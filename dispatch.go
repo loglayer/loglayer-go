@@ -10,14 +10,18 @@ import (
 // tests to verify the pre-exit flush without terminating the test runner.
 var osExit = os.Exit
 
-// formatLog applies the prefix to messages then hands the entry to processLog
-// using the logger's persistent fields. Per-call goCtx overrides the
-// logger's bound ctx (when one is provided), otherwise the bound ctx is
-// passed through. source carries pre-captured call-site info from the
-// emission entry point (nil if Config.Source.Enabled is off and no adapter
+// formatLog hands the entry to processLog using the logger's
+// persistent fields. The prefix is propagated through
+// TransportParams.Prefix; transports decide how to render it (most
+// call transport.JoinPrefixAndMessages to fold it into the first
+// message string).
+//
+// Per-call goCtx overrides the logger's bound ctx (when one is
+// provided), otherwise the bound ctx is passed through. source
+// carries pre-captured call-site info from the emission entry
+// point (nil if Config.Source.Enabled is off and no adapter
 // supplied one).
 func (l *LogLayer) formatLog(level LogLevel, messages []any, goCtx context.Context, metadata any, err error, source *Source, plugins *pluginSet) {
-	applyPrefix(l.prefix, messages)
 	if goCtx == nil {
 		goCtx = l.boundCtx
 	}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"go.loglayer.dev"
+	"go.loglayer.dev/v2"
 )
 
 func TestNewContextAndFromContext_RoundTrip(t *testing.T) {

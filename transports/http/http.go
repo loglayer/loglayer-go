@@ -22,8 +22,8 @@ import (
 
 	"github.com/goccy/go-json"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 )
 
 const (
@@ -210,10 +210,14 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 		t.cfg.OnError(ErrClosed, nil)
 		return
 	}
+	// Fold the prefix into Messages[0] for the rendered output;
+	// transports own this rendering choice.
+	// Encoders that want the prefix as a separate field can read
+	// it from params.Prefix in a future Entry.Prefix addition.
 	entry := Entry{
 		Level:    params.LogLevel,
 		Time:     time.Now(),
-		Messages: params.Messages,
+		Messages: transport.JoinPrefixAndMessages(params.Prefix, params.Messages),
 		Metadata: params.Metadata,
 		Groups:   params.Groups,
 		Schema:   params.Schema,

@@ -62,7 +62,13 @@ type Config struct {
 	// either form is fine.
 	Plugins []Plugin
 
-	// Prefix is prepended to the first string message of every log call.
+	// Prefix is exposed verbatim on TransportParams.Prefix and on
+	// every dispatch-time plugin hook param struct. Transports
+	// decide how to render it: most call
+	// transport.JoinPrefixAndMessages to fold it into the first
+	// message string; cli renders it in dim grey separate from
+	// the level color. Equivalent to calling WithPrefix on the
+	// freshly-constructed logger.
 	Prefix string
 
 	// Disabled suppresses all log output when true. Defaults to false

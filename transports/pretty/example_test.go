@@ -4,8 +4,8 @@ import (
 	"os"
 	"time"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transports/pretty"
+	"go.loglayer.dev/transports/pretty/v2"
+	"go.loglayer.dev/v2"
 )
 
 // New builds the colorized terminal transport. NoColor and a fixed

@@ -115,6 +115,7 @@ gtag('config', '${gaMeasurementId}');`,
           { text: 'For TypeScript Developers', link: '/for-typescript-developers' },
           { text: 'Use with AI / LLMs', link: '/llms' },
           { text: "What's New", link: '/whats-new' },
+          { text: 'Migrating to v2', link: '/migrating-to-v2' },
         ],
       },
       {

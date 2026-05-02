@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	"go.loglayer.dev/transports/console"
+	"go.loglayer.dev/transports/console/v2"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 )
 
 func newLogger(cfg console.Config) (*loglayer.LogLayer, *bytes.Buffer) {

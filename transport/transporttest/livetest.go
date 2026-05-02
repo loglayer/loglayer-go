@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"go.loglayer.dev"
+	"go.loglayer.dev/v2"
 )
 
 // EmitLivetestSurface emits a representative sample of the LogLayer API

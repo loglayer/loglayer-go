@@ -185,14 +185,21 @@ func (t *Transport) SendToLogger(p loglayer.TransportParams) {
 
 `params.Prefix` is the value attached via `WithPrefix` on the emitting logger (or set on `Config.Prefix` at construction), exposed verbatim so transports can render it independently from the message. Empty string when no prefix was set.
 
-::: warning Legacy compat: Prefix is also baked into Messages\[0\]
-For backwards compatibility with transports written before `Prefix` existed as a field, the core ALSO prepends `prefix + " "` to `Messages[0]` when `Messages[0]` is a string (non-string first arguments are left untouched). New transports that consume `params.Prefix` must therefore choose:
+The core does NOT prepend `params.Prefix` into `Messages[0]`. Each transport decides how to render the prefix:
 
-- **Ignore the field, render `Messages` as-is**: preserves legacy behavior. The CLI tool sees `"warning: [auth] retrying"` because the prefix is in the message.
-- **Use the field, strip the duplicate**: the transport checks whether `Messages[0]` is a string starting with `params.Prefix + " "` and removes that prefix before its own rendering. Lets the transport color, layout, or structure the prefix differently from the message body. Skip the strip when `Messages[0]` isn't a string (the core didn't prepend in that case).
+- **Fold the prefix into the message** (simplest): call `transport.JoinPrefixAndMessages(params.Prefix, params.Messages)` at the top of your `SendToLogger`. The helper returns `Messages` unchanged when `Prefix` is empty (fast path) or when `Messages[0]` isn't a string; otherwise it returns a fresh slice with `prefix + " "` prepended to `Messages[0]`. The output reads as one blob (`"[prefix] message body"`) which is what most renderer / wrapper transports want.
+- **Render the prefix separately**: read `params.Prefix` directly and render it however suits your transport. A renderer can color the prefix differently from the message body; a structured transport can emit it as its own top-level field; a wrapper transport can forward it to the underlying logger's structured-field API (`zerolog.Event.Str("prefix", p.Prefix)`, etc.). Don't call `JoinPrefixAndMessages` in this path.
 
-The duplicated signal is a known wart that will be cleaned up in a future major version (the auto-prepend will be removed; transports that want the legacy behavior may get a `transport.JoinPrefixAndMessages`-style helper at that time). For now, the additive shape preserves every existing transport's user-visible output.
-:::
+```go
+func (t *Transport) SendToLogger(p loglayer.TransportParams) {
+    if !t.ShouldProcess(p.LogLevel) {
+        return
+    }
+    // Fold-into-message path:
+    p.Messages = transport.JoinPrefixAndMessages(p.Prefix, p.Messages)
+    // ... existing rendering ...
+}
+```
 
 Use cases for reading `params.Prefix`:
 

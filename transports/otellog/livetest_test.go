@@ -18,8 +18,8 @@ import (
 	"sync"
 	"testing"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transports/otellog"
+	"go.loglayer.dev/transports/otellog/v2"
+	"go.loglayer.dev/v2"
 	otelapi "go.opentelemetry.io/otel/log"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"

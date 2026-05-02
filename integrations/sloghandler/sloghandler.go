@@ -45,7 +45,7 @@ import (
 	"log/slog"
 	"slices"
 
-	"go.loglayer.dev"
+	"go.loglayer.dev/v2"
 )
 
 // Handler is a slog.Handler that emits records through a loglayer logger.

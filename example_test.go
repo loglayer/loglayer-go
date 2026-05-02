@@ -22,7 +22,8 @@ import (
 	"sort"
 	"strings"
 
-	"go.loglayer.dev"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
 )
 
 // fixedTime returns a deterministic timestamp for example output.
@@ -42,10 +43,14 @@ func (exampleTransport) SendToLogger(p loglayer.TransportParams) {
 	parts = append(parts, fmt.Sprintf(`"level":%q`, p.LogLevel.String()))
 	parts = append(parts, fmt.Sprintf(`"time":%q`, fixedTime()))
 
+	// Fold the prefix into the message so the examples render as
+	// one blob; transports decide their own rendering, this one
+	// goes through the helper.
+	msgs := transport.JoinPrefixAndMessages(p.Prefix, p.Messages)
 	msg := ""
-	if len(p.Messages) > 0 {
-		bits := make([]string, len(p.Messages))
-		for i, m := range p.Messages {
+	if len(msgs) > 0 {
+		bits := make([]string, len(msgs))
+		for i, m := range msgs {
 			bits[i] = fmt.Sprint(m)
 		}
 		msg = strings.Join(bits, " ")

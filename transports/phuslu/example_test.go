@@ -3,8 +3,8 @@ package phuslu_test
 import (
 	"io"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transports/phuslu"
+	"go.loglayer.dev/transports/phuslu/v2"
+	"go.loglayer.dev/v2"
 )
 
 // New wraps a *phuslu/log.Logger. When Logger is nil a default logger

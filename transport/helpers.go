@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/utils/maputil"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/utils/maputil"
 )
 
 // WriterOrStderr returns w if non-nil, otherwise os.Stderr. Used by wrapper
@@ -27,6 +27,41 @@ func WriterOrStdout(w io.Writer) io.Writer {
 		return w
 	}
 	return os.Stdout
+}
+
+// JoinPrefixAndMessages folds prefix into the first message so the
+// rendered output reads as one blob (`"[prefix] message body"`).
+// Returns messages unchanged when prefix is empty or messages[0] is
+// not a string; otherwise returns a fresh slice whose first element
+// is `prefix + " " + messages[0]`.
+//
+// Most renderer / wrapper transports want this rendering and call
+// the helper at the top of SendToLogger:
+//
+//	func (t *Transport) SendToLogger(p loglayer.TransportParams) {
+//	    if !t.ShouldProcess(p.LogLevel) { return }
+//	    p.Messages = transport.JoinPrefixAndMessages(p.Prefix, p.Messages)
+//	    // ... existing rendering logic ...
+//	}
+//
+// Transports that want to render the prefix differently (cli's
+// dim-color treatment, a structured transport's separate JSON
+// field, wrapper transports forwarding to the underlying logger's
+// structured-field API) should NOT call this helper; instead
+// consume p.Prefix directly and emit messages without the prefix
+// folded in.
+func JoinPrefixAndMessages(prefix string, messages []any) []any {
+	if prefix == "" || len(messages) == 0 {
+		return messages
+	}
+	s, ok := messages[0].(string)
+	if !ok {
+		return messages
+	}
+	out := make([]any, len(messages))
+	copy(out, messages)
+	out[0] = prefix + " " + s
+	return out
 }
 
 // JoinMessages concatenates a slice of values into a single space-separated

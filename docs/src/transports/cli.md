@@ -119,16 +119,18 @@ When the entry's level is warn / error / fatal, the headline (prefix + message) 
 
 ## Using `WithPrefix`
 
-`loglayer.LogLayer.WithPrefix` mutates the message at the loglayer core (prepending `prefix + " "`), so the cli transport sees the message with the prefix already baked in. Combined with the level prefix:
+The cli transport reads `params.Prefix` directly and renders it as a third visual layer between the level prefix and the message body, in dim grey. Each piece gets its own color treatment so caller-context and urgency stay visually distinct:
 
 ```go
 log := loglayer.New(...).WithPrefix("[auth]")
-log.Info("starting")    // → "[auth] starting"
-log.Warn("retrying")    // → "warning: [auth] retrying"
-log.Error("failed")     // → "error: [auth] failed"
+log.Info("starting")    // → "[auth] starting"            (prefix dim grey)
+log.Warn("retrying")    // → "warning: [auth] retrying"   (level yellow, prefix grey, body yellow)
+log.Error("failed")     // → "error: [auth] failed"       (level red, prefix grey, body red)
 ```
 
-`"warning: "` and `"error: "` come from the cli transport's level prefix; `"[auth]"` is baked into the message at the loglayer core. The level prefix is outermost; `WithPrefix` nests inside as part of the message. The reading order parses as "this is a warning. [auth context] retrying," which is the right framing.
+The level prefix and message body share the level color (yellow / red / etc.); the user prefix gets `color.FgHiBlack` (dim grey) regardless of level. The visual layering reads as "this is a warning. [auth context] retrying": three signals stacked rather than blended.
+
+If you want monochrome rendering, set `Color: ColorNever` to drop all color (the user prefix and the level prefix both render as plain text).
 
 ## Verbose Mode (`-v` / `--debug`)
 

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/internal/lltest"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/internal/lltest"
 )
 
 func newUnwrapLogger(t *testing.T) (*loglayer.LogLayer, *lltest.TestLoggingLibrary) {

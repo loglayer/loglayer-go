@@ -3,9 +3,9 @@ package datadogtrace_test
 import (
 	"context"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/plugins/datadogtrace"
-	lltesting "go.loglayer.dev/transports/testing"
+	"go.loglayer.dev/plugins/datadogtrace/v2"
+	lltesting "go.loglayer.dev/transports/testing/v2"
+	"go.loglayer.dev/v2"
 )
 
 // New returns a plugin that injects dd.trace_id and dd.span_id onto

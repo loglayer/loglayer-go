@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/plugins/plugintest"
-	"go.loglayer.dev/plugins/sampling"
+	"go.loglayer.dev/plugins/plugintest/v2"
+	"go.loglayer.dev/plugins/sampling/v2"
+	"go.loglayer.dev/v2"
 )
 
 func TestFixedRate_KeepAll(t *testing.T) {

@@ -7,10 +7,10 @@ package structured_test
 import (
 	"testing"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	"go.loglayer.dev/transport/benchtest"
-	"go.loglayer.dev/transports/structured"
+	"go.loglayer.dev/transports/structured/v2"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v2/transport/benchtest"
 )
 
 func BenchmarkRender_Structured_SimpleMessage(b *testing.B) {

@@ -5,10 +5,10 @@ import (
 
 	plog "github.com/phuslu/log"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	"go.loglayer.dev/transport/benchtest"
-	llphuslu "go.loglayer.dev/transports/phuslu"
+	llphuslu "go.loglayer.dev/transports/phuslu/v2"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v2/transport/benchtest"
 )
 
 func newDirect() *plog.Logger {

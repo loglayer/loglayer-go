@@ -19,7 +19,7 @@ import (
 	"strings"
 	"testing"
 
-	"go.loglayer.dev"
+	"go.loglayer.dev/v2"
 )
 
 // NewLogger wraps the supplied transport in a *loglayer.LogLayer with

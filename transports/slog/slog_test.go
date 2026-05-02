@@ -6,10 +6,10 @@ import (
 	stdlibslog "log/slog"
 	"testing"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	"go.loglayer.dev/transport/transporttest"
-	llslog "go.loglayer.dev/transports/slog"
+	llslog "go.loglayer.dev/transports/slog/v2"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v2/transport/transporttest"
 )
 
 func factory(opts transporttest.FactoryOpts) (*loglayer.LogLayer, *bytes.Buffer) {

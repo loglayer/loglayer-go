@@ -26,9 +26,9 @@ import (
 
 	"github.com/getsentry/sentry-go"
 
-	"go.loglayer.dev/transport/transporttest"
-	sentrytransport "go.loglayer.dev/transports/sentry"
-	"go.loglayer.dev/utils/idgen"
+	sentrytransport "go.loglayer.dev/transports/sentry/v2"
+	"go.loglayer.dev/v2/transport/transporttest"
+	"go.loglayer.dev/v2/utils/idgen"
 )
 
 func TestLive_Sentry_SendsLog(t *testing.T) {

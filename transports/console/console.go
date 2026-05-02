@@ -15,9 +15,9 @@ import (
 
 	"github.com/goccy/go-json"
 
-	"go.loglayer.dev"
-	"go.loglayer.dev/transport"
-	"go.loglayer.dev/utils/sanitize"
+	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v2/utils/sanitize"
 )
 
 // Config holds configuration options for Transport.
@@ -78,6 +78,9 @@ func (c *Transport) SendToLogger(params loglayer.TransportParams) {
 	if !c.ShouldProcess(params.LogLevel) {
 		return
 	}
+	// Fold the prefix into Messages[0] for the rendered output;
+	// transports own this rendering choice.
+	params.Messages = transport.JoinPrefixAndMessages(params.Prefix, params.Messages)
 	messages := buildMessages(params, c.cfg)
 	fmt.Fprintln(c.writer(params.LogLevel), messages...)
 }
