@@ -147,6 +147,53 @@ func TestPrefixEmptyWhenNotSet(t *testing.T) {
 	}
 }
 
+func TestPrefixSurfacedOnAllPluginHookParams(t *testing.T) {
+	// Every dispatch-time hook param struct must carry Prefix
+	// alongside TransportParams. A regression that leaves Prefix
+	// unset on (say) ShouldSendParams would slip past the
+	// TransportParams-only test, so install one hook of each kind
+	// and capture each variant's Prefix.
+	var (
+		dataPrefix  string
+		msgPrefix   string
+		levelPrefix string
+		gatePrefix  string
+	)
+	plugins := []loglayer.Plugin{
+		loglayer.NewDataHook("capture-data", func(p loglayer.BeforeDataOutParams) loglayer.Data {
+			dataPrefix = p.Prefix
+			return nil
+		}),
+		loglayer.NewMessageHook("capture-msg", func(p loglayer.BeforeMessageOutParams) []any {
+			msgPrefix = p.Prefix
+			return nil
+		}),
+		loglayer.NewLevelHook("capture-level", func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) {
+			levelPrefix = p.Prefix
+			return 0, false
+		}),
+		loglayer.NewSendGate("capture-gate", func(p loglayer.ShouldSendParams) bool {
+			gatePrefix = p.Prefix
+			return true
+		}),
+	}
+	cfg := loglayer.Config{Plugins: plugins}
+	log, _ := setupWithConfig(t, cfg)
+	log.WithPrefix("[auth]").Info("hello")
+
+	cases := map[string]string{
+		"BeforeDataOutParams":     dataPrefix,
+		"BeforeMessageOutParams":  msgPrefix,
+		"TransformLogLevelParams": levelPrefix,
+		"ShouldSendParams":        gatePrefix,
+	}
+	for name, got := range cases {
+		if got != "[auth]" {
+			t.Errorf("%s.Prefix = %q, want %q", name, got, "[auth]")
+		}
+	}
+}
+
 func TestChildInheritsFields(t *testing.T) {
 	log, lib := setup(t)
 	log = log.WithFields(loglayer.Fields{"parent": "yes"})

@@ -109,9 +109,10 @@ type BeforeDataOutParams struct {
 	// Schema mirrors [TransportParams.Schema].
 	Schema Schema
 	// Prefix mirrors [TransportParams.Prefix]: the value attached
-	// via WithPrefix on the emitting logger. Empty when no prefix
-	// was set. Read-only for hooks; the framework propagates this
-	// value unchanged through the dispatch path.
+	// via WithPrefix on the emitting logger (or set on Config.Prefix
+	// at construction). Empty when no prefix was set. Read-only for
+	// hooks; the framework propagates this value unchanged through
+	// the dispatch path.
 	Prefix string
 }
 
@@ -126,9 +127,10 @@ type BeforeMessageOutParams struct {
 	// Schema mirrors [TransportParams.Schema].
 	Schema Schema
 	// Prefix mirrors [TransportParams.Prefix]: the value attached
-	// via WithPrefix on the emitting logger. Empty when no prefix
-	// was set. Read-only for hooks; the framework propagates this
-	// value unchanged through the dispatch path.
+	// via WithPrefix on the emitting logger (or set on Config.Prefix
+	// at construction). Empty when no prefix was set. Read-only for
+	// hooks; the framework propagates this value unchanged through
+	// the dispatch path.
 	Prefix string
 }
 
@@ -147,9 +149,10 @@ type TransformLogLevelParams struct {
 	// Schema mirrors [TransportParams.Schema].
 	Schema Schema
 	// Prefix mirrors [TransportParams.Prefix]: the value attached
-	// via WithPrefix on the emitting logger. Empty when no prefix
-	// was set. Read-only for hooks; the framework propagates this
-	// value unchanged through the dispatch path.
+	// via WithPrefix on the emitting logger (or set on Config.Prefix
+	// at construction). Empty when no prefix was set. Read-only for
+	// hooks; the framework propagates this value unchanged through
+	// the dispatch path.
 	Prefix string
 }
 
@@ -172,9 +175,10 @@ type ShouldSendParams struct {
 	// Schema mirrors [TransportParams.Schema].
 	Schema Schema
 	// Prefix mirrors [TransportParams.Prefix]: the value attached
-	// via WithPrefix on the emitting logger. Empty when no prefix
-	// was set. Read-only for hooks; the framework propagates this
-	// value unchanged through the dispatch path.
+	// via WithPrefix on the emitting logger (or set on Config.Prefix
+	// at construction). Empty when no prefix was set. Read-only for
+	// hooks; the framework propagates this value unchanged through
+	// the dispatch path.
 	Prefix string
 }
 

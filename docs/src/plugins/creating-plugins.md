@@ -233,18 +233,6 @@ Fires per emission, after the message hooks. Return `(level, true)` to override 
 
 If multiple plugins return `ok=true`, the last one wins.
 
-### Reading `params.Prefix`
-
-Every dispatch-time hook param struct (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`) carries the value attached via `WithPrefix` on the emitting logger as `params.Prefix`. Empty string when no prefix was set.
-
-The prefix is read-only from the plugin's perspective: hooks that return modified data / messages / level / send-decision can act on the prefix value, but they don't propagate a modified prefix back to downstream hooks. Plugins that want to mutate the user-visible prefix today have to do it via `OnBeforeMessageOut` (rewriting `Messages[0]`); a future major version may expose the prefix as a writable signal once the legacy auto-prepend is removed.
-
-Use cases:
-
-- **Routing on prefix**: a `SendGate` could send `[audit]`-prefixed entries to an extra audit transport.
-- **Tagging**: a `DataHook` could emit `params.Prefix` as a top-level data key for downstream parsing.
-- **Filtering**: a `LevelHook` could downgrade `[debug-trace]`-prefixed entries to `Debug` regardless of the call-site level.
-
 ```go
 loglayer.NewLevelHook("promote-on-error-key", func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) {
     if _, hasErr := p.Data["err"]; hasErr && p.LogLevel < loglayer.LogLevelError {
@@ -276,6 +264,18 @@ loglayer.NewSendGate("no-debug-to-shipping", func(p loglayer.ShouldSendParams) b
 ```
 
 If multiple plugins implement `SendGate`, the entry goes only when **every** plugin returns true.
+
+## Reading `params.Prefix`
+
+Every dispatch-time hook param struct (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`) carries the value attached via `WithPrefix` on the emitting logger (or set on `Config.Prefix` at construction) as `params.Prefix`. Empty string when no prefix was set.
+
+The prefix is intentionally read-only from the plugin's perspective: hooks that return modified data / messages / level / send-decision can act on the prefix value, but they don't propagate a modified prefix back to downstream hooks. Plugins that want to mutate the user-visible prefix today have to do it via `OnBeforeMessageOut` (rewriting `Messages[0]`); a future major version may expose the prefix as a writable signal once the legacy auto-prepend is removed.
+
+Use cases:
+
+- **Routing on prefix**: a `SendGate` could send `[audit]`-prefixed entries to an extra audit transport.
+- **Tagging**: a `DataHook` could emit `params.Prefix` as a top-level data key for downstream parsing.
+- **Filtering**: a `LevelHook` could downgrade `[debug-trace]`-prefixed entries to `Debug` regardless of the call-site level.
 
 ## Per-call `context.Context`
 

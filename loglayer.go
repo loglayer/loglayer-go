@@ -79,20 +79,21 @@ type TransportParams struct {
 	// decide metadata placement.
 	Schema Schema
 	// Prefix is the value attached via WithPrefix on the emitting
-	// logger, exposed verbatim so transports can render it
-	// independently from the message (e.g. tinted differently,
-	// emitted as a structured field, rendered in its own column).
+	// logger (or set on Config.Prefix at construction), exposed
+	// verbatim so transports can render it independently from the
+	// message (e.g. tinted differently, emitted as a structured
+	// field, rendered in its own column).
 	//
 	// As of this version, Prefix is ALSO prepended to Messages[0]
-	// for backwards compatibility with transports that consumed
-	// the legacy "prefix folded into message" behavior; that
-	// auto-prepend will be removed in a future major version. New
-	// transports should read Prefix here and render it explicitly,
-	// either by stripping the legacy duplicate from Messages[0] or
-	// by using only the standalone field once auto-prepend is
-	// dropped.
+	// (when Messages[0] is a string) for backwards compatibility
+	// with transports that consumed the legacy "prefix folded into
+	// message" behavior; that auto-prepend will be removed in a
+	// future major version. New transports should read Prefix here
+	// and render it explicitly, either by stripping the legacy
+	// duplicate from Messages[0] or by using only the standalone
+	// field once auto-prepend is dropped.
 	//
-	// Empty string when WithPrefix was never called.
+	// Empty string when no prefix was set.
 	Prefix string
 }
 

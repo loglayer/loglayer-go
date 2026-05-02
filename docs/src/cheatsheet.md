@@ -190,6 +190,8 @@ prefixed := log.WithPrefix("[auth]")       // child with a prefix prepended
 
 Mutations on the child do not affect the parent.
 
+The prefix is also surfaced to transports via `TransportParams.Prefix` and to all four dispatch-time plugin hooks (`BeforeDataOutParams.Prefix`, `BeforeMessageOutParams.Prefix`, `TransformLogLevelParams.Prefix`, `ShouldSendParams.Prefix`) so transports and plugins can render or react to the prefix independently from the message text. The legacy auto-prepend into `Messages[0]` is preserved unchanged for backwards compatibility; future major version will drop it.
+
 ## Level Control
 
 ```go
