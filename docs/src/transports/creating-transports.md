@@ -68,7 +68,7 @@ That's the whole shape. From here it's a question of how you want to render the 
 ```go
 type TransportParams struct {
     LogLevel LogLevel
-    Messages []any   // already prefix-applied
+    Messages []any   // already prefix-applied (see Prefix below)
     Data     Data    // assembled fields + error map; nil when both are absent. Use len(Data) > 0 to check.
     Metadata any     // raw value passed to WithMetadata, your transport decides serialization
     Err      error
@@ -76,6 +76,7 @@ type TransportParams struct {
     Ctx      context.Context // per-call WithContext value, or nil
     Groups   []string        // merged persistent + per-call WithGroup tags, or nil
     Schema   Schema           // resolved assembly shape: FieldsKey, MetadataFieldName, ErrorFieldName, SourceFieldName
+    Prefix   string           // value attached via WithPrefix; empty when none was set
 }
 ```
 
@@ -179,6 +180,25 @@ func (t *Transport) SendToLogger(p loglayer.TransportParams) {
 ```
 
 `Groups` is shared with the dispatching `*LogLayer`. Don't mutate the slice in place. If you need to reorder, dedupe further, or filter, copy first.
+
+## Reading `params.Prefix`
+
+`params.Prefix` is the value attached via `WithPrefix` on the emitting logger (or set on `Config.Prefix` at construction), exposed verbatim so transports can render it independently from the message. Empty string when no prefix was set.
+
+::: warning Legacy compat: Prefix is also baked into Messages\[0\]
+For backwards compatibility with transports written before `Prefix` existed as a field, the core ALSO prepends `prefix + " "` to `Messages[0]` when `Messages[0]` is a string (non-string first arguments are left untouched). New transports that consume `params.Prefix` must therefore choose:
+
+- **Ignore the field, render `Messages` as-is**: preserves legacy behavior. The CLI tool sees `"warning: [auth] retrying"` because the prefix is in the message.
+- **Use the field, strip the duplicate**: the transport checks whether `Messages[0]` is a string starting with `params.Prefix + " "` and removes that prefix before its own rendering. Lets the transport color, layout, or structure the prefix differently from the message body. Skip the strip when `Messages[0]` isn't a string (the core didn't prepend in that case).
+
+The duplicated signal is a known wart that will be cleaned up in a future major version (the auto-prepend will be removed; transports that want the legacy behavior may get a `transport.JoinPrefixAndMessages`-style helper at that time). For now, the additive shape preserves every existing transport's user-visible output.
+:::
+
+Use cases for reading `params.Prefix`:
+
+- **Renderer transports** rendering the prefix in a different color than the message (e.g. dim `[auth]` + plain message body).
+- **Structured transports** emitting the prefix as its own JSON field rather than embedding it in the message string.
+- **Wrapper transports** forwarding the prefix to the underlying logger's structured-field mechanism.
 
 ## Level Filtering
 

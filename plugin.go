@@ -108,6 +108,12 @@ type BeforeDataOutParams struct {
 	Groups []string
 	// Schema mirrors [TransportParams.Schema].
 	Schema Schema
+	// Prefix mirrors [TransportParams.Prefix]: the value attached
+	// via WithPrefix on the emitting logger (or set on Config.Prefix
+	// at construction). Empty when no prefix was set. Read-only for
+	// hooks; the framework propagates this value unchanged through
+	// the dispatch path.
+	Prefix string
 }
 
 // BeforeMessageOutParams is the input to [MessageHook.OnBeforeMessageOut].
@@ -120,6 +126,12 @@ type BeforeMessageOutParams struct {
 	Groups []string
 	// Schema mirrors [TransportParams.Schema].
 	Schema Schema
+	// Prefix mirrors [TransportParams.Prefix]: the value attached
+	// via WithPrefix on the emitting logger (or set on Config.Prefix
+	// at construction). Empty when no prefix was set. Read-only for
+	// hooks; the framework propagates this value unchanged through
+	// the dispatch path.
+	Prefix string
 }
 
 // TransformLogLevelParams is the input to [LevelHook.TransformLogLevel].
@@ -136,6 +148,12 @@ type TransformLogLevelParams struct {
 	Groups []string
 	// Schema mirrors [TransportParams.Schema].
 	Schema Schema
+	// Prefix mirrors [TransportParams.Prefix]: the value attached
+	// via WithPrefix on the emitting logger (or set on Config.Prefix
+	// at construction). Empty when no prefix was set. Read-only for
+	// hooks; the framework propagates this value unchanged through
+	// the dispatch path.
+	Prefix string
 }
 
 // ShouldSendParams is the input to [SendGate.ShouldSend].
@@ -156,6 +174,12 @@ type ShouldSendParams struct {
 	Groups []string
 	// Schema mirrors [TransportParams.Schema].
 	Schema Schema
+	// Prefix mirrors [TransportParams.Prefix]: the value attached
+	// via WithPrefix on the emitting logger (or set on Config.Prefix
+	// at construction). Empty when no prefix was set. Read-only for
+	// hooks; the framework propagates this value unchanged through
+	// the dispatch path.
+	Prefix string
 }
 
 // inner is a private hook the framework uses to see through a wrapper

@@ -119,6 +119,81 @@ func TestPrefixDoesNotAffectParent(t *testing.T) {
 	assertLine(t, lib, loglayer.LogLevelInfo, "parent")
 }
 
+func TestPrefixSurfacedOnTransportParams(t *testing.T) {
+	// Prefix is exposed verbatim on TransportParams.Prefix so
+	// transports can render it independently. The legacy
+	// "messages[0] has prefix prepended" behavior is retained for
+	// backwards compatibility; both signals must be present.
+	log, lib := setup(t)
+	prefixed := log.WithPrefix("[auth]")
+	prefixed.Info("starting")
+
+	line := lib.PopLine()
+	if line.Prefix != "[auth]" {
+		t.Errorf("Prefix = %q, want %q", line.Prefix, "[auth]")
+	}
+	if got, _ := line.Messages[0].(string); got != "[auth] starting" {
+		t.Errorf("Messages[0] = %q, want %q (legacy compat)", got, "[auth] starting")
+	}
+}
+
+func TestPrefixEmptyWhenNotSet(t *testing.T) {
+	log, lib := setup(t)
+	log.Info("no prefix")
+
+	line := lib.PopLine()
+	if line.Prefix != "" {
+		t.Errorf("Prefix = %q, want empty", line.Prefix)
+	}
+}
+
+func TestPrefixSurfacedOnAllPluginHookParams(t *testing.T) {
+	// Every dispatch-time hook param struct must carry Prefix
+	// alongside TransportParams. A regression that leaves Prefix
+	// unset on (say) ShouldSendParams would slip past the
+	// TransportParams-only test, so install one hook of each kind
+	// and capture each variant's Prefix.
+	var (
+		dataPrefix  string
+		msgPrefix   string
+		levelPrefix string
+		gatePrefix  string
+	)
+	plugins := []loglayer.Plugin{
+		loglayer.NewDataHook("capture-data", func(p loglayer.BeforeDataOutParams) loglayer.Data {
+			dataPrefix = p.Prefix
+			return nil
+		}),
+		loglayer.NewMessageHook("capture-msg", func(p loglayer.BeforeMessageOutParams) []any {
+			msgPrefix = p.Prefix
+			return nil
+		}),
+		loglayer.NewLevelHook("capture-level", func(p loglayer.TransformLogLevelParams) (loglayer.LogLevel, bool) {
+			levelPrefix = p.Prefix
+			return 0, false
+		}),
+		loglayer.NewSendGate("capture-gate", func(p loglayer.ShouldSendParams) bool {
+			gatePrefix = p.Prefix
+			return true
+		}),
+	}
+	cfg := loglayer.Config{Plugins: plugins}
+	log, _ := setupWithConfig(t, cfg)
+	log.WithPrefix("[auth]").Info("hello")
+
+	cases := map[string]string{
+		"BeforeDataOutParams":     dataPrefix,
+		"BeforeMessageOutParams":  msgPrefix,
+		"TransformLogLevelParams": levelPrefix,
+		"ShouldSendParams":        gatePrefix,
+	}
+	for name, got := range cases {
+		if got != "[auth]" {
+			t.Errorf("%s.Prefix = %q, want %q", name, got, "[auth]")
+		}
+	}
+}
+
 func TestChildInheritsFields(t *testing.T) {
 	log, lib := setup(t)
 	log = log.WithFields(loglayer.Fields{"parent": "yes"})

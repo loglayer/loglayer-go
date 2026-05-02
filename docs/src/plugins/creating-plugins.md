@@ -265,6 +265,18 @@ loglayer.NewSendGate("no-debug-to-shipping", func(p loglayer.ShouldSendParams) b
 
 If multiple plugins implement `SendGate`, the entry goes only when **every** plugin returns true.
 
+## Reading `params.Prefix`
+
+Every dispatch-time hook param struct (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`) carries the value attached via `WithPrefix` on the emitting logger (or set on `Config.Prefix` at construction) as `params.Prefix`. Empty string when no prefix was set.
+
+The prefix is intentionally read-only from the plugin's perspective: hooks that return modified data / messages / level / send-decision can act on the prefix value, but they don't propagate a modified prefix back to downstream hooks. Plugins that want to mutate the user-visible prefix today have to do it via `OnBeforeMessageOut` (rewriting `Messages[0]`); a future major version may expose the prefix as a writable signal once the legacy auto-prepend is removed.
+
+Use cases:
+
+- **Routing on prefix**: a `SendGate` could send `[audit]`-prefixed entries to an extra audit transport.
+- **Tagging**: a `DataHook` could emit `params.Prefix` as a top-level data key for downstream parsing.
+- **Filtering**: a `LevelHook` could downgrade `[debug-trace]`-prefixed entries to `Debug` regardless of the call-site level.
+
 ## Per-call `context.Context`
 
 All four dispatch-time hooks (`DataHook`, `MessageHook`, `LevelHook`, `SendGate`) receive a `Ctx context.Context` field on their params, populated from `WithContext(ctx)`. The value is `nil` when the user didn't attach a context.
