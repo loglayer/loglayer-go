@@ -21,7 +21,7 @@ Then `git push --force-with-lease` (never `--force`).
 
 ## Why
 
-GitHub's squash-merge takes the branch tip's tree and creates a commit with parent = current main. If a branch was based on stale main, files that were deleted on main but still exist on the branch get re-added by the squash-merge. monorel itself was bitten by this exact pattern: PR #30 deleted a `.changeset/*.md` file as part of the v0.7.0 release, then PR #31 (created from a stale local main) re-introduced the file via squash-merge, and the next release-pr cycle proposed to re-ship the same content as v0.8.0.
+GitHub's squash-merge takes the branch tip's tree and creates a commit with parent = current main. If a branch was based on stale main, files that were deleted on main but still exist on the branch get re-added by the squash-merge. monorel itself was bitten by this exact pattern: `disaresta-org/monorel#30` deleted a `.changeset/*.md` file as part of the v0.7.0 release, then `disaresta-org/monorel#31` (created from a stale local main) re-introduced the file via squash-merge, and the next release-pr cycle proposed to re-ship the same content as v0.8.0.
 
 The rule exists to make that class of bug impossible by construction. If the local branch is rebased onto current `origin/main` before the PR opens, the squash diff can never contain a file the most-recent release-cut commit deleted (because the branch already incorporated that deletion).
 
@@ -40,9 +40,9 @@ The rule exists to make that class of bug impossible by construction. If the loc
 
 ## Always run a code review before committing the work that finishes a task
 
-Before the commit that completes a feature, fix, or refactor (the kind of commit that ends up in a PR), invoke the `superpowers:requesting-code-review` skill OR the `/simplify` skill against the diff. Treat it as part of the commit ritual, like running tests.
+Before the commit that completes a feature, fix, or refactor (the kind of commit that ends up in a PR), invoke a code-review subagent against the diff. Treat it as part of the commit ritual, like running tests.
 
-Concretely:
+Concretely (skill names current as of this writing; substitute today's equivalent if they've been renamed):
 
 ```
 # After implementing a task and confirming go build / go test pass:
@@ -55,10 +55,10 @@ Then fix any Critical or Important findings before pushing. Minor findings are n
 
 ## Why
 
-Code reviews catch things humans (including me) consistently miss:
+Code reviews catch things humans (including me) consistently miss. Concrete cases from `disaresta-org/monorel#35` (the doctor-feature PR):
 
-- The `monorel doctor` PR went through a code review and the reviewer flagged `validate.Severity` vs `doctor.Severity` shape inconsistency, a misleading "match validate's envelope" JSON comment, and an `Options.ChangesetDir` field whose name didn't match its constraint. I would have shipped all three without the review.
-- A second review on the same PR caught a stale `ChangesetDir` reference in the `.changeset/<name>.md` body (which would have ended up verbatim in the released CHANGELOG) and two em-dashes in GoDoc that violated the project's own style rule.
+- First review flagged a `Severity` shape inconsistency between two sibling packages, a misleading JSON-envelope-parity comment, and an option field whose name didn't match its constraint. I would have shipped all three without the review.
+- Second review caught a stale field reference in the released changeset body (which would have ended up verbatim in the auto-generated CHANGELOG) and two em-dashes in GoDoc that violated the project's own style rule.
 - A `/simplify` pass on the same PR found three duplicated patterns worth extracting (dedup-and-sort helper, hardcoded check name literal, severity-label ternary).
 
 Skipping reviews "because the change is small" is the most common way regressions ship. The review subagents are cheap; the cost of an issue caught after merge (broken release pipeline, orphaned changelog text, `--no-verify` band-aids) is high.
