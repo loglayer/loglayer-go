@@ -33,6 +33,7 @@ ALL_MODULES=(
   transports/blank
   transports/central
   transports/charmlog
+  transports/cli
   transports/console
   transports/datadog
   transports/gcplogging
@@ -73,6 +74,7 @@ SHIPPED_MODULES=(
   transports/blank
   transports/central
   transports/charmlog
+  transports/cli
   transports/console
   transports/datadog
   transports/gcplogging
@@ -165,6 +167,7 @@ case "$op" in
       transports/blank
       transports/central
       transports/charmlog
+      transports/cli
       transports/console
       transports/datadog
       transports/gcplogging

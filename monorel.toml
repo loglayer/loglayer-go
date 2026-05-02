@@ -19,6 +19,11 @@ tag_prefix = "transports/charmlog"
 path       = "transports/charmlog"
 changelog  = "transports/charmlog/CHANGELOG.md"
 
+[packages."transports/cli"]
+tag_prefix = "transports/cli"
+path       = "transports/cli"
+changelog  = "transports/cli/CHANGELOG.md"
+
 [packages."transports/datadog"]
 tag_prefix = "transports/datadog"
 path       = "transports/datadog"

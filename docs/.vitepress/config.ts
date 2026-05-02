@@ -148,6 +148,7 @@ gtag('config', '${gaMeasurementId}');`,
             text: 'Renderers',
             items: [
               { text: 'Blank', link: '/transports/blank' },
+              { text: 'CLI', link: '/transports/cli' },
               { text: 'Console', link: '/transports/console' },
               { text: 'Pretty', link: '/transports/pretty' },
               { text: 'Structured', link: '/transports/structured' },
