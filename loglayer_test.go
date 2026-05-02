@@ -119,6 +119,34 @@ func TestPrefixDoesNotAffectParent(t *testing.T) {
 	assertLine(t, lib, loglayer.LogLevelInfo, "parent")
 }
 
+func TestPrefixSurfacedOnTransportParams(t *testing.T) {
+	// Prefix is exposed verbatim on TransportParams.Prefix so
+	// transports can render it independently. The legacy
+	// "messages[0] has prefix prepended" behavior is retained for
+	// backwards compatibility; both signals must be present.
+	log, lib := setup(t)
+	prefixed := log.WithPrefix("[auth]")
+	prefixed.Info("starting")
+
+	line := lib.PopLine()
+	if line.Prefix != "[auth]" {
+		t.Errorf("Prefix = %q, want %q", line.Prefix, "[auth]")
+	}
+	if got, _ := line.Messages[0].(string); got != "[auth] starting" {
+		t.Errorf("Messages[0] = %q, want %q (legacy compat)", got, "[auth] starting")
+	}
+}
+
+func TestPrefixEmptyWhenNotSet(t *testing.T) {
+	log, lib := setup(t)
+	log.Info("no prefix")
+
+	line := lib.PopLine()
+	if line.Prefix != "" {
+		t.Errorf("Prefix = %q, want empty", line.Prefix)
+	}
+}
+
 func TestChildInheritsFields(t *testing.T) {
 	log, lib := setup(t)
 	log = log.WithFields(loglayer.Fields{"parent": "yes"})

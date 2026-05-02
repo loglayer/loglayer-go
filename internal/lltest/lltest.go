@@ -31,6 +31,10 @@ type LogLine struct {
 	Groups []string
 	// Schema mirrors [loglayer.TransportParams.Schema].
 	Schema loglayer.Schema
+	// Prefix mirrors [loglayer.TransportParams.Prefix]: the value
+	// attached via WithPrefix, exposed verbatim. Empty when no
+	// prefix was set on the emitting logger.
+	Prefix string
 }
 
 // TestLoggingLibrary captures log lines for assertion in tests.
@@ -144,5 +148,6 @@ func (t *TestTransport) SendToLogger(params loglayer.TransportParams) {
 		Ctx:      params.Ctx,
 		Groups:   params.Groups,
 		Schema:   params.Schema,
+		Prefix:   params.Prefix,
 	})
 }
