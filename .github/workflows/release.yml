@@ -42,26 +42,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      # The monorel CI action runs `go mod tidy` per sub-module with
-      # GOPROXY=off, so it can only resolve modules already in the local
-      # cache. Sub-modules also require Go 1.25, which the runner default
-      # doesn't supply. Install Go 1.25 with caching enabled, then prime
-      # the module cache via `go mod download` per module so monorel's
-      # GOPROXY=off tidy can find every transitive dep.
+      # monorel runs `go mod tidy` with GOTOOLCHAIN=local during release,
+      # so Go must already be installed at a version satisfying every
+      # released sub-module's `go` directive (every sub-module here is
+      # `go 1.25.0`).
       - uses: actions/setup-go@v5
         with:
           go-version: '1.25'
           cache: true
           cache-dependency-path: '**/go.sum'
 
-      - name: Prime module cache for monorel tidy
-        run: |
-          set -euo pipefail
-          while IFS= read -r mod; do
-            (cd "$(dirname "$mod")" && go mod download)
-          done < <(find . -name go.mod -not -path './.git/*' | sort)
-
-      - uses: disaresta-org/monorel/ci/github@v0.11.0
+      - uses: disaresta-org/monorel/ci/github@v0.14.0
         with:
           command: release
 
