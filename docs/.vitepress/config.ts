@@ -137,12 +137,6 @@ gtag('config', '${gaMeasurementId}');`,
         ],
       },
       {
-        text: 'Security',
-        items: [
-          { text: 'Log Sanitization', link: '/log-sanitization' },
-        ],
-      },
-      {
         text: 'Transports',
         items: [
           { text: 'Overview', link: '/transports/' },
@@ -217,6 +211,12 @@ gtag('config', '${gaMeasurementId}');`,
         items: [
           { text: 'HTTP Middleware (loghttp)', link: '/integrations/loghttp' },
           { text: 'slog Handler', link: '/integrations/sloghandler' },
+        ],
+      },
+      {
+        text: 'Security',
+        items: [
+          { text: 'Log Sanitization', link: '/log-sanitization' },
         ],
       },
     ],
