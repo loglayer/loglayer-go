@@ -355,7 +355,7 @@ lines := lib.Lines()  // []lltest.LogLine; assert on Level, Messages, Data, Meta
 - `transports/console`: plain `fmt.Println`-style
 - `transports/structured`: one JSON object per entry (production)
 - `transports/pretty`: colorized terminal output (local dev)
-- `transports/cli`: tuned for command-line apps (short level prefixes, stdout/stderr routing, TTY-detected color, no timestamps)
+- `transports/cli`: tuned for command-line apps (short level prefixes, stdout/stderr routing, TTY-detected color, no timestamps, table rendering for slice-of-map metadata with `Config.TableColumnOrder` to pin leading columns)
 - `transports/testing`: in-memory capture for tests
 - `transports/blank`: user-supplied dispatch function
 
