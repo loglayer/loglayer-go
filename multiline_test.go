@@ -1,6 +1,7 @@
 package loglayer_test
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 
@@ -117,5 +118,40 @@ func TestMultiline_SplitAppliesAfterStringerFormatting(t *testing.T) {
 	want := []string{"stringer:x", "y"}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("Lines() = %#v, want %#v", got, want)
+	}
+}
+
+func TestMultiline_MarshalJSON(t *testing.T) {
+	m := loglayer.Multiline("a", "b", "c")
+	b, err := json.Marshal(m)
+	if err != nil {
+		t.Fatalf("Marshal err: %v", err)
+	}
+	want := `"a\nb\nc"`
+	if string(b) != want {
+		t.Errorf("Marshal = %s, want %s", b, want)
+	}
+}
+
+func TestMultiline_MarshalJSON_EmptyLines(t *testing.T) {
+	m := loglayer.Multiline()
+	b, err := json.Marshal(m)
+	if err != nil {
+		t.Fatalf("Marshal err: %v", err)
+	}
+	if string(b) != `""` {
+		t.Errorf("Marshal = %s, want \"\"", b)
+	}
+}
+
+func TestMultiline_MarshalJSON_RoundtripFromMetadata(t *testing.T) {
+	wrapped := map[string]any{"detail": loglayer.Multiline("x", "y")}
+	b, err := json.Marshal(wrapped)
+	if err != nil {
+		t.Fatalf("Marshal err: %v", err)
+	}
+	want := `{"detail":"x\ny"}`
+	if string(b) != want {
+		t.Errorf("Marshal = %s, want %s", b, want)
 	}
 }

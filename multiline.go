@@ -1,6 +1,7 @@
 package loglayer
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -53,4 +54,13 @@ func (m *MultilineMessage) Lines() []string {
 // every wrapper transport).
 func (m *MultilineMessage) String() string {
 	return strings.Join(m.lines, "\n")
+}
+
+// MarshalJSON returns the "\n"-joined string as a JSON string. Provided
+// so a wrapper that accidentally lands inside Fields or Metadata
+// serializes as a string rather than {} (no exported fields). Terminal
+// transports still sanitize metadata values to a single line in v1;
+// this just prevents silent data loss in JSON sinks.
+func (m *MultilineMessage) MarshalJSON() ([]byte, error) {
+	return json.Marshal(m.String())
 }
