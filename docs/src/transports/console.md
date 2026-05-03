@@ -42,7 +42,7 @@ logged in metadata="{\"id\":42,\"user\":\"alice\"}"
 ```
 
 ::: tip Multi-line messages
-Message strings have control bytes (including `\n`) stripped to defeat log-forging and terminal-escape smuggling. To author a genuinely multi-line message, wrap it with [`loglayer.Multiline(...)`](/logging-api/multiline). Each authored line is still sanitized for ANSI / CR / bidi / ZWSP individually; only the boundaries between authored elements are preserved.
+Message strings have control bytes (including `\n`) stripped to defeat log-forging and terminal-escape smuggling. To author a genuinely multi-line message, wrap it with [`loglayer.Multiline(...)`](/logging-api/multiline). Each authored line is still sanitized for ANSI / CR / bidi / ZWSP individually; only the boundaries between authored elements are preserved. See [Log Sanitization](/log-sanitization) for the full picture of what gets sanitized where.
 :::
 
 ## Output Routing
@@ -171,6 +171,8 @@ Map metadata is merged into the same data bag as fields and errors. Struct metad
 User message strings are sanitized for control characters before output (CR, LF, ESC, Unicode bidi controls, zero-width joiners; see `sanitize.Message`). Field and metadata **string values** are quoted and `\n` / `\r` / `\t` are escaped, so user-controlled string fields can't forge log lines. Non-string values pass through their typed renderer (numbers, bools, JSON encoding for nested), which doesn't introduce control characters.
 
 If your service has untrusted input flowing into a logged field and the resulting log lines are read by a parser sensitive to subtle escape variations, **use [`structured`](/transports/structured) instead**. Structured emits JSON; encoding/json applies a strict, well-specified escaping. Console (like pretty) is for the developer's terminal during local dev.
+
+For the full picture of where loglayer-go sanitizes user-controlled strings (and where it doesn't), see [Log Sanitization](/log-sanitization).
 
 ## Fatal Behavior
 

@@ -82,3 +82,5 @@ If you need multi-line value rendering for fields specifically, file an issue de
 :::
 
 Plugin authors who walk `params.Messages` should preserve `*MultilineMessage` values; see [Creating plugins](/plugins/creating-plugins#preserving-multilinemessage-values). One built-in plugin where the wrapper is intentionally collapsed is `fmtlog`'s format-string mode; see [Format Strings](/plugins/fmtlog#interaction-with-multiline) for the workaround.
+
+For the full picture of what gets sanitized where (across every transport), see [Log Sanitization](/log-sanitization).

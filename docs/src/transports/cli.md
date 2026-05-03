@@ -48,7 +48,7 @@ error: connection refused
 `log.Info` writes to stdout with no decoration. `log.Warn` and `log.Error` write to stderr with their respective short prefixes. When stdout is a TTY, the warn line is yellow and the error line is red.
 
 ::: tip Multi-line messages
-Message strings have control bytes (including `\n`) stripped to defeat log-forging and terminal-escape smuggling. To author a genuinely multi-line message, wrap it with [`loglayer.Multiline(...)`](/logging-api/multiline). Each authored line is still sanitized for ANSI / CR / bidi / ZWSP individually; only the boundaries between authored elements are preserved.
+Message strings have control bytes (including `\n`) stripped to defeat log-forging and terminal-escape smuggling. To author a genuinely multi-line message, wrap it with [`loglayer.Multiline(...)`](/logging-api/multiline). Each authored line is still sanitized for ANSI / CR / bidi / ZWSP individually; only the boundaries between authored elements are preserved. See [Log Sanitization](/log-sanitization) for the full picture of what gets sanitized where.
 :::
 
 ## Config

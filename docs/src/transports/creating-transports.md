@@ -234,6 +234,15 @@ For transports with no underlying library (anything you write from scratch), ret
 
 When multiple transports are configured, they share the same `TransportParams`. Don't modify `params.Data`, `params.Messages`, or `params.Metadata` in place, copy first if you need to transform.
 
+## Sanitizing user-controlled strings
+
+If your transport renders to a TTY (or to anything that could be tail-followed in a terminal), sanitize message content and any other user-controlled string before writing. The shared helpers:
+
+- [`transport.AssembleMessage(messages, sanitize.Message)`](/log-sanitization#for-transport-authors): per-line, `*MultilineMessage`-aware message assembly. Use this for the message body.
+- `utils/sanitize.Message(string) string`: drops control bytes and bidi/zero-width formatting chars. Use this for prefixes, field values rendered as text, and anything else user-controlled.
+
+JSON-shaped transports and wrappers around existing logger libraries should NOT sanitize: the JSON encoder (or the underlying library's encoder) handles control-byte escaping. See [Log Sanitization](/log-sanitization) for the threat model and the full decision tree.
+
 ## Handling Errors
 
 `SendToLogger` doesn't return an error. The dispatch path can't propagate transport failures back to the caller, so error handling is the transport's responsibility:

@@ -137,6 +137,12 @@ gtag('config', '${gaMeasurementId}');`,
         ],
       },
       {
+        text: 'Security',
+        items: [
+          { text: 'Log Sanitization', link: '/log-sanitization' },
+        ],
+      },
+      {
         text: 'Transports',
         items: [
           { text: 'Overview', link: '/transports/' },
