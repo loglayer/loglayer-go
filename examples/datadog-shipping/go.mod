@@ -11,9 +11,9 @@ replace (
 
 require (
 	go.loglayer.dev/transports/datadog/v2 v2.0.0-00010101000000-000000000000
-	go.loglayer.dev/transports/http/v2 v2.0.0-00010101000000-000000000000
+	go.loglayer.dev/transports/http/v2 v2.0.1
 	go.loglayer.dev/transports/pretty/v2 v2.0.0-00010101000000-000000000000
-	go.loglayer.dev/v2 v2.0.0-00010101000000-000000000000
+	go.loglayer.dev/v2 v2.0.1
 )
 
 require (

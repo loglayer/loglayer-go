@@ -12,7 +12,7 @@ replace (
 require (
 	go.loglayer.dev/integrations/loghttp/v2 v2.0.0-00010101000000-000000000000
 	go.loglayer.dev/transports/structured/v2 v2.0.0-00010101000000-000000000000
-	go.loglayer.dev/v2 v2.0.0-00010101000000-000000000000
+	go.loglayer.dev/v2 v2.0.1
 )
 
 require github.com/goccy/go-json v0.10.6 // indirect

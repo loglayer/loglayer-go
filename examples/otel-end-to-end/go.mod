@@ -13,7 +13,7 @@ replace (
 require (
 	go.loglayer.dev/plugins/oteltrace/v2 v2.0.0-00010101000000-000000000000
 	go.loglayer.dev/transports/otellog/v2 v2.0.0-00010101000000-000000000000
-	go.loglayer.dev/v2 v2.0.0-00010101000000-000000000000
+	go.loglayer.dev/v2 v2.0.1
 	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/exporters/stdout/stdoutlog v0.19.0
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.43.0
