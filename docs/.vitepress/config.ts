@@ -98,7 +98,7 @@ gtag('config', '${gaMeasurementId}');`,
     outline: { level: [2, 3] },
     nav: [
       { text: '<img alt="Latest version" src="https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=v*&amp;sort=date&amp;label=version&amp;style=flat-square&color=blue" />', link: 'https://github.com/loglayer/loglayer-go/releases' },
-      { text: '<img alt="Go Reference" src="https://pkg.go.dev/badge/go.loglayer.dev.svg" />', link: 'https://pkg.go.dev/go.loglayer.dev' },
+      { text: '<img alt="Go Reference" src="https://pkg.go.dev/badge/go.loglayer.dev/v2.svg" />', link: 'https://pkg.go.dev/go.loglayer.dev/v2' },
       { text: "What's New", link: '/whats-new' },
       { text: 'Get Started', link: '/getting-started' },
       { text: 'TypeScript Version', link: 'https://loglayer.dev' },
