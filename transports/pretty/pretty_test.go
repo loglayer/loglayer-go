@@ -345,3 +345,44 @@ func TestMultipleMessages(t *testing.T) {
 		t.Errorf("expected joined message, got %q", got)
 	}
 }
+
+func TestPretty_MultilineRendersAcrossLines(t *testing.T) {
+	log, buf := newLogger(pretty.Config{})
+	log.Info(loglayer.Multiline("Header:", "  port: 8080"))
+	got := buf.String()
+	if !strings.Contains(got, "Header:\n  port: 8080") {
+		t.Errorf("expected multi-line headline; got %q", got)
+	}
+}
+
+func TestPretty_BareNewlineStringStillStripped(t *testing.T) {
+	// No wrapper, no trust: a bare "\n" must be stripped.
+	log, buf := newLogger(pretty.Config{})
+	log.Info("a\nb")
+	got := buf.String()
+	// The pretty header is one line; the body should be "ab" with no
+	// newline inside it. Total newlines in the output should be 1
+	// (the trailing one from Fprintln).
+	if strings.Count(got, "\n") != 1 {
+		t.Errorf("bare \\n must strip; rendered: %q", got)
+	}
+}
+
+func TestPretty_MixedStringAndMultiline(t *testing.T) {
+	log, buf := newLogger(pretty.Config{})
+	log.Info("Header:", loglayer.Multiline("a", "b"))
+	got := buf.String()
+	if !strings.Contains(got, "Header: a\nb") {
+		t.Errorf("expected mixed multi-line; got %q", got)
+	}
+}
+
+func TestPretty_PrefixFoldsIntoFirstAuthoredLine(t *testing.T) {
+	log, buf := newLogger(pretty.Config{})
+	prefixed := log.WithPrefix("[svc]")
+	prefixed.Info(loglayer.Multiline("a", "b"))
+	got := buf.String()
+	if !strings.Contains(got, "[svc] a\nb") {
+		t.Errorf("expected prefix on first line; got %q", got)
+	}
+}
