@@ -19,6 +19,11 @@ var (
 	zeroWidthSpace = string(rune(0x200b)) // U+200B ZERO WIDTH SPACE
 )
 
+// stringerImpl implements fmt.Stringer for testing Stringer values in JoinPrefixAndMessages.
+type stringerImpl struct{ v string }
+
+func (s stringerImpl) String() string { return "s:" + s.v }
+
 func TestWriterOrStderr(t *testing.T) {
 	if got := transport.WriterOrStderr(nil); got != os.Stderr {
 		t.Errorf("nil case: got %v, want os.Stderr", got)
@@ -84,11 +89,23 @@ func TestJoinPrefixAndMessages(t *testing.T) {
 			t.Errorf("expected empty, got %v", got)
 		}
 	})
-	t.Run("non-string messages[0] returns input slice unchanged", func(t *testing.T) {
+	t.Run("non-string messages[0] folds prefix via %v formatting", func(t *testing.T) {
 		in := []any{42, "rest"}
 		got := transport.JoinPrefixAndMessages("[p]", in)
-		if len(got) != len(in) || got[0] != 42 || got[1] != "rest" {
-			t.Errorf("non-string first arg should pass through: %v", got)
+		if len(got) != 2 {
+			t.Fatalf("len(got) = %d, want 2", len(got))
+		}
+		if got[0] != "[p] 42" {
+			t.Errorf("got[0] = %v, want %q", got[0], "[p] 42")
+		}
+		if got[1] != "rest" {
+			t.Errorf("got[1] = %v, want %q", got[1], "rest")
+		}
+	})
+	t.Run("Stringer messages[0] folds prefix via String()", func(t *testing.T) {
+		got := transport.JoinPrefixAndMessages("[p]", []any{stringerImpl{v: "x"}})
+		if got[0] != "[p] s:x" {
+			t.Errorf("got[0] = %v, want %q", got[0], "[p] s:x")
 		}
 	})
 	t.Run("normal case prepends prefix and returns fresh slice", func(t *testing.T) {
