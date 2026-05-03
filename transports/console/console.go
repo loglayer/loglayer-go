@@ -7,6 +7,7 @@ package console
 import (
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"sort"
 	"strconv"
@@ -118,9 +119,7 @@ func buildMessages(params loglayer.TransportParams, cfg Config) []any {
 	// MessageField: single structured object as the sole arg.
 	if cfg.MessageField != "" {
 		obj := make(map[string]any, len(combined)+3)
-		for k, v := range combined {
-			obj[k] = v
-		}
+		maps.Copy(obj, combined)
 		obj[cfg.MessageField] = headline
 		if cfg.DateField != "" {
 			obj[cfg.DateField] = dateValue(cfg)
