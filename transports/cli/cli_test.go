@@ -866,3 +866,19 @@ func TestDisableFatalExitOptOut(t *testing.T) {
 		t.Errorf("fatal output missing: %q", stderr.String())
 	}
 }
+
+func TestCLI_MultilineRendersAcrossLines(t *testing.T) {
+	var buf bytes.Buffer
+	log := loglayer.New(loglayer.Config{
+		Transport: clitr.New(clitr.Config{
+			Stdout: &buf,
+			Color:  clitr.ColorNever,
+		}),
+	})
+	log.Info(loglayer.Multiline("Header:", "  port: 8080", "  host: ::1"))
+	got := buf.String()
+	want := "Header:\n  port: 8080\n  host: ::1\n"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
