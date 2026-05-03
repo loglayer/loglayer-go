@@ -7,6 +7,40 @@ description: Latest features and improvements in LogLayer for Go.
 
 - See the [main `CHANGELOG.md`](https://github.com/loglayer/loglayer-go/blob/main/CHANGELOG.md) for the auto-generated per-release log.
 
+## May 03, 2026
+
+`v2.1.0`:
+
+**`loglayer.Multiline(lines ...any)`** is a new value-wrapper that lets terminal transports preserve authored "\n" boundaries. The cli, pretty, and console transports collapse bare-string newlines to one line for security (log-forging, terminal-escape smuggling); the wrapper is a per-call developer-issued opt-in to that defense. Each authored line is still individually sanitized; only the boundaries between them are honored. JSON sinks and wrapper transports flatten via `Stringer` / `MarshalJSON` with no code change. See [Multi-line messages](/logging-api/multiline).
+
+The change also fixes a pre-existing bug in `transport.JoinPrefixAndMessages` where `WithPrefix` was silently dropped when `Messages[0]` was not a string. The prefix now folds in front of the `%v`-formatted first message.
+
+A new [Log Sanitization](/log-sanitization) reference page covers what gets sanitized where, the threat model (log forging, terminal escape smuggling, Trojan Source), and the decision tree for transport authors.
+
+`transports/cli` `v2.2.0`:
+
+The cli transport now honors `loglayer.Multiline` values: authored multi-line content renders across rows on stdout / stderr while bare-string newlines are still stripped. Per-line sanitization for ANSI / CR / bidi / ZWSP is preserved within each authored line.
+
+`transports/cli` `v2.1.0`:
+
+New `Config.TableColumnOrder []string` knob pins the leading column order for slice-of-map metadata table rendering. Keys named here render in the listed order; the rest sort lexicographically and follow. Empty / nil keeps the previous fully-lexicographic behavior. See [Pinning column order](/transports/cli#pinning-column-order).
+
+`transports/pretty` `v2.1.0` and `transports/console` `v2.1.0`:
+
+Same Multiline support as cli: authored multi-line content renders across rows; bare-string newlines still strip; per-line sanitization preserved.
+
+`transports/http` `v2.1.0`:
+
+New `Config.String()` redacts `Headers` values so an accidental `log.Info(cfg)` or `fmt.Sprintf("%v", cfg)` can't leak credentials passed via `Authorization` / `X-API-Key` / similar headers. Header keys stay visible for debuggability. Mirrors the redaction shape already used by `transports/datadog`.
+
+`defaultCheckRedirect` now compares hosts case-insensitively, so legitimate same-host redirects with mixed-case URLs aren't refused. Cross-host refusal still applies; ports are still compared exactly.
+
+New `Config.ShutdownTimeout` (default 5s) bounds how long `Close` waits for in-flight requests to finish during shutdown. When the timeout elapses, the worker's outbound HTTP requests are cancelled via context so `Close` can return even if the endpoint is wedged; previously a stuck endpoint could pin `Close` for up to the per-request `Client.Timeout` (30s default), and the parent `flushTransports`'s 5s timeout would leak the close goroutine.
+
+`v2.0.1`:
+
+Republished every module with a clean `go.mod`. The v2.0.0 cascade shipped sub-module `go.mod` files containing dev-only `replace` directives and placeholder pseudo-version requires; downstream consumers saw `go mod tidy` 404 on the placeholders. No API changes; re-`go get` to pick up the cleaned modules.
+
 ## May 02, 2026
 
 `v2.0.0`:
@@ -17,23 +51,9 @@ description: Latest features and improvements in LogLayer for Go.
 
 `Prefix` is now exposed as a separate field on `TransportParams` and on every dispatch-time plugin hook param struct (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`). Transports and plugins can render or react to the prefix independently from the message string. The legacy "prepend prefix into `Messages[0]`" auto-mutation in v1.7.x stays in place for backwards compatibility within the v1 line; v2.0.0 removes it.
 
-**`loglayer.Multiline(lines ...any)`** is a new value-wrapper that lets terminal transports preserve authored "\n" boundaries. The cli, pretty, and console transports collapse bare-string newlines to one line for security (log-forging, terminal-escape smuggling); the wrapper is a per-call developer-issued opt-in to that defense. Each authored line is still individually sanitized; only the boundaries between them are honored. JSON sinks and wrapper transports flatten via `Stringer` / `MarshalJSON` with no code change. See [Multi-line messages](/logging-api/multiline).
-
-The change also fixes a pre-existing bug in `transport.JoinPrefixAndMessages` where `WithPrefix` was silently dropped when `Messages[0]` was not a string. The prefix now folds in front of the `%v`-formatted first message.
-
 `transports/cli`:
 
 Initial release. New [CLI transport](/transports/cli) tuned for command-line app output: short level prefixes, stdout / stderr routing, TTY-detected ANSI color, no timestamps. Includes table rendering for slice-of-map metadata so the same call site emits a CLI table and a JSON array depending on the transport.
-
-New `Config.TableColumnOrder []string` knob pins the leading column order for slice-of-map metadata table rendering. Keys named here render in the listed order; the rest sort lexicographically and follow. Empty / nil keeps the previous fully-lexicographic behavior. See [Pinning column order](/transports/cli#pinning-column-order).
-
-`transports/http`:
-
-New `Config.String()` redacts `Headers` values so an accidental `log.Info(cfg)` or `fmt.Sprintf("%v", cfg)` can't leak credentials passed via `Authorization` / `X-API-Key` / similar headers. Header keys stay visible for debuggability. Mirrors the redaction shape already used by `transports/datadog`.
-
-`defaultCheckRedirect` now compares hosts case-insensitively, so legitimate same-host redirects with mixed-case URLs aren't refused. Cross-host refusal still applies; ports are still compared exactly.
-
-New `Config.ShutdownTimeout` (default 5s) bounds how long `Close` waits for in-flight requests to finish during shutdown. When the timeout elapses, the worker's outbound HTTP requests are cancelled via context so `Close` can return even if the endpoint is wedged; previously a stuck endpoint could pin `Close` for up to the per-request `Client.Timeout` (30s default), and the parent `flushTransports`'s 5s timeout would leak the close goroutine.
 
 ## Apr 30, 2026
 

@@ -187,7 +187,12 @@ func (t *Transport) SendToLogger(p loglayer.TransportParams) {
 
 The core does NOT prepend `params.Prefix` into `Messages[0]`. Each transport decides how to render the prefix:
 
-- **Fold the prefix into the message** (simplest): call `transport.JoinPrefixAndMessages(params.Prefix, params.Messages)` at the top of your `SendToLogger`. The helper returns `Messages` unchanged when `Prefix` is empty (fast path) or when `Messages[0]` isn't a string; otherwise it returns a fresh slice with `prefix + " "` prepended to `Messages[0]`. The output reads as one blob (`"[prefix] message body"`) which is what most renderer / wrapper transports want.
+- **Fold the prefix into the message** (simplest): call `transport.JoinPrefixAndMessages(params.Prefix, params.Messages)` at the top of your `SendToLogger`. The helper returns `Messages` unchanged only when `Prefix` is empty (fast path); otherwise it folds the prefix in front of `Messages[0]` based on the element's type:
+  - `string`: prepend `prefix + " "` directly.
+  - `*loglayer.MultilineMessage`: prepend `prefix + " "` to the first authored line and rebuild the wrapper, so multi-line content renders with the prefix on line 1 only.
+  - any other value: format with `fmt.Sprintf("%v", v)` and prepend the prefix in front, so types implementing `Stringer` flow correctly.
+
+  The output reads as one blob (`"[prefix] message body"`) which is what most renderer / wrapper transports want.
 - **Render the prefix separately**: read `params.Prefix` directly and render it however suits your transport. A renderer can color the prefix differently from the message body; a structured transport can emit it as its own top-level field; a wrapper transport can forward it to the underlying logger's structured-field API (`zerolog.Event.Str("prefix", p.Prefix)`, etc.). Don't call `JoinPrefixAndMessages` in this path.
 
 ```go
