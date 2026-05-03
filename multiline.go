@@ -22,14 +22,21 @@ type MultilineMessage struct {
 // formatting, nested-wrapper flattening, and per-arg "\n" splitting.
 func Multiline(lines ...any) *MultilineMessage {
 	out := make([]string, 0, len(lines))
+	appendSplit := func(s string) {
+		if s == "" {
+			out = append(out, "")
+			return
+		}
+		out = append(out, strings.Split(s, "\n")...)
+	}
 	for _, l := range lines {
 		switch v := l.(type) {
 		case *MultilineMessage:
 			out = append(out, v.lines...)
 		case string:
-			out = append(out, v)
+			appendSplit(v)
 		default:
-			out = append(out, fmt.Sprintf("%v", v))
+			appendSplit(fmt.Sprintf("%v", v))
 		}
 	}
 	return &MultilineMessage{lines: out}

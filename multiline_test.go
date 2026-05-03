@@ -80,3 +80,42 @@ func TestMultiline_NestedDeep(t *testing.T) {
 		t.Errorf("deep-nested Lines() = %#v, want %#v", got, want)
 	}
 }
+
+func TestMultiline_SplitsEmbeddedNewline(t *testing.T) {
+	m := loglayer.Multiline("a\nb")
+	got := m.Lines()
+	want := []string{"a", "b"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("Lines() = %#v, want %#v", got, want)
+	}
+	if s := m.String(); s != "a\nb" {
+		t.Errorf("String() = %q, want %q", s, "a\nb")
+	}
+}
+
+func TestMultiline_SplitMixedWithLiteralArgs(t *testing.T) {
+	m := loglayer.Multiline("a\nb", "c")
+	got := m.Lines()
+	want := []string{"a", "b", "c"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("Lines() = %#v, want %#v", got, want)
+	}
+}
+
+func TestMultiline_SplitCRLFKeepsCRForSanitizerToStrip(t *testing.T) {
+	m := loglayer.Multiline("a\r\nb")
+	got := m.Lines()
+	want := []string{"a\r", "b"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("Lines() = %#v, want %#v", got, want)
+	}
+}
+
+func TestMultiline_SplitAppliesAfterStringerFormatting(t *testing.T) {
+	m := loglayer.Multiline(stringerOnly{v: "x\ny"})
+	got := m.Lines()
+	want := []string{"stringer:x", "y"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("Lines() = %#v, want %#v", got, want)
+	}
+}
