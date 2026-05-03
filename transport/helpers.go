@@ -59,6 +59,10 @@ func JoinPrefixAndMessages(prefix string, messages []any) []any {
 	switch v := messages[0].(type) {
 	case *loglayer.MultilineMessage:
 		lines := v.Lines()
+		if len(lines) == 0 {
+			out[0] = loglayer.NewMultilineMessage([]string{prefix})
+			break
+		}
 		head := prefix + " " + lines[0]
 		rebuilt := make([]string, len(lines))
 		rebuilt[0] = head

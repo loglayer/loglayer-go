@@ -495,3 +495,26 @@ func TestJoinPrefixAndMessages_MultilineDoesNotMutateInput(t *testing.T) {
 		t.Errorf("original mutated: %#v", got)
 	}
 }
+
+func TestJoinPrefixAndMessages_EmptyMultilineDoesNotPanic(t *testing.T) {
+	// Regression: WithPrefix + empty Multiline must not panic.
+	// Before the fix, the helper indexed Lines()[0] unconditionally.
+	in := []any{loglayer.Multiline()}
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("panicked on empty Multiline + prefix: %v", r)
+		}
+	}()
+	got := transport.JoinPrefixAndMessages("[p]", in)
+	if len(got) != 1 {
+		t.Fatalf("len(got) = %d, want 1", len(got))
+	}
+	m, ok := got[0].(*loglayer.MultilineMessage)
+	if !ok {
+		t.Fatalf("got[0] = %T, want *MultilineMessage", got[0])
+	}
+	// The "[p]" prefix becomes the only authored line.
+	if lines := m.Lines(); len(lines) != 1 || lines[0] != "[p]" {
+		t.Errorf("lines = %#v, want [\"[p]\"]", lines)
+	}
+}
