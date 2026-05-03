@@ -17,6 +17,12 @@ github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRI
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
+go.loglayer.dev/plugins/plugintest/v2 v2.0.1 h1:LirZvR4XdbsnduUkjn72C0Ni1A9TDnpjMXNK59qRhCw=
+go.loglayer.dev/plugins/plugintest/v2 v2.0.1/go.mod h1:i+iSoeHFVhNeLdbpHIZCXVzse4dmGcucJ5yKnpbEHlU=
+go.loglayer.dev/transports/testing/v2 v2.0.1 h1:+xjONuRjjP2Z+CNa+wzfwoTCAn0VexRtd/d48DHCb/Q=
+go.loglayer.dev/transports/testing/v2 v2.0.1/go.mod h1:12kl35hwKAZctpUrkGiV67O2ZF41Drh21Rhad4lul6M=
+go.loglayer.dev/v2 v2.0.1 h1:B7oYpkfMky0UG/N8IdKeIiiTi6h7eyj5NvRyEth9DHI=
+go.loglayer.dev/v2 v2.0.1/go.mod h1:+BWhs5AyICvCLBz07qHnCE12W34tArUWfXOba0Ct/QI=
 go.opentelemetry.io/auto/sdk v1.2.1 h1:jXsnJ4Lmnqd11kwkBV2LgLoFMZKizbCi5fNZ/ipaZ64=
 go.opentelemetry.io/auto/sdk v1.2.1/go.mod h1:KRTj+aOaElaLi+wW1kO/DZRXwkF4C5xPbEe3ZiIhN7Y=
 go.opentelemetry.io/otel v1.43.0 h1:mYIM03dnh5zfN7HautFE4ieIig9amkNANT+xcVxAj9I=

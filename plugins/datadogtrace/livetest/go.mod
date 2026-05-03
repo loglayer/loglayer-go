@@ -12,8 +12,8 @@ replace (
 require (
 	github.com/DataDog/dd-trace-go/v2 v2.7.3
 	go.loglayer.dev/plugins/datadogtrace/v2 v2.0.0-00010101000000-000000000000
-	go.loglayer.dev/transports/testing/v2 v2.0.0-00010101000000-000000000000
-	go.loglayer.dev/v2 v2.0.0-00010101000000-000000000000
+	go.loglayer.dev/transports/testing/v2 v2.0.1
+	go.loglayer.dev/v2 v2.0.1
 )
 
 require (
