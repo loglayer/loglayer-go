@@ -16,11 +16,24 @@ type MultilineMessage struct {
 	lines []string
 }
 
-// Multiline wraps the supplied arguments as separate authored lines.
+// Multiline wraps lines so terminal transports render them on separate
+// rows.
 //
-// This minimal form treats every argument as already-string-shaped.
-// Later steps in this plan extend the constructor with non-string %v
-// formatting, nested-wrapper flattening, and per-arg "\n" splitting.
+// Construction-time normalization, applied uniformly so every transport
+// sees the same Lines() shape:
+//
+//  1. Non-string args convert via fmt.Sprintf("%v", v).
+//  2. *MultilineMessage args flatten: their Lines() append into the
+//     outer's slice.
+//  3. Every resulting string is split on "\n", and each piece becomes
+//     one entry of Lines(). After this step, no Lines() entry contains
+//     an embedded "\n".
+//
+// The split rule means Multiline("a\nb") and Multiline("a","b") are
+// interchangeable. CRLF input (e.g. "a\r\nb") splits to ["a\r","b"]
+// and the trailing "\r" is stripped by per-line sanitization in
+// terminal transports, yielding the same rendered output as
+// Multiline("a","b").
 func Multiline(lines ...any) *MultilineMessage {
 	out := make([]string, 0, len(lines))
 	appendSplit := func(s string) {
