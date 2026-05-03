@@ -81,8 +81,4 @@ JSON sinks (structured + every wrapper transport) serialize `Multiline` values v
 If you need multi-line value rendering for fields specifically, file an issue describing the use case; the right shape is a separate design (probably routing through pretty's expanded-YAML mode).
 :::
 
-## Plugin interactions
-
-Plugin hooks that walk `params.Messages` see the typed value. Most hooks don't need to care: calling `transport.JoinMessages(params.Messages)` flattens correctly via `Stringer`.
-
-The one footgun: if you combine `Multiline` with the `fmtlog` plugin's format-string mode (`log.Info("data: %v", loglayer.Multiline(...))`), `fmt.Sprintf` resolves the wrapper to its `String()` value before the message reaches the transport. The trust signal is lost, and downstream sanitize strips the inner `\n`. To preserve the multi-line shape, construct the wrapper with the formatted lines yourself instead of letting `fmtlog` do it.
+Plugin authors who walk `params.Messages` should preserve `*MultilineMessage` values; see [Creating plugins](/plugins/creating-plugins#preserving-multilinemessage-values). One built-in plugin where the wrapper is intentionally collapsed is `fmtlog`'s format-string mode; see [Format Strings](/plugins/fmtlog#interaction-with-multiline) for the workaround.
