@@ -127,7 +127,7 @@ func buildMessages(params loglayer.TransportParams, cfg Config) []any {
 		for k, v := range combined {
 			obj[k] = v
 		}
-		obj[cfg.MessageField] = transport.JoinMessages(messages)
+		obj[cfg.MessageField] = transport.AssembleMessage(params.Messages, sanitize.Message)
 		if cfg.DateField != "" {
 			obj[cfg.DateField] = dateValue(cfg)
 		}

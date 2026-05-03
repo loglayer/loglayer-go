@@ -2,6 +2,7 @@ package console_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -189,5 +190,47 @@ func TestConsoleLevelFiltering(t *testing.T) {
 	log.Warn("passes")
 	if !strings.Contains(buf.String(), "passes") {
 		t.Errorf("warn should pass, got: %q", buf.String())
+	}
+}
+
+func TestConsole_MultilineInMessageFieldMode(t *testing.T) {
+	var buf bytes.Buffer
+	log := loglayer.New(loglayer.Config{
+		Transport: console.New(console.Config{
+			Writer:       &buf,
+			MessageField: "msg",
+			Stringify:    true,
+			DateFn:       func() string { return "TIME" },
+		}),
+	})
+	log.Info(loglayer.Multiline("a", "b"))
+	var obj map[string]any
+	if err := json.Unmarshal(bytes.TrimSpace(buf.Bytes()), &obj); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if obj["msg"] != "a\nb" {
+		t.Errorf("msg = %v, want %q", obj["msg"], "a\nb")
+	}
+}
+
+func TestConsole_MultilineLinesAreSanitized(t *testing.T) {
+	var buf bytes.Buffer
+	log := loglayer.New(loglayer.Config{
+		Transport: console.New(console.Config{
+			Writer:       &buf,
+			MessageField: "msg",
+			Stringify:    true,
+			DateFn:       func() string { return "TIME" },
+		}),
+	})
+	log.Info(loglayer.Multiline("clean", "evil\x1b[31mred"))
+	var obj map[string]any
+	if err := json.Unmarshal(bytes.TrimSpace(buf.Bytes()), &obj); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	// sanitize.Message drops the ESC byte (0x1b) but printable ANSI
+	// sequence bytes like "[31m" pass through unchanged.
+	if obj["msg"] != "clean\nevil[31mred" {
+		t.Errorf("msg = %v, want %q (per-line sanitize must strip ESC byte)", obj["msg"], "clean\nevil[31mred")
 	}
 }
