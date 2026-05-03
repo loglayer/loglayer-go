@@ -1,6 +1,6 @@
 # go.loglayer.dev/plugins/oteltrace
 
-[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/plugins/oteltrace.svg)](https://pkg.go.dev/go.loglayer.dev/plugins/oteltrace)
+[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/plugins/oteltrace/v2.svg)](https://pkg.go.dev/go.loglayer.dev/plugins/oteltrace/v2)
 
 LogLayer plugin that injects the active OTel `trace_id` and `span_id` (plus optional trace flags, W3C trace state, and W3C baggage members) into every log entry that carries a `context.Context`. Use with non-OTel transports for log/trace correlation; `transports/otellog` does this automatically via the SDK.
 
