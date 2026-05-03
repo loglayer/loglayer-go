@@ -285,6 +285,26 @@ func TestDatadog_ConfigStringRedactsAPIKey(t *testing.T) {
 	}
 }
 
+// The embedded HTTP config's Headers map is the realistic
+// credential-leak surface for downstream wrappers (callers reach for it
+// to add custom auth headers alongside DD-API-KEY). httptr.Config.String
+// redacts those values; assert that an accidental
+// fmt.Sprintf("%v", cfg.HTTP) doesn't ship them.
+func TestDatadog_ConfigHTTPHeadersRedacted(t *testing.T) {
+	const secret = "Bearer custom-auth-token-keep-me-out-of-logs"
+	httpCfg := httptr.Config{
+		Headers: map[string]string{"Authorization": secret},
+	}
+
+	v := fmt.Sprintf("%v", httpCfg)
+	if strings.Contains(v, secret) {
+		t.Errorf("HTTP.Headers value leaked through %%v: %s", v)
+	}
+	if !strings.Contains(v, "Authorization") {
+		t.Errorf("HTTP.Headers key should be preserved for debuggability: %s", v)
+	}
+}
+
 // The APIKey field is tagged json:"-" so it's never included in JSON
 // output. Closes the defense-in-depth leak path where a user does
 // log.WithMetadata(cfg).Info(...) through a JSON-emitting transport.

@@ -65,6 +65,8 @@ type Config struct {
     BatchInterval time.Duration // default 5s
     BufferSize    int           // default 1024
 
+    ShutdownTimeout time.Duration // default 5s
+
     OnError func(err error, entries []Entry) // default writes to os.Stderr
 }
 ```
@@ -142,6 +144,12 @@ Size of the internal channel buffering entries between `SendToLogger` and the wo
 
 When the buffer is full, entries are **dropped** and `OnError(ErrBufferFull, [entry])` is called. The dispatch path (the `log.Info(...)` caller's goroutine) never blocks.
 
+### `ShutdownTimeout`
+
+Caps how long `Close` waits for in-flight HTTP requests to finish during shutdown. Defaults to 5 seconds, matching loglayer's default `Config.TransportCloseTimeout`. When the timeout elapses, the worker's outbound HTTP requests are cancelled via context so `Close` can return even if the endpoint is wedged; queued-but-unsent entries surface via `OnError` as `context.Canceled`.
+
+Without this bound, a stuck endpoint could pin `Close` for up to the per-request `Client.Timeout` (30s by default) per pending batch, and the parent `flushTransports` (`loglayer.Config.TransportCloseTimeout`, 5s default) would abandon the close goroutine on overflow rather than tear it down.
+
 ### `OnError`
 
 Called when something goes wrong:
@@ -183,7 +191,7 @@ log := loglayer.New(loglayer.Config{Transport: tr, ...})
 defer tr.Close()
 ```
 
-After `Close`, subsequent `SendToLogger` calls drop the entry and invoke `OnError(ErrClosed, nil)`. `Close` is idempotent.
+After `Close`, subsequent `SendToLogger` calls drop the entry and invoke `OnError(ErrClosed, nil)`. `Close` is idempotent and bounded by [`ShutdownTimeout`](#shutdowntimeout).
 
 ## Custom Encoder Example
 
