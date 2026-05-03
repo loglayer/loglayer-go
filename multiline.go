@@ -1,5 +1,7 @@
 package loglayer
 
+import "strings"
+
 // MultilineMessage wraps a sequence of authored lines so terminal
 // transports render them on separate rows. Construct with [Multiline].
 //
@@ -28,4 +30,11 @@ func Multiline(lines ...any) *MultilineMessage {
 // when rendering each line independently.
 func (m *MultilineMessage) Lines() []string {
 	return m.lines
+}
+
+// String joins the lines with "\n". Used by the fmt.Stringer fallback
+// path in transports that don't special-case the type (JSON sinks and
+// every wrapper transport).
+func (m *MultilineMessage) String() string {
+	return strings.Join(m.lines, "\n")
 }
