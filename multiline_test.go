@@ -56,3 +56,27 @@ func TestMultiline_StringerArgsCallStringMethod(t *testing.T) {
 		t.Errorf("Lines() = %#v, want [stringer:x]", got)
 	}
 }
+
+func TestMultiline_NestedFlattens(t *testing.T) {
+	inner := loglayer.Multiline("a", "b")
+	outer := loglayer.Multiline(inner, "c")
+	got := outer.Lines()
+	want := []string{"a", "b", "c"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("nested Lines() = %#v, want %#v", got, want)
+	}
+	if s := outer.String(); s != "a\nb\nc" {
+		t.Errorf("nested String() = %q, want %q", s, "a\nb\nc")
+	}
+}
+
+func TestMultiline_NestedDeep(t *testing.T) {
+	inner := loglayer.Multiline("x")
+	mid := loglayer.Multiline(inner, "y")
+	outer := loglayer.Multiline(mid, "z")
+	got := outer.Lines()
+	want := []string{"x", "y", "z"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("deep-nested Lines() = %#v, want %#v", got, want)
+	}
+}

@@ -23,11 +23,14 @@ type MultilineMessage struct {
 func Multiline(lines ...any) *MultilineMessage {
 	out := make([]string, 0, len(lines))
 	for _, l := range lines {
-		if s, ok := l.(string); ok {
-			out = append(out, s)
-			continue
+		switch v := l.(type) {
+		case *MultilineMessage:
+			out = append(out, v.lines...)
+		case string:
+			out = append(out, v)
+		default:
+			out = append(out, fmt.Sprintf("%v", v))
 		}
-		out = append(out, fmt.Sprintf("%v", l))
 	}
 	return &MultilineMessage{lines: out}
 }
