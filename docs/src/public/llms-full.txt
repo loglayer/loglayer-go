@@ -194,9 +194,27 @@ Callbacks may be invoked concurrently across goroutines if the same `*LogLayer` 
   terminal-renderer transports (cli, pretty, console) interpret as
   authored "\n" boundaries. JSON sinks and wrapper transports flatten
   via Stringer/MarshalJSON. Each authored line is still sanitized
-  individually. v1 is messages-only; metadata/fields values still
-  collapse to one line in terminal renderers.
+  individually. The wrapper is honored only as a positional message
+  argument; values placed inside Fields or Metadata still collapse
+  to one line in terminal renderers.
   https://go.loglayer.dev/logging-api/multiline
+
+## Log Sanitization
+
+- The cli, pretty, and console transports strip control bytes
+  (CR / LF / ANSI ESC / bidi controls / zero-width chars) from
+  user-controlled message strings before writing, to defeat log
+  forging, terminal-escape smuggling, and Trojan Source attacks.
+  Untrusted input cannot become multi-line by accident; the
+  loglayer.Multiline wrapper is the developer's explicit opt-in.
+- structured and every wrapper transport (zerolog, zap, slog,
+  logrus, charmlog, phuslu, sentry, otellog, gcplogging, http,
+  datadog, testing) do NOT call sanitize.Message; their JSON
+  encoders escape control bytes automatically.
+- Helpers: utils/sanitize.Message(string) string strips per-rune;
+  transport.AssembleMessage(messages, sanitize) handles per-line
+  sanitize with Multiline-aware joining for terminal transports.
+  https://go.loglayer.dev/log-sanitization
 
 ## Fields (persistent data across all log entries)
 
@@ -1157,6 +1175,7 @@ Full module list: [`monorel.toml`](https://github.com/loglayer/loglayer-go/blob/
 - [Thread Safety](https://go.loglayer.dev/logging-api/thread-safety)
 - [Raw Logging](https://go.loglayer.dev/logging-api/raw)
 - [Multi-line messages](https://go.loglayer.dev/logging-api/multiline)
+- [Log Sanitization](https://go.loglayer.dev/log-sanitization)
 - [Mocking](https://go.loglayer.dev/logging-api/mocking)
 - [For TypeScript Developers](https://go.loglayer.dev/for-typescript-developers)
 - [Transport Overview](https://go.loglayer.dev/transports/)
