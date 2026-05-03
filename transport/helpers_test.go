@@ -11,6 +11,14 @@ import (
 	"go.loglayer.dev/v2/utils/sanitize"
 )
 
+// Unicode control characters used in tests to verify sanitization.
+// Defined as runes to avoid staticcheck linting on unicode
+// format characters in source code.
+var (
+	rtlOverride    = string(rune(0x202e)) // U+202E RIGHT-TO-LEFT OVERRIDE
+	zeroWidthSpace = string(rune(0x200b)) // U+200B ZERO WIDTH SPACE
+)
+
 func TestWriterOrStderr(t *testing.T) {
 	if got := transport.WriterOrStderr(nil); got != os.Stderr {
 		t.Errorf("nil case: got %v, want os.Stderr", got)
@@ -428,7 +436,7 @@ func TestAssembleMessage_AnsiSplitAcrossLinesCannotReconstruct(t *testing.T) {
 
 func TestAssembleMessage_BidiOverrideStripped(t *testing.T) {
 	got := transport.AssembleMessage(
-		[]any{loglayer.Multiline("‮", "evil")}, //nolint:staticcheck // U+202E literal in test
+		[]any{loglayer.Multiline(rtlOverride, "evil")},
 		sanitize.Message,
 	)
 	if got != "\nevil" {
@@ -438,10 +446,35 @@ func TestAssembleMessage_BidiOverrideStripped(t *testing.T) {
 
 func TestAssembleMessage_ZeroWidthSpaceStripped(t *testing.T) {
 	got := transport.AssembleMessage(
-		[]any{loglayer.Multiline("zero​width", "y")}, //nolint:staticcheck // U+200B literal in test
+		[]any{loglayer.Multiline("zero"+zeroWidthSpace+"width", "y")},
 		sanitize.Message,
 	)
 	if got != "zerowidth\ny" {
 		t.Errorf("got %q, want %q (ZWSP must strip)", got, "zerowidth\ny")
+	}
+}
+
+func TestJoinPrefixAndMessages_MultilinePrependsToFirstLine(t *testing.T) {
+	in := []any{loglayer.Multiline("a", "b", "c")}
+	got := transport.JoinPrefixAndMessages("[p]", in)
+	if len(got) != 1 {
+		t.Fatalf("len(got) = %d, want 1", len(got))
+	}
+	m, ok := got[0].(*loglayer.MultilineMessage)
+	if !ok {
+		t.Fatalf("got[0] = %T, want *MultilineMessage", got[0])
+	}
+	want := []string{"[p] a", "b", "c"}
+	if gotLines := m.Lines(); !reflect.DeepEqual(gotLines, want) {
+		t.Errorf("lines = %#v, want %#v", gotLines, want)
+	}
+}
+
+func TestJoinPrefixAndMessages_MultilineDoesNotMutateInput(t *testing.T) {
+	original := loglayer.Multiline("a", "b")
+	in := []any{original}
+	_ = transport.JoinPrefixAndMessages("[p]", in)
+	if got := original.Lines(); !reflect.DeepEqual(got, []string{"a", "b"}) {
+		t.Errorf("original mutated: %#v", got)
 	}
 }
