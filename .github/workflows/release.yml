@@ -42,6 +42,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      # The monorel CI action runs `go mod tidy` per sub-module to refresh
+      # go.sum entries. Sub-modules require Go 1.25; the runner default is
+      # older and the action sets GOTOOLCHAIN=local, so install the Go we
+      # need explicitly before invoking monorel.
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
       - uses: disaresta-org/monorel/ci/github@v0.11.0
         with:
           command: release
