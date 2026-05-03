@@ -155,3 +155,14 @@ func TestMultiline_MarshalJSON_RoundtripFromMetadata(t *testing.T) {
 		t.Errorf("Marshal = %s, want %s", b, want)
 	}
 }
+
+func TestMultiline_DoesNotImplementError(t *testing.T) {
+	// The wrapper is a message-content sentinel. Implementing error
+	// would force a rendering policy that fits neither role. This
+	// test pins that decision so a future "convenience" PR doesn't
+	// accidentally add it.
+	var v any = loglayer.Multiline("a", "b")
+	if _, ok := v.(error); ok {
+		t.Fatal("*MultilineMessage must not implement error")
+	}
+}
