@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"go.loglayer.dev/v2"
+	loglayer "go.loglayer.dev/v2"
 )
 
 func TestMultiline_LinesReturnsAuthoredSlice(t *testing.T) {
@@ -34,5 +34,25 @@ func TestMultiline_StringSingle(t *testing.T) {
 	m := loglayer.Multiline("only")
 	if got := m.String(); got != "only" {
 		t.Errorf("String() on single-arg = %q, want %q", got, "only")
+	}
+}
+
+func TestMultiline_NonStringArgsFormatViaPercentV(t *testing.T) {
+	m := loglayer.Multiline(42, true, nil)
+	got := m.Lines()
+	want := []string{"42", "true", "<nil>"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("Lines() = %#v, want %#v", got, want)
+	}
+}
+
+type stringerOnly struct{ v string }
+
+func (s stringerOnly) String() string { return "stringer:" + s.v }
+
+func TestMultiline_StringerArgsCallStringMethod(t *testing.T) {
+	m := loglayer.Multiline(stringerOnly{v: "x"})
+	if got := m.Lines(); !reflect.DeepEqual(got, []string{"stringer:x"}) {
+		t.Errorf("Lines() = %#v, want [stringer:x]", got)
 	}
 }

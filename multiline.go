@@ -1,6 +1,9 @@
 package loglayer
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // MultilineMessage wraps a sequence of authored lines so terminal
 // transports render them on separate rows. Construct with [Multiline].
@@ -18,10 +21,13 @@ type MultilineMessage struct {
 // Later steps in this plan extend the constructor with non-string %v
 // formatting, nested-wrapper flattening, and per-arg "\n" splitting.
 func Multiline(lines ...any) *MultilineMessage {
-	out := make([]string, len(lines))
-	for i, l := range lines {
-		s, _ := l.(string)
-		out[i] = s
+	out := make([]string, 0, len(lines))
+	for _, l := range lines {
+		if s, ok := l.(string); ok {
+			out = append(out, s)
+			continue
+		}
+		out = append(out, fmt.Sprintf("%v", l))
 	}
 	return &MultilineMessage{lines: out}
 }
