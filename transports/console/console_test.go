@@ -234,3 +234,51 @@ func TestConsole_MultilineLinesAreSanitized(t *testing.T) {
 		t.Errorf("msg = %v, want %q (per-line sanitize must strip ESC byte)", obj["msg"], "clean\nevil[31mred")
 	}
 }
+
+func TestConsole_MultilineDefaultMode(t *testing.T) {
+	var buf bytes.Buffer
+	log := loglayer.New(loglayer.Config{
+		Transport: console.New(console.Config{
+			Writer: &buf,
+			DateFn: func() string { return "TIME" },
+		}),
+	})
+	log.Info(loglayer.Multiline("a", "b"))
+	got := buf.String()
+	want := "a\nb\n"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestConsole_DefaultModeMultilineWithLogfmtFields(t *testing.T) {
+	var buf bytes.Buffer
+	log := loglayer.New(loglayer.Config{
+		Transport: console.New(console.Config{
+			Writer: &buf,
+			DateFn: func() string { return "TIME" },
+		}),
+	})
+	log.WithFields(loglayer.Fields{"k": "v"}).Info(loglayer.Multiline("a", "b"))
+	got := buf.String()
+	want := "a\nb k=v\n"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestConsole_DefaultModeBareNewlineStillStripped(t *testing.T) {
+	var buf bytes.Buffer
+	log := loglayer.New(loglayer.Config{
+		Transport: console.New(console.Config{
+			Writer: &buf,
+			DateFn: func() string { return "TIME" },
+		}),
+	})
+	log.Info("a\nb")
+	got := buf.String()
+	want := "ab\n"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
