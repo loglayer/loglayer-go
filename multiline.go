@@ -37,10 +37,6 @@ type MultilineMessage struct {
 func Multiline(lines ...any) *MultilineMessage {
 	out := make([]string, 0, len(lines))
 	appendSplit := func(s string) {
-		if s == "" {
-			out = append(out, "")
-			return
-		}
 		out = append(out, strings.Split(s, "\n")...)
 	}
 	for _, l := range lines {
