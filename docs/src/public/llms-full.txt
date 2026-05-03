@@ -645,11 +645,14 @@ Tuned for command-line application output rather than diagnostic logging. Short 
 import "go.loglayer.dev/transports/cli/v2"
 
 cli.New(cli.Config{
-    // Writer:     os.Stdout,            // override (defaults: stdout for info/debug, stderr for warn+)
-    // Color:      cli.ColorAuto,        // ColorNever / ColorAlways
-    // ShowFields: false,                 // append fields/metadata after the message
+    // Writer:           os.Stdout,            // override (defaults: stdout for info/debug, stderr for warn+)
+    // Color:            cli.ColorAuto,        // ColorNever / ColorAlways
+    // ShowFields:       false,                 // append fields/metadata after the message
+    // TableColumnOrder: []string{"package"},  // pin leading columns for slice-of-map metadata tables; rest sort lex
 })
 ```
+
+For slice-of-map metadata (`[]loglayer.Metadata`, `[]map[string]any`, `[]MyStruct`), the cli transport renders a tabwriter-aligned table after the message. Columns sort lexicographically by default; `TableColumnOrder` pins specific leading columns (additive: pinned keys first in listed order, remaining keys lex-sorted and appended; pinned keys absent from every row are silently skipped).
 
 ### Testing Transport
 

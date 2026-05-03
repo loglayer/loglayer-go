@@ -166,7 +166,7 @@ When adding a transport, plugin, or integration:
 
 2. **If you split**, mirror the structure used by `transports/otellog/`: own `go.mod` with `module go.loglayer.dev/<path>`, `replace go.loglayer.dev => ../...` for development, a placeholder `require go.loglayer.dev v0.0.0-...` line that the replace directive overrides. Add a CI step in `.github/workflows/ci.yml` that `cd`s into the new module and runs tests. Update the `Mostly single Go module` bullet in AGENTS.md "Key Design Decisions" with the new module path.
 
-3. **If you don't split and the floor moves**, update `go.mod`, the matrix in `.github/workflows/ci.yml`, and the version statements in `README.md`, `docs/src/getting-started.md`, and `AGENTS.md`. Mention the bump in `CHANGELOG.md` and `docs/src/whats-new.md`.
+3. **If you don't split and the floor moves**, update `go.mod`, the matrix in `.github/workflows/ci.yml`, and the version statements in `README.md`, `docs/src/getting-started.md`, and `AGENTS.md`. Add a `.changeset/*.md` for the affected module(s) at the appropriate bump level and note the floor change in `docs/src/whats-new.md`.
 
 4. **Per-transport/plugin pages** for split modules need an `::: info Separate module` block at the top stating the import path and floor. Pages for sub-packages of the main module default to "inherits the module's floor" without restating the number; only call it out when the floor differs from the main module.
 
@@ -361,7 +361,7 @@ Update all of these:
 2. **`docs/src/whats-new.md`**: add a bullet under today's `## MMM DD, YYYY` date section, beneath the appropriate `` `module-or-version`: `` paragraph (creating the section and/or paragraph if they don't exist). Format per the rules above.
 3. **`docs/src/public/llms.txt`**: concise LLM-facing reference. Add a link or bullet for the new surface.
 4. **`docs/src/public/llms-full.txt`**: comprehensive LLM-facing reference. Add a section or bullet describing the new surface.
-5. **`CHANGELOG.md`** (repo root): add an entry under `## [Unreleased]` in the appropriate component subsection. Format follows [Keep a Changelog](https://keepachangelog.com).
+5. **`.changeset/<name>.md`**: add a changeset naming the affected package(s) and bump level (`:major` / `:minor` / `:patch`) so the release pipeline picks it up. Use `monorel add --package "<key>:<level>" --message "..."` or hand-roll the file. `CHANGELOG.md` files (root + per-package) are written from these by `monorel release`; do not edit them by hand.
 6. The relevant doc page (e.g. `configuration.md`, the `logging-api/` page, or the `transports/<name>.md` page).
 
 For a brand-new transport, also see "When Adding a New Transport" above.
@@ -385,4 +385,4 @@ Document this in the method's GoDoc comment. The current contract is summarized 
 
 ## Versioning Note
 
-The repo is currently a single Go module. Do not create per-package `CHANGELOG.md` files. All entries go in the root `CHANGELOG.md`, grouped by component under each release. See `AGENTS.md` for the full versioning policy.
+The repo is multi-module: every transport, plugin, and integration ships as its own Go module with its own `CHANGELOG.md`. Both the root and per-package `CHANGELOG.md` files are written from `.changeset/*.md` files by `monorel release` at release time; do not edit them by hand. See `AGENTS.md` for the full versioning policy and the changeset workflow.

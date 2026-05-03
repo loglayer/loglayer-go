@@ -103,7 +103,7 @@ v0.2.0  transports/bar  v1.0.0
 
 Rules:
 
-- **Column order**: union of keys across all rows, sorted lexicographically. Stable across runs.
+- **Column order**: union of keys across all rows, sorted lexicographically by default. Stable across runs. Pin specific leading columns via [`Config.TableColumnOrder`](#pinning-column-order) below.
 - **Column header**: each key uppercased.
 - **Missing values**: empty cell.
 - **Padding**: two spaces between columns (matches `gh`, `kubectl get`, `cargo`).
@@ -114,6 +114,32 @@ Rules:
 - **Compatible with `MetadataOnly`**: `log.MetadataOnly([]loglayer.Metadata{...})` emits just the table, no leading blank line.
 
 When `ShowFields` is also true, table rendering takes precedence over logfmt for that entry.
+
+### Pinning column order
+
+Lexicographic-by-default works for ad-hoc tables, but a CLI status report often wants a specific *identifier* column to lead so the human eye scanning rows can ground itself on each row's "what is this?". Set `Config.TableColumnOrder` to pin the leading columns:
+
+```go
+cli.New(cli.Config{
+    TableColumnOrder: []string{"package", "changeset"},
+})
+```
+
+```go
+log.WithMetadata([]loglayer.Metadata{
+    {"package": "transports/foo", "changeset": "abc", "bump": "minor", "summary": "fix"},
+    {"package": "transports/bar", "changeset": "def", "bump": "patch", "summary": "doc"},
+}).Info("Plan:")
+```
+
+```
+Plan:
+PACKAGE         CHANGESET  BUMP   SUMMARY
+transports/foo  abc        minor  fix
+transports/bar  def        patch  doc
+```
+
+The knob is additive: list only the leading columns you want anchored; the remaining columns sort lexicographically and follow. Pinned keys that don't appear in any row are silently skipped, so the same `TableColumnOrder` is safe to reuse across call sites with different row shapes.
 
 When the entry's level is warn / error / fatal, the headline (prefix + message) is colored, but the table body renders neutral. Tables are data, not warnings; tinting the rows would be visually misleading.
 

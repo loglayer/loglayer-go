@@ -123,6 +123,15 @@ type Config struct {
 	// the transport's prefixes would be redundant.
 	DisableLevelPrefix bool
 
+	// TableColumnOrder pins the leading column order for slice-of-map
+	// metadata renderings. Keys named here render in the listed order;
+	// keys not in the list are sorted lexicographically and appended
+	// afterward, so the knob is additive: pin only the leading columns
+	// that anchor the row (e.g. an identifier column) and let the rest
+	// sort. Pinned keys that don't appear in any row are silently
+	// skipped. Nil / empty falls back to fully lexicographic ordering.
+	TableColumnOrder []string
+
 	// LevelColor overrides the default per-level color map.
 	// Missing entries fall back to the defaults:
 	//
@@ -266,7 +275,7 @@ func (t *Transport) format(params loglayer.TransportParams) string {
 	var table string
 	switch {
 	case isTableMetadata(params.Metadata):
-		table = renderTable(asTableRows(params.Metadata))
+		table = renderTable(asTableRows(params.Metadata), t.cfg.TableColumnOrder)
 	case t.cfg.ShowFields:
 		if fields := renderLogfmt(transport.MergeFieldsAndMetadata(params)); fields != "" {
 			if body != "" {
@@ -518,12 +527,13 @@ func elementAsMap(elem any) map[string]any {
 }
 
 // renderTable produces a tabwriter-aligned table: an uppercase header
-// row built from the union of keys (sorted lexicographically), then
+// row built from the union of keys (sorted lexicographically, with any
+// keys named in order pinned to the front in the listed order), then
 // one row per input map. Missing values render as empty cells. Uses
 // two spaces of column padding, matching the conventional CLI table
 // shape (`gh`, `kubectl get`, `cargo`).
-func renderTable(rows []map[string]any) string {
-	keys := tableColumns(rows)
+func renderTable(rows []map[string]any, order []string) string {
+	keys := tableColumns(rows, order)
 
 	var b strings.Builder
 	tw := tabwriter.NewWriter(&b, 0, 0, 2, ' ', 0)
@@ -551,22 +561,34 @@ func renderTable(rows []map[string]any) string {
 	return strings.TrimRight(b.String(), "\n")
 }
 
-// tableColumns returns the union of keys across all rows, sorted
-// lexicographically. Sorted ordering is required so the output is
-// deterministic regardless of the (random) Go map iteration order.
-func tableColumns(rows []map[string]any) []string {
+// tableColumns returns the union of keys across all rows. Keys named
+// in order render first in the listed order; remaining keys sort
+// lexicographically and follow. Sorted ordering for the tail is
+// required so the output is deterministic regardless of the (random)
+// Go map iteration order. Pinned keys absent from every row are
+// silently skipped so the knob is forward-compatible with row shapes
+// that don't yet exist.
+func tableColumns(rows []map[string]any, order []string) []string {
 	seen := make(map[string]struct{})
 	for _, row := range rows {
 		for k := range row {
 			seen[k] = struct{}{}
 		}
 	}
+
 	keys := make([]string, 0, len(seen))
-	for k := range seen {
-		keys = append(keys, k)
+	for _, k := range order {
+		if _, ok := seen[k]; ok {
+			keys = append(keys, k)
+			delete(seen, k)
+		}
 	}
-	sort.Strings(keys)
-	return keys
+	rest := make([]string, 0, len(seen))
+	for k := range seen {
+		rest = append(rest, k)
+	}
+	sort.Strings(rest)
+	return append(keys, rest...)
 }
 
 func needsQuote(s string) bool {

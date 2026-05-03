@@ -371,6 +371,106 @@ func TestTableRenderingDeterministicColumnOrder(t *testing.T) {
 	}
 }
 
+func TestTableColumnOrderPinsLeadingColumns(t *testing.T) {
+	log, stdout, _ := makeLogger(t, clitr.Config{
+		TableColumnOrder: []string{"package", "changeset"},
+	})
+
+	log.WithMetadata([]loglayer.Metadata{
+		{"bump": "minor", "changeset": "abc", "package": "transports/foo", "summary": "fix"},
+		{"bump": "patch", "changeset": "def", "package": "transports/bar", "summary": "doc"},
+	}).Info("status:")
+
+	lines := strings.Split(strings.TrimRight(stdout.String(), "\n"), "\n")
+	if len(lines) < 2 {
+		t.Fatalf("expected headline plus header row, got: %q", stdout.String())
+	}
+	header := lines[1]
+
+	// PACKAGE first, CHANGESET second; BUMP and SUMMARY follow lex-sorted.
+	wantOrder := []string{"PACKAGE", "CHANGESET", "BUMP", "SUMMARY"}
+	idx := 0
+	for _, want := range wantOrder {
+		hit := strings.Index(header[idx:], want)
+		if hit < 0 {
+			t.Fatalf("header missing %q in %q", want, header)
+		}
+		idx += hit + len(want)
+	}
+}
+
+func TestTableColumnOrderEmptyKeepsLexicographic(t *testing.T) {
+	// Regression: empty / nil TableColumnOrder must produce the same
+	// output as before the feature shipped.
+	log, stdout, _ := makeLogger(t, clitr.Config{})
+
+	log.WithMetadata([]loglayer.Metadata{
+		{"z": 1, "a": 2, "m": 3},
+	}).Info("ord:")
+
+	lines := strings.Split(strings.TrimRight(stdout.String(), "\n"), "\n")
+	if len(lines) < 2 {
+		t.Fatalf("expected at least 2 lines, got: %q", stdout.String())
+	}
+	header := lines[1]
+	wantOrder := []string{"A", "M", "Z"}
+	idx := 0
+	for _, want := range wantOrder {
+		hit := strings.Index(header[idx:], want)
+		if hit < 0 {
+			t.Fatalf("header missing %q at-or-after position %d in %q", want, idx, header)
+		}
+		idx += hit + len(want)
+	}
+}
+
+func TestTableColumnOrderSkipsMissingPinnedKeys(t *testing.T) {
+	// A pinned key that doesn't appear in any row is silently skipped.
+	log, stdout, _ := makeLogger(t, clitr.Config{
+		TableColumnOrder: []string{"package", "doesnotexist", "changeset"},
+	})
+
+	log.WithMetadata([]loglayer.Metadata{
+		{"package": "transports/foo", "changeset": "abc"},
+	}).Info("status:")
+
+	got := stdout.String()
+	if strings.Contains(strings.ToUpper(got), "DOESNOTEXIST") {
+		t.Errorf("missing pinned key leaked into output: %q", got)
+	}
+	lines := strings.Split(strings.TrimRight(got, "\n"), "\n")
+	header := lines[1]
+	pkgAt := strings.Index(header, "PACKAGE")
+	csAt := strings.Index(header, "CHANGESET")
+	if pkgAt < 0 || csAt < 0 || pkgAt > csAt {
+		t.Errorf("PACKAGE should precede CHANGESET; got: %q", header)
+	}
+}
+
+func TestTableColumnOrderUnpinnedKeysSortLexicographicallyAfter(t *testing.T) {
+	// Keys NOT named in TableColumnOrder sort lexicographically after
+	// the pinned ones.
+	log, stdout, _ := makeLogger(t, clitr.Config{
+		TableColumnOrder: []string{"package"},
+	})
+
+	log.WithMetadata([]loglayer.Metadata{
+		{"package": "transports/foo", "z": 1, "a": 2, "m": 3},
+	}).Info("ord:")
+
+	lines := strings.Split(strings.TrimRight(stdout.String(), "\n"), "\n")
+	header := lines[1]
+	wantOrder := []string{"PACKAGE", "A", "M", "Z"}
+	idx := 0
+	for _, want := range wantOrder {
+		hit := strings.Index(header[idx:], want)
+		if hit < 0 {
+			t.Fatalf("header missing %q at-or-after position %d in %q", want, idx, header)
+		}
+		idx += hit + len(want)
+	}
+}
+
 func TestTableRenderingTakesPrecedenceOverShowFields(t *testing.T) {
 	// When ShowFields is true AND metadata is a table-shaped slice,
 	// the table renderer wins. Logfmt is dropped for that entry.

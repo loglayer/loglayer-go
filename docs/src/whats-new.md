@@ -21,6 +21,8 @@ description: Latest features and improvements in LogLayer for Go.
 
 Initial release. New [CLI transport](/transports/cli) tuned for command-line app output: short level prefixes, stdout / stderr routing, TTY-detected ANSI color, no timestamps. Includes table rendering for slice-of-map metadata so the same call site emits a CLI table and a JSON array depending on the transport.
 
+New `Config.TableColumnOrder []string` knob pins the leading column order for slice-of-map metadata table rendering. Keys named here render in the listed order; the rest sort lexicographically and follow. Empty / nil keeps the previous fully-lexicographic behavior. See [Pinning column order](/transports/cli#pinning-column-order).
+
 ## Apr 30, 2026
 
 `transports/gcplogging`:
