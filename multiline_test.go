@@ -166,3 +166,27 @@ func TestMultiline_DoesNotImplementError(t *testing.T) {
 		t.Fatal("*MultilineMessage must not implement error")
 	}
 }
+
+func TestMultiline_EdgeCases(t *testing.T) {
+	cases := []struct {
+		name    string
+		args    []any
+		want    []string
+		wantStr string
+	}{
+		{"single empty arg", []any{""}, []string{""}, ""},
+		{"trailing empty", []any{"a", ""}, []string{"a", ""}, "a\n"},
+		{"interleaved nil", []any{"a", nil, "b"}, []string{"a", "<nil>", "b"}, "a\n<nil>\nb"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := loglayer.Multiline(tc.args...)
+			if got := m.Lines(); !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("Lines() = %#v, want %#v", got, tc.want)
+			}
+			if got := m.String(); got != tc.wantStr {
+				t.Errorf("String() = %q, want %q", got, tc.wantStr)
+			}
+		})
+	}
+}

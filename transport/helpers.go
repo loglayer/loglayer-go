@@ -229,6 +229,8 @@ func FieldEstimate(p loglayer.TransportParams) int {
 //   - any other v           -> sanitize(fmt.Sprintf("%v", v))
 //
 // Adjacent elements are joined with " ". Empty messages produce "".
+// Nil elements format as "<nil>" via the default branch (matching
+// JoinMessages's behavior for non-string elements).
 //
 // Used by terminal-style transports (cli, pretty, console). Wrapper
 // transports and JSON sinks call JoinMessages instead; the

@@ -53,7 +53,10 @@ func Multiline(lines ...any) *MultilineMessage {
 }
 
 // Lines returns the authored line list. Transport authors call this
-// when rendering each line independently.
+// when rendering each line independently. No entry contains "\n".
+//
+// The returned slice aliases the wrapper's internal storage; do not
+// mutate it. Treat the result as read-only.
 func (m *MultilineMessage) Lines() []string {
 	return m.lines
 }
