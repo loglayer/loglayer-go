@@ -405,3 +405,43 @@ func TestAssembleMessage_NoSanitizerIdentity(t *testing.T) {
 		t.Errorf("got %q, want %q", got, "a\nb")
 	}
 }
+
+func TestAssembleMessage_CRStrippedFromLine(t *testing.T) {
+	got := transport.AssembleMessage(
+		[]any{loglayer.Multiline("a\r", "b")},
+		sanitize.Message,
+	)
+	if got != "a\nb" {
+		t.Errorf("got %q, want %q (CR must strip; LF boundary survives)", got, "a\nb")
+	}
+}
+
+func TestAssembleMessage_AnsiSplitAcrossLinesCannotReconstruct(t *testing.T) {
+	got := transport.AssembleMessage(
+		[]any{loglayer.Multiline("\x1b", "[31mred")},
+		sanitize.Message,
+	)
+	if got != "\n[31mred" {
+		t.Errorf("got %q, want %q (ANSI must NOT reconstruct across lines)", got, "\n[31mred")
+	}
+}
+
+func TestAssembleMessage_BidiOverrideStripped(t *testing.T) {
+	got := transport.AssembleMessage(
+		[]any{loglayer.Multiline("‮", "evil")}, //nolint:staticcheck // U+202E literal in test
+		sanitize.Message,
+	)
+	if got != "\nevil" {
+		t.Errorf("got %q, want %q (bidi override must strip)", got, "\nevil")
+	}
+}
+
+func TestAssembleMessage_ZeroWidthSpaceStripped(t *testing.T) {
+	got := transport.AssembleMessage(
+		[]any{loglayer.Multiline("zero​width", "y")}, //nolint:staticcheck // U+200B literal in test
+		sanitize.Message,
+	)
+	if got != "zerowidth\ny" {
+		t.Errorf("got %q, want %q (ZWSP must strip)", got, "zerowidth\ny")
+	}
+}
