@@ -882,3 +882,57 @@ func TestCLI_MultilineRendersAcrossLines(t *testing.T) {
 		t.Errorf("got %q, want %q", got, want)
 	}
 }
+
+func TestCLI_BareNewlineStringStillStripped(t *testing.T) {
+	// No wrapper, no trust: a plain string with embedded "\n" still
+	// renders on a single line.
+	var buf bytes.Buffer
+	log := loglayer.New(loglayer.Config{
+		Transport: clitr.New(clitr.Config{Stdout: &buf, Color: clitr.ColorNever}),
+	})
+	log.Info("a\nb")
+	got := buf.String()
+	want := "ab\n"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestCLI_MixedStringAndMultiline(t *testing.T) {
+	var buf bytes.Buffer
+	log := loglayer.New(loglayer.Config{
+		Transport: clitr.New(clitr.Config{Stdout: &buf, Color: clitr.ColorNever}),
+	})
+	log.Info("Header:", loglayer.Multiline("a", "b"))
+	got := buf.String()
+	want := "Header: a\nb\n"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestCLI_PrefixFoldsIntoFirstAuthoredLine(t *testing.T) {
+	var buf bytes.Buffer
+	log := loglayer.New(loglayer.Config{
+		Transport: clitr.New(clitr.Config{Stdout: &buf, Color: clitr.ColorNever}),
+	}).WithPrefix("[svc]")
+	log.Info(loglayer.Multiline("a", "b", "c"))
+	got := buf.String()
+	want := "[svc] a\nb\nc\n"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestCLI_EmptyMultilineProducesNoOutput(t *testing.T) {
+	// Matches the behavior of log.Info("") on cli (the empty-body
+	// skip in SendToLogger short-circuits the Fprintln).
+	var buf bytes.Buffer
+	log := loglayer.New(loglayer.Config{
+		Transport: clitr.New(clitr.Config{Stdout: &buf, Color: clitr.ColorNever}),
+	})
+	log.Info(loglayer.Multiline())
+	if got := buf.String(); got != "" {
+		t.Errorf("expected no output, got %q", got)
+	}
+}
