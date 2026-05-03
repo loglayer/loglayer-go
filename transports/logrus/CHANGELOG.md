@@ -8,6 +8,18 @@ versions independently of the framework core. Maintained
 automatically by [monorel](https://monorel.disaresta.com) from
 `.changeset/*.md` files.
 
+## [2.0.1] - 2026-05-03
+
+### Patch Changes
+
+- Republish every module to ship a clean `go.mod` to the Go module proxy.
+
+  The v2.0.0 cascade and the subsequent `transports/cli` v2.1.0 release shipped sub-module `go.mod` files containing dev-only `replace go.loglayer.dev/v2 => ../..` directives and placeholder pseudo-version requires (`v2.0.0-00010101000000-000000000000`). Downstream consumers who depended on any sub-module saw `go mod tidy` 404 on the placeholder.
+
+  monorel v0.9.0 ([disaresta-org/monorel#42](https://github.com/disaresta-org/monorel/pull/42)) added a release-time `go.mod` cleaner that strips the dev-only sibling replaces and pins sibling requires to the planned release version. This release republishes every affected module with the cleaned `go.mod`.
+
+  No API changes. Re-`go get` to pick up the cleaned modules.
+
 ## [2.0.0] - 2026-05-02
 
 ### Major Changes
