@@ -8,6 +8,7 @@ import (
 
 	"go.loglayer.dev/v2"
 	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v2/utils/sanitize"
 )
 
 func TestWriterOrStderr(t *testing.T) {
@@ -342,3 +343,65 @@ func TestMergeIntoMap(t *testing.T) {
 type benchErr string
 
 func (e benchErr) Error() string { return string(e) }
+
+func TestAssembleMessage_PlainStrings(t *testing.T) {
+	got := transport.AssembleMessage([]any{"hello", "world"}, sanitize.Message)
+	if got != "hello world" {
+		t.Errorf("got %q, want %q", got, "hello world")
+	}
+}
+
+func TestAssembleMessage_NonStringElement(t *testing.T) {
+	got := transport.AssembleMessage([]any{"value:", 42}, sanitize.Message)
+	if got != "value: 42" {
+		t.Errorf("got %q, want %q", got, "value: 42")
+	}
+}
+
+func TestAssembleMessage_MultilineAlone(t *testing.T) {
+	got := transport.AssembleMessage([]any{loglayer.Multiline("a", "b")}, sanitize.Message)
+	if got != "a\nb" {
+		t.Errorf("got %q, want %q", got, "a\nb")
+	}
+}
+
+func TestAssembleMessage_MultilineMixedWithString(t *testing.T) {
+	got := transport.AssembleMessage([]any{"Header:", loglayer.Multiline("a", "b")}, sanitize.Message)
+	if got != "Header: a\nb" {
+		t.Errorf("got %q, want %q", got, "Header: a\nb")
+	}
+}
+
+func TestAssembleMessage_BareNewlineGetsStripped(t *testing.T) {
+	got := transport.AssembleMessage([]any{"a\nb"}, sanitize.Message)
+	if got != "ab" {
+		t.Errorf("got %q, want %q (newline must be stripped from a bare string)", got, "ab")
+	}
+}
+
+func TestAssembleMessage_PerLineANSIStrippedInsideMultiline(t *testing.T) {
+	got := transport.AssembleMessage(
+		[]any{loglayer.Multiline("clean", "evil\x1b[31mred")},
+		sanitize.Message,
+	)
+	if got != "clean\nevil[31mred" {
+		t.Errorf("got %q, want %q", got, "clean\nevil[31mred")
+	}
+}
+
+func TestAssembleMessage_EmptyInputProducesEmptyString(t *testing.T) {
+	if got := transport.AssembleMessage(nil, sanitize.Message); got != "" {
+		t.Errorf("got %q, want empty", got)
+	}
+	if got := transport.AssembleMessage([]any{}, sanitize.Message); got != "" {
+		t.Errorf("got %q, want empty", got)
+	}
+}
+
+func TestAssembleMessage_NoSanitizerIdentity(t *testing.T) {
+	identity := func(s string) string { return s }
+	got := transport.AssembleMessage([]any{"a\nb"}, identity)
+	if got != "a\nb" {
+		t.Errorf("got %q, want %q", got, "a\nb")
+	}
+}
