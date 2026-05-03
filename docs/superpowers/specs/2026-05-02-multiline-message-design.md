@@ -90,25 +90,44 @@ Plugin hooks with a Messages signature see the wrapper as-is. Hooks that just wa
 
 **`integrations/loghttp`** does not need a swap. Its only `sanitize.Message` calls (`sanitizeForLog`) apply to *fields* (`RequestID`, `Method`, `Path`, the recovered panic value), not to message content. Its actual log calls use hardcoded literal messages (`"request started"`, `"request completed"`, `"request panicked"`). The integration is downstream of the cli/pretty/console transports; users get the new behavior from those.
 
-### `JoinPrefixAndMessages` Multiline-handling
+### `JoinPrefixAndMessages` Multiline-handling and general non-string fix
 
-The existing `transport.JoinPrefixAndMessages` helper in `transport/helpers.go` folds a `WithPrefix` value into `Messages[0]`. Its current shape returns Messages unchanged when `Messages[0]` is not a string, which would silently drop the prefix on `log.WithPrefix("X").Info(loglayer.Multiline(...))`. ~14 transports call this helper.
+The existing `transport.JoinPrefixAndMessages` helper in `transport/helpers.go` folds a `WithPrefix` value into `Messages[0]`. Its current shape returns Messages unchanged when `Messages[0]` is not a string. ~14 transports call this helper.
 
-The fix: extend the helper to handle `*MultilineMessage` explicitly. When `Messages[0]` is a `*MultilineMessage`, return a fresh `[]any` whose first element is a new `*MultilineMessage` with the prefix prepended to the first authored line:
+That fallback is a pre-existing bug: every caller of `JoinPrefixAndMessages` then runs `JoinMessages` (or equivalent) on the result, which `fmt.Sprintf("%v", ...)`-flattens non-string elements to strings anyway. The prefix is silently dropped for no semantic reason. Cases that hit it today: `log.WithPrefix("X").Info(42)`, `log.WithPrefix("X").Info(someStruct{})`, `log.WithPrefix("X").Info(loglayer.Lazy(...))`, and (after this PR) `log.WithPrefix("X").Info(loglayer.Multiline(...))`.
+
+Fix the bug, and handle Multiline at the same site. The helper's new shape:
 
 ```go
-// Pseudocode for the added branch:
-if m, ok := messages[0].(*MultilineMessage); ok {
-    head := prefix + " " + m.Lines()[0]
-    rebuilt := &MultilineMessage{lines: append([]string{head}, m.Lines()[1:]...)}
+// Pseudocode:
+func JoinPrefixAndMessages(prefix string, messages []any) []any {
+    if prefix == "" || len(messages) == 0 {
+        return messages
+    }
     out := make([]any, len(messages))
     copy(out, messages)
-    out[0] = rebuilt
+
+    switch v := messages[0].(type) {
+    case *MultilineMessage:
+        // Prepend prefix to the first authored line; later lines unchanged.
+        head := prefix + " " + v.Lines()[0]
+        out[0] = &MultilineMessage{
+            lines: append([]string{head}, v.Lines()[1:]...),
+        }
+    case string:
+        out[0] = prefix + " " + v
+    default:
+        out[0] = prefix + " " + fmt.Sprintf("%v", v)
+    }
     return out
 }
 ```
 
-The non-string-non-Multiline fallback stays as-is for now: that's a pre-existing limitation independent of this work. A follow-up could generalize via `fmt.Sprint`, but it's out of scope here.
+`fmt.Sprintf("%v", v)` resolves `Stringer` and is the same shape `JoinMessages` already uses to flatten non-string elements, so output downstream is byte-equivalent to "today's `JoinMessages` output, with the prefix in front."
+
+**Behavior change:** the existing test `TestJoinPrefixAndMessages/non-string messages[0] returns input slice unchanged` (in `transport/helpers_test.go:78`) is rewritten to assert the new behavior. The change is a strict improvement: today's outcome ("prefix silently dropped") is never desirable.
+
+Documented in the changeset body so anyone parsing the migration knows the prefix now lands in front of non-string first messages where it didn't before.
 
 ### `transport.AssembleMessage`
 
@@ -234,6 +253,8 @@ The gap is documented as a `::: warning Messages-only in v1` callout on the doc 
 - Bidi / ZWJ stripping: `Multiline("‮", "evil")` -> `"\nevil"`; `Multiline("zero​width", "y")` -> `"zerowidth\ny"`.
 - Bare string with `\n` still gets stripped (no wrapper, no trust): `AssembleMessage([]any{"a\nb"}, sanitize.Message)` -> `"ab"`.
 - `JoinPrefixAndMessages` with `prefix="X"` and `messages=[Multiline("a","b")]` returns `[Multiline("X a","b")]` (prefix folded into first authored line; subsequent lines unchanged).
+- `JoinPrefixAndMessages` with `prefix="X"` and `messages=[42, "rest"]` returns `["X 42", "rest"]` (general non-string fix; replaces the existing pass-through assertion).
+- `JoinPrefixAndMessages` with `prefix="X"` and `messages=[someStruct{}, "rest"]` where `someStruct` implements `Stringer` returns `["X <stringer-output>", "rest"]`.
 - `JoinPrefixAndMessages` with `prefix=""` returns `messages` unchanged (existing fast path).
 
 **Per terminal transport (`cli`, `pretty`, `console`):**
@@ -282,8 +303,14 @@ Add loglayer.Multiline(lines...) for authoring multi-line message
 content that survives terminal-renderer sanitization. The wrapper
 is messages-only in v1; field/metadata values are still sanitized
 to a single line in terminal transports (JSON sinks serialize via
-MarshalJSON to the joined string). See
-https://go.loglayer.dev/logging-api/multiline.
+MarshalJSON to the joined string).
+
+Also fixes a pre-existing bug in transport.JoinPrefixAndMessages
+where a WithPrefix value was silently dropped when Messages[0] was
+not a string (e.g. log.WithPrefix("X").Info(42) lost the prefix).
+The prefix now folds in front of the %v-formatted first message.
+
+See https://go.loglayer.dev/logging-api/multiline.
 ```
 
 The wrapper transports (`zerolog`, `zap`, `slog`, `logrus`, `charmlog`, `phuslu`, `sentry`, `otellog`, `gcplogging`, `http`, `datadog`, `testing`) and `structured` need no code change. `Multiline` flows through their existing `JoinMessages` path via Stringer. They pick up the new behavior automatically when their next routine release happens to bump their `go.loglayer.dev` requirement past v2.1.0. No same-PR changeset entries needed for them.
