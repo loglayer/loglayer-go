@@ -1,6 +1,6 @@
 # go.loglayer.dev/transports/otellog
 
-[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/otellog.svg)](https://pkg.go.dev/go.loglayer.dev/transports/otellog)
+[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/otellog/v2.svg)](https://pkg.go.dev/go.loglayer.dev/transports/otellog/v2)
 
 OpenTelemetry Logs transport for LogLayer. Emits each entry as an OTel `log.Record` on a configured `LoggerProvider`, propagating `WithContext` so the SDK's span correlation works.
 
