@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-05-03
+
+### Minor Changes
+
+- New `Config.TableColumnOrder []string` knob pins the leading column order for
+  slice-of-map metadata renderings. Keys named here render in the listed order;
+  remaining keys sort lexicographically and follow. Pinned keys absent from
+  every row are silently skipped, so the same `TableColumnOrder` is safe to
+  reuse across call sites with different row shapes. Empty / nil falls back to
+  the previous fully-lexicographic behavior. Resolves [#66](https://github.com/loglayer/loglayer-go/issues/66).
+
 ## [2.0.0] - 2026-05-02
 
 ### Major Changes
