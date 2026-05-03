@@ -124,7 +124,7 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 	// rendered separately through the theme's Style functions; see
 	// pretty's doc for the threat-model boundary (this transport is
 	// for human terminals, not for log pipelines).
-	message := sanitize.Message(transport.JoinMessages(params.Messages))
+	message := transport.AssembleMessage(params.Messages, sanitize.Message)
 	if message == "" {
 		message = "(no message)"
 	}

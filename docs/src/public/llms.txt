@@ -89,6 +89,10 @@ log = log.WithFields(loglayer.Fields{
 
 A panicking callback substitutes `loglayer.LazyEvalError` and the rest of the entry still emits. Callbacks may run concurrently across goroutines; they must be thread-safe.
 
+## Multi-line Messages
+
+- loglayer.Multiline(lines ...any): wrap multi-line message content that survives terminal sanitize. https://go.loglayer.dev/logging-api/multiline
+
 ## Fields (persistent data across all log entries)
 
 Fields ride on every emission from the logger they're set on. Always assign the result; `WithFields` returns a new `*LogLayer`.
@@ -399,6 +403,7 @@ lines := lib.Lines()  // []lltest.LogLine; assert on Level, Messages, Data, Meta
 - [Groups](https://go.loglayer.dev/logging-api/groups): Per-transport routing
 - [Adjusting Log Levels](https://go.loglayer.dev/logging-api/adjusting-log-levels): Three-tier level control
 - [Raw Logging](https://go.loglayer.dev/logging-api/raw): `Raw(RawLogEntry)` bypasses the builder
+- [Multi-line messages](https://go.loglayer.dev/logging-api/multiline): `loglayer.Multiline` for authored multi-line output
 - [Mocking](https://go.loglayer.dev/logging-api/mocking): `loglayer.NewMock()` and `transports/testing`
 - [Transport Overview](https://go.loglayer.dev/transports/): All transports
 - [Plugins Overview](https://go.loglayer.dev/plugins/): Plugin system and hooks

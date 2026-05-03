@@ -7,6 +7,7 @@ package console
 import (
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"sort"
 	"strconv"
@@ -103,31 +104,23 @@ func (c *Transport) writer(level loglayer.LogLevel) io.Writer {
 // after the message. MessageField and Stringify switch to single-object output
 // for callers that want a structured-but-non-pipeline shape.
 func buildMessages(params loglayer.TransportParams, cfg Config) []any {
-	messages := make([]any, len(params.Messages))
-	copy(messages, params.Messages)
-
+	// Apply MessageFn override before Multiline-aware assembly so the
+	// override produces the canonical input (a single string).
+	rawMessages := params.Messages
 	if cfg.MessageFn != nil {
-		messages = []any{cfg.MessageFn(params)}
+		rawMessages = []any{cfg.MessageFn(params)}
 	}
 
-	// Sanitize user-controlled message strings so a CRLF or ANSI ESC
-	// can't forge log lines or smuggle terminal escapes through the
-	// renderer.
-	for i, m := range messages {
-		if s, ok := m.(string); ok {
-			messages[i] = sanitize.Message(s)
-		}
-	}
+	// Per-line, Multiline-aware sanitize-and-join for the headline.
+	headline := transport.AssembleMessage(rawMessages, sanitize.Message)
 
 	combined := transport.MergeFieldsAndMetadata(params)
 
 	// MessageField: single structured object as the sole arg.
 	if cfg.MessageField != "" {
 		obj := make(map[string]any, len(combined)+3)
-		for k, v := range combined {
-			obj[k] = v
-		}
-		obj[cfg.MessageField] = transport.JoinMessages(messages)
+		maps.Copy(obj, combined)
+		obj[cfg.MessageField] = headline
 		if cfg.DateField != "" {
 			obj[cfg.DateField] = dateValue(cfg)
 		}
@@ -150,16 +143,24 @@ func buildMessages(params loglayer.TransportParams, cfg Config) []any {
 		}
 		// Stringify: emit a JSON object after the message instead of logfmt.
 		if cfg.Stringify {
-			messages = append(messages, maybeStringify(combined, true))
-			return messages
+			if headline == "" {
+				return []any{maybeStringify(combined, true)}
+			}
+			return []any{headline, maybeStringify(combined, true)}
 		}
 	}
 
 	if len(combined) > 0 {
-		messages = append(messages, renderLogfmt(combined))
+		suffix := renderLogfmt(combined)
+		if headline == "" {
+			return []any{suffix}
+		}
+		return []any{headline, suffix}
 	}
-
-	return messages
+	if headline == "" {
+		return nil
+	}
+	return []any{headline}
 }
 
 func dateValue(cfg Config) string {

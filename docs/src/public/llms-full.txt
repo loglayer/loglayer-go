@@ -188,6 +188,16 @@ If the callback panics, the recovered placeholder `loglayer.LazyEvalError` (`"[L
 
 Callbacks may be invoked concurrently across goroutines if the same `*LogLayer` is shared; they must be thread-safe. Plugin call-time hooks (`OnFieldsCalled`) see the raw `*LazyValue` wrapper; dispatch-time hooks (`OnBeforeDataOut`, `OnBeforeMessageOut`, `TransformLogLevel`) see the resolved value.
 
+## Multi-line Messages
+
+- loglayer.Multiline(lines ...any) returns a *MultilineMessage that
+  terminal-renderer transports (cli, pretty, console) interpret as
+  authored "\n" boundaries. JSON sinks and wrapper transports flatten
+  via Stringer/MarshalJSON. Each authored line is still sanitized
+  individually. v1 is messages-only; metadata/fields values still
+  collapse to one line in terminal renderers.
+  https://go.loglayer.dev/logging-api/multiline
+
 ## Fields (persistent data across all log entries)
 
 Fields ride on every emission from the logger they're set on. `WithFields` returns a new `*LogLayer`; always assign the result.
@@ -1146,6 +1156,7 @@ Full module list: [`monorel.toml`](https://github.com/loglayer/loglayer-go/blob/
 - [Groups](https://go.loglayer.dev/logging-api/groups)
 - [Thread Safety](https://go.loglayer.dev/logging-api/thread-safety)
 - [Raw Logging](https://go.loglayer.dev/logging-api/raw)
+- [Multi-line messages](https://go.loglayer.dev/logging-api/multiline)
 - [Mocking](https://go.loglayer.dev/logging-api/mocking)
 - [For TypeScript Developers](https://go.loglayer.dev/for-typescript-developers)
 - [Transport Overview](https://go.loglayer.dev/transports/)

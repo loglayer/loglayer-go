@@ -55,6 +55,8 @@ func RunContract(t *testing.T, c ContractCase) {
 	t.Helper()
 	t.Run(c.Name+"/SimpleMessage", func(t *testing.T) { t.Parallel(); testSimpleMessage(t, c) })
 	t.Run(c.Name+"/MultipleMessages", func(t *testing.T) { t.Parallel(); testMultipleMessages(t, c) })
+	t.Run(c.Name+"/Multiline", func(t *testing.T) { t.Parallel(); testMultilineRendersAcrossLines(t, c) })
+	t.Run(c.Name+"/MultilineWithPrefix", func(t *testing.T) { t.Parallel(); testMultilineWithPrefixFoldsToFirstLine(t, c) })
 	t.Run(c.Name+"/Levels", func(t *testing.T) { t.Parallel(); testLevels(t, c) })
 	if !c.Expect.SkipFatal {
 		t.Run(c.Name+"/FatalDoesNotExit", func(t *testing.T) { t.Parallel(); testFatalDoesNotExit(t, c) })
@@ -113,6 +115,35 @@ func testMultipleMessages(t *testing.T, c ContractCase) {
 	obj := ParseJSONLine(t, buf)
 	if obj[c.Expect.MessageKey] != "part1 part2" {
 		t.Errorf("%s: got %v", c.Expect.MessageKey, obj[c.Expect.MessageKey])
+	}
+}
+
+func testMultilineRendersAcrossLines(t *testing.T, c ContractCase) {
+	log, buf := c.Factory(FactoryOpts{})
+	log.Info(loglayer.Multiline("line1", "line2", "line3"))
+	obj := ParseJSONLine(t, buf)
+	got, ok := obj[c.Expect.MessageKey].(string)
+	if !ok {
+		t.Fatalf("%s: missing or non-string; got %T = %v", c.Expect.MessageKey, obj[c.Expect.MessageKey], obj[c.Expect.MessageKey])
+	}
+	want := "line1\nline2\nline3"
+	if got != want {
+		t.Errorf("%s: got %q, want %q", c.Expect.MessageKey, got, want)
+	}
+}
+
+func testMultilineWithPrefixFoldsToFirstLine(t *testing.T, c ContractCase) {
+	log, buf := c.Factory(FactoryOpts{})
+	prefixed := log.WithPrefix("[svc]")
+	prefixed.Info(loglayer.Multiline("a", "b", "c"))
+	obj := ParseJSONLine(t, buf)
+	got, ok := obj[c.Expect.MessageKey].(string)
+	if !ok {
+		t.Fatalf("%s: missing or non-string; got %T = %v", c.Expect.MessageKey, obj[c.Expect.MessageKey], obj[c.Expect.MessageKey])
+	}
+	want := "[svc] a\nb\nc"
+	if got != want {
+		t.Errorf("%s: got %q, want %q", c.Expect.MessageKey, got, want)
 	}
 }
 

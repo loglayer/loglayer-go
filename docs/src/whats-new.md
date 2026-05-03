@@ -17,6 +17,10 @@ description: Latest features and improvements in LogLayer for Go.
 
 `Prefix` is now exposed as a separate field on `TransportParams` and on every dispatch-time plugin hook param struct (`BeforeDataOutParams`, `BeforeMessageOutParams`, `TransformLogLevelParams`, `ShouldSendParams`). Transports and plugins can render or react to the prefix independently from the message string. The legacy "prepend prefix into `Messages[0]`" auto-mutation in v1.7.x stays in place for backwards compatibility within the v1 line; v2.0.0 removes it.
 
+**`loglayer.Multiline(lines ...any)`** is a new value-wrapper that lets terminal transports preserve authored "\n" boundaries. The cli, pretty, and console transports collapse bare-string newlines to one line for security (log-forging, terminal-escape smuggling); the wrapper is a per-call developer-issued opt-in to that defense. Each authored line is still individually sanitized; only the boundaries between them are honored. JSON sinks and wrapper transports flatten via `Stringer` / `MarshalJSON` with no code change. See [Multi-line messages](/logging-api/multiline).
+
+The change also fixes a pre-existing bug in `transport.JoinPrefixAndMessages` where `WithPrefix` was silently dropped when `Messages[0]` was not a string. The prefix now folds in front of the `%v`-formatted first message.
+
 `transports/cli`:
 
 Initial release. New [CLI transport](/transports/cli) tuned for command-line app output: short level prefixes, stdout / stderr routing, TTY-detected ANSI color, no timestamps. Includes table rendering for slice-of-map metadata so the same call site emits a CLI table and a JSON array depending on the transport.

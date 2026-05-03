@@ -108,6 +108,18 @@ log = log.WithFields(loglayer.Fields{
 
 `loglayer.Lazy(fn)` wraps a `WithFields` value that runs at dispatch time, after the level filter, on every emission. A panic substitutes `loglayer.LazyEvalError`. See [Lazy Evaluation](/logging-api/lazy-evaluation).
 
+## Multi-line Messages
+
+```go
+log.Info(loglayer.Multiline(
+    "Configuration:",
+    "  port: 8080",
+    "  host: ::1",
+))
+```
+
+`loglayer.Multiline(lines ...any)` wraps multiple lines so the cli, pretty, and console transports render them on separate rows. Each authored line is still individually sanitized; bare `\n` in plain strings is still stripped. See [Multi-line messages](/logging-api/multiline).
+
 ## Errors
 
 ```go

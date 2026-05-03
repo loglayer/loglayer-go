@@ -155,3 +155,20 @@ func ExampleConfig_LevelPrefix() {
 	// [warn]  about to retry
 	// [error] retry failed
 }
+
+// ExampleNew_multiline shows the cli transport rendering authored
+// multi-line content. Color is forced off so the rendered output is
+// byte-stable.
+func ExampleNew_multiline() {
+	log := loglayer.New(loglayer.Config{
+		Transport: clitr.New(clitr.Config{
+			Stdout: os.Stdout,
+			Color:  clitr.ColorNever,
+		}),
+	})
+	log.Info(loglayer.Multiline("Configuration:", "  port: 8080", "  host: ::1"))
+	// Output:
+	// Configuration:
+	//   port: 8080
+	//   host: ::1
+}

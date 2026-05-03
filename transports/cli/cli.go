@@ -253,7 +253,7 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 // color so it reads as caller-context rather than urgency. Tables
 // render neutral.
 func (t *Transport) format(params loglayer.TransportParams) string {
-	msg := transport.JoinMessages(sanitizeMessages(params.Messages))
+	msg := transport.AssembleMessage(params.Messages, sanitize.Message)
 
 	levelPrefix := ""
 	if !t.cfg.DisableLevelPrefix {
@@ -379,21 +379,6 @@ func defaultColors() map[loglayer.LogLevel]*color.Color {
 	}
 }
 
-// sanitizeMessages scrubs CRLF and ANSI ESC from each string-shaped
-// message so a user-controlled value can't smuggle terminal escapes
-// or forge log lines.
-func sanitizeMessages(in []any) []any {
-	out := make([]any, len(in))
-	for i, m := range in {
-		if s, ok := m.(string); ok {
-			out[i] = sanitize.Message(s)
-			continue
-		}
-		out[i] = m
-	}
-	return out
-}
-
 // renderLogfmt formats data as `key=value key=value`, sorted for
 // determinism. Returns "" for empty input.
 func renderLogfmt(data map[string]any) string {
@@ -430,7 +415,7 @@ func writeValue(b *strings.Builder, v any) {
 	// Sanitize the rendered value so an ANSI ESC or CRLF embedded
 	// in a user-controlled field can't smuggle escape sequences or
 	// forge log lines through the ShowFields path. Same threat
-	// model as sanitizeMessages.
+	// model as the message-side AssembleMessage.
 	s := sanitize.Message(fmt.Sprintf("%v", v))
 	if needsQuote(s) {
 		fmt.Fprintf(b, "%q", s)

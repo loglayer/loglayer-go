@@ -54,13 +54,26 @@ func JoinPrefixAndMessages(prefix string, messages []any) []any {
 	if prefix == "" || len(messages) == 0 {
 		return messages
 	}
-	s, ok := messages[0].(string)
-	if !ok {
-		return messages
-	}
 	out := make([]any, len(messages))
 	copy(out, messages)
-	out[0] = prefix + " " + s
+	switch v := messages[0].(type) {
+	case *loglayer.MultilineMessage:
+		lines := v.Lines()
+		if len(lines) == 0 {
+			out[0] = loglayer.Multiline(prefix)
+			break
+		}
+		rebuilt := make([]any, len(lines))
+		rebuilt[0] = prefix + " " + lines[0]
+		for i, l := range lines[1:] {
+			rebuilt[i+1] = l
+		}
+		out[0] = loglayer.Multiline(rebuilt...)
+	case string:
+		out[0] = prefix + " " + v
+	default:
+		out[0] = prefix + " " + fmt.Sprintf("%v", v)
+	}
 	return out
 }
 
@@ -204,4 +217,48 @@ func FieldEstimate(p loglayer.TransportParams) int {
 		n++
 	}
 	return n
+}
+
+// AssembleMessage flattens a message slice into a single string,
+// applying sanitize to every authored chunk while preserving line
+// boundaries inside *MultilineMessage values.
+//
+// For each element in messages:
+//   - string s              -> sanitize(s)
+//   - *MultilineMessage m   -> per-line sanitize, joined with "\n"
+//   - any other v           -> sanitize(fmt.Sprintf("%v", v))
+//
+// Adjacent elements are joined with " ". Empty messages produce "".
+// Nil elements format as "<nil>" via the default branch (matching
+// JoinMessages's behavior for non-string elements).
+//
+// Used by terminal-style transports (cli, pretty, console). Wrapper
+// transports and JSON sinks call JoinMessages instead; the
+// *MultilineMessage.String method handles flattening transparently
+// for them.
+func AssembleMessage(messages []any, sanitize func(string) string) string {
+	if len(messages) == 0 {
+		return ""
+	}
+	parts := make([]string, len(messages))
+	for i, m := range messages {
+		parts[i] = assembleElement(m, sanitize)
+	}
+	return strings.Join(parts, " ")
+}
+
+func assembleElement(v any, sanitize func(string) string) string {
+	switch x := v.(type) {
+	case *loglayer.MultilineMessage:
+		lines := x.Lines()
+		out := make([]string, len(lines))
+		for i, l := range lines {
+			out[i] = sanitize(l)
+		}
+		return strings.Join(out, "\n")
+	case string:
+		return sanitize(x)
+	default:
+		return sanitize(fmt.Sprintf("%v", v))
+	}
 }

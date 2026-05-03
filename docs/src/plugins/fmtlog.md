@@ -69,6 +69,20 @@ The plugin's preconditions are:
 
 If either fails, the messages slice passes through untouched.
 
+## Interaction with Multiline
+
+Combining the format-string mode with [`loglayer.Multiline(...)`](/logging-api/multiline) collapses the wrapper. When `fmtlog` fires, it runs `fmt.Sprintf(format, args...)` on every argument, which resolves the `*MultilineMessage` via its `String()` method to a flat `\n`-joined string. The trust signal is then lost: downstream terminal-renderer transports treat the result as an ordinary string and strip the inner `\n`.
+
+```go
+// ❌ Trust signal lost. Renders as one line on cli/pretty/console.
+log.Info("data: %v", loglayer.Multiline("a", "b"))
+
+// ✅ Construct the wrapper with the formatted content.
+log.Info(loglayer.Multiline("data:", fmt.Sprintf("  a: %s", "x"), fmt.Sprintf("  b: %s", "y")))
+```
+
+This isn't a bug in `fmtlog`; the plugin's contract is "flatten args into a format string." If you need both Sprintf semantics *and* multi-line preservation, build the lines yourself and pass them to `Multiline` directly.
+
 ## Performance
 
 `fmtlog.New()` is a single `MessageHook`. Per-call cost when the plugin doesn't fire (single-arg call, or first arg isn't a string): one type assertion and a length check. When it does fire: one `fmt.Sprintf` call.

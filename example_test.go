@@ -140,6 +140,20 @@ func ExampleNewMock() {
 	// Output: test ran
 }
 
+// Multiline shows how to author a multi-line message that survives
+// terminal-renderer sanitization. Multi-line content authored with
+// Multiline preserves "\n" boundaries between authored elements while
+// terminal transports still sanitize ANSI / control bytes inside each
+// line.
+func ExampleMultiline() {
+	log := loglayer.New(loglayer.Config{
+		Transport:        exampleTransport{},
+		DisableFatalExit: true,
+	})
+	log.Info(loglayer.Multiline("Header:", "  port: 8080", "  host: ::1"))
+	// Output: {"level":"info","time":"2026-04-26T12:00:00Z","msg":"Header:\n  port: 8080\n  host: ::1"}
+}
+
 // WithFields returns a new logger with persistent key/value pairs that
 // appear on every subsequent log entry. Always assign the result.
 func ExampleLogLayer_WithFields() {

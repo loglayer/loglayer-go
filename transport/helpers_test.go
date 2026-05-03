@@ -8,7 +8,21 @@ import (
 
 	"go.loglayer.dev/v2"
 	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v2/utils/sanitize"
 )
+
+// Unicode control characters used in tests to verify sanitization.
+// Defined as runes to avoid staticcheck linting on unicode
+// format characters in source code.
+var (
+	rtlOverride    = string(rune(0x202e)) // U+202E RIGHT-TO-LEFT OVERRIDE
+	zeroWidthSpace = string(rune(0x200b)) // U+200B ZERO WIDTH SPACE
+)
+
+// stringerImpl implements fmt.Stringer for testing Stringer values in JoinPrefixAndMessages.
+type stringerImpl struct{ v string }
+
+func (s stringerImpl) String() string { return "s:" + s.v }
 
 func TestWriterOrStderr(t *testing.T) {
 	if got := transport.WriterOrStderr(nil); got != os.Stderr {
@@ -75,11 +89,23 @@ func TestJoinPrefixAndMessages(t *testing.T) {
 			t.Errorf("expected empty, got %v", got)
 		}
 	})
-	t.Run("non-string messages[0] returns input slice unchanged", func(t *testing.T) {
+	t.Run("non-string messages[0] folds prefix via %v formatting", func(t *testing.T) {
 		in := []any{42, "rest"}
 		got := transport.JoinPrefixAndMessages("[p]", in)
-		if len(got) != len(in) || got[0] != 42 || got[1] != "rest" {
-			t.Errorf("non-string first arg should pass through: %v", got)
+		if len(got) != 2 {
+			t.Fatalf("len(got) = %d, want 2", len(got))
+		}
+		if got[0] != "[p] 42" {
+			t.Errorf("got[0] = %v, want %q", got[0], "[p] 42")
+		}
+		if got[1] != "rest" {
+			t.Errorf("got[1] = %v, want %q", got[1], "rest")
+		}
+	})
+	t.Run("Stringer messages[0] folds prefix via String()", func(t *testing.T) {
+		got := transport.JoinPrefixAndMessages("[p]", []any{stringerImpl{v: "x"}})
+		if got[0] != "[p] s:x" {
+			t.Errorf("got[0] = %v, want %q", got[0], "[p] s:x")
 		}
 	})
 	t.Run("normal case prepends prefix and returns fresh slice", func(t *testing.T) {
@@ -342,3 +368,153 @@ func TestMergeIntoMap(t *testing.T) {
 type benchErr string
 
 func (e benchErr) Error() string { return string(e) }
+
+func TestAssembleMessage_PlainStrings(t *testing.T) {
+	got := transport.AssembleMessage([]any{"hello", "world"}, sanitize.Message)
+	if got != "hello world" {
+		t.Errorf("got %q, want %q", got, "hello world")
+	}
+}
+
+func TestAssembleMessage_NonStringElement(t *testing.T) {
+	got := transport.AssembleMessage([]any{"value:", 42}, sanitize.Message)
+	if got != "value: 42" {
+		t.Errorf("got %q, want %q", got, "value: 42")
+	}
+}
+
+func TestAssembleMessage_MultilineAlone(t *testing.T) {
+	got := transport.AssembleMessage([]any{loglayer.Multiline("a", "b")}, sanitize.Message)
+	if got != "a\nb" {
+		t.Errorf("got %q, want %q", got, "a\nb")
+	}
+}
+
+func TestAssembleMessage_MultilineMixedWithString(t *testing.T) {
+	got := transport.AssembleMessage([]any{"Header:", loglayer.Multiline("a", "b")}, sanitize.Message)
+	if got != "Header: a\nb" {
+		t.Errorf("got %q, want %q", got, "Header: a\nb")
+	}
+}
+
+func TestAssembleMessage_BareNewlineGetsStripped(t *testing.T) {
+	got := transport.AssembleMessage([]any{"a\nb"}, sanitize.Message)
+	if got != "ab" {
+		t.Errorf("got %q, want %q (newline must be stripped from a bare string)", got, "ab")
+	}
+}
+
+func TestAssembleMessage_PerLineANSIStrippedInsideMultiline(t *testing.T) {
+	got := transport.AssembleMessage(
+		[]any{loglayer.Multiline("clean", "evil\x1b[31mred")},
+		sanitize.Message,
+	)
+	if got != "clean\nevil[31mred" {
+		t.Errorf("got %q, want %q", got, "clean\nevil[31mred")
+	}
+}
+
+func TestAssembleMessage_EmptyInputProducesEmptyString(t *testing.T) {
+	if got := transport.AssembleMessage(nil, sanitize.Message); got != "" {
+		t.Errorf("got %q, want empty", got)
+	}
+	if got := transport.AssembleMessage([]any{}, sanitize.Message); got != "" {
+		t.Errorf("got %q, want empty", got)
+	}
+}
+
+func TestAssembleMessage_NoSanitizerIdentity(t *testing.T) {
+	identity := func(s string) string { return s }
+	got := transport.AssembleMessage([]any{"a\nb"}, identity)
+	if got != "a\nb" {
+		t.Errorf("got %q, want %q", got, "a\nb")
+	}
+}
+
+func TestAssembleMessage_CRStrippedFromLine(t *testing.T) {
+	got := transport.AssembleMessage(
+		[]any{loglayer.Multiline("a\r", "b")},
+		sanitize.Message,
+	)
+	if got != "a\nb" {
+		t.Errorf("got %q, want %q (CR must strip; LF boundary survives)", got, "a\nb")
+	}
+}
+
+func TestAssembleMessage_AnsiSplitAcrossLinesCannotReconstruct(t *testing.T) {
+	got := transport.AssembleMessage(
+		[]any{loglayer.Multiline("\x1b", "[31mred")},
+		sanitize.Message,
+	)
+	if got != "\n[31mred" {
+		t.Errorf("got %q, want %q (ANSI must NOT reconstruct across lines)", got, "\n[31mred")
+	}
+}
+
+func TestAssembleMessage_BidiOverrideStripped(t *testing.T) {
+	got := transport.AssembleMessage(
+		[]any{loglayer.Multiline(rtlOverride, "evil")},
+		sanitize.Message,
+	)
+	if got != "\nevil" {
+		t.Errorf("got %q, want %q (bidi override must strip)", got, "\nevil")
+	}
+}
+
+func TestAssembleMessage_ZeroWidthSpaceStripped(t *testing.T) {
+	got := transport.AssembleMessage(
+		[]any{loglayer.Multiline("zero"+zeroWidthSpace+"width", "y")},
+		sanitize.Message,
+	)
+	if got != "zerowidth\ny" {
+		t.Errorf("got %q, want %q (ZWSP must strip)", got, "zerowidth\ny")
+	}
+}
+
+func TestJoinPrefixAndMessages_MultilinePrependsToFirstLine(t *testing.T) {
+	in := []any{loglayer.Multiline("a", "b", "c")}
+	got := transport.JoinPrefixAndMessages("[p]", in)
+	if len(got) != 1 {
+		t.Fatalf("len(got) = %d, want 1", len(got))
+	}
+	m, ok := got[0].(*loglayer.MultilineMessage)
+	if !ok {
+		t.Fatalf("got[0] = %T, want *MultilineMessage", got[0])
+	}
+	want := []string{"[p] a", "b", "c"}
+	if gotLines := m.Lines(); !reflect.DeepEqual(gotLines, want) {
+		t.Errorf("lines = %#v, want %#v", gotLines, want)
+	}
+}
+
+func TestJoinPrefixAndMessages_MultilineDoesNotMutateInput(t *testing.T) {
+	original := loglayer.Multiline("a", "b")
+	in := []any{original}
+	_ = transport.JoinPrefixAndMessages("[p]", in)
+	if got := original.Lines(); !reflect.DeepEqual(got, []string{"a", "b"}) {
+		t.Errorf("original mutated: %#v", got)
+	}
+}
+
+func TestJoinPrefixAndMessages_EmptyMultilineDoesNotPanic(t *testing.T) {
+	// Regression: WithPrefix + empty Multiline must not panic.
+	// Before the fix, the helper indexed Lines()[0] unconditionally.
+	in := []any{loglayer.Multiline()}
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("panicked on empty Multiline + prefix: %v", r)
+		}
+	}()
+	got := transport.JoinPrefixAndMessages("[p]", in)
+	if len(got) != 1 {
+		t.Fatalf("len(got) = %d, want 1", len(got))
+	}
+	m, ok := got[0].(*loglayer.MultilineMessage)
+	if !ok {
+		t.Fatalf("got[0] = %T, want *MultilineMessage", got[0])
+	}
+	// The "[p]" prefix becomes the only authored line.
+	if lines := m.Lines(); len(lines) != 1 || lines[0] != "[p]" {
+		t.Errorf("lines = %#v, want [\"[p]\"]", lines)
+	}
+}

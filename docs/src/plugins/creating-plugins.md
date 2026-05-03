@@ -221,6 +221,25 @@ loglayer.NewMessageHook("no-newlines", func(p loglayer.BeforeMessageOutParams) [
 })
 ```
 
+### Preserving `*MultilineMessage` values
+
+If your plugin walks `params.Messages` and replaces elements, be careful with `*loglayer.MultilineMessage` values. The wrapper is a developer-issued token of trust that lets terminal transports preserve authored "\n" boundaries. If your hook flattens it to a `string` (e.g., via `fmt.Sprintf` or `transport.JoinMessages`), the trust signal is lost and downstream terminal sanitize strips the inner "\n".
+
+To preserve the multi-line shape, pass `*MultilineMessage` values through unchanged, or rebuild a new wrapper at the end of your transformation:
+
+```go
+out := make([]any, 0, len(p.Messages))
+for _, m := range p.Messages {
+    if ml, ok := m.(*loglayer.MultilineMessage); ok {
+        out = append(out, ml) // pass through
+        continue
+    }
+    out = append(out, transformString(m))
+}
+```
+
+The built-in `fmtlog` plugin's format-string mode is one example where the wrapper is intentionally collapsed: `log.Info("data: %v", loglayer.Multiline(...))` runs `fmt.Sprintf` on the wrapper, which calls `String()` and yields a flat string. Document this trade-off in your plugin's GoDoc if it applies.
+
 ### `LevelHook`
 
 ```go
