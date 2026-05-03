@@ -56,18 +56,6 @@ func Multiline(lines ...any) *MultilineMessage {
 	return &MultilineMessage{lines: out}
 }
 
-// NewMultilineMessage wraps an already-canonicalized slice of lines.
-// Use this only when you know the input has been processed by a prior
-// Multiline call. The slice is taken without any normalization
-// (no "\n" splitting, no nested flattening). The transport package
-// uses this when folding a prefix into the first line of an existing
-// wrapper without rebuilding the whole tree.
-//
-// Most callers should use [Multiline] instead.
-func NewMultilineMessage(lines []string) *MultilineMessage {
-	return &MultilineMessage{lines: lines}
-}
-
 // Lines returns the authored line list. Transport authors call this
 // when rendering each line independently.
 func (m *MultilineMessage) Lines() []string {
