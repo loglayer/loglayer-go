@@ -15,6 +15,25 @@ from `.changeset/*.md` files. New entries land above the first `## `
 heading; older entries (released under release-please before the
 migration) stay verbatim below.
 
+## [2.1.0] - 2026-05-03
+
+### Minor Changes
+
+- Add `loglayer.Multiline(lines ...any)` for authoring multi-line message
+  content that survives terminal-renderer sanitization. The wrapper is
+  honored only as a positional message argument; values placed inside
+  `WithFields(...)` or `WithMetadata(...)` are still sanitized to a single
+  line in terminal transports (JSON sinks serialize via `MarshalJSON` to
+  the joined string).
+
+  Also fixes a pre-existing bug in `transport.JoinPrefixAndMessages`
+  where a `WithPrefix` value was silently dropped when `Messages[0]`
+  was not a string (e.g. `log.WithPrefix("X").Info(42)` lost the
+  prefix). The prefix now folds in front of the `%v`-formatted first
+  message.
+
+  See https://go.loglayer.dev/logging-api/multiline.
+
 ## [2.0.1] - 2026-05-03
 
 ### Patch Changes
