@@ -12,10 +12,12 @@ package httptransport
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -27,10 +29,11 @@ import (
 )
 
 const (
-	defaultBatchSize     = 100
-	defaultBatchInterval = 5 * time.Second
-	defaultBufferSize    = 1024
-	defaultClientTimeout = 30 * time.Second
+	defaultBatchSize       = 100
+	defaultBatchInterval   = 5 * time.Second
+	defaultBufferSize      = 1024
+	defaultClientTimeout   = 30 * time.Second
+	defaultShutdownTimeout = 5 * time.Second
 )
 
 // Encoder serializes a batch of entries into the HTTP request body. The
@@ -120,10 +123,45 @@ type Config struct {
 	// 1024.
 	BufferSize int
 
+	// ShutdownTimeout caps how long Close waits for in-flight requests to
+	// finish during shutdown. Once exceeded, the worker's outbound HTTP
+	// requests are cancelled via context so Close can return even if the
+	// endpoint is wedged; queued-but-unsent entries surface via OnError as
+	// context.Canceled. Defaults to 5 seconds, matching loglayer's default
+	// Config.TransportCloseTimeout. Zero or negative uses the default.
+	ShutdownTimeout time.Duration
+
 	// OnError is called when a batch fails to encode or send. The default
 	// writes a one-line error to os.Stderr. Use this to plumb send errors
 	// into a separate logger or metrics counter.
 	OnError func(err error, entries []Entry)
+}
+
+// String returns a redacted form of the config so that an accidental
+// log.Info(cfg) (or fmt.Sprintf("%v", cfg)) can't ship Headers values
+// (Authorization, X-API-Key, etc.). Header keys are preserved so the
+// call site stays debuggable; values are replaced with a fixed mask
+// regardless of length.
+//
+// Note: Go's fmt verbs %+v and %#v intentionally bypass Stringer and
+// always print struct fields. Code that uses those verbs against
+// Config will see the raw Headers. Reserve %+v / %#v for debugger-style
+// inspection, never for production logs.
+func (c Config) String() string {
+	var maskedHeaders map[string]string
+	if len(c.Headers) > 0 {
+		maskedHeaders = make(map[string]string, len(c.Headers))
+		for k := range c.Headers {
+			maskedHeaders[k] = "***redacted***"
+		}
+	}
+	// Spell out the fields explicitly rather than %+v on `c` so a future
+	// field addition doesn't silently expose new sensitive content. Keep
+	// the order matching the struct for readability.
+	return fmt.Sprintf(
+		"httptransport.Config{URL:%q Method:%q Headers:%v BatchSize:%d BatchInterval:%v BufferSize:%d ShutdownTimeout:%v}",
+		c.URL, c.Method, maskedHeaders, c.BatchSize, c.BatchInterval, c.BufferSize, c.ShutdownTimeout,
+	)
 }
 
 // Transport implements loglayer.Transport with batched HTTP delivery.
@@ -135,6 +173,13 @@ type Transport struct {
 	wg      sync.WaitGroup
 	closed  atomic.Bool
 	closeMu sync.RWMutex // SendToLogger holds RLock; Close takes Lock to drain in-flight sends.
+	// reqCtx is intentionally a struct field: its lifetime is the
+	// transport's lifetime, not a single request's. It exists only so
+	// Close can cancel any in-flight Client.Do via cancelReq once
+	// ShutdownTimeout elapses; outbound requests never carry a
+	// caller-provided context (the dispatch path is async).
+	reqCtx    context.Context
+	cancelReq context.CancelFunc
 }
 
 // New constructs an HTTP Transport and starts its background worker.
@@ -176,15 +221,21 @@ func Build(cfg Config) (*Transport, error) {
 	if cfg.BufferSize <= 0 {
 		cfg.BufferSize = defaultBufferSize
 	}
+	if cfg.ShutdownTimeout <= 0 {
+		cfg.ShutdownTimeout = defaultShutdownTimeout
+	}
 	if cfg.OnError == nil {
 		cfg.OnError = defaultOnError
 	}
 
+	reqCtx, cancelReq := context.WithCancel(context.Background())
 	t := &Transport{
 		BaseTransport: transport.NewBaseTransport(cfg.BaseConfig),
 		cfg:           cfg,
 		queue:         make(chan Entry, cfg.BufferSize),
 		done:          make(chan struct{}),
+		reqCtx:        reqCtx,
+		cancelReq:     cancelReq,
 	}
 	t.wg.Add(1)
 	go t.worker()
@@ -239,6 +290,11 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 // to complete; once they have, no new SendToLogger can land an entry in the
 // queue (the closed flag is set under the same lock), so the worker's
 // drainAndFlush sees a stable, finite queue.
+//
+// Close is bounded by Config.ShutdownTimeout: when that elapses, in-flight
+// HTTP requests are cancelled via context so wg.Wait can't pin Close past
+// the configured bound when the endpoint is wedged. Queued-but-unsent
+// entries surface via OnError as context.Canceled.
 func (t *Transport) Close() error {
 	if !t.closed.CompareAndSwap(false, true) {
 		return nil
@@ -246,7 +302,11 @@ func (t *Transport) Close() error {
 	t.closeMu.Lock()
 	close(t.done)
 	t.closeMu.Unlock()
+
+	timer := time.AfterFunc(t.cfg.ShutdownTimeout, t.cancelReq)
 	t.wg.Wait()
+	timer.Stop()
+	t.cancelReq() // idempotent; ensures the request context is released.
 	return nil
 }
 
@@ -335,7 +395,7 @@ func (t *Transport) flush(entries []Entry) {
 		return
 	}
 
-	req, err := http.NewRequest(t.cfg.Method, t.cfg.URL, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(t.reqCtx, t.cfg.Method, t.cfg.URL, bytes.NewReader(body))
 	if err != nil {
 		t.cfg.OnError(fmt.Errorf("loglayer/transports/http: build request: %w", err), entries)
 		return
@@ -381,7 +441,7 @@ func defaultCheckRedirect(req *http.Request, via []*http.Request) error {
 	if len(via) == 0 {
 		return nil
 	}
-	if req.URL.Host != via[0].URL.Host {
+	if !strings.EqualFold(req.URL.Host, via[0].URL.Host) {
 		return fmt.Errorf("loglayer/transports/http: refusing cross-host redirect from %q to %q", via[0].URL.Host, req.URL.Host)
 	}
 	return nil

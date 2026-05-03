@@ -727,14 +727,15 @@ tr := httptr.New(httptr.Config{
     URL:           "https://logs.example.com/ingest",
     Method:        "POST",                 // default POST
     Headers:       map[string]string{"Authorization": "Bearer " + token},
-    BatchSize:     100,                    // default
-    BatchInterval: 5 * time.Second,        // default
-    BufferSize:    1024,                   // channel capacity
-    Client:        &http.Client{Timeout: 30 * time.Second},
-    Encoder:       httptr.JSONArrayEncoder,
-    OnError:       func(err error, entries []httptr.Entry) { /* report */ },
+    BatchSize:       100,                    // default
+    BatchInterval:   5 * time.Second,        // default
+    BufferSize:      1024,                   // channel capacity
+    ShutdownTimeout: 5 * time.Second,        // bounds Close; cancels in-flight requests on overflow
+    Client:          &http.Client{Timeout: 30 * time.Second},
+    Encoder:         httptr.JSONArrayEncoder,
+    OnError:         func(err error, entries []httptr.Entry) { /* report */ },
 })
-defer tr.Close()  // flush pending entries
+defer tr.Close()  // flush pending entries; bounded by ShutdownTimeout
 ```
 
 ### File (Lumberjack)

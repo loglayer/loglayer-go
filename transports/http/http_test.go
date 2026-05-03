@@ -3,6 +3,7 @@ package httptransport_test
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -621,5 +622,104 @@ func TestHTTP_EntryCarriesGroups(t *testing.T) {
 	}
 	if len(captured[1]) != 0 {
 		t.Errorf("entry 1 Groups: got %v, want nil", captured[1])
+	}
+}
+
+// Close is bounded by Config.ShutdownTimeout: when the endpoint is wedged,
+// in-flight HTTP requests are cancelled via context so wg.Wait can't pin
+// Close past the configured bound (otherwise Close would wait for the
+// underlying Client.Timeout, 30s by default).
+func TestHTTP_CloseBoundedByShutdownTimeout(t *testing.T) {
+	started := make(chan struct{}, 1)
+	block := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.Copy(io.Discard, r.Body)
+		select {
+		case started <- struct{}{}:
+		default:
+		}
+		<-block // pin the request until the test ends
+	}))
+	// Defer LIFO: srv.Close runs after close(block) so the pinned handler
+	// is released first; otherwise srv.Close would deadlock waiting for
+	// the handler to return.
+	defer srv.Close()
+	defer close(block)
+
+	var sendErrs atomic.Int32
+	tr := httptr.New(httptr.Config{
+		URL:             srv.URL,
+		BatchSize:       1,
+		BatchInterval:   10 * time.Millisecond,
+		ShutdownTimeout: 100 * time.Millisecond,
+		OnError: func(_ error, _ []httptr.Entry) {
+			sendErrs.Add(1)
+		},
+	})
+	log := loglayer.New(loglayer.Config{Transport: tr, DisableFatalExit: true})
+	log.Info("trigger send")
+
+	select {
+	case <-started:
+	case <-time.After(2 * time.Second):
+		t.Fatal("server didn't receive the request within 2s")
+	}
+
+	closeStart := time.Now()
+	if err := tr.Close(); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+	elapsed := time.Since(closeStart)
+
+	// 1s upper bound rejects regression to "blocks until Client.Timeout"
+	// (30s) while leaving headroom for the cancel-and-drain handshake on
+	// slow CI.
+	if elapsed > time.Second {
+		t.Errorf("Close took %v; expected ~ShutdownTimeout (100ms), upper bound 1s", elapsed)
+	}
+	if got := sendErrs.Load(); got == 0 {
+		t.Errorf("expected OnError to surface the cancelled request, got 0")
+	}
+}
+
+// Config.String redacts Headers values so an accidental log.Info(cfg) or
+// fmt.Sprintf("%v", cfg) can't ship Authorization / X-API-Key values. Keys
+// stay visible so the call site is debuggable.
+func TestHTTP_ConfigStringRedactsHeaders(t *testing.T) {
+	const (
+		secretAuth = "Bearer deadbeef-secret-keep-me-out-of-logs"
+		secretKey  = "another-secret-shhh"
+	)
+	cfg := httptr.Config{
+		URL:    "https://example.com/logs",
+		Method: "POST",
+		Headers: map[string]string{
+			"Authorization": secretAuth,
+			"X-API-Key":     secretKey,
+		},
+	}
+
+	s := cfg.String()
+	for _, secret := range []string{secretAuth, secretKey} {
+		if strings.Contains(s, secret) {
+			t.Errorf("header value leaked through String(): %s", s)
+		}
+	}
+	if !strings.Contains(s, "redacted") {
+		t.Errorf("String() should mark header values as redacted: %s", s)
+	}
+	for _, key := range []string{"Authorization", "X-API-Key"} {
+		if !strings.Contains(s, key) {
+			t.Errorf("header key %q should be preserved for debuggability: %s", key, s)
+		}
+	}
+
+	// fmt.Sprintf("%v", cfg) picks up String() automatically since the
+	// receiver is a value type.
+	v := fmt.Sprintf("%v", cfg)
+	for _, secret := range []string{secretAuth, secretKey} {
+		if strings.Contains(v, secret) {
+			t.Errorf("header value leaked through %%v: %s", v)
+		}
 	}
 }
