@@ -1,6 +1,6 @@
 # go.loglayer.dev/transports/charmlog
 
-[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/charmlog.svg)](https://pkg.go.dev/go.loglayer.dev/transports/charmlog)
+[![Go Reference](https://pkg.go.dev/badge/go.loglayer.dev/transports/charmlog/v2.svg)](https://pkg.go.dev/go.loglayer.dev/transports/charmlog/v2)
 
 LogLayer transport that wraps a `*charmbracelet/log.Logger`. Map metadata becomes individual key/value attrs; struct metadata lands under a configurable key. The package name is `charmlog` to avoid colliding with the stdlib `log`.
 
