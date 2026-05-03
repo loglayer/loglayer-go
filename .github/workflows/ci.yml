@@ -14,7 +14,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The chore(release): merge commit updates each released module's
+  # go.mod to require a new go.loglayer.dev version. The matching tag
+  # is created concurrently by release.yml on the same push. Tidy here
+  # races with that tag push and loses; skip the run so the release
+  # workflow has the field to itself. The next non-release push to main
+  # triggers a clean CI.
   test:
+    if: github.event_name == 'pull_request' || !startsWith(github.event.head_commit.message, 'chore(release):')
     name: Test (Go ${{ matrix.go }})
     runs-on: ubuntu-latest
     strategy:
@@ -79,6 +86,7 @@ jobs:
         run: go build -o /dev/null ./...
 
   staticcheck:
+    if: github.event_name == 'pull_request' || !startsWith(github.event.head_commit.message, 'chore(release):')
     name: Staticcheck
     runs-on: ubuntu-latest
     env:
@@ -119,6 +127,7 @@ jobs:
         run: scripts/foreach-module.sh staticcheck
 
   govulncheck:
+    if: github.event_name == 'pull_request' || !startsWith(github.event.head_commit.message, 'chore(release):')
     name: Govulncheck
     runs-on: ubuntu-latest
     env:
