@@ -73,10 +73,10 @@ log.WithPrefix("[svc]").Info(loglayer.Multiline("a", "b"))
 
 ## Inside fields or metadata
 
-::: warning Messages-only in v1
-`Multiline` only applies inside the message slice (`log.Info(...)`, `log.Error(...)`, etc.). Inside `Fields` or `Metadata`, terminal transports still sanitize each value to a single line, so a `Multiline` value placed in metadata gets rendered as a single line on cli/pretty/console.
+::: warning Not honored inside Fields or Metadata
+`Multiline` only applies when it appears as a positional message argument (`log.Info(loglayer.Multiline(...))`, `log.Error(loglayer.Multiline(...))`, etc.). Inside `WithFields(...)` or `WithMetadata(...)`, terminal transports (cli, pretty, console) still sanitize each value to a single line, so a `Multiline` value placed there gets collapsed.
 
-JSON sinks (structured + every wrapper transport) serialize `Multiline` values via `MarshalJSON` to the `\n`-joined string, so no data is silently lost there.
+JSON sinks (structured + every wrapper transport) serialize `Multiline` values via `MarshalJSON` to the `\n`-joined string, so no data is silently lost in those sinks.
 
 If you need multi-line value rendering for fields specifically, file an issue describing the use case; the right shape is a separate design (probably routing through pretty's expanded-YAML mode).
 :::

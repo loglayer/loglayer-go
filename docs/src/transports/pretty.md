@@ -39,6 +39,10 @@ log.WithMetadata(loglayer.Metadata{"user": "alice", "n": 42}).Info("served")
 
 (With colors applied by the default Moonlight theme.)
 
+::: tip Multi-line messages
+Message strings have control bytes (including `\n`) stripped to defeat log-forging and terminal-escape smuggling. To author a genuinely multi-line message, wrap it with [`loglayer.Multiline(...)`](/logging-api/multiline). Each authored line is still sanitized for ANSI / CR / bidi / ZWSP individually; only the boundaries between authored elements are preserved.
+:::
+
 ## View Modes
 
 Three rendering modes via `Config.ViewMode`:

@@ -7,9 +7,10 @@
 
 Add `loglayer.Multiline(lines ...any)` for authoring multi-line message
 content that survives terminal-renderer sanitization. The wrapper is
-messages-only in v1; field/metadata values are still sanitized to a
-single line in terminal transports (JSON sinks serialize via
-`MarshalJSON` to the joined string).
+honored only as a positional message argument; values placed inside
+`WithFields(...)` or `WithMetadata(...)` are still sanitized to a single
+line in terminal transports (JSON sinks serialize via `MarshalJSON` to
+the joined string).
 
 Also fixes a pre-existing bug in `transport.JoinPrefixAndMessages`
 where a `WithPrefix` value was silently dropped when `Messages[0]`
