@@ -415,7 +415,7 @@ func writeValue(b *strings.Builder, v any) {
 	// Sanitize the rendered value so an ANSI ESC or CRLF embedded
 	// in a user-controlled field can't smuggle escape sequences or
 	// forge log lines through the ShowFields path. Same threat
-	// model as sanitizeMessages.
+	// model as the message-side AssembleMessage.
 	s := sanitize.Message(fmt.Sprintf("%v", v))
 	if needsQuote(s) {
 		fmt.Fprintf(b, "%q", s)
