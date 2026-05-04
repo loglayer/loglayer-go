@@ -1,29 +1,29 @@
 name: release
 
-# Cuts the release after the always-open release PR is merged.
-# Triggers:
-#   push (main, "chore(release):") — the standard path; the merge
-#       commit of the release PR carries that subject by monorel
-#       convention.
-#   workflow_dispatch — manual escape hatch.
+# Single-step release pipeline using monorel v1's `monorel auto`.
+# Fires on every push to main. The action's `monorel auto` step
+# detects whether HEAD is a release-PR merge:
 #
-# Pipeline (inside disaresta-org/monorel/ci/github with command:release):
-#   1. monorel tag           — read HEAD's monorel-Release: trailers
-#                              (written upstream by `monorel apply` on
-#                              the staging branch — see release-pr.yml)
-#                              and create per-package tags locally.
-#                              The merge already brought the file
-#                              changes (CHANGELOGs + changeset deletions)
-#                              onto main from the release PR.
-#   2. git push --follow-tags — push the new tags to the remote so
-#                              the provider can validate them.
-#   3. monorel publish       — create one GitHub Release per tag, body
-#                              sourced from each tag's CHANGELOG entry.
+#   - On a regular feature merge: applies pending `.changeset/*.md`
+#     files onto a staging branch, force-pushes, and upserts the
+#     always-open release PR. The PR's body shows the rendered
+#     plan; its diff IS the file changes the next release will
+#     produce.
+#   - On the merge of that release PR (subject `chore(release): ...`):
+#     creates per-package tags from HEAD's `monorel-Release:`
+#     trailers, pushes them with `--follow-tags`, and creates one
+#     GitHub Release per tag with the body sourced from each tag's
+#     CHANGELOG entry.
 #
-# Then deploy-docs runs as a workflow_call. Releases created via
+# `deploy-docs` runs as a workflow_call after the action completes,
+# but only on the `chore(release):` commit so we don't redeploy the
+# docs site on every feature merge. Releases created via
 # secrets.GITHUB_TOKEN do not propagate `release: published` events
 # (GitHub anti-recursion), so docs.yml's release trigger never fires
 # from a monorel-driven release; we call docs.yml directly here.
+#
+# Replaces the v0.x split of release-pr.yml + release.yml. Single
+# workflow, single step, no `command` input.
 
 on:
   push:
@@ -32,33 +32,34 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
-  release:
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'chore(release):')
+  monorel:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # monorel runs `go mod tidy` with GOTOOLCHAIN=local during release,
-      # so Go must already be installed at a version satisfying every
-      # released sub-module's `go` directive (every sub-module here is
-      # `go 1.25.0`).
+      # monorel runs `go mod tidy` with GOTOOLCHAIN=local during the
+      # release path, so Go must already be installed at a version
+      # satisfying every released sub-module's `go` directive (every
+      # sub-module here is `go 1.25.0`).
       - uses: actions/setup-go@v5
         with:
           go-version: '1.25'
           cache: true
           cache-dependency-path: '**/go.sum'
 
-      - uses: disaresta-org/monorel/ci/github@v0.14.0
-        with:
-          command: release
+      - uses: disaresta-org/monorel/ci/github@v1.0.0
 
   deploy-docs:
-    needs: release
-    if: ${{ needs.release.result == 'success' }}
+    # Only deploy docs on the release-PR merge commit, not on every
+    # feature merge. `monorel auto` does PR-upsert work on those
+    # pushes; nothing in the docs site changes from upserting a PR.
+    if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'chore(release):') }}
+    needs: monorel
     uses: ./.github/workflows/docs.yml
     permissions:
       contents: read
