@@ -234,12 +234,13 @@ The release-please-era gotchas (`release-as` initial-version dance, squash-merge
   GitHub Pages on main push, also called by `release.yml` after a
   monorel-driven release (workflow_call sidesteps GitHub's anti-recursion
   for `GITHUB_TOKEN`-created releases).
-- **release-pr.yml**: triggered on push to `main`. Runs `monorel preview --upsert`
-  to maintain the always-open release PR.
-- **release.yml**: triggered on push to `main` for the `chore(release):`
-  merge commit (or via `workflow_dispatch`). Runs the release pipeline:
-  `monorel release` → `git push --follow-tags` → `monorel publish`.
-  Then calls `docs.yml` via `workflow_call`.
+- **release.yml**: triggered on every push to `main` (or via `workflow_dispatch`).
+  Runs `monorel auto` via the `disaresta-org/monorel/ci/github@v1` action,
+  which detects whether HEAD is a release-PR merge: on a regular feature
+  merge it upserts the always-open release PR; on the `chore(release):`
+  merge it tags, pushes, and publishes per-package GitHub Releases. After
+  the action completes on a `chore(release):` push, `deploy-docs` runs
+  via `workflow_call`.
 - **pr-title.yml**: validates that PR titles follow Conventional Commits
   for git-history hygiene. Allowed types match the scoped-commit
   convention above.
@@ -249,14 +250,14 @@ To cut a release:
 1. Land changes on `main` via PRs that include a `.changeset/<name>.md`
    file when a release is desired. Use `monorel add --package "<name>:<level>"`
    to author one, or hand-roll the file.
-2. The release-pr workflow updates the always-open release PR after each
-   push to `main`. The PR body shows the rendered plan (per-package
-   `from`/`to` versions plus the changelog body for each).
+2. The release workflow's `monorel auto` step updates the always-open
+   release PR after each push to `main`. The PR body shows the rendered
+   plan (per-package `from`/`to` versions plus the changelog body for each).
 3. Edit `docs/src/whats-new.md` to add the user-facing summary if
    relevant — monorel doesn't touch this file.
-4. Merge the release PR. The release.yml workflow runs the pipeline:
-   writes per-package CHANGELOG entries, deletes the consumed
-   `.changeset/*.md` files, creates per-package tags, pushes, and
+4. Merge the release PR. The release workflow's `monorel auto` step
+   detects the `chore(release):` merge, creates per-package tags from
+   the merge commit's `monorel-Release:` trailers, pushes them, and
    creates one GitHub Release per tag.
 
 ## Vulnerability scanning (advisory, not gating)
