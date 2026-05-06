@@ -120,7 +120,7 @@ func Build(cfg Config) (*Transport, error) {
 	merged := make(map[string]string, len(httpCfg.Headers)+2)
 	for k, v := range httpCfg.Headers {
 		if strings.EqualFold(k, "authorization") || strings.EqualFold(k, "content-type") {
-			continue // Let betterstack's values win for these
+			continue // betterstack sets these; ignore any user-provided values
 		}
 		merged[k] = v
 	}
