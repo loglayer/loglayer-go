@@ -160,6 +160,7 @@ gtag('config', '${gaMeasurementId}');`,
           {
             text: 'Cloud',
             items: [
+              { text: 'Axiom', link: '/transports/axiom' },
               { text: 'Datadog', link: '/transports/datadog' },
               { text: 'Google Cloud Logging', link: '/transports/gcplogging' },
               { text: 'Sentry', link: '/transports/sentry' },

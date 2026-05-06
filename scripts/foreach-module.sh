@@ -30,6 +30,7 @@ fi
 # sub-modules. Don't reorder without a reason.
 ALL_MODULES=(
   .
+  transports/axiom
   transports/blank
   transports/central
   transports/charmlog
@@ -71,6 +72,7 @@ ALL_MODULES=(
 # of example code shouldn't gate the build.
 SHIPPED_MODULES=(
   .
+  transports/axiom
   transports/blank
   transports/central
   transports/charmlog
@@ -102,7 +104,7 @@ SHIPPED_MODULES=(
 
 op="${1:-}"
 if [ -z "$op" ]; then
-  cat >&2 <<EOF
+  cat >&2 <<USAGE_EOF
 Usage: $0 <op>
   Ops:
     tidy         go mod tidy + diff check (all modules)
@@ -115,7 +117,7 @@ Usage: $0 <op>
 
 The 'all modules' set is: ${ALL_MODULES[*]}
 The 'shipped modules' set is: ${SHIPPED_MODULES[*]}
-EOF
+USAGE_EOF
   exit 2
 fi
 
@@ -123,9 +125,6 @@ case "$op" in
   tidy)
     # Run `go mod tidy` across every module first so a single invocation
     # cleans up *all* drift, then do one repo-wide diff check at the end.
-    # The earlier per-module diff fail-fast pattern made this script a
-    # poor pre-push hook: each run only ever found the first drifted
-    # module, so multi-module drift took multiple iterations to surface.
     for mod in "${ALL_MODULES[@]}"; do
       echo "==> $mod (tidy)"
       (cd "$mod" && go mod tidy)
@@ -164,6 +163,7 @@ case "$op" in
     # "[no test files]" output. Every other module has tests.
     TEST_MODULES=(
       .
+      transports/axiom
       transports/blank
       transports/central
       transports/charmlog

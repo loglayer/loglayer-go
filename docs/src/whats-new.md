@@ -7,6 +7,12 @@ description: Latest features and improvements in LogLayer for Go.
 
 - See the [main `CHANGELOG.md`](https://github.com/loglayer/loglayer-go/blob/main/CHANGELOG.md) for the auto-generated per-release log.
 
+## May 06, 2026
+
+`transports/axiom`:
+
+Initial release. New [Axiom transport](/transports/axiom).
+
 ## May 03, 2026
 
 `v2.1.0`:

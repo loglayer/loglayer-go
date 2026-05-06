@@ -22,8 +22,10 @@ loglayer-go/
 │       ├── logging-api/        Per-method API guides
 │       ├── transports/         Per-transport guides + _partials/
 │       └── ...                 Top-level pages (index, intro, configuration, etc.)
-├── transport/                  BaseTransport / BaseConfig
+├── transport/                  BaseTransport / BaseConfig / helpers / transporttest
 ├── transports/                 Built-in transports
+│   ├── axiom/                  Wraps github.com/axiomhq/axiom-go
+│   ├── blank/                  Delegates to user-supplied function (template for new transports)
 │   ├── console/                Plain fmt.Println-style
 │   ├── pretty/                 Colorized terminal output (uses fatih/color)
 │   ├── structured/             JSON-per-line
@@ -92,6 +94,9 @@ go test -tags=livetest -race ./transports/otellog/ ./plugins/oteltrace/
 # transitive closure doesn't pollute the main module's dependency graph.
 cd plugins/datadogtrace/livetest && go test -race ./...
 ```
+
+# Axiom: build-tag gated, lives in the transport module (cheap deps).
+go test -tags=livetest ./transports/axiom/
 
 Two patterns are in use, picked by dependency weight:
 
@@ -164,6 +169,12 @@ multi-core box.
 
 Releases are managed by [monorel](https://monorel.disaresta.com), a changesets-style release tool built specifically for the layout this repo uses (bare `vX.Y.Z` for the root, `<path>/vX.Y.Z` for sub-modules). The release signal is explicit per-PR: `.changeset/<name>.md` files declare which packages release at what bump level. Don't `git tag` manually.
 
+Install monorel once:
+
+```sh
+go install monorel.disaresta.com/cmd/monorel@latest
+```
+
 - **Main module** tags as `v1.X.Y`. Sub-modules tag as
   `transports/otellog/v1.X.Y`, `plugins/oteltrace/v1.X.Y` (Go module
   convention). Configured in `monorel.toml` at the repo root.
@@ -209,6 +220,8 @@ To add `<path>` (e.g. `transports/foo` or `plugins/bar`):
 3. Register the module in `monorel.toml` with a `[packages."<path>"]` block following the existing siblings as a template (`tag_prefix`, `path`, `changelog` all set to the path-derived values).
 4. Add the path to `scripts/foreach-module.sh` (`ALL_MODULES`, `SHIPPED_MODULES`, and the `test` op's hardcoded list).
 5. Add the path to `go.work`'s `use` block.
+
+6. **Important:** For fresh modules (new transports, plugins, or integrations), use `:major` for the initial release to establish v1.0.0. Subsequent releases will bump to `:minor` for new features or `:patch` for bug fixes.
 6. Run `bash scripts/foreach-module.sh tidy` to settle indirect deps and `bash scripts/foreach-module.sh test` to confirm.
 7. Open the PR. **No release happens from this PR** — `monorel.toml` registers the package but registration alone doesn't trigger a release.
 8. Cut the first release in a follow-up PR by adding a changeset:
@@ -401,3 +414,12 @@ These exist in upstream loglayer but are not in the Go v1:
 - Mixins (the `useLogLayerMixin` augmentation pattern)
 
 If you're asked to add one of these, propose the design first, do not silently start implementing.
+
+## Git Workflow
+
+**Never commit directly to `main`.** Always create a feature branch from current main, work on it, then open a PR that targets main. This applies to all changes: features, bug fixes, docs updates, configuration tweaks.
+
+The full workflow is in [`.claude/rules/git-workflow.md`](.claude/rules/git-workflow.md):
+- Rebase your branch onto current main before opening a PR
+- Always run code review (`/superpowers:requesting-code-review`) before committing final work
+- Documentation changes need a separate review with framing "act as a senior Go developer encountering this for the first time"

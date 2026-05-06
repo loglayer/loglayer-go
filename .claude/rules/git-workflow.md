@@ -32,9 +32,19 @@ The rule exists to make that class of bug impossible by construction. If the loc
 - Use `git rebase --onto origin/<parent>` form when the local branch's lower commits are squash-merge ancestors that won't replay cleanly. Replaying just the work-in-this-PR's commits keeps the rebase trivial.
 - After the rebase succeeds, run the build / tests once before pushing. A rebase can produce silent semantic conflicts that compile but break behavior.
 
+## Branch policy
+
+**Never commit directly to `main`.** Always create a feature branch from current main, work on it, then open a PR that targets main. This applies equally to:
+- Feature development
+- Bug fixes
+- Documentation updates
+- Configuration changes
+
+The only exception is if you're a maintainer merging a reviewed PR (via squash-merge as configured in GitHub).
+
 ## What this rule does NOT cover
 
-- Force-pushing to `main` or other shared protected branches. Don't.
+- Force-pushing to other shared protected branches. Don't.
 - Resolving genuine merge conflicts during the rebase. Read both sides; never `git checkout --theirs/ours` blindly.
 - Skipping the rule with `--no-verify`. The rule is the rule even when the hook isn't enforcing it.
 
