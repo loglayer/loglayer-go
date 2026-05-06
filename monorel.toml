@@ -14,6 +14,16 @@ tag_prefix = ""
 path       = "."
 changelog  = "CHANGELOG.md"
 
+[packages."transports/axiom"]
+tag_prefix = "transports/axiom"
+path       = "transports/axiom"
+changelog  = "transports/axiom/CHANGELOG.md"
+
+[packages."transports/blank"]
+tag_prefix = "transports/blank"
+path       = "transports/blank"
+changelog  = "transports/blank/CHANGELOG.md"
+
 [packages."transports/charmlog"]
 tag_prefix = "transports/charmlog"
 path       = "transports/charmlog"
@@ -23,6 +33,11 @@ changelog  = "transports/charmlog/CHANGELOG.md"
 tag_prefix = "transports/cli"
 path       = "transports/cli"
 changelog  = "transports/cli/CHANGELOG.md"
+
+[packages."transports/console"]
+tag_prefix = "transports/console"
+path       = "transports/console"
+changelog  = "transports/console/CHANGELOG.md"
 
 [packages."transports/datadog"]
 tag_prefix = "transports/datadog"
@@ -34,11 +49,6 @@ tag_prefix = "transports/gcplogging"
 path       = "transports/gcplogging"
 changelog  = "transports/gcplogging/CHANGELOG.md"
 
-[packages."transports/lumberjack"]
-tag_prefix = "transports/lumberjack"
-path       = "transports/lumberjack"
-changelog  = "transports/lumberjack/CHANGELOG.md"
-
 [packages."transports/http"]
 tag_prefix = "transports/http"
 path       = "transports/http"
@@ -48,6 +58,11 @@ changelog  = "transports/http/CHANGELOG.md"
 tag_prefix = "transports/logrus"
 path       = "transports/logrus"
 changelog  = "transports/logrus/CHANGELOG.md"
+
+[packages."transports/lumberjack"]
+tag_prefix = "transports/lumberjack"
+path       = "transports/lumberjack"
+changelog  = "transports/lumberjack/CHANGELOG.md"
 
 [packages."transports/otellog"]
 tag_prefix = "transports/otellog"
@@ -69,65 +84,10 @@ tag_prefix = "transports/sentry"
 path       = "transports/sentry"
 changelog  = "transports/sentry/CHANGELOG.md"
 
-[packages."transports/zap"]
-tag_prefix = "transports/zap"
-path       = "transports/zap"
-changelog  = "transports/zap/CHANGELOG.md"
-
-[packages."transports/zerolog"]
-tag_prefix = "transports/zerolog"
-path       = "transports/zerolog"
-changelog  = "transports/zerolog/CHANGELOG.md"
-
-[packages."plugins/oteltrace"]
-tag_prefix = "plugins/oteltrace"
-path       = "plugins/oteltrace"
-changelog  = "plugins/oteltrace/CHANGELOG.md"
-
-[packages."transports/blank"]
-tag_prefix = "transports/blank"
-path       = "transports/blank"
-changelog  = "transports/blank/CHANGELOG.md"
-
 [packages."transports/slog"]
 tag_prefix = "transports/slog"
 path       = "transports/slog"
 changelog  = "transports/slog/CHANGELOG.md"
-
-[packages."plugins/redact"]
-tag_prefix = "plugins/redact"
-path       = "plugins/redact"
-changelog  = "plugins/redact/CHANGELOG.md"
-
-[packages."plugins/sampling"]
-tag_prefix = "plugins/sampling"
-path       = "plugins/sampling"
-changelog  = "plugins/sampling/CHANGELOG.md"
-
-[packages."plugins/fmtlog"]
-tag_prefix = "plugins/fmtlog"
-path       = "plugins/fmtlog"
-changelog  = "plugins/fmtlog/CHANGELOG.md"
-
-[packages."plugins/datadogtrace"]
-tag_prefix = "plugins/datadogtrace"
-path       = "plugins/datadogtrace"
-changelog  = "plugins/datadogtrace/CHANGELOG.md"
-
-[packages."integrations/loghttp"]
-tag_prefix = "integrations/loghttp"
-path       = "integrations/loghttp"
-changelog  = "integrations/loghttp/CHANGELOG.md"
-
-[packages."integrations/sloghandler"]
-tag_prefix = "integrations/sloghandler"
-path       = "integrations/sloghandler"
-changelog  = "integrations/sloghandler/CHANGELOG.md"
-
-[packages."transports/console"]
-tag_prefix = "transports/console"
-path       = "transports/console"
-changelog  = "transports/console/CHANGELOG.md"
 
 [packages."transports/structured"]
 tag_prefix = "transports/structured"
@@ -139,7 +99,52 @@ tag_prefix = "transports/testing"
 path       = "transports/testing"
 changelog  = "transports/testing/CHANGELOG.md"
 
+[packages."transports/zap"]
+tag_prefix = "transports/zap"
+path       = "transports/zap"
+changelog  = "transports/zap/CHANGELOG.md"
+
+[packages."transports/zerolog"]
+tag_prefix = "transports/zerolog"
+path       = "transports/zerolog"
+changelog  = "transports/zerolog/CHANGELOG.md"
+
+[packages."plugins/datadogtrace"]
+tag_prefix = "plugins/datadogtrace"
+path       = "plugins/datadogtrace"
+changelog  = "plugins/datadogtrace/CHANGELOG.md"
+
+[packages."plugins/fmtlog"]
+tag_prefix = "plugins/fmtlog"
+path       = "plugins/fmtlog"
+changelog  = "plugins/fmtlog/CHANGELOG.md"
+
+[packages."plugins/oteltrace"]
+tag_prefix = "plugins/oteltrace"
+path       = "plugins/oteltrace"
+changelog  = "plugins/oteltrace/CHANGELOG.md"
+
 [packages."plugins/plugintest"]
 tag_prefix = "plugins/plugintest"
 path       = "plugins/plugintest"
 changelog  = "plugins/plugintest/CHANGELOG.md"
+
+[packages."plugins/redact"]
+tag_prefix = "plugins/redact"
+path       = "plugins/redact"
+changelog  = "plugins/redact/CHANGELOG.md"
+
+[packages."plugins/sampling"]
+tag_prefix = "plugins/sampling"
+path       = "plugins/sampling"
+changelog  = "plugins/sampling/CHANGELOG.md"
+
+[packages."integrations/loghttp"]
+tag_prefix = "integrations/loghttp"
+path       = "integrations/loghttp"
+changelog  = "integrations/loghttp/CHANGELOG.md"
+
+[packages."integrations/sloghandler"]
+tag_prefix = "integrations/sloghandler"
+path       = "integrations/sloghandler"
+changelog  = "integrations/sloghandler/CHANGELOG.md"

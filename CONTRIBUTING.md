@@ -12,6 +12,7 @@ Thanks for considering a contribution. The essentials:
 | lefthook | Drives the pre-commit, commit-msg, and pre-push git hooks. | `go install github.com/evilmartians/lefthook@latest` |
 | staticcheck | Pre-commit lint that mirrors CI. Hook hard-fails without it. | `go install honnef.co/go/tools/cmd/staticcheck@latest` |
 | Bun | Runs the conventional-commit linter and builds the docs site. The commit-msg hook hard-fails without `bun` + `node_modules`. | <https://bun.sh/> |
+| monorel | Manages releases across all modules via changesets. Required for creating releases. | `go install monorel.disaresta.com/cmd/monorel@latest` |
 | govulncheck (optional) | Advisory vuln scan; the SessionStart hook surfaces findings as session context. | `go install golang.org/x/vuln/cmd/govulncheck@latest` |
 
 `go install` puts binaries in `$(go env GOPATH)/bin` (default `~/go/bin`). Make sure that directory is on your `PATH`, otherwise the git hooks silently skip when they can't find `lefthook` / `staticcheck`. If only `~/.local/bin` is on your `PATH`, symlink:
@@ -162,6 +163,11 @@ for the root, `<path>` for sub-modules (e.g. `transports/zerolog`,
 `plugins/oteltrace`, `integrations/loghttp`). Bump levels are `major`,
 `minor`, or `patch`. The body becomes the rendered changelog entry for
 every package the changeset names.
+
+For new transports, plugins, and integrations that are fresh modules,
+the initial release should always be a **major version** (`:major`) to
+indicate v1.0.0, following Go module conventions where the first
+release establishes the major version number.
 
 Hand-writing the file directly works too; the `monorel add` command is
 just a generator.
