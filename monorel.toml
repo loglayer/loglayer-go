@@ -24,6 +24,11 @@ tag_prefix = "transports/blank"
 path       = "transports/blank"
 changelog  = "transports/blank/CHANGELOG.md"
 
+[packages."transports/betterstack"]
+tag_prefix = "transports/betterstack"
+path       = "transports/betterstack"
+changelog  = "transports/betterstack/CHANGELOG.md"
+
 [packages."transports/charmlog"]
 tag_prefix = "transports/charmlog"
 path       = "transports/charmlog"

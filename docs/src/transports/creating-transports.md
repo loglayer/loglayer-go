@@ -309,3 +309,15 @@ Match the pattern the built-ins use ([`transports/structured`](https://github.co
 ## Testing
 
 For testing a custom transport, see [Testing Transports](/transports/testing-transports). It covers the direct buffer assertion pattern and the `RunContract` helper that drives the same 14-test contract suite every built-in wrapper passes.
+
+### Live Tests
+
+Transports that ship to third-party services (HTTP endpoints, cloud APIs) include build-tagged live tests (`//go:build livetest`) that hit the real API. These are **never documented** in the transport's VitePress docs — they're internal developer documentation only.
+
+Run them locally with the required credentials:
+
+```sh
+SOME_SERVICE_TOKEN=<token> go test -tags=livetest ./transports/yourservice/
+```
+
+CI runs them automatically on pushes to `main`. The test code itself includes a comment block at the top explaining how to run it, so contributors can discover it from the source.

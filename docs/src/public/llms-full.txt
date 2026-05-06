@@ -21,15 +21,9 @@ go get go.loglayer.dev/transports/cli/v2
 go get go.loglayer.dev/transports/testing/v2
 go get go.loglayer.dev/transports/blank/v2
 
-# Wrappers around third-party loggers
-go get go.loglayer.dev/transports/zerolog/v2
-go get go.loglayer.dev/transports/zap/v2
-go get go.loglayer.dev/transports/slog/v2
-go get go.loglayer.dev/transports/phuslu/v2
-go get go.loglayer.dev/transports/logrus/v2
-go get go.loglayer.dev/transports/charmlog/v2
-
 # Cloud (managed log services)
+go get go.loglayer.dev/transports/axiom/v2
+go get go.loglayer.dev/transports/betterstack/v2
 go get go.loglayer.dev/transports/datadog/v2
 go get go.loglayer.dev/transports/gcplogging/v2
 go get go.loglayer.dev/transports/sentry/v2
@@ -38,6 +32,14 @@ go get go.loglayer.dev/transports/sentry/v2
 go get go.loglayer.dev/transports/http/v2
 go get go.loglayer.dev/transports/lumberjack/v2
 go get go.loglayer.dev/transports/otellog/v2
+
+# Wrappers around third-party loggers
+go get go.loglayer.dev/transports/charmlog/v2
+go get go.loglayer.dev/transports/logrus/v2
+go get go.loglayer.dev/transports/phuslu/v2
+go get go.loglayer.dev/transports/slog/v2
+go get go.loglayer.dev/transports/zap/v2
+go get go.loglayer.dev/transports/zerolog/v2
 
 # Plugins
 go get go.loglayer.dev/plugins/redact/v2
