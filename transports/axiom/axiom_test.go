@@ -91,8 +91,8 @@ func TestBuildEntry_PayloadShape(t *testing.T) {
 
 func TestBuildEntry_CustomMessageField(t *testing.T) {
 	tr, err := Build(Config{
-		Client:      fakeClient,
-		DatasetName: "testlogs",
+		Client:       fakeClient,
+		DatasetName:  "testlogs",
 		MessageField: "message",
 	})
 	if err != nil {
@@ -208,12 +208,12 @@ func TestBuildEntry_WithPrefix(t *testing.T) {
 	}
 
 	params := loglayer.TransportParams{
-		LogLevel:  loglayer.LogLevelInfo,
-		Prefix:    "[web]",
-		Messages:  []any{"request completed"},
-		Data:      loglayer.Data{},
-		Metadata:  nil,
-		Schema:    loglayer.Schema{},
+		LogLevel: loglayer.LogLevelInfo,
+		Prefix:   "[web]",
+		Messages: []any{"request completed"},
+		Data:     loglayer.Data{},
+		Metadata: nil,
+		Schema:   loglayer.Schema{},
 	}
 	// Apply prefix before calling buildEntry (simulating what SendToLogger does)
 	params.Messages = transport.JoinPrefixAndMessages(params.Prefix, params.Messages)
