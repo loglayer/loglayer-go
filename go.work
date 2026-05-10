@@ -12,6 +12,7 @@ use (
 	./transports/datadog
 	./transports/gcplogging
 	./transports/lumberjack
+	./transports/newrelic
 	./transports/http
 	./transports/logrus
 	./transports/otellog

@@ -64,6 +64,11 @@ tag_prefix = "transports/lumberjack"
 path       = "transports/lumberjack"
 changelog  = "transports/lumberjack/CHANGELOG.md"
 
+[packages."transports/newrelic"]
+tag_prefix = "transports/newrelic"
+path       = "transports/newrelic"
+changelog  = "transports/newrelic/CHANGELOG.md"
+
 [packages."transports/otellog"]
 tag_prefix = "transports/otellog"
 path       = "transports/otellog"

@@ -39,6 +39,7 @@ ALL_MODULES=(
   transports/datadog
   transports/gcplogging
   transports/lumberjack
+  transports/newrelic
   transports/http
   transports/logrus
   transports/otellog
@@ -81,6 +82,7 @@ SHIPPED_MODULES=(
   transports/datadog
   transports/gcplogging
   transports/lumberjack
+  transports/newrelic
   transports/http
   transports/logrus
   transports/otellog
@@ -172,6 +174,7 @@ case "$op" in
       transports/datadog
       transports/gcplogging
       transports/lumberjack
+      transports/newrelic
       transports/http
       transports/logrus
       transports/otellog
