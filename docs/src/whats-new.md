@@ -13,15 +13,15 @@ description: Latest features and improvements in LogLayer for Go.
 
 Initial release. New [New Relic transport](/transports/newrelic).
 
+`transports/betterstack`:
+
+Initial release. New [Better Stack transport](/transports/betterstack).
+
 ## May 06, 2026
 
 `transports/axiom`:
 
 Initial release. New [Axiom transport](/transports/axiom).
-
-`transports/betterstack`:
-
-Initial release. New [Better Stack transport](/transports/betterstack).
 
 ## May 03, 2026
 
