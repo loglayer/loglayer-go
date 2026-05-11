@@ -161,6 +161,7 @@ gtag('config', '${gaMeasurementId}');`,
             text: 'Cloud',
             items: [
               { text: 'Axiom', link: '/transports/axiom' },
+              { text: 'Better Stack', link: '/transports/betterstack' },
               { text: 'Datadog', link: '/transports/datadog' },
               { text: 'Google Cloud Logging', link: '/transports/gcplogging' },
               { text: 'New Relic', link: '/transports/newrelic' },

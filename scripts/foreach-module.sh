@@ -32,6 +32,7 @@ ALL_MODULES=(
   .
   transports/axiom
   transports/blank
+  transports/betterstack
   transports/central
   transports/charmlog
   transports/cli
@@ -75,6 +76,7 @@ SHIPPED_MODULES=(
   .
   transports/axiom
   transports/blank
+  transports/betterstack
   transports/central
   transports/charmlog
   transports/cli
@@ -167,6 +169,7 @@ case "$op" in
       .
       transports/axiom
       transports/blank
+      transports/betterstack
       transports/central
       transports/charmlog
       transports/cli

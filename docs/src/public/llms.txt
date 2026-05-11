@@ -364,6 +364,8 @@ lines := lib.Lines()  // []lltest.LogLine; assert on Level, Messages, Data, Meta
 - `transports/blank`: user-supplied dispatch function
 
 **Cloud** (managed log services):
+- `transports/axiom`: ships logs to Axiom via caller-supplied `*axiom.Client`
+- `transports/betterstack`: ships logs to Better Stack via HTTP intake
 - `transports/datadog`: Datadog Logs HTTP intake
 - `transports/gcplogging`: wraps a caller-supplied `*logging.Logger` from `cloud.google.com/go/logging`
 - `transports/sentry`: wraps a caller-supplied `sentry.Logger`
@@ -374,7 +376,7 @@ lines := lib.Lines()  // []lltest.LogLine; assert on Level, Messages, Data, Meta
 - `transports/otellog`: emits to an OTel `log.Logger`; forwards `WithContext` for trace correlation
 
 **Wrappers around third-party loggers**:
-- `transports/zerolog`, `transports/zap`, `transports/slog`, `transports/phuslu`, `transports/logrus`, `transports/charmlog`
+- `transports/charmlog`, `transports/logrus`, `transports/phuslu`, `transports/slog`, `transports/zap`, `transports/zerolog`
 
 ## Available Plugins
 
