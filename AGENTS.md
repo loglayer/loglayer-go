@@ -206,7 +206,7 @@ To add `<path>` (e.g. `transports/foo` or `plugins/bar`):
 1. Create the directory and code as usual.
 2. Add `<path>/go.mod` with:
 
-   ```
+   ```go
    module go.loglayer.dev/<path>
 
    go 1.25.0
@@ -215,6 +215,8 @@ To add `<path>` (e.g. `transports/foo` or `plugins/bar`):
 
    require go.loglayer.dev v0.0.0-00010101000000-000000000000
    ```
+
+   The module path is `go.loglayer.dev/<path>` with **no `/v2` suffix**, even though the core dependency is `go.loglayer.dev/v2`. The sub-module ships at v1.0.0 independently; it only gets a `/v2` in its own path when *it* breaks its own API after v1.x.x. (See `transports/datadog` — started at `transports/datadog/v1.0.0`, later bumped to `transports/datadog/v2.0.0` when the core went v2 and the wrapper shape changed.)
 
    Adjust the `replace` depth (`../..` for `transports/foo`, `../../..` for `plugins/foo/livetest`, etc.). If the package depends on other split sub-modules (e.g. `plugins/plugintest`), add corresponding `replace` and `require` lines following the existing siblings as a template.
 3. Register the module in `monorel.toml` with a `[packages."<path>"]` block following the existing siblings as a template (`tag_prefix`, `path`, `changelog` all set to the path-derived values).

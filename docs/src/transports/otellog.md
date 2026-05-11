@@ -209,16 +209,6 @@ log.WithContext(ctx).Info("served")
 
 For the persistent-binding pattern in HTTP handlers, see [Go Context](/logging-api/go-context). The `loghttp` middleware binds `r.Context()` automatically so handlers reading via `loghttp.FromRequest(r)` get trace correlation with no per-emission boilerplate.
 
-## Live Integration Tests
-
-The transport ships with `//go:build livetest`-tagged tests that exercise the real OpenTelemetry SDK end-to-end (real `LoggerProvider` with an in-memory `Exporter`, real `TracerProvider` for span correlation). They're skipped by the default test run and opt-in via:
-
-```sh
-go test -tags=livetest ./transports/otellog/
-```
-
-CI runs them automatically. See `transports/otellog/livetest_test.go` for the full set.
-
 ## Reaching the Underlying Logger
 
 `GetLoggerInstance` returns the underlying `log.Logger`:
