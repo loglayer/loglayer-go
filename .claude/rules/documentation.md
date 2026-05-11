@@ -156,6 +156,8 @@ When adding a new transport, update the transport-list partial. Both the homepag
 3. Add a sidebar entry in `docs/.vitepress/config.ts`.
 4. Run `cd docs && bun run docs:build` and confirm clean.
 
+Do not include a "Live Test" or similar section in transport/plugin docs. Live tests are development-time artifacts (build-tagged, env-var-gated) that belong in the code, not the docs. Users don't need to read about them.
+
 ## Go Version Floors
 
 The main `go.loglayer.dev` module's Go floor is whatever the highest dep in its tree demands. Today that's **1.25** (driven by `golang.org/x/exp` via `charmbracelet/log` and `golang.org/x/sys`). Sub-modules — `transports/otellog`, `plugins/oteltrace`, `plugins/datadogtrace/livetest` — have their own go.mod files and their own floors.
@@ -164,7 +166,7 @@ When adding a transport, plugin, or integration:
 
 1. **If your dep would raise the main module's floor**, first ask whether splitting your code into its own go.mod would isolate the bump. Heavy SDK bindings (OpenTelemetry, vendor APIs) are good candidates for splitting; small libraries that nudge the floor by one minor version usually aren't.
 
-2. **If you split**, mirror the structure used by `transports/otellog/`: own `go.mod` with `module go.loglayer.dev/<path>`, `replace go.loglayer.dev => ../...` for development, a placeholder `require go.loglayer.dev v0.0.0-...` line that the replace directive overrides. Add a CI step in `.github/workflows/ci.yml` that `cd`s into the new module and runs tests. Update the `Mostly single Go module` bullet in AGENTS.md "Key Design Decisions" with the new module path.
+2. **If you split**, mirror the structure used by `transports/otellog/`: own `go.mod` with `module go.loglayer.dev/<path>` (no `/v2` suffix on the module path), `replace go.loglayer.dev => ../...` for development, a placeholder `require go.loglayer.dev v0.0.0-...` line that the replace directive overrides. Depend on `go.loglayer.dev/v2` explicitly. The import path is `go.loglayer.dev/<path>` because the sub-module ships at v1.0.0 initially (not v2.0.0); the `/v2` in deps is the *core's* version, not the sub-module's. When the sub-module itself later breaks its own API, it moves to `<path>/v2` and the corresponding major bump. Add a CI step in `.github/workflows/ci.yml` that `cd`s into the new module and runs tests. Update the `Mostly single Go module` bullet in AGENTS.md "Key Design Decisions" with the new module path.
 
 3. **If you don't split and the floor moves**, update `go.mod`, the matrix in `.github/workflows/ci.yml`, and the version statements in `README.md`, `docs/src/getting-started.md`, and `AGENTS.md`. Add a `.changeset/*.md` for the affected module(s) at the appropriate bump level and note the floor change in `docs/src/whats-new.md`.
 

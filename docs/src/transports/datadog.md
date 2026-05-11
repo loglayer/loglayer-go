@@ -225,41 +225,6 @@ tr.Close()                      // from httptransport.Transport
 tr.GetLoggerInstance()          // from httptransport.Transport (returns nil)
 ```
 
-## Live Test
-
-A build-tagged test (`//go:build livetest`) ships with the package and hits the real Datadog intake. It's gated by build tag *and* by an env-var check so normal `go test ./...` runs ignore it entirely.
-
-```sh
-# Minimal
-DD_API_KEY=<your-key> go test -tags=livetest -v -run TestLive_Datadog ./transports/datadog/
-
-# With all options
-DD_API_KEY=<your-key> \
-DD_SITE=us1 \
-DD_SOURCE=go-loglayer-livetest \
-DD_SERVICE=loglayer-go-livetest \
-DD_HOSTNAME=$(hostname) \
-DD_TAGS=env:livetest,team:platform \
-  go test -tags=livetest -v -run TestLive_Datadog ./transports/datadog/
-```
-
-The test sends two entries (one Info with persistent fields, one Warn with metadata) and fails if the intake returns any error. It prints a search query you can paste into the Datadog Logs Explorer to verify the entries landed:
-
-```
-source:go-loglayer-livetest @livetest_id:<random-hex>
-```
-
-Indexing latency in Datadog is typically 5-60 seconds. Without `DD_API_KEY` the test skips with a clear message, so it's safe to leave the build tag in CI without leaking errors.
-
-| Env var       | Required | Default                  | Purpose                        |
-|---------------|----------|--------------------------|--------------------------------|
-| `DD_API_KEY`  | Yes      | (none)                   | Datadog API key                |
-| `DD_SITE`     | No       | `us1`                    | Datadog region                 |
-| `DD_SOURCE`   | No       | `go-loglayer-livetest`   | `ddsource` field               |
-| `DD_SERVICE`  | No       | `loglayer-go-livetest`   | `service` field                |
-| `DD_HOSTNAME` | No       | empty                    | `hostname` field               |
-| `DD_TAGS`     | No       | `env:livetest`           | `ddtags` field                 |
-
 ## Fatal Behavior
 
 <!--@include: ./_partials/fatal-passthrough.md-->
