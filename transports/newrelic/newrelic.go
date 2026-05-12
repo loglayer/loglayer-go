@@ -3,9 +3,8 @@
 // Wraps transports/http with New Relic-specific defaults:
 //   - Site-aware intake URL (US, EU)
 //   - Api-Key header from Config.LicenseKey
-//   - Encoder that emits New Relic's expected log shape (logtype,
-//     timestamp, loglevel, message) merged with the user's fields
-//     and metadata
+//   - Encoder that emits the New Relic log shape (timestamp, level, log,
+//     attributes) with attribute validation enforced at encode time
 //
 // API reference:
 // https://docs.newrelic.com/docs/logs/log-api/introduction-log-api/
@@ -155,23 +154,85 @@ func Build(cfg Config) (*Transport, error) {
 }
 
 // newEncoder produces the JSON-array encoder for New Relic's intake format.
-// Each entry is a JSON object with logtype, timestamp, loglevel, message,
-// plus any user fields and metadata.
+// Each entry is a JSON object with timestamp, level, log, and attributes
+// (merged data + metadata), matching the TypeScript transport format.
 func newEncoder() httptr.Encoder {
 	return httptr.EncoderFunc(func(entries []httptr.Entry) ([]byte, string, error) {
 		objs := make([]map[string]any, len(entries))
 		for i, e := range entries {
-			obj := make(map[string]any, 4+len(e.Data))
-			obj["logtype"] = "LogEvent"
-			obj["timestamp"] = e.Time.UnixMilli()
-			obj["loglevel"] = loglevelFor(e.Level)
-			obj["message"] = transport.JoinMessages(e.Messages)
-			transport.MergeIntoMap(obj, e.Data, e.Metadata, e.Schema.MetadataFieldName)
+			obj := map[string]any{
+				"timestamp": e.Time.UnixMilli(),
+				"level":     loglevelFor(e.Level),
+				"log":       transport.JoinMessages(e.Messages),
+			}
+			attrs := mergeAttributes(e)
+			if len(attrs) > 0 {
+				obj["attributes"] = attrs
+			}
 			objs[i] = obj
 		}
 		body, err := json.Marshal(objs)
 		return body, "application/json", err
 	})
+}
+
+const (
+	maxAttributes           = 255
+	maxAttributeNameLength  = 255
+	maxAttributeValueLength = 4094
+)
+
+// mergeAttributes merges entry data and metadata into a single attributes
+// map, enforcing New Relic's API constraints: max 255 attributes, max 255-
+// char attribute names, and values truncated at 4094 chars. Reserved fields
+// (timestamp, level, log) are excluded to prevent collisions.
+func mergeAttributes(e httptr.Entry) map[string]any {
+	attrs := make(map[string]any)
+	for k, v := range e.Data {
+		if reserved(k) {
+			continue
+		}
+		if len(attrs)+1 > maxAttributes {
+			break
+		}
+		setAttr(attrs, k, v)
+	}
+
+	if m, ok := transport.MetadataAsRootMap(e.Metadata); ok {
+		for k, v := range m {
+			if reserved(k) {
+				continue
+			}
+			if len(attrs)+1 > maxAttributes {
+				break
+			}
+			setAttr(attrs, k, v)
+		}
+	}
+
+	return attrs
+}
+
+// reserved returns true if k is a top-level New Relic log field that should
+// not appear inside the attributes map.
+func reserved(k string) bool {
+	switch k {
+	case "timestamp", "level", "log":
+		return true
+	}
+	return false
+}
+
+// setAttr validates and sets a single attribute, truncating string values
+// that exceed the New Relic limit.
+func setAttr(attrs map[string]any, key string, val any) {
+	if len(key) > maxAttributeNameLength {
+		return
+	}
+	if s, ok := val.(string); ok && len(s) > maxAttributeValueLength {
+		val = s[:maxAttributeValueLength]
+	}
+	attrs[key] = val
 }
 
 // loglevelFor maps a loglayer LogLevel to New Relic's loglevel string.

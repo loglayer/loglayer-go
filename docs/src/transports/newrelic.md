@@ -7,7 +7,7 @@ description: Ship logs to the New Relic Log Ingest API.
 
 <ModuleBadges path="transports/newrelic" />
 
-Sends log entries to the [New Relic Log Ingest API](https://docs.newrelic.com/docs/logs/log-api/introduction-log-api/). Built on the [HTTP transport](/transports/http) with a New Relic-specific encoder, site-aware URL, and `api-key` header.
+Sends log entries to the [New Relic Log Ingest API](https://docs.newrelic.com/docs/logs/log-api/introduction-log-api/). Built on the [HTTP transport](/transports/http) with a New Relic-specific encoder (timestamp, level, log, attributes), site-aware URL, and `Api-Key` header. Includes attribute validation enforced at encode time (max 255 attributes, 255-char names, 4,094-char values). Log format matches the [TypeScript transport](https://loglayer.dev/transports/new-relic).
 
 ```sh
 go get go.loglayer.dev/transports/newrelic
@@ -134,47 +134,52 @@ See the [HTTP transport docs](/transports/http) for the full HTTP config surface
 
 ## Encoded Body Shape
 
-Each log entry becomes one object in a JSON array:
+Each log entry becomes one object in a JSON array. The format matches the [TypeScript New Relic transport](https://loglayer.dev/transports/new-relic):
 
 ```json
 [
   {
-    "logtype":    "LogEvent",
     "timestamp":  1745616000123,
-    "loglevel":   "info",
-    "message":    "served request",
-    "requestId":  "abc",
-    "durationMs": 42
+    "level":      "info",
+    "log":        "served request",
+    "attributes": {
+      "requestId":  "abc",
+      "durationMs": 42
+    }
   }
 ]
 ```
 
-Every object includes `logtype: "LogEvent"` and `timestamp` (epoch milliseconds) as required by the New Relic API. Persistent fields (`WithFields`) and metadata (`WithMetadata`) follow the [core placement rules](/configuration#fieldskey): when `FieldsKey` is empty, fields merge at the root of each log object; when `MetadataFieldName` is empty, map metadata merges at the root and non-map metadata nests under `metadata`. Fields and metadata are merged via `transport.MergeIntoMap` so they coexist cleanly with the system fields. Set either knob on `loglayer.Config` to nest under a configured key instead.
+Every object includes `timestamp` (epoch milliseconds), `level` (the log layer severity), and `log` (the message text). Persistent fields and metadata are merged under the `attributes` key with New Relic's API constraints enforced: maximum 255 attributes, 255-character attribute names, and string values truncated at 4,094 characters. Reserved fields (`timestamp`, `level`, `log`) are excluded from attributes to prevent collisions.
 
-## Level → loglevel Mapping
+## Level → level Mapping
 
-New Relic uses a `loglevel` string per entry. The transport maps loglayer levels:
+New Relic uses a `level` string per entry. The transport maps loglayer levels:
 
-| LogLayer Level   | New Relic loglevel |
-|------------------|--------------------|
-| `LogLevelTrace`  | `trace`            |
-| `LogLevelDebug`  | `debug`            |
-| `LogLevelInfo`   | `info`             |
-| `LogLevelWarn`   | `warn`             |
-| `LogLevelError`  | `error`            |
-| `LogLevelFatal`  | `critical`         |
-| `LogLevelPanic`  | `critical`         |
+| LogLayer Level   | New Relic level  |
+|------------------|------------------|
+| `LogLevelTrace`  | `trace`          |
+| `LogLevelDebug`  | `debug`          |
+| `LogLevelInfo`   | `info`           |
+| `LogLevelWarn`   | `warn`           |
+| `LogLevelError`  | `error`          |
+| `LogLevelFatal`  | `critical`       |
+| `LogLevelPanic`  | `critical`       |
 
 New Relic has no distinction between Fatal and Panic, so both map to `critical` (the highest-severity level in the Log Ingest API).
 
 ## API Limits
 
-New Relic enforces these restrictions on Log Ingest API requests ([reference](https://docs.newrelic.com/docs/logs/log-api/introduction-log-api/#limits)):
+The transport enforces these limits at encode time ([reference](https://docs.newrelic.com/docs/logs/log-api/introduction-log-api/#limits)):
+
+- 255 attributes maximum per event (excess attributes are dropped, not merged)
+- 255 characters maximum per attribute name (longer names are dropped silently)
+- String values truncated at 4,094 characters
+
+New Relic also enforces these on the server side:
 
 - 1MB maximum payload per POST (compression recommended)
 - Payload must be UTF-8 encoded
-- 255 attributes maximum per event
-- 255 characters maximum per attribute name
 - 4,094 characters stored in NRDB; longer values stored as a blob
 
 The default `BatchSize` of 100 stays well under the 1MB payload limit for typical entries. If you bump `BatchSize` for higher throughput or ship large attributes, watch for the boundary.
