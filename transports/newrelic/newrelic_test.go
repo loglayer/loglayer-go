@@ -79,8 +79,8 @@ func TestNewRelic_BasicBatchOnClose(t *testing.T) {
 	}
 
 	// First entry should be "hello"
-	if arr[0]["message"] != "hello" {
-		t.Errorf("first message: got %v, want hello", arr[0]["message"])
+	if arr[0]["log"] != "hello" {
+		t.Errorf("first log: got %v, want hello", arr[0]["log"])
 	}
 }
 
@@ -292,9 +292,9 @@ func TestNewRelic_LevelFiltering(t *testing.T) {
 
 	// Check that no debug or info entries made it through.
 	for i, obj := range arr {
-		if loglevel, ok := obj["loglevel"].(string); ok {
-			if loglevel == "debug" || loglevel == "info" {
-				t.Errorf("entry %d should have been filtered, got loglevel %q", i, loglevel)
+		if level, ok := obj["level"].(string); ok {
+			if level == "debug" || level == "info" {
+				t.Errorf("entry %d should have been filtered, got level %q", i, level)
 			}
 		}
 	}
@@ -339,8 +339,8 @@ func TestNewRelic_EncodedBodyShape(t *testing.T) {
 
 	obj := arr[0]
 
-	if obj["logtype"] != "LogEvent" {
-		t.Errorf("logtype: got %v, want LogEvent", obj["logtype"])
+	if level, ok := obj["level"].(string); !ok || level == "" {
+		t.Errorf("level: missing or empty, got %v", obj["level"])
 	}
 
 	// Timestamp should be a number (epoch milliseconds).
@@ -350,12 +350,12 @@ func TestNewRelic_EncodedBodyShape(t *testing.T) {
 		t.Errorf("timestamp too small for a valid epoch-ms: %v", ts)
 	}
 
-	if obj["loglevel"] != "info" {
-		t.Errorf("loglevel: got %v, want info", obj["loglevel"])
+	if obj["level"] != "info" {
+		t.Errorf("level: got %v, want info", obj["level"])
 	}
 
-	if obj["message"] != "test body shape" {
-		t.Errorf("message: got %v, want 'test body shape'", obj["message"])
+	if obj["log"] != "test body shape" {
+		t.Errorf("log: got %v, want 'test body shape'", obj["log"])
 	}
 }
 
@@ -393,15 +393,19 @@ func TestNewRelic_FieldAndMetadataInBody(t *testing.T) {
 	_ = json.Unmarshal(cap.bodies[0], &arr)
 
 	obj := arr[0]
-	if obj["requestId"] != "req-42" {
-		t.Errorf("requestId: got %v", obj["requestId"])
+	attrs, ok := obj["attributes"].(map[string]any)
+	if !ok {
+		t.Fatal("expected attributes map")
+	}
+	if attrs["requestId"] != "req-42" {
+		t.Errorf("requestId: got %v", attrs["requestId"])
 	}
 	// JSON unmarshals numbers as float64.
-	if obj["durationMs"] != float64(123) {
-		t.Errorf("durationMs: got %v", obj["durationMs"])
+	if attrs["durationMs"] != float64(123) {
+		t.Errorf("durationMs: got %v", attrs["durationMs"])
 	}
-	if obj["endpoint"] != "/api/v1" {
-		t.Errorf("endpoint: got %v", obj["endpoint"])
+	if attrs["endpoint"] != "/api/v1" {
+		t.Errorf("endpoint: got %v", attrs["endpoint"])
 	}
 }
 
@@ -585,11 +589,11 @@ func TestNewRelic_GroupsWork(t *testing.T) {
 		t.Fatalf("expected 1 entry, got %d", len(arr))
 	}
 	obj := arr[0]
-	if obj["logtype"] != "LogEvent" {
-		t.Errorf("logtype: got %v", obj["logtype"])
+	if obj["level"] == nil {
+		t.Errorf("level: missing")
 	}
-	if obj["message"] != "grouped log" {
-		t.Errorf("message: got %v", obj["message"])
+	if obj["log"] != "grouped log" {
+		t.Errorf("log: got %v", obj["log"])
 	}
 }
 
@@ -650,9 +654,9 @@ func TestNewRelic_LevelMapping(t *testing.T) {
 		"critical": {},
 	}
 	for i, obj := range allEntries {
-		if lv, ok := obj["loglevel"].(string); ok {
+		if lv, ok := obj["level"].(string); ok {
 			if _, ok := wantMap[lv]; !ok {
-				t.Errorf("entry %d has unexpected loglevel %q", i, lv)
+				t.Errorf("entry %d has unexpected level %q", i, lv)
 			}
 		}
 	}

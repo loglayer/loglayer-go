@@ -7,6 +7,12 @@ description: Latest features and improvements in LogLayer for Go.
 
 - See the [main `CHANGELOG.md`](https://github.com/loglayer/loglayer-go/blob/main/CHANGELOG.md) for the auto-generated per-release log.
 
+## May 11, 2026
+
+`transports/newrelic`:
+
+Encoder updated to match the [TypeScript transport format](https://loglayer.dev/transports/new-relic). Log entries now use `timestamp`, `level`, `log`, and `attributes` (nested) instead of the previous flat shape (`logtype`, `loglevel`, `message`, fields at root). Attribute validation added at encode time: maximum 255 attributes, 255-char names, 4,094-char string values.
+
 ## May 10, 2026
 
 `transports/newrelic`:
