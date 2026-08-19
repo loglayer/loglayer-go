@@ -51,6 +51,10 @@ log.IsLevelEnabled(loglayer.LogLevelInfo)   // false
 
 This is the right default for unit tests of business logic.
 
+::: tip Need to assert on the rendered output?
+`NewMock()` emits nothing, and there is no `NewMockWithWriter`. When the test's purpose is to assert what a transport *renders* (exact level prefixes, logfmt, JSON shape), construct a real logger with the [transports/testing](/transports/testing) capture transport or a `bytes.Buffer` writer on a renderer transport (see [Testing Transports](/transports/testing-transports)), and assert against the captured lines or buffer.
+:::
+
 ## 2. Capturing Mock: `transports/testing`
 
 Use this when the test's purpose is to verify *what* was logged. The `transports/testing` package provides a transport that captures every entry into an in-memory library, exposed as typed `LogLine` values.

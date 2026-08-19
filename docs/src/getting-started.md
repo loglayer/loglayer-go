@@ -58,6 +58,17 @@ func main() {
 
 The example above sets `FieldsKey` and `MetadataFieldName` to nest fields and metadata under their own keys. See [Configuration](/configuration) for every knob on `loglayer.Config`: error serialization, field/metadata placement, prefix, source capture, group routing, fatal-exit control, and more.
 
+When the config comes from a runtime source (env vars, config file), use `loglayer.Build` to handle errors explicitly instead of `New`, which panics:
+
+```go
+log, err := loglayer.Build(loglayer.Config{
+    Transport: structured.New(structured.Config{}),
+})
+if err != nil {
+    return err
+}
+```
+
 ::: tip Pretty terminal output
 For local development, the [Pretty Transport](/transports/pretty) gives you colorized, theme-aware output with three view modes. Much easier to scan than raw JSON or the basic [Console Transport](/transports/console).
 :::

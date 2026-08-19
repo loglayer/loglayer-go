@@ -75,6 +75,20 @@ type Config struct {
 	// (logging on). Equivalent to calling DisableLogging() after construction.
 	Disabled bool
 
+	// Level is the initial level threshold, applied at construction exactly
+	// like SetLevel: it enables the configured level and everything above
+	// it, and disables everything below.
+	//
+	// Zero value means "no override": every level is enabled (the default).
+	// Levels start at LogLevelTrace = 5, so zero is unambiguous. Prefer
+	// this over a post-construction SetLevel when the level is known at
+	// setup time (e.g. from a --verbose / --quiet flag), so there is no
+	// window where the logger is live at the wrong level.
+	//
+	// Distinct from transport.BaseConfig.Level, which is a per-transport
+	// minimum checked in addition to the logger's own level state.
+	Level LogLevel
+
 	// ErrorSerializer customizes how errors are serialized into the log data.
 	ErrorSerializer ErrorSerializer
 

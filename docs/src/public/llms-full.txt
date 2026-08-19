@@ -341,6 +341,7 @@ log := loglayer.New(loglayer.Config{
 
     Prefix:   "[auth]",
     Disabled: false,
+    Level:    loglayer.LogLevelInfo, // initial threshold; zero = every level enabled
 
     // Errors
     ErrorSerializer:    loglayer.UnwrappingErrorSerializer,
@@ -554,7 +555,7 @@ log.GetGroups()
 
 ## Go context.Context
 
-Distinct from "context" in TypeScript LogLayer (which is what Go calls "fields"). Go's `context.Context` carries trace IDs, deadlines, request-scoped values. Use `WithContext` to attach it; transports and plugins read it via `TransportParams.Ctx`.
+Distinct from "context" in TypeScript LogLayer (which is what Go calls "fields"). Go's `context.Context` carries trace IDs, deadlines, request-scoped values. Use `WithContext` to attach it; transports and plugins read it via `TransportParams.Ctx`. `WithStdlibContext` is an alias for `WithContext` on both `*LogLayer` and `*LogBuilder`, provided for discoverability (`WithContext` remains canonical).
 
 ```go
 // Per-call attachment via *LogBuilder
@@ -564,6 +565,10 @@ log.WithContext(ctx).Info("request received")
 reqLog := log.WithContext(ctx)
 reqLog.Info("step 1")
 reqLog.Info("step 2")
+
+// Alias (identical behavior)
+reqLog = reqLog.WithStdlibContext(ctx)
+reqLog.WithStdlibContext(otherCtx).Info("per-call override")
 ```
 
 For HTTP handlers, the [loghttp middleware](https://go.loglayer.dev/integrations/loghttp) auto-binds `r.Context()` to a per-request logger. Plugins like `oteltrace` and `datadogtrace` read trace IDs from `params.Ctx`.
@@ -669,7 +674,7 @@ pretty.New(pretty.Config{
 
 ### CLI Transport
 
-Tuned for command-line application output rather than diagnostic logging. Short cargo/eslint-style level prefixes (`warning:`, `error:`, `fatal:`), stdout for info/debug and stderr for warn+, TTY-detected ANSI color, no timestamps. Renders the `WithPrefix` value in dim grey, separate from the level color. Fields/metadata dropped by default; opt in via `Config.ShowFields`.
+Tuned for command-line application output rather than diagnostic logging. Short cargo/eslint-style level prefixes (`warning:`, `error:`, `fatal:`), stdout for info/debug and stderr for warn+, per-stream TTY-detected ANSI color (info/debug follow stdout, warn/error/fatal follow stderr, pinned at construction), no timestamps. Renders the `WithPrefix` value in dim grey, separate from the level color. Fields/metadata dropped by default; opt in via `Config.ShowFields`. `Config.MessageFn func(loglayer.TransportParams) string` takes over the entire output line: its return value replaces the message plus the logfmt/table body (level prefix and its color still apply); an empty return falls back to normal rendering.
 
 ```go
 import "go.loglayer.dev/transports/cli/v2"
@@ -679,6 +684,7 @@ cli.New(cli.Config{
     // Color:            cli.ColorAuto,        // ColorNever / ColorAlways
     // ShowFields:       false,                 // append fields/metadata after the message
     // TableColumnOrder: []string{"package"},  // pin leading columns for slice-of-map metadata tables; rest sort lex
+    // MessageFn: func(p loglayer.TransportParams) string { ... }, // full-line takeover
 })
 ```
 

@@ -11,9 +11,10 @@
 //     unambiguous when a CLI run mixes levels.
 //   - Info / debug write to stdout; warn / error / fatal write to
 //     stderr, matching long-standing CLI convention.
-//   - ANSI color is gated by TTY detection on stdout. Pipe to a file
-//     and the color disappears automatically. Override via
-//     [Config.Color].
+//   - ANSI color is gated by per-stream TTY detection: info / debug
+//     follow stdout, warn / error / fatal follow stderr. Pipe only
+//     stdout (e.g. `cli ... | less`) and severity lines stay colored.
+//     Override via [Config.Color].
 //   - Fields and metadata are dropped by default. CLI users don't
 //     want `key=value` noise on user-facing output. Set
 //     [Config.ShowFields] to append them when running with `-vv` /
@@ -90,6 +91,23 @@ type Config struct {
 	// Color controls ANSI color output. Zero value is [ColorAuto].
 	Color ColorMode
 
+	// MessageFn, when set, formats the entire output line. Its return
+	// value replaces the message, the logfmt tail, and the table body
+	// with a single user-controlled string. The level prefix (and its
+	// color) still applies, so the line keeps its urgency marker.
+	//
+	// An empty return falls back to the normal rendering for that
+	// entry, which lets a caller opt out conditionally.
+	//
+	// This is the full-takeover escape hatch the console transport
+	// doesn't offer: there, the logfmt tail still appends after the
+	// MessageFn return value.
+	//
+	// The return value goes through the same sanitization as messages
+	// (ANSI / CRLF / bidi stripping), so a user-controlled format
+	// string can't smuggle terminal escapes into the output.
+	MessageFn func(params loglayer.TransportParams) string
+
 	// ShowFields, when true, appends fields and metadata after the
 	// message in `key=value` form (logfmt). Default false: CLI
 	// users don't want structured noise on user-facing output.
@@ -161,14 +179,21 @@ type Transport struct {
 	transport.BaseTransport
 	cfg             Config
 	useANSI         bool
+	useANSISeverity bool
 	prefix          map[loglayer.LogLevel]string
 	colors          map[loglayer.LogLevel]*color.Color
 	userPrefixColor *color.Color
 }
 
 // New constructs a Transport from cfg. The TTY detection for
-// [ColorAuto] runs once here against cfg.Stdout (or os.Stdout when
-// cfg.Stdout is nil); subsequent writes don't re-check.
+// [ColorAuto] runs once here, per stream: info / debug / trace
+// follow cfg.Stdout (or os.Stdout), warn / error / fatal / panic
+// follow cfg.Stderr (or os.Stderr). Subsequent writes don't
+// re-check. This keeps severity lines colored when stdout is piped
+// but stderr is still a terminal (e.g. `hmn ... | less`).
+//
+// ColorAlways and ColorNever override both streams; there is no
+// per-stream color mode.
 func New(cfg Config) *Transport {
 	t := &Transport{
 		BaseTransport:   transport.NewBaseTransport(cfg.BaseConfig),
@@ -185,7 +210,8 @@ func New(cfg Config) *Transport {
 		t.prefix[level] = sanitize.Message(p)
 	}
 	maps.Copy(t.colors, cfg.LevelColor)
-	t.useANSI = resolveColor(cfg)
+	t.useANSI = resolveColor(cfg, cfg.Stdout, false)
+	t.useANSISeverity = resolveColor(cfg, cfg.Stderr, true)
 
 	// fatih/color has a process-global `color.NoColor` flag that
 	// the package auto-sets based on stdout TTY detection at
@@ -198,12 +224,16 @@ func New(cfg Config) *Transport {
 	// have passed us a color shared with another Transport, and
 	// EnableColor / DisableColor mutate per-instance state on the
 	// pointer. Copying decouples the two transports' resolutions.
+	//
+	// Each level's color is toggled by the stream that level writes
+	// to (severity levels go to stderr), so the two streams can
+	// carry different resolutions under ColorAuto.
 	for level, c := range t.colors {
 		if c == nil {
 			continue
 		}
 		cp := *c
-		if t.useANSI {
+		if t.colorOn(level) {
 			cp.EnableColor()
 		} else {
 			cp.DisableColor()
@@ -212,15 +242,28 @@ func New(cfg Config) *Transport {
 	}
 	// Same shallow-copy + per-instance flag dance for the user-
 	// prefix color so a transport with ColorAlways doesn't share
-	// the global NoColor with another transport.
+	// the global NoColor with another transport. The user prefix
+	// rides on the headline, which uses the level's stream color.
 	upc := *t.userPrefixColor
-	if t.useANSI {
+	if t.useANSI || t.useANSISeverity {
 		upc.EnableColor()
 	} else {
 		upc.DisableColor()
 	}
 	t.userPrefixColor = &upc
 	return t
+}
+
+// colorOn reports whether the level's stream resolves to ANSI under
+// the configured Color mode. Severity levels (warn / error / fatal /
+// panic) write to stderr; the rest write to stdout.
+func (t *Transport) colorOn(level loglayer.LogLevel) bool {
+	switch level {
+	case loglayer.LogLevelWarn, loglayer.LogLevelError, loglayer.LogLevelFatal, loglayer.LogLevelPanic:
+		return t.useANSISeverity
+	default:
+		return t.useANSI
+	}
 }
 
 // GetLoggerInstance returns nil; the cli transport has no underlying
@@ -253,22 +296,17 @@ func (t *Transport) SendToLogger(params loglayer.TransportParams) {
 // color so it reads as caller-context rather than urgency. Tables
 // render neutral.
 func (t *Transport) format(params loglayer.TransportParams) string {
+	// MessageFn takes over the entire line. The level prefix and its
+	// color still apply; an empty return falls back to the normal
+	// rendering so the hook can opt out per entry.
+	if t.cfg.MessageFn != nil {
+		fnBody := sanitize.Message(t.cfg.MessageFn(params))
+		if fnBody != "" {
+			return t.renderHeadline(params, fnBody)
+		}
+	}
+
 	msg := transport.AssembleMessage(params.Messages, sanitize.Message)
-
-	levelPrefix := ""
-	if !t.cfg.DisableLevelPrefix {
-		levelPrefix = t.prefix[params.LogLevel]
-	}
-
-	userPrefix := ""
-	if params.Prefix != "" {
-		// Sanitize the prefix in-line so a Config.Prefix /
-		// WithPrefix value loaded from env or config can't
-		// smuggle ANSI / CRLF through cli's smart-rendering
-		// path. Mirrors the sanitize call applied to messages,
-		// logfmt values, table cells, and LevelPrefix.
-		userPrefix = sanitize.Message(params.Prefix) + " "
-	}
 
 	// Append optional logfmt or capture a table.
 	body := msg
@@ -288,8 +326,35 @@ func (t *Transport) format(params loglayer.TransportParams) string {
 
 	// Compose the headline. Level color tints the level prefix and
 	// the message body together; the user prefix gets dim-grey.
+	headline := t.renderHeadline(params, body)
+
+	switch {
+	case table == "":
+		return headline
+	case headline == "":
+		// MetadataOnly with table-shaped metadata: emit the table
+		// alone, no leading blank line.
+		return table
+	default:
+		return headline + "\n" + table
+	}
+}
+
+// renderHeadline composes the level prefix, the user prefix, and the
+// body into a single line, applying the level's stream color decision.
+func (t *Transport) renderHeadline(params loglayer.TransportParams, body string) string {
+	levelPrefix := ""
+	if !t.cfg.DisableLevelPrefix {
+		levelPrefix = t.prefix[params.LogLevel]
+	}
+
+	userPrefix := ""
+	if params.Prefix != "" {
+		userPrefix = sanitize.Message(params.Prefix) + " "
+	}
+
 	var levelPart, userPart, bodyPart string
-	if t.useANSI {
+	if t.colorOn(params.LogLevel) {
 		if c, ok := t.colors[params.LogLevel]; ok && c != nil {
 			levelPart = c.Sprint(levelPrefix)
 			bodyPart = c.Sprint(body)
@@ -305,18 +370,7 @@ func (t *Transport) format(params loglayer.TransportParams) string {
 		userPart = userPrefix
 		bodyPart = body
 	}
-	headline := levelPart + userPart + bodyPart
-
-	switch {
-	case table == "":
-		return headline
-	case headline == "":
-		// MetadataOnly with table-shaped metadata: emit the table
-		// alone, no leading blank line.
-		return table
-	default:
-		return headline + "\n" + table
-	}
+	return levelPart + userPart + bodyPart
 }
 
 // writer picks stdout vs stderr by level.
@@ -336,20 +390,29 @@ func (t *Transport) writer(level loglayer.LogLevel) io.Writer {
 }
 
 // resolveColor returns the static ANSI on/off decision for cfg's
-// configured Color mode. ColorAuto checks whether the resolved
-// stdout is a TTY at construction time.
-func resolveColor(cfg Config) bool {
+// configured Color mode, against the given stream (cfg.Stdout for
+// the info / debug / trace levels, cfg.Stderr for the severity
+// levels). ColorAuto checks whether that stream is a TTY at
+// construction time, so each stream's decision is pinned per stream.
+//
+// A nil stream means "the real default for that stream", which is
+// what writer() would use: os.Stdout for the severity=false side,
+// os.Stderr for the severity side.
+func resolveColor(cfg Config, stream io.Writer, severity bool) bool {
 	switch cfg.Color {
 	case ColorAlways:
 		return true
 	case ColorNever:
 		return false
 	}
-	out := cfg.Stdout
-	if out == nil {
-		out = os.Stdout
+	if stream == nil {
+		if severity {
+			stream = os.Stderr
+		} else {
+			stream = os.Stdout
+		}
 	}
-	if f, ok := out.(*os.File); ok {
+	if f, ok := stream.(*os.File); ok {
 		return isatty.IsTerminal(f.Fd()) || isatty.IsCygwinTerminal(f.Fd())
 	}
 	return false

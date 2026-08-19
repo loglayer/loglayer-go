@@ -210,6 +210,46 @@ func TestWithContext_PerCallOverridesBound(t *testing.T) {
 	}
 }
 
+// WithStdlibContext is an alias for WithContext: same derived-logger
+// semantics (bind to every subsequent emission, per-call override wins, nil
+// clears, receiver unchanged).
+func TestWithStdlibContext_AliasBehavior(t *testing.T) {
+	log, lib := setup(t)
+	type ctxKey struct{}
+	ctx := context.WithValue(context.Background(), ctxKey{}, "stdlib-ctx")
+
+	logger := log.WithStdlibContext(ctx)
+	logger.Info("bound via alias")
+	if got := lib.PopLine().Ctx.Value(ctxKey{}); got != "stdlib-ctx" {
+		t.Errorf("alias should bind ctx: got %v", got)
+	}
+
+	_ = log.WithStdlibContext(ctx) // no assignment
+	log.Info("receiver unchanged")
+	if got := lib.PopLine(); got.Ctx != nil {
+		t.Errorf("receiver must not be affected by alias call: got %v", got.Ctx)
+	}
+
+	cleared := logger.WithStdlibContext(context.WithValue(context.Background(), ctxKey{}, "replacement"))
+	cleared.Info("replacement")
+	if got := lib.PopLine(); got.Ctx.Value(ctxKey{}) != "replacement" {
+		t.Errorf("replacement ctx should attach: got %v", got.Ctx)
+	}
+}
+
+// WithStdlibContext works on the builder too: per-call override for one
+// emission, mirroring (*LogBuilder).WithContext.
+func TestWithStdlibContext_BuilderAlias(t *testing.T) {
+	log, lib := setup(t)
+	type ctxKey struct{}
+	override := context.WithValue(context.Background(), ctxKey{}, "OVERRIDE")
+
+	log.WithStdlibContext(override).Info("one emission")
+	if got := lib.PopLine().Ctx.Value(ctxKey{}); got != "OVERRIDE" {
+		t.Errorf("builder alias should attach ctx per call: got %v", got)
+	}
+}
+
 // WithContext returns a derived logger; the receiver's behavior is unchanged.
 func TestWithContext_ReceiverUnchanged(t *testing.T) {
 	log, lib := setup(t)

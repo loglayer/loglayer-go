@@ -59,6 +59,10 @@ log.Fatal("logged but no exit") // entry written, process continues
 
 `loglayer.NewMock()` enables this automatically. See [Mocking](/logging-api/mocking).
 
+::: warning Fatal skips deferred cleanup
+`os.Exit` does not run `defer`s. In service code with deferred cleanup (auto-updater re-exec, graceful shutdown) or from worker goroutines, a `Fatal` call kills the process without cleanup. Set `DisableFatalExit: true` at the root and use `Error` in workers (or call `Fatal` only from a coordinator that drains first).
+:::
+
 ## Panic Panics the Goroutine
 
 `log.Panic(...)` dispatches the entry, then calls `panic(<joined message>)`. Unlike Fatal, the panic is recoverable: a `defer recover()` higher up the call stack can catch it and continue. Use Panic when you want a logged unrecoverable error that a caller (or framework, like `chi.Recoverer`) can intercept.

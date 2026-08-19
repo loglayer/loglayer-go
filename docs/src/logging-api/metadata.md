@@ -7,7 +7,7 @@ description: "Per-log structured data: maps, structs, or any value."
 
 Metadata attaches structured data to a single log entry. Unlike [fields](/logging-api/fields), it does not persist. Once the entry is emitted, the metadata is discarded.
 
-`WithMetadata` accepts **any** value. The core logger does no conversion; the transport decides how to serialize.
+`WithMetadata` accepts **any** value. The core logger does no conversion; the transport decides how to serialize. Two shapes dominate: map metadata flattens to root keys; struct metadata is JSON-roundtripped so its fields also merge at the root for renderers (non-map values nest under `MetadataFieldName` when that is set on the core config).
 
 ## Struct vs Map: pick the right shape
 
@@ -126,6 +126,10 @@ log.MetadataOnly(loglayer.Metadata{
 // or at a specific level
 log.MetadataOnly(loglayer.Metadata{"cpu": "90%"}, loglayer.MetadataOnlyOpts{LogLevel: loglayer.LogLevelWarn})
 ```
+
+The default level is `Info`. Passing `nil` is a no-op.
+
+### KV-only entries
 
 The default level is `Info`. Passing `nil` is a no-op.
 

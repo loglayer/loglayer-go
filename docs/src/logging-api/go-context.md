@@ -12,6 +12,13 @@ LogLayer can attach a `context.Context` to log entries. Transports and plugins t
 - **`(*LogLayer).WithContext(ctx)`** returns a derived logger with the context **bound** to every subsequent emission. This is the recommended pattern for per-request handlers.
 - **`(*LogBuilder).WithContext(ctx)`** attaches the context to a **single emission only**. Useful as an override on a logger that already has a different context bound.
 
+`WithStdlibContext` is an alias for `WithContext` on both receivers, provided for discoverability: it names the stdlib `context.Context` type explicitly, so it shows up in searches for "context". `WithContext` remains canonical.
+
+```go
+log := base.WithStdlibContext(ctx) // same as base.WithContext(ctx)
+log.WithStdlibContext(otherCtx).Info("single emission override")
+```
+
 ## Binding to a logger (recommended)
 
 ```go

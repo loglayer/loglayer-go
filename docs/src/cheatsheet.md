@@ -171,6 +171,11 @@ log.Warn("retrying")
 
 // Or per-call only (override):
 log.WithContext(otherCtx).Info("override for this entry")
+
+// WithStdlibContext is an alias for WithContext on both receivers,
+// provided for discoverability (it names context.Context explicitly).
+log = log.WithStdlibContext(ctx)
+log.WithStdlibContext(otherCtx).Info("override for this entry")
 ```
 
 Surfaced to transports via `TransportParams.Ctx` and to plugin dispatch hooks via `params.Ctx`. The `loghttp` middleware binds `r.Context()` automatically. See [Go Context](/logging-api/go-context).

@@ -53,13 +53,17 @@ console.New(console.Config{
 
 `BaseConfig.ID` is optional. When you omit it, the transport gets an auto-generated ID, so multiple no-ID transports never collide. **Supply your own ID** when you'll later need to address that specific transport: `RemoveTransport(id)`, `GetLoggerInstance(id)`, and `AddTransport`'s replace-by-ID semantics all key off the string you set.
 
+The base config lives in the shared `transport` package. Import it alongside the transport:
+
 ```go
+import "go.loglayer.dev/v2/transport"
+
 console.New(console.Config{
     BaseConfig: transport.BaseConfig{ID: "console"},
 })
 ```
 
-For transports you set up once and never touch (a single console renderer, a one-shot test transport), leaving `ID` empty is fine: the auto-generated ID still works for routing, you just won't have a stable handle for management calls.
+An ID is only needed when the logger will manage that transport at runtime: `RemoveTransport(id)`, `GetLoggerInstance(id)`, group routing, replace-by-ID. For transports you set up once and never touch (a single console renderer, a one-shot test transport), leaving `ID` empty is fine: the auto-generated ID still works for routing, you just won't have a stable handle for management calls.
 
 ## Enabling and disabling per environment
 

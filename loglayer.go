@@ -195,6 +195,10 @@ func build(config Config) (*LogLayer, error) {
 		l.config.Source.FieldName = "source"
 	}
 
+	if config.Level != 0 {
+		l.levels.setLevel(config.Level)
+	}
+
 	if config.Disabled {
 		l.levels.setMaster(false)
 	}
