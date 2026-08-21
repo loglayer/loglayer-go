@@ -131,7 +131,7 @@ jobs:
     name: Govulncheck
     runs-on: ubuntu-latest
     env:
-      GOVULNCHECK_VERSION: 'v1.1.4'
+      GOVULNCHECK_VERSION: 'v1.7.0'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -148,5 +148,9 @@ jobs:
       - name: Install govulncheck
         if: steps.cache-govulncheck.outputs.cache-hit != 'true'
         run: go install golang.org/x/vuln/cmd/govulncheck@${{ env.GOVULNCHECK_VERSION }}
-      - name: Run govulncheck
-        run: scripts/foreach-module.sh vuln
+      # Mirrors the local pre-push gate (scripts/govulncheck-gate.sh):
+      # fails on reachable dependency vulnerabilities, which the repo
+      # can fix by bumping the dep; reports stdlib findings (fixed only
+      # by upgrading the Go toolchain) as advisory, not gating.
+      - name: Run govulncheck gate
+        run: bash scripts/govulncheck-gate.sh
