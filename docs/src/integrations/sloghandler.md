@@ -42,7 +42,7 @@ log.AddPlugin(redact.New(redact.Config{Keys: []string{"password"}}))
 slog.SetDefault(slog.New(sloghandler.New(log)))
 
 slog.Info("user signed in", "userId", 42, "password", "hunter2")
-// {"level":"info","time":"...","msg":"user signed in","context":{"userId":42,"password":"[REDACTED]"}}
+// {"level":"info","time":"...","msg":"user signed in","context":{"password":"[REDACTED]","userId":42},"source":{"function":"main.main","file":"/app/main.go","line":11}}
 ```
 
 The redact plugin runs even though the call site is `slog.Info(...)`. Same for `oteltrace`, `datadogtrace`, fan-out across multiple transports, group routing, and runtime level mutation.
@@ -97,7 +97,7 @@ slog.Info("hi")
 // {"...","msg":"hi","context":{"service":"api"}}
 
 slog.Info("with-attr", "k", "v")
-// {"...","msg":"with-attr","context":{"service":"api","k":"v"}}
+// {"...","msg":"with-attr","context":{"k":"v","service":"api"}}
 ```
 
 ## Mixing slog and Loglayer Call Sites
@@ -119,7 +119,7 @@ Both paths run through the same plugin pipeline and the same transports.
 
 ## Error Attrs
 
-`slog.Any("err", err)` arrives as a field with the original `error` value. The transport decides how to serialize it (default is whatever the configured `ErrorSerializer` does, otherwise the JSON encoder calls `Error()`).
+`slog.Any("err", err)` arrives as a field holding the original `error` value. The transport serializes it as a plain value: the JSON encoder marshals the error's exported fields, so an error with none (like one from `errors.New`) renders as `{}`. The configured `ErrorSerializer` does not apply to fields; it only runs on the entry-level error.
 
 If you want loglayer's structured error treatment (`{"err": {"message": ...}}` via the configured `ErrorSerializer`), call `log.WithError(err).Info(...)` directly on the loglayer side rather than passing the error as a slog attr.
 

@@ -32,7 +32,8 @@ LogLayer uses two distinct method patterns. Knowing which is which avoids one of
 | Prefix | Pattern | Example |
 |---|---|---|
 | `With*` | Returns a **new logger or builder**. The receiver is unchanged; **assign the return value** or your change is lost. | `log = log.WithFields(...)` |
-| `Mute`, `Unmute`, `Set`, `Enable`, `Disable`, `Add`, `Remove` | Mutates the receiver in place. Returns `*LogLayer` for chaining; the return value is the same instance. | `log.MuteFields()` |
+| `Mute`, `Unmute`, `Set`, `Enable`, `Disable`, `Add` | Mutates the receiver in place. Returns `*LogLayer` for chaining; the return value is the same instance. | `log.MuteFields()` |
+| `Remove` | Mutates the receiver in place. Returns `bool` (whether something was removed), not a logger. | `log.RemoveTransport("id")` |
 
 `Child()` is the one exception to the prefix rule: it returns a new logger (conventional name in Go logging libraries; mirrors zerolog/slog). Treat it the same as `With*` and assign the result.
 
@@ -171,6 +172,11 @@ log.Warn("retrying")
 
 // Or per-call only (override):
 log.WithContext(otherCtx).Info("override for this entry")
+
+// WithStdlibContext is an alias for WithContext on both receivers,
+// provided for discoverability (it names context.Context explicitly).
+log = log.WithStdlibContext(ctx)
+log.WithStdlibContext(otherCtx).Info("override for this entry")
 ```
 
 Surfaced to transports via `TransportParams.Ctx` and to plugin dispatch hooks via `params.Ctx`. The `loghttp` middleware binds `r.Context()` automatically. See [Go Context](/logging-api/go-context).
@@ -330,7 +336,7 @@ log.Info("served")
 // {"level":"info","time":"...","msg":"served","source":{"function":"main.handler","file":"/app/main.go","line":42}}
 ```
 
-Off by default. Costs ~100 ns / one runtime.Caller per emission when on. The slog Handler forwards `slog.Record.PC` automatically (no capture cost on the slog path).
+Off by default. Costs ~600 ns / +5 allocs per emission when on (see [Benchmarks](/benchmarks#caller-info-configsource)). The slog Handler forwards `slog.Record.PC` automatically (no capture cost on the slog path).
 
 ## slog Interop
 

@@ -36,8 +36,8 @@ log.
 ```json
 {
   "msg": "user action failed",
-  "metadata": { "userId": "1234" },
-  "err": { "message": "something went wrong" }
+  "err": { "message": "something went wrong" },
+  "metadata": { "userId": "1234" }
 }
 ```
 
@@ -100,8 +100,8 @@ log.
 {
   "msg": "Request failed",
   "context": { "requestId": "abc-123" },
-  "metadata": { "duration": 150 },
-  "err": { "message": "timeout" }
+  "err": { "message": "timeout" },
+  "metadata": { "duration": 150 }
 }
 ```
 

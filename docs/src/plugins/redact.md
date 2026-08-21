@@ -136,7 +136,7 @@ The plugin implements three hooks:
 The first two scrub data the caller passes in. `OnBeforeDataOut` exists so a `Patterns`-style redactor also catches secrets that only surface in `err.Error()` (LogLayer places `WithError` errors into `Data` as `{"err": {"message": err.Error()}}`). Without the third hook a credit-card-shaped string baked into an error message would slip past redaction.
 
 ```go
-log.WithError(errors.New("auth failed for card 4111111111111111")).Error("oops")
+log.WithError(errors.New("4111111111111111")).Error("oops")
 // {"err":{"message":"[REDACTED]"}, ...}
 ```
 

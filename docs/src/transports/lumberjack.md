@@ -162,7 +162,6 @@ If you keep a reference to the transport, get it directly. The upstream library 
 import (
     lj "gopkg.in/natefinch/lumberjack.v2"
 
-    "go.loglayer.dev/v2"
     "go.loglayer.dev/transports/lumberjack/v2"
 )
 
@@ -257,9 +256,11 @@ errorLog := lumberjack.New(lumberjack.Config{
 log := loglayer.New(loglayer.Config{
     Transports: []loglayer.Transport{infoLog, errorLog},
 })
+
+log.Info("served")
 ```
 
-`info.log` ends up with everything at info level and above (including errors). `error.log` contains only the error-and-above subset. To omit info/warn from `info.log` without sending them anywhere, change the logger's own level instead via `loglayer.Config.MinLevel`.
+`info.log` ends up with everything at info level and above (including errors). `error.log` contains only the error-and-above subset. To omit info/warn from `info.log` without sending them anywhere, change the logger's own level instead via `loglayer.Config.Level`.
 
 ### Daily / time-based rotation
 

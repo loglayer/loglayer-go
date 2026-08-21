@@ -83,3 +83,14 @@ pre-push:
     # other op) directly when iterating.
     test-race:
       run: scripts/foreach-module.sh test
+    # Vulnerability scan before the push reaches CI. Fails on
+    # reachable DEPENDENCY findings (the repo's responsibility to bump),
+    # e.g. the grpc v1.79.3 -> v1.82.1 fix for GO-2026-6061. Stdlib
+    # findings are toolchain-env (only a Go upgrade fixes them; see
+    # AGENTS.md) and are reported as advisory, not gating.
+    #
+    # Missing govulncheck is a hard fail, matching staticcheck's
+    # convention: the gate only works if the tool actually runs.
+    # Bypass a single push with --no-verify if you genuinely need to.
+    vuln:
+      run: bash scripts/govulncheck-gate.sh

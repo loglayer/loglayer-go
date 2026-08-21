@@ -29,6 +29,18 @@ func (l *LogLayer) WithContext(ctx context.Context) *LogLayer {
 	return child
 }
 
+// WithStdlibContext is an alias for WithContext that spells out what the
+// argument is. loglayer.Fields holds the persistent key/value bag; stdlib
+// context.Context is a different concept that carries trace IDs, deadlines,
+// and request-scoped values. The alias exists so call sites where the two
+// live next to each other read unambiguously. WithContext remains canonical.
+//
+// Same semantics as WithContext: returns a derived logger; assign the result;
+// nil clears any bound context.
+func (l *LogLayer) WithStdlibContext(ctx context.Context) *LogLayer {
+	return l.WithContext(ctx)
+}
+
 // Trace logs at the trace level. Trace sits below Debug; use it for
 // extremely fine-grained diagnostic output that you'd typically want
 // disabled in production.

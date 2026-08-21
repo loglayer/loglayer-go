@@ -58,6 +58,13 @@ func (b *LogBuilder) WithContext(ctx context.Context) *LogBuilder {
 	return b
 }
 
+// WithStdlibContext is an alias for WithContext on the builder, mirroring
+// (*LogLayer).WithStdlibContext. It spells out that the argument is the
+// stdlib context.Context, distinct from loglayer.Fields.
+func (b *LogBuilder) WithStdlibContext(ctx context.Context) *LogBuilder {
+	return b.WithContext(ctx)
+}
+
 // WithGroup tags this single log entry with one or more group names.
 // Routing rules in Config.Groups decide which transports receive the
 // entry. Tags are merged with any persistent groups assigned via

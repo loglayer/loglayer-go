@@ -18,6 +18,7 @@ type Config struct {
     Plugins               []Plugin        // plugins to register at construction time
     Prefix                string          // surfaced to transports as TransportParams.Prefix
     Disabled              bool            // suppress all output (default: false)
+    Level                 LogLevel        // initial level threshold (default: every level enabled)
     ErrorSerializer       ErrorSerializer // customize error rendering
     ErrorFieldName        string          // key for serialized error (default: "err")
     CopyMsgOnOnlyError    bool            // copy err.Error() into the message in ErrorOnly
@@ -44,6 +45,21 @@ type RoutingConfig struct {
     Ungrouped    UngroupedRouting    // how to route entries with no group tag
 }
 ```
+
+## New vs Build
+
+`New` panics on misconfiguration (no transport, both `Transport` and `Transports` set). `Build` returns an `error` instead, with the same validation. `New` fits program-start setup where a bad config is a programmer error; `Build` fits config loaded at runtime (env vars, config files) where you want to handle failure explicitly:
+
+```go
+log, err := loglayer.Build(loglayer.Config{
+    Transport: structured.New(structured.Config{}),
+})
+if err != nil {
+    return fmt.Errorf("configure logger: %w", err)
+}
+```
+
+Both report `loglayer.ErrNoTransport` when no transport is configured (via `errors.Is` on the `Build` error).
 
 ## Transports
 
@@ -131,6 +147,23 @@ log := loglayer.New(loglayer.Config{
 
 You can flip it at runtime with `log.EnableLogging()` / `log.DisableLogging()`. See [Adjusting Log Levels](/logging-api/adjusting-log-levels).
 
+## Level
+
+The initial level threshold, applied at construction exactly like [`SetLevel`](/logging-api/adjusting-log-levels). Any of `LogLevelTrace` (5), `LogLevelDebug` (10), `LogLevelInfo` (20), `LogLevelWarn` (30), `LogLevelError` (40), `LogLevelFatal` (50), or `LogLevelPanic` (60). See [Log Levels](/logging-api/basic-logging#log-levels) for the full list. Any level below the threshold is dropped.
+
+The zero value means "no override": every level is enabled (the default). Levels start at `LogLevelTrace`, so zero is unambiguous.
+
+```go
+log := loglayer.New(loglayer.Config{
+    Transport: structured.New(structured.Config{}),
+    Level:     loglayer.LogLevelInfo, // trace + debug dropped from construction
+})
+```
+
+Composes with `Disabled`: `Disabled: true` suppresses everything even when `Level` is set.
+
+Set it before `New` for config-driven loggers (env var, config file); use `SetLevel` at runtime to toggle live.
+
 ## ErrorSerializer
 
 A function that converts `error` to a `map[string]any`. The default returns `{"message": err.Error()}`. Override to capture stack traces, error chains, or library-specific fields. We recommend [`github.com/rotisserie/eris`](https://github.com/rotisserie/eris), its `ToJSON` function plugs in directly:
@@ -214,8 +247,8 @@ log.WithMetadata(loglayer.Metadata{"userId": "1234"}).
 // {
 //   "msg":     "user action failed",
 //   "context": {"service": "api"},
-//   "metadata":{"userId": "1234"},
-//   "error":   {"message": "boom"}
+//   "error":   {"message": "boom"},
+//   "metadata":{"userId": "1234"}
 // }
 ```
 
@@ -236,6 +269,10 @@ log.Fatal("logged, but process keeps running")
 ```
 
 `loglayer.NewMock()` enables this automatically. See [Mocking](/logging-api/mocking) and [Fatal Exits the Process](/logging-api/basic-logging#fatal-exits-the-process).
+
+::: warning Fatal in a long-running worker skips cleanup
+In service code with deferred cleanup (auto-updater re-exec, graceful shutdown) or from worker goroutines, a bare `log.Fatal(...)` kills the process immediately without running `defer`s. Set `DisableFatalExit: true` at the root and use `Error` in workers (or call `log.Fatal` only from a coordinator that drains first).
+:::
 
 ## MuteFields / MuteMetadata
 

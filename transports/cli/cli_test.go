@@ -2,14 +2,72 @@ package cli_test
 
 import (
 	"bytes"
+	"fmt"
+	"os"
+	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/fatih/color"
+	"golang.org/x/sys/unix"
 
 	clitr "go.loglayer.dev/transports/cli/v2"
 	"go.loglayer.dev/v2"
 )
+
+// openPTY opens a new pseudo-terminal pair and returns the slave end (a
+// real terminal fd, so isatty reports true) and the master end (to read
+// output written to the slave). Cleanup closes both. Used to exercise
+// ColorAuto's per-stream TTY check without a controlling terminal.
+// Linux-only: the TIOCSPTLCK / TIOCGPTN ioctls are Linux-specific.
+func openPTY(t *testing.T) (slave, master *os.File, cleanup func()) {
+	t.Helper()
+	if runtime.GOOS != "linux" {
+		t.Skipf("PTY ioctls are Linux-specific; skipping on %s", runtime.GOOS)
+	}
+	master, err := os.OpenFile("/dev/ptmx", os.O_RDWR, 0)
+	if err != nil {
+		t.Skipf("cannot open /dev/ptmx: %v", err)
+	}
+	// Unlock the slave side (Linux convention) so it can be opened.
+	// TIOCSPTLCK takes a pointer to the int, not the value itself.
+	if err := unix.IoctlSetPointerInt(int(master.Fd()), unix.TIOCSPTLCK, 0); err != nil {
+		master.Close()
+		t.Fatalf("TIOCSPTLCK unlock: %v", err)
+	}
+	n, err := unix.IoctlGetInt(int(master.Fd()), unix.TIOCGPTN)
+	if err != nil {
+		master.Close()
+		t.Fatalf("TIOCGPTN: %v", err)
+	}
+	slave, err = os.OpenFile(fmt.Sprintf("/dev/pts/%d", n), os.O_RDWR|unix.O_NOCTTY, 0)
+	if err != nil {
+		master.Close()
+		t.Fatalf("open slave /dev/pts/%d: %v", n, err)
+	}
+	cleanup = func() {
+		slave.Close()
+		master.Close()
+	}
+	return slave, master, cleanup
+}
+
+// readTimeout reads up to len(buf) bytes from the PTY master with a
+// deadline, so a missing write fails the test instead of hanging it.
+func readTimeout(t *testing.T, f *os.File, buf []byte) string {
+	t.Helper()
+	if err := f.SetReadDeadline(nowAdd2s()); err != nil {
+		t.Fatalf("SetReadDeadline: %v", err)
+	}
+	n, err := f.Read(buf)
+	if err != nil {
+		t.Fatalf("read from pty master: %v", err)
+	}
+	return string(buf[:n])
+}
+
+func nowAdd2s() (t_ time.Time) { return time.Now().Add(2 * time.Second) }
 
 // makeLogger constructs a logger backed by a cli.Transport whose
 // stdout / stderr are captured into the returned buffers. Color is
@@ -171,6 +229,211 @@ func TestColorAutoDisabledWhenStdoutIsBuffer(t *testing.T) {
 
 	if strings.ContainsRune(stderr.String(), 0x1b) {
 		t.Errorf("ColorAuto with non-TTY stdout should not produce ANSI; got %q", stderr.String())
+	}
+}
+
+// ColorAuto resolves per stream at construction: severity levels follow
+// stderr, so when stdout is a pipe but stderr is a TTY, warn / error lines
+// stay colored while info lines stay plain. This is the `hmn ... | less`
+// case from user feedback.
+func TestColorAutoPerStreamTTYDetection(t *testing.T) {
+	slave, master, cleanupPTY := openPTY(t)
+	defer cleanupPTY()
+
+	var stdout bytes.Buffer // piped stdout: not a TTY
+
+	log := loglayer.New(loglayer.Config{
+		Transport: clitr.New(clitr.Config{
+			Stdout: &stdout,
+			Stderr: slave, // real terminal
+			Color:  clitr.ColorAuto,
+		}),
+	})
+
+	log.Info("plain")
+	if strings.ContainsRune(stdout.String(), 0x1b) {
+		t.Errorf("info (stdout, non-TTY) should not have ANSI; got %q", stdout.String())
+	}
+
+	log.Error("colored")
+
+	// The severity line lands in the PTY slave; read it back from the
+	// master side and verify it carries ANSI.
+	out := ""
+	for range 5 {
+		chunk := readTimeout(t, master, make([]byte, 256))
+		out += chunk
+		if strings.Contains(out, "\n") {
+			break
+		}
+	}
+	if !strings.ContainsRune(out, 0x1b) {
+		t.Errorf("error (stderr, TTY) should have ANSI under ColorAuto; got %q", out)
+	}
+	if !strings.Contains(out, "error:") || !strings.Contains(out, "colored") {
+		t.Errorf("severity line missing from stderr output; got %q", out)
+	}
+}
+
+// Both streams are real *os.File values, but only stderr is a TTY. Each
+// stream's resolution must be independent: warn stays colored (stderr
+// TTY) even though stdout is a non-TTY file. This pins the decision path
+// the per-stream resolution was built for.
+func TestColorAutoPerStreamBothFilesOneTTY(t *testing.T) {
+	slave, master, cleanupPTY := openPTY(t)
+	defer cleanupPTY()
+
+	stdoutF, err := os.CreateTemp(t.TempDir(), "piped-stdout")
+	if err != nil {
+		t.Fatalf("create temp stdout: %v", err)
+	}
+	defer stdoutF.Close()
+
+	log := loglayer.New(loglayer.Config{
+		Transport: clitr.New(clitr.Config{
+			Stdout: stdoutF, // real file, not a TTY
+			Stderr: slave,   // real terminal
+			Color:  clitr.ColorAuto,
+		}),
+	})
+
+	log.Info("plain")
+	log.Warn("colored")
+
+	// stderr is the TTY: warn must carry ANSI.
+	out := ""
+	for range 5 {
+		chunk := readTimeout(t, master, make([]byte, 256))
+		out += chunk
+		if strings.Contains(out, "\n") {
+			break
+		}
+	}
+	if !strings.ContainsRune(out, 0x1b) {
+		t.Errorf("warn (stderr, TTY) should have ANSI under ColorAuto; got %q", out)
+	}
+	if !strings.Contains(out, "warning:") || !strings.Contains(out, "colored") {
+		t.Errorf("warn line missing from stderr output; got %q", out)
+	}
+
+	// stdout is a non-TTY file: info must stay plain.
+	infoBytes, _ := os.ReadFile(stdoutF.Name())
+	if strings.ContainsRune(string(infoBytes), 0x1b) {
+		t.Errorf("info (stdout, non-TTY file) should not have ANSI; got %q", infoBytes)
+	}
+	if !strings.Contains(string(infoBytes), "plain") {
+		t.Errorf("info line missing from stdout file; got %q", infoBytes)
+	}
+}
+
+// The inverse case: stdout is a TTY but stderr is a pipe. Debug lines
+// (stdout stream) carry ANSI; warn lines (stderr stream) stay plain.
+// Info is not used here: its default palette color is nil ("no color:
+// plain stdout"), so Info lines are plain by design on any stream.
+func TestColorAutoPerStreamTTYDetectionInverse(t *testing.T) {
+	slave, master, cleanupPTY := openPTY(t)
+	defer cleanupPTY()
+
+	var stderr bytes.Buffer // piped stderr: not a TTY
+
+	log := loglayer.New(loglayer.Config{
+		Transport: clitr.New(clitr.Config{
+			Stdout: slave, // real terminal
+			Stderr: &stderr,
+			Color:  clitr.ColorAuto,
+		}),
+	})
+
+	// Exercise the bug that per-stream resolution fixes: warn must be
+	// uncolored even though stdout (the TTY) would say "color on".
+	log.Warn("plain")
+	if strings.ContainsRune(stderr.String(), 0x1b) {
+		t.Errorf("warn (stderr, non-TTY) should not have ANSI; got %q", stderr.String())
+	}
+
+	log.Debug("colored")
+
+	if strings.ContainsRune(stderr.String(), 0x1b) {
+		t.Errorf("warn (stderr, non-TTY) should not have ANSI; got %q", stderr.String())
+	}
+	// Read the debug line back from the pty (debug writes to the slave).
+	// A single read may return a partial chunk; keep reading until the
+	// line terminator arrives.
+	out := ""
+	for range 5 {
+		chunk := readTimeout(t, master, make([]byte, 256))
+		out += chunk
+		if strings.Contains(out, "\n") {
+			break
+		}
+	}
+	if !strings.ContainsRune(out, 0x1b) {
+		t.Errorf("debug (stdout, TTY) should have ANSI under ColorAuto; got %q", out)
+	}
+	if !strings.Contains(out, "colored") {
+		t.Errorf("debug line missing from stdout output; got %q", out)
+	}
+}
+
+func TestMessageFnFullTakeover(t *testing.T) {
+	// With MessageFn set, only its output is emitted: the assembled
+	// message and its logfmt/table body are replaced wholesale. The
+	// hook still receives the full TransportParams (level, messages,
+	// assembled Data) to format from.
+	log, stdout, _ := makeLogger(t, clitr.Config{
+		MessageFn: func(params loglayer.TransportParams) string {
+			return fmt.Sprintf("[%s] %v fields=%d", params.LogLevel, params.Messages[0], len(params.Data))
+		},
+	})
+
+	log.WithFields(loglayer.Fields{"ge": "eu-west"}).Info("ignored message")
+
+	got := strings.TrimRight(stdout.String(), "\n")
+	if !strings.Contains(got, "[info] ignored message fields=1") {
+		t.Errorf("MessageFn output missing: %q", got)
+	}
+	if strings.Contains(got, "ge=eu-west") {
+		t.Errorf("logfmt body should be replaced by MessageFn, got %q", got)
+	}
+}
+
+func TestMessageFnEmptyFallsBack(t *testing.T) {
+	// An empty return opts out per entry: the normal rendering wins.
+	log, stdout, _ := makeLogger(t, clitr.Config{
+		MessageFn: func(params loglayer.TransportParams) string {
+			return ""
+		},
+	})
+
+	log.WithMetadata(loglayer.Metadata{"user": "alice"}).Info("regular line")
+
+	got := strings.TrimRight(stdout.String(), "\n")
+	if !strings.Contains(got, "regular line") {
+		t.Errorf("fallback rendering missing: %q", got)
+	}
+}
+
+func TestMessageFnSanitized(t *testing.T) {
+	// The takeover string goes through the same sanitizer as any other
+	// rendered body, so a hostile MessageFn can't forge lines or
+	// smuggle terminal escapes. The contract: no ESC (0x1b) control
+	// byte reaches the output. CSI-family sequences like \x1b[2J and
+	// \x1b[K lose their ESC, so the terminal never interprets the rest
+	// as a control sequence (the trailing text is inert).
+	for _, hostile := range []string{
+		"clean\x1b[31mred\x1b[0m", // classic SGR color
+		"ok\x1b[2J",               // clear screen
+		"ok\x1b[K",                // erase to end of line
+	} {
+		hostile := hostile
+		log, stdout, _ := makeLogger(t, clitr.Config{
+			MessageFn: func(_ loglayer.TransportParams) string { return hostile },
+		})
+		log.Info("x")
+		got := stdout.String()
+		if strings.ContainsRune(got, 0x1b) {
+			t.Errorf("ANSI ESC from MessageFn leaked through: %q", got)
+		}
 	}
 }
 

@@ -35,6 +35,7 @@ The DSN is non-secret in the sense that it's safe to ship in client-side apps, b
 ```go
 import (
     "context"
+    "time"
 
     "github.com/getsentry/sentry-go"
 

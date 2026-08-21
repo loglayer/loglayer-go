@@ -63,7 +63,7 @@ log.WithMetadata(loglayer.Metadata{"userId": "123", "action": "login"}).Info("us
 // loglayer.M is a shorter alias for loglayer.Metadata
 log.WithMetadata(loglayer.M{"durationMs": 42}).Info("served")
 
-// Struct metadata nests under the "metadata" key by default
+// Struct metadata: its fields merge at the root (JSON-roundtripped)
 type Event struct {
     OrderID string `json:"orderId"`
     Path    string `json:"path"`
@@ -170,6 +170,7 @@ log := loglayer.New(loglayer.Config{
     // Optional
     Prefix:           "[auth]",                          // surfaced to transports as TransportParams.Prefix
     Disabled:         false,                             // master on/off
+    Level:            loglayer.LogLevelInfo,             // initial threshold (zero = every level enabled)
     ErrorSerializer:  loglayer.UnwrappingErrorSerializer,
     ErrorFieldName:   "err",                             // default
     CopyMsgOnOnlyError: false,                           // ErrorOnly copies err.Error() as the message
@@ -308,7 +309,7 @@ log.SetTransports(t1, t2)
 
 ## Go context.Context
 
-Distinct from "context" in TS LogLayer: Go's `context.Context` carries trace IDs, deadlines, request-scoped values. Use `WithContext` to attach it; transports and plugins read it via `TransportParams.Ctx`.
+Distinct from "context" in TS LogLayer: Go's `context.Context` carries trace IDs, deadlines, request-scoped values. Use `WithContext` to attach it; transports and plugins read it via `TransportParams.Ctx`. `WithStdlibContext` is an alias for `WithContext` on both `*LogLayer` and `*LogBuilder`, provided for discoverability (`WithContext` remains canonical).
 
 ```go
 // Per-call attachment
@@ -359,7 +360,7 @@ lines := lib.Lines()  // []lltest.LogLine; assert on Level, Messages, Data, Meta
 - `transports/console`: plain `fmt.Println`-style
 - `transports/structured`: one JSON object per entry (production)
 - `transports/pretty`: colorized terminal output (local dev)
-- `transports/cli`: tuned for command-line apps (short level prefixes, stdout/stderr routing, TTY-detected color, no timestamps, table rendering for slice-of-map metadata with `Config.TableColumnOrder` to pin leading columns)
+- `transports/cli`: tuned for command-line apps (short level prefixes, stdout/stderr routing, per-stream TTY-detected color: info/debug/trace follow stdout, warn/error/fatal/panic follow stderr, no timestamps, table rendering for slice-of-map metadata with `Config.TableColumnOrder` to pin leading columns, `Config.MessageFn` for full-line takeover)
 - `transports/testing`: in-memory capture for tests
 - `transports/blank`: user-supplied dispatch function
 

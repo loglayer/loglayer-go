@@ -126,7 +126,7 @@ log := loglayer.New(loglayer.Config{
     Transports: []loglayer.Transport{
         pretty.New(pretty.Config{BaseConfig: transport.BaseConfig{ID: "pretty"}}),
         structured.New(structured.Config{BaseConfig: transport.BaseConfig{ID: "structured-file"}, Writer: file}),
-        datadogtransport.New(datadogtransport.Config{
+        datadog.New(datadog.Config{
             BaseConfig: transport.BaseConfig{ID: "datadog"},
             APIKey:     os.Getenv("DD_API_KEY"),
         }),

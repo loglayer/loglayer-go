@@ -59,11 +59,11 @@ log.WithPrefix("[my-app]").
     "path": "/",
     "reqId": "1234"
   },
-  "metadata": {
-    "some": "data"
-  },
   "err": {
     "message": "test"
+  },
+  "metadata": {
+    "some": "data"
   }
 }
 ```

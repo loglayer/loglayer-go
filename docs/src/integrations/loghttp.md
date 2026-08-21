@@ -48,8 +48,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 A request to `GET /users` produces:
 
 ```json
-{"level":"info","time":"...","msg":"looking up user","context":{"requestId":"3f1a...","method":"GET","path":"/users"}}
-{"level":"info","time":"...","msg":"request completed","context":{"requestId":"3f1a...","method":"GET","path":"/users"},"metadata":{"status":200,"durationMs":2,"bytes":42}}
+{"level":"info","time":"...","msg":"looking up user","context":{"method":"GET","path":"/users","requestId":"3f1a..."}}
+{"level":"info","time":"...","msg":"request completed","context":{"method":"GET","path":"/users","requestId":"3f1a..."},"metadata":{"bytes":42,"durationMs":2,"status":200}}
 ```
 
 ## What the Middleware Does

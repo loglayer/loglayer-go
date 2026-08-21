@@ -71,8 +71,8 @@ func main() {
   "time": "2026-04-25T12:00:00Z",
   "msg": "user action failed",
   "context": { "service": "api" },
-  "metadata": { "userId": "1234" },
-  "err": { "message": "something went wrong" }
+  "err": { "message": "something went wrong" },
+  "metadata": { "userId": "1234" }
 }
 ```
 

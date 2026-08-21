@@ -7,6 +7,22 @@ description: Latest features and improvements in LogLayer for Go.
 
 - See the [main `CHANGELOG.md`](https://github.com/loglayer/loglayer-go/blob/main/CHANGELOG.md) for the auto-generated per-release log.
 
+## Aug 19, 2026
+
+`loglayer`:
+
+- **`Config.Level` initial threshold**: set the minimum level at construction, applied exactly like `SetLevel`. Zero means "no override": every level stays enabled (the previous behavior). Composes with `Disabled`. See [Level](/configuration#level).
+- **`WithStdlibContext` alias**: `WithContext` is now also reachable as `WithStdlibContext` on both `*LogLayer` and `*LogBuilder`, for discoverability when searching for "context". `WithContext` remains canonical. See [Go Context](/logging-api/go-context).
+
+`transports/cli`:
+
+- **Per-stream TTY detection in `ColorAuto`**: info / debug / trace lines follow stdout's TTY status; warn / error / fatal / panic lines follow stderr's. Piping stdout (e.g. `cli ... | less`) no longer strips color from severity lines that are still attached to a terminal. Resolution is pinned at construction. The counter-direction also holds: a real `*os.File` stderr plus a non-TTY stdout now renders warn/error uncolored. See [CLI Transport](/transports/cli#color-auto-always-never).
+- **`Config.MessageFn` full-line takeover**: a callback that replaces the message plus the logfmt / table body with a single user-controlled string. The level prefix, its color, and the user prefix still apply; an empty return falls back to normal rendering. See [MessageFn](/transports/cli#messagefn).
+
+`transports/gcplogging`:
+
+Bumped `google.golang.org/grpc` (v1.79.3 → v1.82.1) to fix GO-2026-6061 (xDS RBAC authorization + HTTP/2 server vulnerabilities), reachable from the transport. Also raised transitive `golang.org/x/*`, `google.golang.org/genproto`, OpenTelemetry, and protobuf versions.
+
 ## May 11, 2026
 
 `transports/newrelic`:

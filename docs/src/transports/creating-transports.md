@@ -308,7 +308,7 @@ Match the pattern the built-ins use ([`transports/structured`](https://github.co
 
 ## Testing
 
-For testing a custom transport, see [Testing Transports](/transports/testing-transports). It covers the direct buffer assertion pattern and the `RunContract` helper that drives the same 14-test contract suite every built-in wrapper passes.
+For testing a custom transport, see [Testing Transports](/transports/testing-transports). It covers the direct buffer assertion pattern and the `RunContract` helper that drives the same 17-test contract suite every built-in wrapper passes.
 
 ### Live Tests
 

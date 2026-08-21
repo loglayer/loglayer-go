@@ -88,8 +88,8 @@ log.WithError(err).Error("db query failed")
     "root": {
       "message": "connection refused",
       "stack": [
-        "main.queryDB:/app/db.go:42",
-        "main.main:/app/main.go:12"
+        "main.main:/app/main.go:12",
+        "main.queryDB:/app/db.go:42"
       ]
     }
   }
@@ -109,10 +109,10 @@ log := loglayer.New(loglayer.Config{
 })
 
 log.WithError(fmt.Errorf("op failed: %w", io.EOF)).Error("oops")
-// {"err":{"message":"op failed: EOF","causes":[{"message":"EOF"}]}}
+// {"err":{"causes":[{"message":"EOF"}],"message":"op failed: EOF"}}
 
 log.WithError(errors.Join(errA, errB)).Error("combined")
-// {"err":{"message":"errA\nerrB","causes":[{"message":"errA"},{"message":"errB"}]}}
+// {"err":{"causes":[{"message":"errA"},{"message":"errB"}],"message":"errA\nerrB"}}
 ```
 
 Behavior:
@@ -185,7 +185,7 @@ The default is `"err"`.
 Errors compose with fields and metadata:
 
 ```go
-log.WithFields(loglayer.Fields{"requestId": "abc"})
+log = log.WithFields(loglayer.Fields{"requestId": "abc"})
 
 log.WithMetadata(loglayer.Metadata{"retry_count": 3}).
     WithError(err).

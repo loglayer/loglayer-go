@@ -215,3 +215,62 @@ func TestLogLevelString_TraceAndPanic(t *testing.T) {
 		t.Errorf("Panic.String() = %q, want \"panic\"", loglayer.LogLevelPanic.String())
 	}
 }
+
+// Config.Level applies the threshold at construction, so there is no window
+// where the logger is live at the wrong level before SetLevel runs.
+func TestConfigLevelThreshold(t *testing.T) {
+	log, lib := setupWithConfig(t, loglayer.Config{Level: loglayer.LogLevelWarn})
+
+	log.Trace("dropped")
+	log.Debug("dropped")
+	log.Info("dropped")
+	if lib.Len() != 0 {
+		t.Errorf("expected no lines below warn, got %d", lib.Len())
+	}
+
+	log.Warn("kept")
+	log.Error("kept")
+	if lib.Len() != 2 {
+		t.Errorf("expected 2 lines at/above warn, got %d", lib.Len())
+	}
+}
+
+// Config.Level zero value means "no override": every level stays enabled.
+func TestConfigLevelZeroKeepsEverythingEnabled(t *testing.T) {
+	log, lib := setupWithConfig(t, loglayer.Config{})
+
+	log.Trace("kept")
+	log.Debug("kept")
+	log.Info("kept")
+	if lib.Len() != 3 {
+		t.Errorf("expected all levels enabled by default, got %d lines", lib.Len())
+	}
+	if !log.IsLevelEnabled(loglayer.LogLevelTrace) {
+		t.Error("trace should be enabled by default")
+	}
+}
+
+// Config.Level composes with Config.Disabled: the master switch still
+// suppresses everything even when the threshold would pass.
+func TestConfigLevelWithDisabled(t *testing.T) {
+	log, lib := setupWithConfig(t, loglayer.Config{
+		Level:    loglayer.LogLevelInfo,
+		Disabled: true,
+	})
+
+	log.Info("suppressed by master switch")
+	log.Error("suppressed by master switch")
+	if lib.Len() != 0 {
+		t.Errorf("expected no lines with Disabled=true, got %d", lib.Len())
+	}
+}
+
+// Unknown levels are no-ops at construction, matching SetLevel's contract.
+func TestConfigLevelUnknownLevelNoOp(t *testing.T) {
+	log, lib := setupWithConfig(t, loglayer.Config{Level: loglayer.LogLevel(123)})
+
+	log.Trace("still enabled")
+	if lib.Len() != 1 {
+		t.Errorf("unknown Config.Level should not change level state, got %d lines", lib.Len())
+	}
+}

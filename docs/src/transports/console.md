@@ -155,7 +155,7 @@ If you only want JSON output, prefer the [structured transport](/transports/stru
 ```go
 console.New(console.Config{
     MessageFn: func(p loglayer.TransportParams) string {
-        return fmt.Sprintf("[%s] %s", p.LogLevel, strings.Join(stringifyMessages(p.Messages), " | "))
+        return fmt.Sprintf("[%s] %s", p.LogLevel, transport.JoinMessages(p.Messages))
     },
 })
 ```

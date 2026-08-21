@@ -11,7 +11,7 @@ The `cli` transport renders log entries as plain user-facing CLI output. The clo
 
 - **No timestamp, no log-id, no level label embedded in info / debug output.** The message is printed as-is.
 - **Short cargo / eslint-style prefixes for warn / error / fatal**: `warning: `, `error: `, `fatal: `.
-- **Stdout for info / debug; stderr for warn / error / fatal / panic.**
+- **Stdout for info / debug / trace; stderr for warn / error / fatal / panic.**
 - **TTY-detected color.** Pipe to a file or another process and ANSI escapes auto-disable. Override via `Config.Color`.
 - **Fields and metadata are dropped by default.** CLI users don't want `key=value` noise on user-facing output. Set `ShowFields: true` when wiring `-vv` / `--debug` to a verbose mode.
 - **Table rendering for slice metadata.** Pass `[]loglayer.Metadata`, `[]SomeStruct`, or any other slice of map-shaped or struct-shaped values to `WithMetadata` / `MetadataOnly` and the transport renders a tabwriter-aligned table after the message. Same call site emits a proper JSON array when paired with the [structured](/transports/structured) transport. See [Table Rendering for Slice-of-Map Metadata](#table-rendering-for-slice-of-map-metadata) below.
@@ -57,7 +57,8 @@ Message strings have control bytes (including `\n`) stripped to defeat log-forgi
 |-------|------|---------|-------------|
 | `Stdout` | `io.Writer` | `os.Stdout` | Override for the info / debug / trace stream. |
 | `Stderr` | `io.Writer` | `os.Stderr` | Override for the warn / error / fatal / panic stream. |
-| `Color` | `ColorMode` | `ColorAuto` | One of `ColorAuto` (color when stdout is a TTY), `ColorAlways`, or `ColorNever`. Wire your CLI's `--color` flag through this. |
+| `Color` | `ColorMode` | `ColorAuto` | One of `ColorAuto` (per-stream TTY detection, see [below](#color-auto-always-never)), `ColorAlways`, or `ColorNever`. Wire your CLI's `--color` flag through this. |
+| `MessageFn` | `func(loglayer.TransportParams) string` | `nil` | Format the entire output line (full takeover). The return value replaces the message plus the logfmt / table body; the level prefix and its color still apply. See [MessageFn](#messagefn) below. |
 | `ShowFields` | `bool` | `false` | When true, append `key=value` pairs (logfmt) after the message. Useful for `-vv` / `--debug` verbosity modes. |
 | `LevelPrefix` | `map[loglayer.LogLevel]string` | see below | Override the per-level prefix. Missing entries fall back to defaults. Set an entry to `""` to suppress the default prefix for that level only. |
 | `DisableLevelPrefix` | `bool` | `false` | Master switch: when true, every level's prefix is suppressed regardless of `LevelPrefix`. Use when the host CLI already renders its own urgency markers. |
@@ -210,9 +211,51 @@ default:
 }
 ```
 
-`ColorAuto` checks whether the resolved stdout is a terminal at construction time, and that decision is pinned for the lifetime of the transport. If your CLI is invoked from a wrapper that pipes stdout, color disables automatically.
+`ColorAuto` resolves the TTY status of each stream at construction time, and the decision is pinned for the lifetime of the transport:
 
-Note that the TTY check is against `Stdout`, not `Stderr`: piping stdout to a file disables color on stderr-bound warn / error / fatal lines too. This matches how `gh`, `kubectl`, and most modern CLIs behave; the operator either wants color everywhere or nowhere, not a half-and-half mix.
+- Info / debug / trace lines follow the resolved stdout (`Config.Stdout`, default `os.Stdout`).
+- Warn / error / fatal / panic lines follow the resolved stderr (`Config.Stderr`, default `os.Stderr`).
+
+If your CLI is invoked from a wrapper that pipes stdout, severity lines stay colored as long as stderr is still a terminal (e.g. `cli ... | less`), instead of losing color because the stdout check failed.
+
+## MessageFn
+
+`Config.MessageFn` takes over the entire output line: its return value replaces the assembled message plus any logfmt or table body with a single user-controlled string. The level prefix and its color still apply to the result.
+
+Use it when the default `[level prefix][user prefix][message] [fields]` layout doesn't fit your CLI's established output format:
+
+```go
+import (
+    "fmt"
+
+    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v2/transport"
+    cli "go.loglayer.dev/transports/cli/v2"
+)
+
+log := loglayer.New(loglayer.Config{
+    Transport: cli.New(cli.Config{
+        MessageFn: func(p loglayer.TransportParams) string {
+            return fmt.Sprintf("%v -> %v", p.LogLevel, transport.JoinMessages(p.Messages))
+        },
+    }),
+})
+```
+
+An empty return falls back to the normal rendering, so the hook can opt out per entry:
+
+```go
+MessageFn: func(p loglayer.TransportParams) string {
+    if p.Metadata == nil {
+        return "" // normal rendering for plain entries
+    }
+    return renderRichLine(p)
+},
+```
+
+The return value is sanitized like any other rendered body, so a hostile message can't forge lines or smuggle terminal escapes. The user prefix (`WithPrefix`) still renders ahead of the body, in its usual dim-grey color; include `p.Prefix` in the format string if your format itself needs it.
+
+The contrast with the [Console Transport](/transports/console): console's `MessageFn` formats only the message, and the logfmt tail still appends. Here the body is replaced wholesale.
 
 ## Recommended Plugin Pairings
 

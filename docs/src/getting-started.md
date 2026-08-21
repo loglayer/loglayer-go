@@ -58,6 +58,17 @@ func main() {
 
 The example above sets `FieldsKey` and `MetadataFieldName` to nest fields and metadata under their own keys. See [Configuration](/configuration) for every knob on `loglayer.Config`: error serialization, field/metadata placement, prefix, source capture, group routing, fatal-exit control, and more.
 
+When the config comes from a runtime source (env vars, config file), use `loglayer.Build` to handle errors explicitly instead of `New`, which panics. See [New vs Build](/configuration#new-vs-build):
+
+```go
+log, err := loglayer.Build(loglayer.Config{
+    Transport: structured.New(structured.Config{}),
+})
+if err != nil {
+    return fmt.Errorf("configure logger: %w", err)
+}
+```
+
 ::: tip Pretty terminal output
 For local development, the [Pretty Transport](/transports/pretty) gives you colorized, theme-aware output with three view modes. Much easier to scan than raw JSON or the basic [Console Transport](/transports/console).
 :::
@@ -73,7 +84,7 @@ log := loglayer.New(loglayer.Config{
 })
 
 log.WithError(fmt.Errorf("op failed: %w", io.EOF)).Error("oops")
-// {"err":{"message":"op failed: EOF","causes":[{"message":"EOF"}]}}
+// {"err":{"causes":[{"message":"EOF"}],"message":"op failed: EOF"}}
 ```
 
 For stack traces, custom shapes, or other options, see [Error Handling](/logging-api/error-handling).

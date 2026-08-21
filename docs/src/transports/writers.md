@@ -21,7 +21,7 @@ log := loglayer.New(loglayer.Config{
 |-----------|-------------|
 | `structured` | `os.Stdout` |
 | `pretty` | `os.Stdout` |
-| `console` | `os.Stdout` for debug/info, `os.Stderr` for warn/error/fatal |
+| `console` | `os.Stdout` for trace/debug/info, `os.Stderr` for warn/error/fatal/panic |
 | `testing` | In-memory; the Writer field is intentionally absent |
 
 ## Recipes

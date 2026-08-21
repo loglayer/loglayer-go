@@ -39,7 +39,7 @@ It also sets [`DisableFatalExit: true`](/configuration#disablefatalexit) so test
 
 ```go
 log := loglayer.NewMock()
-log.WithFields(loglayer.Fields{"requestId": "abc"})
+log = log.WithFields(loglayer.Fields{"requestId": "abc"})
 log.SetLevel(loglayer.LogLevelWarn)
 
 log.Info("dropped: below threshold AND silent")
@@ -50,6 +50,10 @@ log.IsLevelEnabled(loglayer.LogLevelInfo)   // false
 ```
 
 This is the right default for unit tests of business logic.
+
+::: tip Need to assert on the rendered output?
+`NewMock()` emits nothing, and there is no `NewMockWithWriter`. When the test's purpose is to assert what a transport *renders* (exact level prefixes, logfmt, JSON shape), construct a real logger with the [transports/testing](/transports/testing) capture transport or a `bytes.Buffer` writer on a renderer transport (see [Testing Transports](/transports/testing-transports)), and assert against the captured lines or buffer.
+:::
 
 ## 2. Capturing Mock: `transports/testing`
 
@@ -97,6 +101,7 @@ type LogLine struct {
     Data     loglayer.Data   // assembled fields + error map; nil when neither were set
     Metadata any             // raw value passed to WithMetadata
     Ctx      context.Context // per-call context attached via WithContext; nil if not set
+    Prefix   string          // value from WithPrefix / Config.Prefix; empty when unset
 }
 ```
 
