@@ -227,16 +227,16 @@ Use it when the default `[level prefix][user prefix][message] [fields]` layout d
 ```go
 import (
     "fmt"
-    "strings"
 
     "go.loglayer.dev/v2"
+    "go.loglayer.dev/v2/transport"
     cli "go.loglayer.dev/transports/cli/v2"
 )
 
 log := loglayer.New(loglayer.Config{
     Transport: cli.New(cli.Config{
         MessageFn: func(p loglayer.TransportParams) string {
-            return fmt.Sprintf("%v -> %v", p.LogLevel, strings.Join(p.Messages, " "))
+            return fmt.Sprintf("%v -> %v", p.LogLevel, transport.JoinMessages(p.Messages))
         },
     }),
 })
