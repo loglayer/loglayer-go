@@ -236,7 +236,7 @@ import (
 log := loglayer.New(loglayer.Config{
     Transport: cli.New(cli.Config{
         MessageFn: func(p loglayer.TransportParams) string {
-            return fmt.Sprintf("%v -> %v", p.Level, strings.Join(p.Messages, " "))
+            return fmt.Sprintf("%v -> %v", p.LogLevel, strings.Join(p.Messages, " "))
         },
     }),
 })
@@ -253,7 +253,7 @@ MessageFn: func(p loglayer.TransportParams) string {
 },
 ```
 
-The return value is sanitized like any other rendered body, so a hostile message can't forge lines or smuggle terminal escapes. It also replaces the user prefix (`WithPrefix`) rendering: include `p.Prefix` in the format string if your CLI's established layout carries it.
+The return value is sanitized like any other rendered body, so a hostile message can't forge lines or smuggle terminal escapes. The user prefix (`WithPrefix`) still renders ahead of the body, in its usual dim-grey color; include `p.Prefix` in the format string if your format itself needs it.
 
 The contrast with the [Console Transport](/transports/console): console's `MessageFn` formats only the message, and the logfmt tail still appends. Here the body is replaced wholesale.
 

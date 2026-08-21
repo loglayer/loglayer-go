@@ -131,7 +131,18 @@ The default level is `Info`. Passing `nil` is a no-op.
 
 ### KV-only entries
 
-The default level is `Info`. Passing `nil` is a no-op.
+`MetadataOnly` is the KV-only idiom: entries with data but no message. The [Structured Transport](/transports/structured) emits them as JSON objects, and for the terminal renderers the [CLI Transport](/transports/cli) renders them as `key=value` pairs only when `Config.ShowFields` is set.
+
+```go
+// structured: {"status":"healthy","memory":"512MB"}
+// console / cli (with ShowFields): status=healthy memory=512MB
+log.MetadataOnly(loglayer.Metadata{
+    "status": "healthy",
+    "memory": "512MB",
+})
+```
+
+The same shape is available with persistent fields: `log.WithFields(...).Info("")` produces an entry with fields but no message. Prefer `MetadataOnly` for per-event data, `WithFields(...).Info("")` when the keys belong to the logger's persistent bag.
 
 ## Muting Metadata
 
