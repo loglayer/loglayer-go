@@ -109,10 +109,10 @@ log := loglayer.New(loglayer.Config{
 })
 
 log.WithError(fmt.Errorf("op failed: %w", io.EOF)).Error("oops")
-// {"err":{"message":"op failed: EOF","causes":[{"message":"EOF"}]}}
+// {"err":{"causes":[{"message":"EOF"}],"message":"op failed: EOF"}}
 
 log.WithError(errors.Join(errA, errB)).Error("combined")
-// {"err":{"message":"errA\nerrB","causes":[{"message":"errA"},{"message":"errB"}]}}
+// {"err":{"causes":[{"message":"errA"},{"message":"errB"}],"message":"errA\nerrB"}}
 ```
 
 Behavior:

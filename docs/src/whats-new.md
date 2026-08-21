@@ -16,7 +16,7 @@ description: Latest features and improvements in LogLayer for Go.
 
 `transports/cli`:
 
-- **Per-stream TTY detection in `ColorAuto`**: info / debug lines follow stdout's TTY status; warn / error / fatal lines follow stderr's. Piping stdout (e.g. `cli ... | less`) no longer strips color from severity lines that are still attached to a terminal. Resolution is pinned at construction. The counter-direction also holds: a real `*os.File` stderr plus a non-TTY stdout now renders warn/error uncolored. See [CLI Transport](/transports/cli#color-auto-always-never).
+- **Per-stream TTY detection in `ColorAuto`**: info / debug / trace lines follow stdout's TTY status; warn / error / fatal / panic lines follow stderr's. Piping stdout (e.g. `cli ... | less`) no longer strips color from severity lines that are still attached to a terminal. Resolution is pinned at construction. The counter-direction also holds: a real `*os.File` stderr plus a non-TTY stdout now renders warn/error uncolored. See [CLI Transport](/transports/cli#color-auto-always-never).
 - **`Config.MessageFn` full-line takeover**: a callback that replaces the message plus the logfmt / table body with a single user-controlled string. The level prefix, its color, and the user prefix still apply; an empty return falls back to normal rendering. See [MessageFn](/transports/cli#messagefn).
 
 ## May 11, 2026

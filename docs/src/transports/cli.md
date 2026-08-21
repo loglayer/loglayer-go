@@ -11,7 +11,7 @@ The `cli` transport renders log entries as plain user-facing CLI output. The clo
 
 - **No timestamp, no log-id, no level label embedded in info / debug output.** The message is printed as-is.
 - **Short cargo / eslint-style prefixes for warn / error / fatal**: `warning: `, `error: `, `fatal: `.
-- **Stdout for info / debug; stderr for warn / error / fatal / panic.**
+- **Stdout for info / debug / trace; stderr for warn / error / fatal / panic.**
 - **TTY-detected color.** Pipe to a file or another process and ANSI escapes auto-disable. Override via `Config.Color`.
 - **Fields and metadata are dropped by default.** CLI users don't want `key=value` noise on user-facing output. Set `ShowFields: true` when wiring `-vv` / `--debug` to a verbose mode.
 - **Table rendering for slice metadata.** Pass `[]loglayer.Metadata`, `[]SomeStruct`, or any other slice of map-shaped or struct-shaped values to `WithMetadata` / `MetadataOnly` and the transport renders a tabwriter-aligned table after the message. Same call site emits a proper JSON array when paired with the [structured](/transports/structured) transport. See [Table Rendering for Slice-of-Map Metadata](#table-rendering-for-slice-of-map-metadata) below.
