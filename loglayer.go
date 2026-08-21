@@ -195,6 +195,10 @@ func build(config Config) (*LogLayer, error) {
 		l.config.Source.FieldName = "source"
 	}
 
+	if config.MetadataFieldName == "" && !config.FlattenMetadata {
+		l.config.MetadataFieldName = "metadata"
+	}
+
 	if config.Level != 0 {
 		l.levels.setLevel(config.Level)
 	}
