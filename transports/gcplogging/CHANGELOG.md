@@ -8,6 +8,15 @@ versions independently of the framework core. Maintained
 automatically by [monorel](https://monorel.disaresta.com) from
 `.changeset/*.md` files.
 
+## [2.0.2] - 2026-08-21
+
+### Patch Changes
+
+- Bump `google.golang.org/grpc` from v1.79.3 to v1.82.1 (plus transitive
+  upgrades) to clear GO-2026-6061 (xDS RBAC authorization + HTTP/2
+  transport server vulnerabilities), which was reachable from
+  `SendToLogger` / `reportError`.
+
 ## [2.0.1] - 2026-05-03
 
 ### Patch Changes

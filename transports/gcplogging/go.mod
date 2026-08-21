@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	cloud.google.com/go/logging v1.13.0
-	go.loglayer.dev/v2 v2.0.1
+	go.loglayer.dev/v2 v2.2.0
 )
 
 require (
