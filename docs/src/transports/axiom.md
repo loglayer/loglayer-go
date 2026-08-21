@@ -17,30 +17,27 @@ go get go.loglayer.dev/transports/axiom/v2
 
 ## Authenticating
 
-Axiom authenticates with an API token. You can provide this to the transport in two ways:
+Axiom authenticates with an API token. The transport takes a caller-supplied `*axiom.Client` (required; `New` panics with `ErrClientRequired` when it is nil). You construct the client yourself, and the `axiom-go` SDK reads the token from the environment for you:
 
-1. **Pass the client directly**: Construct `*axiom.Client` yourself and pass it to the transport.
-2. **Use environment variables**: The transport reads `AXIOM_TOKEN` if no client is provided.
+| Env var | Read by | Purpose |
+|---------|---------|---------|
+| `AXIOM_TOKEN` | `axiom-go` SDK | API token with ingest permission. |
+| `AXIOM_ORG_ID` | `axiom-go` SDK | Organization ID (required for personal tokens). |
 
-| Env var | Purpose |
-|---------|---------|
-| `AXIOM_TOKEN` | API token with ingest permission. Used when constructing the client. |
-| `AXIOM_ORG_ID` | Organization ID (required for personal tokens). |
-| `AXIOM_DATASET` | Dataset name or ID to ingest logs into. |
+The dataset is set on the transport via `Config.DatasetName`, not an env var.
 
 ### Using environment variables
 
 ```go
 import (
-    "github.com/axiomhq/axiom-go/axiom"
+    axiomgo "github.com/axiomhq/axiom-go/axiom"
     "go.loglayer.dev/v2"
     "go.loglayer.dev/transports/axiom/v2"
 )
 
-// Client picks up AXIOM_TOKEN from the environment
-client, err := axiom.NewClient(
-    axiom.SetAPITokenConfig(os.Getenv("AXIOM_TOKEN")),
-)
+// The client picks up AXIOM_TOKEN (and AXIOM_ORG_ID for personal tokens)
+// from the environment.
+client, err := axiomgo.NewClient()
 if err != nil {
     panic(err)
 }
@@ -57,16 +54,13 @@ log := loglayer.New(loglayer.Config{
 
 ```go
 import (
-    "context"
-
-    "github.com/axiomhq/axiom-go/axiom"
+    axiomgo "github.com/axiomhq/axiom-go/axiom"
     "go.loglayer.dev/v2"
     "go.loglayer.dev/transports/axiom/v2"
 )
 
-ctx := context.Background()
-client, err := axiom.NewClient(
-    axiom.SetAPITokenConfig("your-api-token"),
+client, err := axiomgo.NewClient(
+    axiomgo.SetAPITokenConfig("your-api-token"),
 )
 if err != nil {
     panic(err)
@@ -80,7 +74,7 @@ log := loglayer.New(loglayer.Config{
 })
 
 log.Info("user signed in")
-log.WithMetadata(map[string]any{"userId": 42}).Warn("retry exhausted")
+log.WithMetadata(loglayer.Metadata{"userId": 42}).Warn("retry exhausted")
 ```
 
 ## Config
@@ -113,9 +107,9 @@ Each log entry is ingested as a JSON object:
 - Map metadata flattened at root, or any other metadata nested under `metadata`
 
 ```go
-log.WithFields(map[string]any{"requestId": "abc"}).
+log.WithFields(loglayer.Fields{"requestId": "abc"}).
     WithError(errors.New("timeout")).
-    WithMetadata(map[string]any{"durationMs": 42}).
+    WithMetadata(loglayer.Metadata{"durationMs": 42}).
     Info("served")
 ```
 

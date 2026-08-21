@@ -23,7 +23,7 @@ go get go.loglayer.dev/transports/blank/v2
 
 # Cloud (managed log services)
 go get go.loglayer.dev/transports/axiom/v2
-go get go.loglayer.dev/transports/betterstack/v2
+go get go.loglayer.dev/transports/betterstack
 go get go.loglayer.dev/transports/datadog/v2
 go get go.loglayer.dev/transports/gcplogging/v2
 go get go.loglayer.dev/transports/sentry/v2
@@ -61,6 +61,8 @@ The full module list is in [`monorel.toml`](https://github.com/loglayer/loglayer
 package main
 
 import (
+    "errors"
+
     "go.loglayer.dev/v2"
     "go.loglayer.dev/transports/structured/v2"
 )
@@ -125,7 +127,7 @@ log.WithMetadata(loglayer.Metadata{"userId": "123", "action": "login"}).Info("us
 // loglayer.M is a shorter alias
 log.WithMetadata(loglayer.M{"durationMs": 42}).Info("served")
 
-// Struct metadata nests under "metadata" by default
+// Struct metadata: its fields merge at the root (JSON-roundtripped)
 type Event struct {
     OrderID string `json:"orderId"`
     Path    string `json:"path"`
@@ -404,7 +406,7 @@ child = child.WithFields(loglayer.F{"handler": "users"})
 child.Info("request received")  // emits with service AND handler
 ```
 
-`Child()` shallow-copies fields, level state, transports, plugins, and group routing. Group config is shared by reference (runtime changes propagate); persistent group tags from `WithGroup` are copied.
+`Child()` shallow-copies the fields map and clones the level state. Transports, plugins, and group routing are shared as immutable snapshots; the mutators (`AddTransport`, `AddPlugin`, `AddGroup`, ...) publish a new snapshot on the receiver only, so runtime changes on one logger never affect the other.
 
 ## Log Level Control
 
@@ -652,7 +654,6 @@ structured.New(structured.Config{
     Writer: os.Stdout,
     // DateFn: func() string { return time.Now().UTC().Format(time.RFC3339) },
     // LevelFn: func(l loglayer.LogLevel) string { return l.String() },
-    // Indent: false,
     // MessageField, DateField, LevelField: customize key names
 })
 ```
@@ -668,13 +669,13 @@ pretty.New(pretty.Config{
     Writer:   os.Stdout,
     NoColor:  false,
     ViewMode: pretty.ViewModeInline,    // or ViewModeMessageOnly / ViewModeExpanded
-    Theme:    pretty.MoonlightTheme,
+    Theme:    pretty.Moonlight(),       // or Sunlight() / Neon() / Nature() / Pastel()
 })
 ```
 
 ### CLI Transport
 
-Tuned for command-line application output rather than diagnostic logging. Short cargo/eslint-style level prefixes (`warning:`, `error:`, `fatal:`), stdout for info/debug and stderr for warn+, per-stream TTY-detected ANSI color (info/debug follow stdout, warn/error/fatal follow stderr, pinned at construction), no timestamps. Renders the `WithPrefix` value in dim grey, separate from the level color. Fields/metadata dropped by default; opt in via `Config.ShowFields`. `Config.MessageFn func(loglayer.TransportParams) string` takes over the entire output line: its return value replaces the message plus the logfmt/table body (the level prefix, its color, and the user `WithPrefix` value still apply); an empty return falls back to normal rendering.
+Tuned for command-line application output rather than diagnostic logging. Short cargo/eslint-style level prefixes (`warning:`, `error:`, `fatal:`), stdout for info/debug/trace and stderr for warn/error/fatal/panic, per-stream TTY-detected ANSI color (info/debug/trace follow stdout, warn/error/fatal/panic follow stderr, pinned at construction), no timestamps. Renders the `WithPrefix` value in dim grey, separate from the level color. Fields/metadata dropped by default; opt in via `Config.ShowFields`. `Config.MessageFn func(loglayer.TransportParams) string` takes over the entire output line: its return value replaces the message plus the logfmt/table body (the level prefix, its color, and the user `WithPrefix` value still apply); an empty return falls back to normal rendering.
 
 ```go
 import "go.loglayer.dev/transports/cli/v2"
@@ -1156,8 +1157,8 @@ require.Equal(t, "[REDACTED]", md["pw"])
 
 ## Currently out of scope
 
-- Lazy evaluation in fields/metadata (TS LogLayer has `lazy()`; not in Go yet)
-- Async lazy values
+- Lazy evaluation in per-call metadata (`loglayer.Lazy` resolves only in `Fields` / `RawLogEntry.Fields`, not in `Metadata`; see Lazy Evaluation above)
+- Async lazy values (the sync form ships as `loglayer.Lazy`; the async TS form has no Go equivalent)
 - Mixins (TS has `Mixins`; the Go equivalent is plugin authorship)
 - Context Managers / Log Level Managers as separate concepts (Go uses `context.Context` + the three-tier level system directly)
 

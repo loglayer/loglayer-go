@@ -38,7 +38,7 @@ log := loglayer.New(loglayer.Config{
 })
 
 log.Info("hello")
-// 2026-04-25 12:00:00 INFO hello
+// 2026/04/25 12:00:00 INFO hello
 ```
 
 If you don't pass a `Logger`, the transport constructs one writing to `Writer` (default `os.Stderr`).
@@ -80,7 +80,7 @@ type User struct {
 }
 
 log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
-// INFO user metadata={ID:7 Name:Alice}
+// INFO user metadata="{ID:7 Name:Alice}"
 ```
 
 charmbracelet renders the struct via its default formatter. Exact output shape depends on whether you've configured `JSONFormatter`, `TextFormatter`, or the default colored output.
@@ -108,6 +108,8 @@ loglayer.New(loglayer.Config{
 cl := log.GetLoggerInstance("charmlog").(*clog.Logger)
 cl.SetLevel(clog.DebugLevel)
 ```
+
+(`"charmlog"` is whatever you set as `BaseConfig.ID`; defaults to an auto-generated ID when unset.)
 
 ## Level Mapping
 

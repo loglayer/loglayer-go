@@ -55,7 +55,7 @@ type Config struct {
 ## Fatal Behavior
 
 ::: danger phuslu always exits on Fatal
-phuslu calls `os.Exit(1)` from every fatal-level dispatch path, including `Logger.WithLevel(FatalLevel).Msg(...)`. **This wrapper cannot suppress that behavior.** A `log.Fatal(...)` through the phuslu transport WILL terminate the process even when [`Config.DisableFatalExit`](/configuration#disablefatalexit) is set to `true`.
+phuslu calls `os.Exit(255)` from every fatal-level dispatch path, including `Logger.WithLevel(FatalLevel).Msg(...)`. **This wrapper cannot suppress that behavior.** A `log.Fatal(...)` through the phuslu transport WILL terminate the process even when [`Config.DisableFatalExit`](/configuration#disablefatalexit) is set to `true`.
 
 If you need fatal paths to not exit (tests, library code, integration scenarios), use a different transport for those scenarios. The [structured](/transports/structured), [zerolog](/transports/zerolog), and [zap](/transports/zap) transports all honor `DisableFatalExit`.
 :::
@@ -70,7 +70,7 @@ For non-fatal levels, the wrapper dispatches via `Logger.WithLevel(level).Msg(..
 
 ```go
 log.WithMetadata(loglayer.Metadata{"requestId": "xyz", "n": 42}).Info("served")
-// {"time":"...","level":"info","message":"served","requestId":"xyz","n":42}
+// {"time":"...","level":"info","requestId":"xyz","n":42,"message":"served"}
 ```
 
 Each map entry becomes an `Entry.Any(k, v)` call.
@@ -84,7 +84,7 @@ type User struct {
 }
 
 log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
-// {"time":"...","level":"info","message":"user","metadata":{"id":7,"name":"Alice"}}
+// {"time":"...","level":"info","metadata":{"id":7,"name":"Alice"},"message":"user"}
 ```
 
 To use a different key per call, wrap in a map:
@@ -110,6 +110,8 @@ loglayer.New(loglayer.Config{
 p := log.GetLoggerInstance("phuslu").(*plog.Logger)
 p.SetLevel(plog.DebugLevel)
 ```
+
+(`"phuslu"` is whatever you set as `BaseConfig.ID`; defaults to an auto-generated ID when unset.)
 
 ## Level Mapping
 

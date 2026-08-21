@@ -19,6 +19,8 @@ The directory is `transports/http`; the package name is `httptransport` to avoid
 
 ```go
 import (
+    "os"
+
     "go.loglayer.dev/v2"
     httptr "go.loglayer.dev/transports/http/v2"
 )
@@ -26,7 +28,7 @@ import (
 tr := httptr.New(httptr.Config{
     URL: "https://logs.example.com/ingest",
     Headers: map[string]string{
-        "Authorization": "Bearer " + token,
+        "Authorization": "Bearer " + os.Getenv("INGEST_TOKEN"),
     },
 })
 
@@ -96,8 +98,10 @@ type Entry struct {
     Level    loglayer.LogLevel
     Time     time.Time
     Messages []any
-    Data     map[string]any // fields + error (may be nil)
-    Metadata any            // raw value passed to WithMetadata
+    Data     map[string]any  // fields + error (may be nil)
+    Metadata any             // raw value passed to WithMetadata
+    Groups   []string        // active groups for this entry
+    Schema   loglayer.Schema // resolved assembly-shape keys
 }
 ```
 

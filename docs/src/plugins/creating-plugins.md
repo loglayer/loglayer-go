@@ -425,7 +425,7 @@ loglayer.NewMetadataHook("redact", func(metadata any) any {
 
 `Cloner` handles maps (string-keyed), structs (json-tag aware), slices, arrays, pointers, and interface values. It skips unexported fields. Caller's input is never mutated.
 
-The [`plugins/redact`](/plugins/redact) plugin is built on `Cloner`; [its source](https://github.com/loglayer/loglayer-go/blob/main/plugins/redact/redact.go) is the canonical reference for this pattern. It's also the canonical example of a multi-hook plugin (implements both `MetadataHook` and `FieldsHook`).
+The [`plugins/redact`](/plugins/redact) plugin is built on `Cloner`; [its source](https://github.com/loglayer/loglayer-go/blob/main/plugins/redact/redact.go) is the canonical reference for this pattern. It's also the canonical example of a multi-hook plugin (implements `MetadataHook`, `FieldsHook`, and `DataHook`).
 
 ### Recipe 3: normalize to a map first
 

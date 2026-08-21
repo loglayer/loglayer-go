@@ -29,7 +29,7 @@ func TestMyPlugin_AddsField(t *testing.T) {
 }
 ```
 
-`PopLine` returns the most recent entry and removes it; `Lines()` returns all captured. Both are `LogLine` structs with `LogLevel`, `Messages`, `Data`, `Metadata`, and `Err` fields. See [`transports/testing`](/transports/testing) for the full helper API.
+`PopLine` returns the most recent entry and removes it; `Lines()` returns all captured. Both are `LogLine` structs with `Level`, `Messages`, `Data`, `Metadata`, `Ctx`, and `Prefix` fields. See [`transports/testing`](/transports/testing) for the full helper API.
 
 ## Verifying input-side hooks don't mutate input
 

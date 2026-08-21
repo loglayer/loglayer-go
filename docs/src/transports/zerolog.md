@@ -56,7 +56,7 @@ type Config struct {
 
 ```go
 log.WithMetadata(loglayer.Metadata{"requestId": "abc", "n": 42}).Info("served")
-// {"level":"info","time":"...","message":"served","requestId":"abc","n":42}
+// {"level":"info","n":42,"requestId":"abc","time":"...","message":"served"}
 ```
 
 ### Struct metadata nests under the metadata key
@@ -68,7 +68,7 @@ type User struct {
 }
 
 log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
-// {"level":"info","time":"...","message":"user","metadata":{"id":7,"name":"Alice"}}
+// {"level":"info","metadata":{"id":7,"name":"Alice"},"time":"...","message":"user"}
 ```
 
 Zerolog's `Interface` field handler reflects directly into the struct, so the value is encoded once at write time without an extra JSON roundtrip.
@@ -95,7 +95,7 @@ Map fields are merged at the root via zerolog's `Fields`:
 ```go
 log.WithFields(loglayer.Fields{"service": "api"})
 log.Info("request")
-// {"level":"info","message":"request","service":"api",...}
+// {"level":"info","service":"api","time":"...","message":"request"}
 ```
 
 If `FieldsKey` is set on the LogLayer config, the fields are nested first by the core, then merged at root by zerolog. The result appears as a single nested object:
@@ -108,7 +108,7 @@ loglayer.New(loglayer.Config{
 
 log.WithFields(loglayer.Fields{"requestId": "abc"})
 log.Info("hi")
-// {"level":"info","message":"hi","fields":{"requestId":"abc"}}
+// {"level":"info","fields":{"requestId":"abc"},"time":"...","message":"hi"}
 ```
 
 ## Fatal Behavior
@@ -135,6 +135,8 @@ log.Fatal("logged but no exit")
 z := log.GetLoggerInstance("zerolog").(*zlog.Logger)
 z.Hook(myHook)
 ```
+
+(`"zerolog"` is whatever you set as `BaseConfig.ID`; defaults to an auto-generated ID when unset.)
 
 ## Level Mapping
 

@@ -62,7 +62,7 @@ When testing against a mock endpoint or using a proxy, set `Config.URL` directly
 ```go
 tr := betterstack.New(betterstack.Config{
     SourceToken: "fake-for-tests",
-    URL:         "http://localhost:8080/logs",  // test server URL
+    URL:         "https://logs.internal.acme.com",  // on-prem intake URL
 })
 ```
 

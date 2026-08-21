@@ -40,6 +40,8 @@ The license key is a secret. Treat it like a password: load it from an environme
 
 ```go
 import (
+    "os"
+
     "go.loglayer.dev/v2"
     "go.loglayer.dev/transports/newrelic"
 )

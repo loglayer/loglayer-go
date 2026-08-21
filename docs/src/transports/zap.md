@@ -31,7 +31,7 @@ log := loglayer.New(loglayer.Config{
 })
 
 log.Info("hello")
-// {"level":"info","ts":...,"msg":"hello"}
+// {"level":"info","ts":...,"caller":"...","msg":"hello"}
 ```
 
 If you don't pass a `Logger`, the transport constructs one with a JSON encoder writing to `Writer` (default `os.Stderr`).
@@ -55,7 +55,7 @@ type Config struct {
 
 ```go
 log.WithMetadata(loglayer.Metadata{"requestId": "abc", "n": 42}).Info("served")
-// {"level":"info","msg":"served","requestId":"abc","n":42}
+// {"level":"info","ts":...,"caller":"...","msg":"served","requestId":"abc","n":42}
 ```
 
 Each map entry becomes a `zap.Any(k, v)` call, so zap renders it however its encoder is configured.
@@ -69,7 +69,7 @@ type User struct {
 }
 
 log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
-// {"level":"info","msg":"user","metadata":{"id":7,"name":"Alice"}}
+// {"level":"info","ts":...,"caller":"...","msg":"user","metadata":{"id":7,"name":"Alice"}}
 ```
 
 zap reflects into the struct via `zap.Any`, which is faster than a JSON roundtrip.
@@ -107,6 +107,8 @@ The result: zap writes the fatal entry and returns. The core then decides whethe
 z := log.GetLoggerInstance("zap").(*zap.Logger)
 z.Sync()
 ```
+
+(`"zap"` is whatever you set as `BaseConfig.ID`; defaults to an auto-generated ID when unset.)
 
 This is the wrapped instance, not the original you passed in. For most operations that doesn't matter: fields, sampling, and hooks set before passing the logger to LogLayer are preserved.
 

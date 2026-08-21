@@ -111,6 +111,8 @@ l := log.GetLoggerInstance("logrus").(*logrus.Logger)
 l.AddHook(myHook)
 ```
 
+(`"logrus"` is whatever you set as `BaseConfig.ID`; defaults to an auto-generated ID when unset.)
+
 ## Level Mapping
 
 | LogLayer Level   | logrus Level   |

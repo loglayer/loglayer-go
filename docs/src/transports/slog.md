@@ -60,7 +60,7 @@ slog has no fatal level. This transport maps `LogLevelFatal` to `slog.LevelError
 
 ```go
 log.WithMetadata(loglayer.Metadata{"requestId": "abc", "n": 42}).Info("served")
-// {"level":"INFO","msg":"served","requestId":"abc","n":42}
+// {"time":"...","level":"INFO","msg":"served","requestId":"abc","n":42}
 ```
 
 Each map entry becomes a `slog.Any(k, v)` attribute, so slog renders it via the configured handler (JSON, text, or anything custom).
@@ -74,7 +74,7 @@ type User struct {
 }
 
 log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
-// {"level":"INFO","msg":"user","metadata":{"id":7,"name":"Alice"}}
+// {"time":"...","level":"INFO","msg":"user","metadata":{"id":7,"name":"Alice"}}
 ```
 
 The JSON handler honors `json:` tags; other handlers may render fields differently.
@@ -100,6 +100,8 @@ If your slog handler is wired to OpenTelemetry (e.g. via `slogcontext` or a cust
 sl := log.GetLoggerInstance("slog").(*slog.Logger)
 sl.With("global", "field").Info("...")
 ```
+
+(`"slog"` is whatever you set as `BaseConfig.ID`; defaults to an auto-generated ID when unset.)
 
 ## Level Mapping
 

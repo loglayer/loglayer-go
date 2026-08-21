@@ -84,7 +84,7 @@ log := loglayer.New(loglayer.Config{
 })
 
 log.WithError(fmt.Errorf("op failed: %w", io.EOF)).Error("oops")
-// {"err":{"message":"op failed: EOF","causes":[{"message":"EOF"}]}}
+// {"err":{"causes":[{"message":"EOF"}],"message":"op failed: EOF"}}
 ```
 
 For stack traces, custom shapes, or other options, see [Error Handling](/logging-api/error-handling).

@@ -88,8 +88,8 @@ log.WithError(err).Error("db query failed")
     "root": {
       "message": "connection refused",
       "stack": [
-        "main.queryDB:/app/db.go:42",
-        "main.main:/app/main.go:12"
+        "main.main:/app/main.go:12",
+        "main.queryDB:/app/db.go:42"
       ]
     }
   }
@@ -185,7 +185,7 @@ The default is `"err"`.
 Errors compose with fields and metadata:
 
 ```go
-log.WithFields(loglayer.Fields{"requestId": "abc"})
+log = log.WithFields(loglayer.Fields{"requestId": "abc"})
 
 log.WithMetadata(loglayer.Metadata{"retry_count": 3}).
     WithError(err).

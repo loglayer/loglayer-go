@@ -53,6 +53,8 @@ import (
     "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
     "go.opentelemetry.io/otel/sdk/resource"
     semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+
+    "go.loglayer.dev/transports/otellog/v2"
 )
 
 res := resource.NewSchemaless(
@@ -219,4 +221,4 @@ import otellogapi "go.opentelemetry.io/otel/log"
 l := log.GetLoggerInstance("otellog").(otellogapi.Logger)
 ```
 
-(`"otellog"` is the default `BaseConfig.ID`; set `BaseConfig.ID` explicitly when running multiple OTel transports.)
+(`"otellog"` is whatever you set as `BaseConfig.ID`; defaults to an auto-generated ID when unset, so assign it explicitly to look the transport up by ID.)

@@ -34,7 +34,7 @@ log.WithMetadata(loglayer.Metadata{"user": "alice", "n": 42}).Info("served")
 ```
 
 ```
-12:34:56.789 ▶ INFO served metadata={n=42, user=alice}
+12:34:56.789 ▶ INFO served metadata={n=42 user=alice}
 ```
 
 (With colors applied by the default Moonlight theme.)
@@ -56,7 +56,7 @@ pretty.New(pretty.Config{ViewMode: pretty.ViewModeInline})
 ```
 
 ```
-12:34:56.789 ▶ INFO served user=alice n=42
+12:34:56.789 ▶ INFO served n=42 user=alice
 ```
 
 ### Message-only
@@ -81,13 +81,13 @@ pretty.New(pretty.Config{ViewMode: pretty.ViewModeExpanded})
 
 ```
 12:34:56.789 ▶ INFO served
-  user: alice
-  request:
-    method: POST
-    path: /users
   items:
     - first
     - second
+  request:
+    method: POST
+    path:   /users
+  user: alice
 ```
 
 ## Themes
@@ -111,24 +111,34 @@ pretty.New(pretty.Config{Theme: pretty.Neon()})
 A `*pretty.Theme` is just a struct of `Style` functions (`func(string) string`). Build one with `color.RGB(...)` or any other color library:
 
 ```go
-import "github.com/fatih/color"
+import (
+    "github.com/fatih/color"
+
+    "go.loglayer.dev/transports/pretty/v2"
+)
+
+// Style is func(string) string; fatih/color's SprintFunc returns
+// func(...any) string, so wrap each color in a one-argument closure.
+style := func(c *color.Color) pretty.Style {
+    return func(s string) string { return c.Sprint(s) }
+}
 
 theme := &pretty.Theme{
-    Debug:     color.New(color.FgCyan).SprintFunc(),
-    Info:      color.New(color.FgGreen).SprintFunc(),
-    Warn:      color.New(color.FgYellow).SprintFunc(),
-    Error:     color.New(color.FgRed).SprintFunc(),
-    Fatal:     color.New(color.BgRed, color.FgWhite).SprintFunc(),
-    Timestamp: color.New(color.Faint).SprintFunc(),
-    LogID:     color.New(color.Faint).SprintFunc(),
-    DataKey:   color.New(color.FgCyan).SprintFunc(),
-    DataValue: color.New(color.FgWhite).SprintFunc(),
+    Debug:     style(color.New(color.FgCyan)),
+    Info:      style(color.New(color.FgGreen)),
+    Warn:      style(color.New(color.FgYellow)),
+    Error:     style(color.New(color.FgRed)),
+    Fatal:     style(color.New(color.BgRed, color.FgWhite)),
+    Timestamp: style(color.New(color.Faint)),
+    LogID:     style(color.New(color.Faint)),
+    DataKey:   style(color.New(color.FgCyan)),
+    DataValue: style(color.New(color.FgWhite)),
 }
 
 pretty.New(pretty.Config{Theme: theme})
 ```
 
-(Note: `color.New(...).SprintFunc()` returns `func(...any) string`, but `Style` is `func(string) string`. Wrap in `func(s string) string { return c.Sprint(s) }` if needed.)
+The `style` wrapper is required, not optional: `color.New(...).SprintFunc()` returns `func(...any) string`, but `Style` is `func(string) string`, so the two are not assignment-compatible.
 
 ## Config
 

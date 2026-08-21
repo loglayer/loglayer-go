@@ -53,6 +53,7 @@ type LogLine struct {
     Data     loglayer.Data   // assembled fields + error map; nil when neither were set
     Metadata any             // raw value passed to WithMetadata
     Ctx      context.Context // per-call context attached via WithContext; nil if not set
+    Prefix   string          // value attached via WithPrefix; empty when none was set
 }
 ```
 

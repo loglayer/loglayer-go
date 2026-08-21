@@ -247,8 +247,8 @@ log.WithMetadata(loglayer.Metadata{"userId": "1234"}).
 // {
 //   "msg":     "user action failed",
 //   "context": {"service": "api"},
-//   "metadata":{"userId": "1234"},
-//   "error":   {"message": "boom"}
+//   "error":   {"message": "boom"},
+//   "metadata":{"userId": "1234"}
 // }
 ```
 

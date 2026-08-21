@@ -41,9 +41,13 @@ The API key is a secret. Treat it like a password: load it from an environment v
 
 ```go
 import (
+    "os"
+
     "go.loglayer.dev/v2"
     "go.loglayer.dev/transports/datadog/v2"
 )
+
+hostname, _ := os.Hostname()
 
 tr := datadog.New(datadog.Config{
     APIKey:   os.Getenv("DD_API_KEY"),
