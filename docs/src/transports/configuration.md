@@ -63,7 +63,7 @@ console.New(console.Config{
 })
 ```
 
-An ID is only needed when the logger will manage that transport at runtime: `RemoveTransport(id)`, `GetLoggerInstance(id)`, group routing, replace-by-ID. For transports you set up once and never touch (a single console renderer, a one-shot test transport), leaving `ID` empty is fine: the auto-generated ID still works for routing, you just won't have a stable handle for management calls.
+An ID is only needed when the logger will manage that transport at runtime: `RemoveTransport(id)`, `GetLoggerInstance(id)`, and replace-by-ID. For transports you set up once and never touch (a single console renderer, a one-shot test transport), leaving `ID` empty is fine: the auto-generated ID still works for routing and group dispatch, you just won't have a stable handle for management calls.
 
 ## Enabling and disabling per environment
 

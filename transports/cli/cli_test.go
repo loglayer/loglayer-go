@@ -416,18 +416,24 @@ func TestMessageFnEmptyFallsBack(t *testing.T) {
 func TestMessageFnSanitized(t *testing.T) {
 	// The takeover string goes through the same sanitizer as any other
 	// rendered body, so a hostile MessageFn can't forge lines or
-	// smuggle terminal escapes.
-	log, stdout, _ := makeLogger(t, clitr.Config{
-		MessageFn: func(params loglayer.TransportParams) string {
-			return "clean\x1b[31mred\x1b[0m"
-		},
-	})
-
-	log.Info("x")
-
-	got := strings.TrimRight(stdout.String(), "\n")
-	if strings.ContainsRune(got, 0x1b) {
-		t.Errorf("ANSI ESC from MessageFn leaked through: %q", got)
+	// smuggle terminal escapes. The contract: no ESC (0x1b) control
+	// byte reaches the output. CSI-family sequences like \x1b[2J and
+	// \x1b[K lose their ESC, so the terminal never interprets the rest
+	// as a control sequence (the trailing text is inert).
+	for _, hostile := range []string{
+		"clean\x1b[31mred\x1b[0m", // classic SGR color
+		"ok\x1b[2J",               // clear screen
+		"ok\x1b[K",                // erase to end of line
+	} {
+		hostile := hostile
+		log, stdout, _ := makeLogger(t, clitr.Config{
+			MessageFn: func(_ loglayer.TransportParams) string { return hostile },
+		})
+		log.Info("x")
+		got := stdout.String()
+		if strings.ContainsRune(got, 0x1b) {
+			t.Errorf("ANSI ESC from MessageFn leaked through: %q", got)
+		}
 	}
 }
 

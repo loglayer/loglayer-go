@@ -568,7 +568,7 @@ reqLog.Info("step 2")
 
 // Alias (identical behavior)
 reqLog = reqLog.WithStdlibContext(ctx)
-reqLog.WithStdlibContext(otherCtx).Info("per-call override")
+reqLog.WithStdlibContext(context.WithValue(ctx, "scope", "subop")).Info("per-call override")
 ```
 
 For HTTP handlers, the [loghttp middleware](https://go.loglayer.dev/integrations/loghttp) auto-binds `r.Context()` to a per-request logger. Plugins like `oteltrace` and `datadogtrace` read trace IDs from `params.Ctx`.
@@ -674,7 +674,7 @@ pretty.New(pretty.Config{
 
 ### CLI Transport
 
-Tuned for command-line application output rather than diagnostic logging. Short cargo/eslint-style level prefixes (`warning:`, `error:`, `fatal:`), stdout for info/debug and stderr for warn+, per-stream TTY-detected ANSI color (info/debug follow stdout, warn/error/fatal follow stderr, pinned at construction), no timestamps. Renders the `WithPrefix` value in dim grey, separate from the level color. Fields/metadata dropped by default; opt in via `Config.ShowFields`. `Config.MessageFn func(loglayer.TransportParams) string` takes over the entire output line: its return value replaces the message plus the logfmt/table body (level prefix and its color still apply); an empty return falls back to normal rendering.
+Tuned for command-line application output rather than diagnostic logging. Short cargo/eslint-style level prefixes (`warning:`, `error:`, `fatal:`), stdout for info/debug and stderr for warn+, per-stream TTY-detected ANSI color (info/debug follow stdout, warn/error/fatal follow stderr, pinned at construction), no timestamps. Renders the `WithPrefix` value in dim grey, separate from the level color. Fields/metadata dropped by default; opt in via `Config.ShowFields`. `Config.MessageFn func(loglayer.TransportParams) string` takes over the entire output line: its return value replaces the message plus the logfmt/table body (the level prefix, its color, and the user `WithPrefix` value still apply); an empty return falls back to normal rendering.
 
 ```go
 import "go.loglayer.dev/transports/cli/v2"

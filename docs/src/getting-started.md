@@ -58,14 +58,14 @@ func main() {
 
 The example above sets `FieldsKey` and `MetadataFieldName` to nest fields and metadata under their own keys. See [Configuration](/configuration) for every knob on `loglayer.Config`: error serialization, field/metadata placement, prefix, source capture, group routing, fatal-exit control, and more.
 
-When the config comes from a runtime source (env vars, config file), use `loglayer.Build` to handle errors explicitly instead of `New`, which panics:
+When the config comes from a runtime source (env vars, config file), use `loglayer.Build` to handle errors explicitly instead of `New`, which panics. See [New vs Build](/configuration#new-vs-build):
 
 ```go
 log, err := loglayer.Build(loglayer.Config{
     Transport: structured.New(structured.Config{}),
 })
 if err != nil {
-    return err
+    return fmt.Errorf("configure logger: %w", err)
 }
 ```
 

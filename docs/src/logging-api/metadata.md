@@ -7,7 +7,7 @@ description: "Per-log structured data: maps, structs, or any value."
 
 Metadata attaches structured data to a single log entry. Unlike [fields](/logging-api/fields), it does not persist. Once the entry is emitted, the metadata is discarded.
 
-`WithMetadata` accepts **any** value. The core logger does no conversion; the transport decides how to serialize. Two shapes dominate: map metadata flattens to root keys; struct metadata is JSON-roundtripped so its fields also merge at the root for renderers (non-map values nest under `MetadataFieldName` when that is set on the core config).
+`WithMetadata` accepts **any** value. The core logger does no conversion; the transport decides how to serialize. Two shapes dominate: map metadata flattens to root keys; struct metadata is JSON-roundtripped so its fields also merge at the root. When `MetadataFieldName` is set on the core config, the whole metadata value nests under that key instead (see [MetadataFieldName](/configuration#metadatafieldname)).
 
 ## Struct vs Map: pick the right shape
 
@@ -134,8 +134,8 @@ The default level is `Info`. Passing `nil` is a no-op.
 `MetadataOnly` is the KV-only idiom: entries with data but no message. The [Structured Transport](/transports/structured) emits them as JSON objects, and for the terminal renderers the [CLI Transport](/transports/cli) renders them as `key=value` pairs only when `Config.ShowFields` is set.
 
 ```go
-// structured: {"status":"healthy","memory":"512MB"}
-// console / cli (with ShowFields): status=healthy memory=512MB
+// structured: {"level":"info","time":"...","msg":"","status":"healthy","memory":"512MB"}
+// console (always) / cli (with ShowFields): memory=512MB status=healthy
 log.MetadataOnly(loglayer.Metadata{
     "status": "healthy",
     "memory": "512MB",
