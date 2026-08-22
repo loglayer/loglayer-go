@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	go.loglayer.dev/transports/structured/v2 v2.0.1
-	go.loglayer.dev/v2 v2.0.1
+	go.loglayer.dev/v3 v3.0.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 

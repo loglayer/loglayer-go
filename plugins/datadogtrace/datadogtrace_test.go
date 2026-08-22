@@ -8,7 +8,7 @@ import (
 
 	"go.loglayer.dev/plugins/datadogtrace/v2"
 	"go.loglayer.dev/plugins/plugintest/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 )
 
 // fakeExtract returns a deterministic extractor for tests.

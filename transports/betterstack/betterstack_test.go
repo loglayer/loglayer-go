@@ -12,7 +12,7 @@ import (
 	"time"
 
 	httptr "go.loglayer.dev/transports/http/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 )
 
 type capture struct {
@@ -169,8 +169,9 @@ func TestEncoder_Shape(t *testing.T) {
 	if obj["userId"] != "123" {
 		t.Errorf("userId: got %v", obj["userId"])
 	}
-	if obj["traceId"] != "abc" {
-		t.Errorf("traceId: got %v", obj["traceId"])
+	// The metadata map nests under "metadata" per the v3 core default.
+	if obj["metadata"].(map[string]any)["traceId"] != "abc" {
+		t.Errorf("metadata.traceId: got %v", obj["metadata"])
 	}
 }
 

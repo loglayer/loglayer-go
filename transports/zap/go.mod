@@ -3,7 +3,7 @@ module go.loglayer.dev/transports/zap/v2
 go 1.25.0
 
 require (
-	go.loglayer.dev/v2 v2.0.1
+	go.loglayer.dev/v3 v3.0.0
 	go.uber.org/zap v1.27.1
 )
 

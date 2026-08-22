@@ -2,7 +2,7 @@ package structured_test
 
 import (
 	"go.loglayer.dev/transports/structured/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 )
 
 // New builds a structured-JSON transport. DateFn returns a fixed
@@ -16,5 +16,5 @@ func ExampleNew() {
 		DisableFatalExit: true,
 	})
 	log.WithMetadata(loglayer.Metadata{"durationMs": 42}).Info("served")
-	// Output: {"level":"info","time":"2026-04-26T12:00:00Z","msg":"served","durationMs":42}
+	// Output: {"level":"info","time":"2026-04-26T12:00:00Z","msg":"served","metadata":{"durationMs":42}}
 }

@@ -15,8 +15,8 @@ import (
 
 	httptr "go.loglayer.dev/transports/http/v2"
 	"go.loglayer.dev/transports/newrelic"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
 )
 
 type capture struct {

@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"go.loglayer.dev/transports/zap/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 )
 
 // New wraps a *zap.Logger. When Logger is nil a default logger is

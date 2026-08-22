@@ -6,7 +6,7 @@ import (
 	"github.com/getsentry/sentry-go"
 
 	sentrytransport "go.loglayer.dev/transports/sentry/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 )
 
 // New forwards entries to a caller-supplied sentry.Logger. The Logger

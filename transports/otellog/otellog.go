@@ -15,7 +15,7 @@
 // Wiring with the global LoggerProvider (most common):
 //
 //	import (
-//	    "go.loglayer.dev/v2"
+//	    "go.loglayer.dev/v3"
 //	    "go.loglayer.dev/transports/otellog/v2"
 //	)
 //
@@ -44,8 +44,8 @@ import (
 	"fmt"
 	"time"
 
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
 	otellog "go.opentelemetry.io/otel/log"
 	"go.opentelemetry.io/otel/log/global"
 )

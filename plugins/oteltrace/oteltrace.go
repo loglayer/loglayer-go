@@ -18,7 +18,7 @@
 // Usage:
 //
 //	import (
-//	    "go.loglayer.dev/v2"
+//	    "go.loglayer.dev/v3"
 //	    "go.loglayer.dev/plugins/oteltrace/v2"
 //	    "go.loglayer.dev/transports/structured/v2"
 //	)
@@ -37,7 +37,7 @@
 package oteltrace
 
 import (
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/trace"
 )

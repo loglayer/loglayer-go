@@ -14,8 +14,8 @@ import (
 
 	zlog "github.com/rs/zerolog"
 
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
 )
 
 // Config holds configuration options for the zerolog transport.

@@ -3,7 +3,7 @@ module go.loglayer.dev/transports/otellog/v2
 go 1.25.0
 
 require (
-	go.loglayer.dev/v2 v2.0.1
+	go.loglayer.dev/v3 v3.0.0
 	go.opentelemetry.io/otel/log v0.19.0
 	go.opentelemetry.io/otel/log/logtest v0.19.0
 	go.opentelemetry.io/otel/sdk v1.43.0

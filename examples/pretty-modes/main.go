@@ -7,7 +7,7 @@
 //
 // Run:
 //
-//	go run go.loglayer.dev/v2/examples/pretty-modes
+//	go run go.loglayer.dev/v3/examples/pretty-modes
 //
 // Or from a clone:
 //
@@ -26,8 +26,8 @@ import (
 	"os"
 
 	"go.loglayer.dev/transports/pretty/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport/transporttest"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport/transporttest"
 )
 
 func main() {

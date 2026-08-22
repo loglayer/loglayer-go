@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"go.loglayer.dev/transports/blank/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
 )
 
 func TestBlank_CallsShipToLogger(t *testing.T) {

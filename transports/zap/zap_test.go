@@ -8,9 +8,9 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	llzap "go.loglayer.dev/transports/zap/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
-	"go.loglayer.dev/v2/transport/transporttest"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
+	"go.loglayer.dev/v3/transport/transporttest"
 )
 
 func factory(opts transporttest.FactoryOpts) (*loglayer.LogLayer, *bytes.Buffer) {

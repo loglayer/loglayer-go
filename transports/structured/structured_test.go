@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"go.loglayer.dev/transports/structured/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
-	"go.loglayer.dev/v2/transport/transporttest"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
+	"go.loglayer.dev/v3/transport/transporttest"
 )
 
 func newLogger(cfg structured.Config) (*loglayer.LogLayer, *bytes.Buffer) {
@@ -79,8 +79,8 @@ func TestStructuredWithMetadataMap(t *testing.T) {
 	log, buf := newLogger(structured.Config{})
 	log.WithMetadata(map[string]any{"requestId": "xyz"}).Info("req")
 	obj := transporttest.ParseJSONLine(t, buf)
-	if obj["requestId"] != "xyz" {
-		t.Errorf("requestId: got %v", obj["requestId"])
+	if obj["metadata"].(map[string]any)["requestId"] != "xyz" {
+		t.Errorf("metadata.requestId: got %v", obj["metadata"])
 	}
 }
 
@@ -92,11 +92,12 @@ func TestStructuredWithMetadataStruct(t *testing.T) {
 	log, buf := newLogger(structured.Config{})
 	log.WithMetadata(user{ID: 7, Name: "Alice"}).Info("hi")
 	obj := transporttest.ParseJSONLine(t, buf)
-	if obj["id"] != float64(7) {
-		t.Errorf("id: got %v", obj["id"])
+	md := obj["metadata"].(map[string]any)
+	if md["id"] != float64(7) {
+		t.Errorf("metadata.id: got %v", md["id"])
 	}
-	if obj["name"] != "Alice" {
-		t.Errorf("name: got %v", obj["name"])
+	if md["name"] != "Alice" {
+		t.Errorf("metadata.name: got %v", md["name"])
 	}
 }
 

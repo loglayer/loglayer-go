@@ -19,8 +19,8 @@ import (
 	"github.com/goccy/go-json"
 
 	httptr "go.loglayer.dev/transports/http/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
 )
 
 // Config holds Better Stack transport configuration.

@@ -29,8 +29,8 @@ import (
 	"cloud.google.com/go/logging"
 
 	"go.loglayer.dev/transports/gcplogging/v2"
-	"go.loglayer.dev/v2/transport/transporttest"
-	"go.loglayer.dev/v2/utils/idgen"
+	"go.loglayer.dev/v3/transport/transporttest"
+	"go.loglayer.dev/v3/utils/idgen"
 )
 
 func TestLive_GCPLogging_SendsLog(t *testing.T) {

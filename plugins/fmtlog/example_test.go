@@ -5,7 +5,7 @@ import (
 
 	"go.loglayer.dev/plugins/fmtlog/v2"
 	lltesting "go.loglayer.dev/transports/testing/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 )
 
 // New returns a plugin that rewrites multi-argument log messages via

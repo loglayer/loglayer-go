@@ -1,7 +1,7 @@
 package axiom
 
 import (
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 )
 
 // ExampleNew shows a basic usage pattern with the Axiom transport. The client

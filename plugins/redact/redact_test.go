@@ -7,7 +7,7 @@ import (
 
 	"go.loglayer.dev/plugins/plugintest/v2"
 	"go.loglayer.dev/plugins/redact/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 )
 
 func TestRedact_MetadataMapKey(t *testing.T) {

@@ -28,8 +28,8 @@ import (
 
 	httptr "go.loglayer.dev/transports/http/v2"
 	"go.loglayer.dev/transports/newrelic"
-	"go.loglayer.dev/v2/transport/transporttest"
-	"go.loglayer.dev/v2/utils/idgen"
+	"go.loglayer.dev/v3/transport/transporttest"
+	"go.loglayer.dev/v3/utils/idgen"
 )
 
 func TestLive_NewRelic_SendsLog(t *testing.T) {

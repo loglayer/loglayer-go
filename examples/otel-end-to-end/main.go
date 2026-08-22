@@ -26,7 +26,7 @@ import (
 
 	"go.loglayer.dev/plugins/oteltrace/v2"
 	"go.loglayer.dev/transports/otellog/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutlog"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"

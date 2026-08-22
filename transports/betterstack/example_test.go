@@ -1,7 +1,7 @@
 package betterstack
 
 import (
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 )
 
 // ExampleNew shows how to create a Better Stack transport and ship logs.

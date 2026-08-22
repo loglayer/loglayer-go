@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"go.loglayer.dev/transports/phuslu/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 )
 
 // New wraps a *phuslu/log.Logger. When Logger is nil a default logger

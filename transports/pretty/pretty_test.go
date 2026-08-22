@@ -10,8 +10,8 @@ import (
 	"github.com/fatih/color"
 
 	"go.loglayer.dev/transports/pretty/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
 )
 
 const fixedTime = "12:34:56.789"
@@ -47,7 +47,7 @@ func TestInlineWithMetadataMap(t *testing.T) {
 	log.WithMetadata(map[string]any{"user": "alice", "n": 42}).Info("served")
 	got := buf.String()
 	// keys are sorted
-	want := "12:34:56.789 ▶ INFO served n=42 user=alice\n"
+	want := "12:34:56.789 ▶ INFO served metadata={n=42 user=alice}\n"
 	if got != want {
 		t.Errorf("got %q, want %q", got, want)
 	}
@@ -61,7 +61,7 @@ func TestInlineWithMetadataStruct(t *testing.T) {
 	log, buf := newLogger(pretty.Config{})
 	log.WithMetadata(user{ID: 7, Name: "Alice"}).Info("hi")
 	got := buf.String()
-	want := "12:34:56.789 ▶ INFO hi id=7 name=Alice\n"
+	want := "12:34:56.789 ▶ INFO hi metadata={id=7 name=Alice}\n"
 	if got != want {
 		t.Errorf("got %q, want %q", got, want)
 	}
@@ -105,7 +105,7 @@ func TestExpandedMode(t *testing.T) {
 		"nested": map[string]any{"a": 1, "b": 2},
 	}).Info("served")
 	got := buf.String()
-	want := "12:34:56.789 ▶ INFO served\n  nested:\n    a: 1\n    b: 2\n  user: alice\n"
+	want := "12:34:56.789 ▶ INFO served\n  metadata:\n    nested:\n      a: 1\n      b: 2\n    user: alice\n"
 	if got != want {
 		t.Errorf("got %q\nwant %q", got, want)
 	}
@@ -117,7 +117,7 @@ func TestExpandedModeArrays(t *testing.T) {
 		"items": []any{"a", "b", "c"},
 	}).Info("list")
 	got := buf.String()
-	want := "12:34:56.789 ▶ INFO list\n  items:\n    - a\n    - b\n    - c\n"
+	want := "12:34:56.789 ▶ INFO list\n  metadata:\n    items:\n      - a\n      - b\n      - c\n"
 	if got != want {
 		t.Errorf("got %q\nwant %q", got, want)
 	}
@@ -154,11 +154,12 @@ func TestExpandedModeDeeplyNested(t *testing.T) {
 	//  level 3: "city" (len 4) and "zip" (len 3); maxKey = 4, "zip" pads.
 	want := "" +
 		"12:34:56.789 ▶ INFO served\n" +
-		"  user:\n" +
-		"    address:\n" +
-		"      city: Brooklyn\n" +
-		"      zip:  11201\n" +
-		"    id: 42\n"
+		"  metadata:\n" +
+		"    user:\n" +
+		"      address:\n" +
+		"        city: Brooklyn\n" +
+		"        zip:  11201\n" +
+		"      id: 42\n"
 	if got != want {
 		t.Errorf("got %q\nwant %q", got, want)
 	}
@@ -181,14 +182,15 @@ func TestExpandedModeAlignedColumns(t *testing.T) {
 	// Among same-line keys: a (1), longerKey (9), middle (6). maxKey = 9.
 	want := "" +
 		"12:34:56.789 ▶ INFO aligned\n" +
-		"  a:         1\n" +
-		"  alsoIgnored:\n" +
-		"    - a\n" +
-		"    - b\n" +
-		"  longerKey: v\n" +
-		"  middle:    true\n" +
-		"  nested:\n" +
-		"    x: 1\n"
+		"  metadata:\n" +
+		"    a:         1\n" +
+		"    alsoIgnored:\n" +
+		"      - a\n" +
+		"      - b\n" +
+		"    longerKey: v\n" +
+		"    middle:    true\n" +
+		"    nested:\n" +
+		"      x: 1\n"
 	if got != want {
 		t.Errorf("got %q\nwant %q", got, want)
 	}
@@ -329,11 +331,8 @@ func TestInlineDepthLimit(t *testing.T) {
 	}).Info("depth")
 	got := buf.String()
 	// At depth 1, the nested map should collapse to {...}
-	if !strings.Contains(got, "deep={...}") {
+	if !strings.Contains(got, "metadata={...}") {
 		t.Errorf("expected deep={...} truncation, got: %q", got)
-	}
-	if !strings.Contains(got, "shallow=ok") {
-		t.Errorf("expected shallow=ok, got: %q", got)
 	}
 }
 

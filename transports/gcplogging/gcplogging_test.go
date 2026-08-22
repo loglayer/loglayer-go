@@ -7,7 +7,7 @@ import (
 
 	"cloud.google.com/go/logging"
 
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 )
 
 func TestSeverityFor(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"go.loglayer.dev/plugins/plugintest/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 )
 
 func TestInstall_PluginRunsAndCaptures(t *testing.T) {

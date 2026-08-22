@@ -7,9 +7,9 @@ import (
 	plog "github.com/phuslu/log"
 
 	llphuslu "go.loglayer.dev/transports/phuslu/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
-	"go.loglayer.dev/v2/transport/transporttest"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
+	"go.loglayer.dev/v3/transport/transporttest"
 )
 
 func factory(opts transporttest.FactoryOpts) (*loglayer.LogLayer, *bytes.Buffer) {

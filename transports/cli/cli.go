@@ -54,9 +54,9 @@ import (
 	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
 
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
-	"go.loglayer.dev/v2/utils/sanitize"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
+	"go.loglayer.dev/v3/utils/sanitize"
 )
 
 // ColorMode controls ANSI color output.

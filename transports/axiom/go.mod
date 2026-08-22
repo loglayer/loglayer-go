@@ -6,7 +6,7 @@ replace go.loglayer.dev => ../..
 
 require (
 	github.com/axiomhq/axiom-go v0.32.0
-	go.loglayer.dev/v2 v2.1.0
+	go.loglayer.dev/v3 v3.0.0
 )
 
 require (

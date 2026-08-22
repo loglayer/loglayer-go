@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"go.loglayer.dev/integrations/sloghandler/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 )
 
 // noopTransport drops everything; used to isolate handler dispatch cost

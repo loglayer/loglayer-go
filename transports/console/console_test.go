@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"go.loglayer.dev/transports/console/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
 )
 
 func newLogger(cfg console.Config) (*loglayer.LogLayer, *bytes.Buffer) {
@@ -55,20 +55,10 @@ func TestConsoleLogfmtOutput(t *testing.T) {
 	if !strings.HasPrefix(out, "event ") {
 		t.Errorf("expected message before fields, got: %q", out)
 	}
-	if !strings.Contains(out, "id=42") {
-		t.Errorf("expected unquoted scalar 'id=42', got: %q", out)
-	}
-	if !strings.Contains(out, "name=alice") {
-		t.Errorf("expected unquoted 'name=alice', got: %q", out)
-	}
-	if !strings.Contains(out, `"with s"="value with space"`) {
-		t.Errorf("expected quoted key + value with space, got: %q", out)
-	}
-	// Sorted: id < name < with s.
-	idIdx := strings.Index(out, "id=")
-	nameIdx := strings.Index(out, "name=")
-	if !(idIdx < nameIdx) {
-		t.Errorf("expected sorted keys (id before name), got: %q", out)
+	// Metadata nests under the "metadata" key as a JSON-encoded value
+	// (sorted keys) per the v3 core's default assembly shape.
+	if !strings.Contains(out, `metadata="{\"id\":42,\"name\":\"alice\",\"with s\":\"value with space\"}"`) {
+		t.Errorf("expected JSON-encoded metadata value, got: %q", out)
 	}
 }
 
@@ -78,8 +68,9 @@ func TestConsoleLogfmtNestedJSON(t *testing.T) {
 		"nested": map[string]any{"a": 1, "b": "two"},
 	}).Info("event")
 	out := strings.TrimSpace(buf.String())
-	// Nested values are JSON-encoded and string-quoted.
-	if !strings.Contains(out, `nested="{`) {
+	// The metadata map nests under "metadata" as one JSON-encoded value;
+	// non-scalar values inside are JSON-encoded.
+	if !strings.Contains(out, `metadata="{\"nested\":{\"a\":1,\"b\":\"two\"}}"`) {
 		t.Errorf("expected JSON-encoded nested value, got: %q", out)
 	}
 }

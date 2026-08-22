@@ -15,7 +15,7 @@ import (
 
 	"go.loglayer.dev/integrations/loghttp/v2"
 	"go.loglayer.dev/transports/structured/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 )
 
 var serverLog = loglayer.New(loglayer.Config{

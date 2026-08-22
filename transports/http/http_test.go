@@ -15,8 +15,8 @@ import (
 	"time"
 
 	httptr "go.loglayer.dev/transports/http/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
 )
 
 // captureServer accumulates request bodies for assertion. It supports an
@@ -339,8 +339,9 @@ func TestHTTP_FieldsAndMetadataInBody(t *testing.T) {
 	if entry["requestId"] != "abc" {
 		t.Errorf("requestId: got %v", entry["requestId"])
 	}
-	if entry["durationMs"] != float64(42) {
-		t.Errorf("durationMs: got %v", entry["durationMs"])
+	// The metadata map nests under "metadata" per the v3 core default.
+	if entry["metadata"].(map[string]any)["durationMs"] != float64(42) {
+		t.Errorf("metadata.durationMs: got %v", entry["metadata"])
 	}
 }
 

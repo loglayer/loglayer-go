@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"go.loglayer.dev/transports/blank/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 )
 
 // New wraps a callback. ShipToLogger receives every TransportParams

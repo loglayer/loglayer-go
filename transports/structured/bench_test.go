@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"go.loglayer.dev/transports/structured/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
-	"go.loglayer.dev/v2/transport/benchtest"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
+	"go.loglayer.dev/v3/transport/benchtest"
 )
 
 func BenchmarkRender_Structured_SimpleMessage(b *testing.B) {

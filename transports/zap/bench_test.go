@@ -7,9 +7,9 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	llzap "go.loglayer.dev/transports/zap/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
-	"go.loglayer.dev/v2/transport/benchtest"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
+	"go.loglayer.dev/v3/transport/benchtest"
 )
 
 func newDirect() *zap.Logger {

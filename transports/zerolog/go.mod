@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/rs/zerolog v1.35.1
-	go.loglayer.dev/v2 v2.0.1
+	go.loglayer.dev/v3 v3.0.0
 )
 
 require (

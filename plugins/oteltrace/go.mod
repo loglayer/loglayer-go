@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	go.loglayer.dev/plugins/plugintest/v2 v2.0.1
 	go.loglayer.dev/transports/testing/v2 v2.0.1
-	go.loglayer.dev/v2 v2.0.1
+	go.loglayer.dev/v3 v3.0.0
 	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/sdk v1.43.0
 	go.opentelemetry.io/otel/trace v1.43.0

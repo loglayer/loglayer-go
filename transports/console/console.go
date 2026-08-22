@@ -16,9 +16,9 @@ import (
 
 	"github.com/goccy/go-json"
 
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
-	"go.loglayer.dev/v2/utils/sanitize"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
+	"go.loglayer.dev/v3/utils/sanitize"
 )
 
 // Config holds configuration options for Transport.
