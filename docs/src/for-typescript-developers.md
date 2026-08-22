@@ -116,10 +116,12 @@ TypeScript's `@loglayer/transport-pino`, `@loglayer/plugin-redaction`, etc. are 
 
 | TypeScript                       | Go                                            |
 |----------------------------------|-----------------------------------------------|
-| `loglayer`                       | `go.loglayer.dev/v2` (core + stdlib renderers)   |
+| `loglayer`                       | `go.loglayer.dev/v3` (core + stdlib renderers)   |
 | `@loglayer/transport-zerolog`    | `go.loglayer.dev/transports/zerolog/v2`          |
 | `@loglayer/transport-datadog`    | `go.loglayer.dev/transports/datadog/v2`          |
 | `@loglayer/integration-elysia`   | `go.loglayer.dev/integrations/loghttp/v2` (etc.) |
+
+Transports and integrations keep their current paths until each ships its own v3 bump; check the [Transports overview](/transports/) and the [loghttp](/integrations/loghttp) / [sloghandler](/integrations/sloghandler) pages for each module's current path.
 
 `go get` each module you actually need; the dependency graph stays focused on whatever you imported.
 
@@ -157,7 +159,7 @@ log.AddPlugin(redact.New(redact.Config{
 }))
 ```
 
-See [Plugins](/plugins/) for the full lifecycle, hook ordering, and nil-return semantics. Third-party plugins can use [`utils/maputil`](https://pkg.go.dev/go.loglayer.dev/v2/utils/maputil) for the same reflection-based deep-clone primitive that the redact plugin uses.
+See [Plugins](/plugins/) for the full lifecycle, hook ordering, and nil-return semantics. Third-party plugins can use [`utils/maputil`](https://pkg.go.dev/go.loglayer.dev/v3/utils/maputil) for the same reflection-based deep-clone primitive that the redact plugin uses.
 
 ## Groups
 
@@ -197,7 +199,7 @@ If any of these are blockers for your use case, open an issue at [github.com/log
 //   log.withMetadata({ duration: 42 }).withError(err).info('did the thing');
 
 import (
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/structured/v2"
 )
 

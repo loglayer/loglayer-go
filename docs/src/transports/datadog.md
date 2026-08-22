@@ -43,7 +43,7 @@ The API key is a secret. Treat it like a password: load it from an environment v
 import (
     "os"
 
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/datadog/v2"
 )
 

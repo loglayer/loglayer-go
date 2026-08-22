@@ -31,7 +31,7 @@ log := loglayer.New(loglayer.Config{
 ```go
 import (
     "os"
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/structured/v2"
 )
 
@@ -56,7 +56,7 @@ The dedicated [lumberjack](/transports/lumberjack) transport already does this f
 ```go
 import (
     "gopkg.in/natefinch/lumberjack.v2"
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/pretty/v2"
 )
 
@@ -103,7 +103,7 @@ A `*bytes.Buffer` works but isn't safe for concurrent writes. For real test asse
 ```go
 import (
     "bytes"
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/structured/v2"
 )
 
@@ -124,7 +124,7 @@ Anything that satisfies `io.Writer` works, including `net.Conn`. The example bel
 ```go
 import (
     "net"
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/structured/v2"
 )
 
@@ -201,7 +201,7 @@ Wrapper transports ([Zerolog](/transports/zerolog), [Zap](/transports/zap), [log
 ```go
 import (
     "github.com/rs/zerolog"
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     llzero "go.loglayer.dev/transports/zerolog/v2"
 )
 

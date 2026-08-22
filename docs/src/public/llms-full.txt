@@ -63,7 +63,7 @@ package main
 import (
     "errors"
 
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/structured/v2"
 )
 
@@ -617,7 +617,7 @@ type BaseConfig struct {
 Pattern across all transports:
 
 ```go
-import "go.loglayer.dev/v2/transport"
+import "go.loglayer.dev/v3/transport"
 
 structured.New(structured.Config{
     BaseConfig: transport.BaseConfig{ID: "main", Level: loglayer.LogLevelInfo},

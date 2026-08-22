@@ -22,7 +22,7 @@ For the registration API see [Plugin Configuration](/plugins/configuration) and 
 **For single-hook inline plugins** use one of the adapter constructors:
 
 ```go
-import "go.loglayer.dev/v2"
+import "go.loglayer.dev/v3"
 
 p := loglayer.NewMessageHook("prefix-msg", func(p loglayer.BeforeMessageOutParams) []any {
     if len(p.Messages) == 0 {
@@ -43,7 +43,7 @@ The full set: `NewFieldsHook`, `NewMetadataHook`, `NewDataHook`, `NewMessageHook
 ```go
 package mything
 
-import "go.loglayer.dev/v2"
+import "go.loglayer.dev/v3"
 
 type Plugin struct {
     id  string
@@ -407,10 +407,10 @@ Simple, predictable, no reflection. The downside: a struct with a `Password` fie
 
 ### Recipe 2: walk every shape (preserve type)
 
-If your plugin needs to walk structs and nested values (recursively, honoring `json` tags), use [`maputil.Cloner`](https://pkg.go.dev/go.loglayer.dev/v2/utils/maputil#Cloner). It produces a deep clone of any value with replacement predicates applied at any depth, preserving the runtime type.
+If your plugin needs to walk structs and nested values (recursively, honoring `json` tags), use [`maputil.Cloner`](https://pkg.go.dev/go.loglayer.dev/v3/utils/maputil#Cloner). It produces a deep clone of any value with replacement predicates applied at any depth, preserving the runtime type.
 
 ```go
-import "go.loglayer.dev/v2/utils/maputil"
+import "go.loglayer.dev/v3/utils/maputil"
 
 cloner := &maputil.Cloner{
     MatchKey:   func(k string) bool { return k == "password" || k == "apiKey" },
@@ -429,10 +429,10 @@ The [`plugins/redact`](/plugins/redact) plugin is built on `Cloner`; [its source
 
 ### Recipe 3: normalize to a map first
 
-If the **shape** matters more than preserving the user's runtime type, use [`maputil.ToMap`](https://pkg.go.dev/go.loglayer.dev/v2/utils/maputil#ToMap) to JSON-roundtrip the input, then walk the resulting map.
+If the **shape** matters more than preserving the user's runtime type, use [`maputil.ToMap`](https://pkg.go.dev/go.loglayer.dev/v3/utils/maputil#ToMap) to JSON-roundtrip the input, then walk the resulting map.
 
 ```go
-import "go.loglayer.dev/v2/utils/maputil"
+import "go.loglayer.dev/v3/utils/maputil"
 
 loglayer.NewMetadataHook("normalize", func(metadata any) any {
     m := maputil.ToMap(metadata)

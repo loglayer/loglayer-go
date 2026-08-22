@@ -23,8 +23,8 @@ go get go.loglayer.dev/transports/blank/v2
 
 ```go
 import (
-    "go.loglayer.dev/v2"
-    "go.loglayer.dev/v2/transport"
+    "go.loglayer.dev/v3"
+    "go.loglayer.dev/v3/transport"
     "go.loglayer.dev/transports/blank/v2"
 )
 

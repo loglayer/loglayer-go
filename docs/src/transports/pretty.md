@@ -21,7 +21,7 @@ This transport pulls in `github.com/fatih/color` for ANSI handling.
 
 ```go
 import (
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/pretty/v2"
 )
 

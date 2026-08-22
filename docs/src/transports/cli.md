@@ -24,7 +24,7 @@ go get go.loglayer.dev/transports/cli/v2
 
 ```go
 import (
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     cli "go.loglayer.dev/transports/cli/v2"
 )
 
@@ -169,7 +169,7 @@ The standard CLI shape is to wire `-v` flags to loglayer's level state and `-vv`
 
 ```go
 import (
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     cli "go.loglayer.dev/transports/cli/v2"
 )
 
@@ -228,8 +228,8 @@ Use it when the default `[level prefix][user prefix][message] [fields]` layout d
 import (
     "fmt"
 
-    "go.loglayer.dev/v2"
-    "go.loglayer.dev/v2/transport"
+    "go.loglayer.dev/v3"
+    "go.loglayer.dev/v3/transport"
     cli "go.loglayer.dev/transports/cli/v2"
 )
 
@@ -287,7 +287,7 @@ For machine-readable output, swap `cli` for [structured](/transports/structured)
 
 ```go
 import (
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     cli "go.loglayer.dev/transports/cli/v2"
     "go.loglayer.dev/transports/structured/v2"
 )

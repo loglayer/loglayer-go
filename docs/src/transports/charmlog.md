@@ -24,7 +24,7 @@ import (
 
     clog "github.com/charmbracelet/log"
 
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     llcharm "go.loglayer.dev/transports/charmlog/v2"
 )
 

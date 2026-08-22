@@ -31,7 +31,7 @@ The source token is a secret. Load it from an environment variable or secret man
 ```go
 import (
     "os"
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/betterstack"
 )
 

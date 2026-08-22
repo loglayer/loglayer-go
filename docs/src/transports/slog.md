@@ -20,7 +20,7 @@ import (
     "log/slog"
     "os"
 
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     llslog "go.loglayer.dev/transports/slog/v2"
 )
 

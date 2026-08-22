@@ -51,19 +51,25 @@ console.New(console.Config{
 
 ## Transport IDs
 
-`BaseConfig.ID` is optional. When you omit it, the transport gets an auto-generated ID, so multiple no-ID transports never collide. **Supply your own ID** when you'll later need to address that specific transport: `RemoveTransport(id)`, `GetLoggerInstance(id)`, and `AddTransport`'s replace-by-ID semantics all key off the string you set.
+Every transport has an `ID()` method; set the ID at construction via `transport.BaseConfig{ID: ...}`. Every transport's `New` returns a `*Transport` wrapping its `BaseTransport`, so when the ID is empty the constructed value carries the auto-generated ID (`auto-transport-<hex>`) and you can read it back from `ID()` before wiring the transport into the logger. If you later call `RemoveTransport(id)` or `GetLoggerInstance(id)` with the wrong string, the call silently under-delivers: `RemoveTransport` returns `false`, `GetLoggerInstance` returns `nil`, and the transport stays in the dispatch list. Confirm the assigned ID with `tr.ID()` before relying on it.
 
 The base config lives in the shared `transport` package. Import it alongside the transport:
 
 ```go
-import "go.loglayer.dev/v2/transport"
+import "go.loglayer.dev/v3/transport"
 
 console.New(console.Config{
     BaseConfig: transport.BaseConfig{ID: "console"},
 })
 ```
 
-An ID is only needed when the logger will manage that transport at runtime: `RemoveTransport(id)`, `GetLoggerInstance(id)`, and replace-by-ID. For transports you set up once and never touch (a single console renderer, a one-shot test transport), leaving `ID` empty is fine: the auto-generated ID still works for routing and group dispatch, you just won't have a stable handle for management calls.
+An ID is only needed when the logger will manage that transport at runtime: `RemoveTransport(id)`, `GetLoggerInstance(id)`, and replace-by-ID (`AddTransport` replaces an existing transport with the same ID instead of duplicating it). For transports you set up once and never touch (a single console renderer, a one-shot test transport), leaving `ID` empty is fine: the auto-generated ID still works for routing and group dispatch, you just won't have a stable handle for management calls.
+
+The random-ID hazard applies most in fan-out setups: `RemoveTransport("ship")` removes nothing (and returns `false`) when the "ship" transport was constructed without an ID and got `auto-transport-...`. See [Multiple Transports → Transport IDs](/transports/multiple-transports#transport-ids) for a worked example.
+
+::: warning Auto-generated IDs are random
+Leaving `BaseConfig.ID` empty assigns a random ID per construction. Never call `RemoveTransport` or `GetLoggerInstance` with an ID you copied from an earlier run, and do not key routing config off an auto-generated ID: it changes every process start. Always set explicit IDs for any transport you intend to manage by ID.
+:::
 
 ## Enabling and disabling per environment
 

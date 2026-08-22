@@ -21,7 +21,7 @@ The directory is `transports/http`; the package name is `httptransport` to avoid
 import (
     "os"
 
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     httptr "go.loglayer.dev/transports/http/v2"
 )
 
