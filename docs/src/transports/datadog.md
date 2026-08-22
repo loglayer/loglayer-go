@@ -10,7 +10,7 @@ description: Ship logs to the Datadog Logs HTTP intake API.
 Sends log entries to Datadog's [Logs HTTP intake API](https://docs.datadoghq.com/api/latest/logs/#send-logs). Built on the [HTTP transport](/transports/http) with a Datadog-specific encoder, site-aware URL, and `DD-API-KEY` header.
 
 ```sh
-go get go.loglayer.dev/transports/datadog/v2
+go get go.loglayer.dev/transports/datadog/v3
 ```
 
 ## Getting an API Key and Site
@@ -44,7 +44,7 @@ import (
     "os"
 
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/transports/datadog/v2"
+    "go.loglayer.dev/transports/datadog/v3"
 )
 
 hostname, _ := os.Hostname()

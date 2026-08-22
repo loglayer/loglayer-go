@@ -1,7 +1,7 @@
 package newrelic_test
 
 import (
-	"go.loglayer.dev/transports/newrelic"
+	"go.loglayer.dev/transports/newrelic/v2"
 	"go.loglayer.dev/v3"
 )
 

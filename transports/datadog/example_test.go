@@ -1,7 +1,7 @@
 package datadog_test
 
 import (
-	"go.loglayer.dev/transports/datadog/v2"
+	"go.loglayer.dev/transports/datadog/v3"
 	"go.loglayer.dev/v3"
 )
 

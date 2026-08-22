@@ -1,4 +1,4 @@
-module go.loglayer.dev/transports/betterstack
+module go.loglayer.dev/transports/betterstack/v2
 
 go 1.25.0
 
@@ -9,7 +9,5 @@ require (
 )
 
 replace go.loglayer.dev => ../..
-
-replace go.loglayer.dev/transports/http => ../http
 
 replace go.loglayer.dev/transports/http/v3 => ../http

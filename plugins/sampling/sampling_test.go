@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"go.loglayer.dev/plugins/plugintest/v2"
-	"go.loglayer.dev/plugins/sampling/v2"
+	"go.loglayer.dev/plugins/plugintest/v3"
+	"go.loglayer.dev/plugins/sampling/v3"
 	"go.loglayer.dev/v3"
 )
 

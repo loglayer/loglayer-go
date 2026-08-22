@@ -3,7 +3,7 @@ package redact_test
 import (
 	"fmt"
 
-	"go.loglayer.dev/plugins/redact/v2"
+	"go.loglayer.dev/plugins/redact/v3"
 	lltesting "go.loglayer.dev/transports/testing/v3"
 	"go.loglayer.dev/v3"
 )

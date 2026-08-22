@@ -3,7 +3,7 @@ package sampling_test
 import (
 	"fmt"
 
-	"go.loglayer.dev/plugins/sampling/v2"
+	"go.loglayer.dev/plugins/sampling/v3"
 	lltesting "go.loglayer.dev/transports/testing/v3"
 	"go.loglayer.dev/v3"
 )

@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"go.loglayer.dev/transports/datadog/v2"
+	"go.loglayer.dev/transports/datadog/v3"
 	httptr "go.loglayer.dev/transports/http/v3"
 	"go.loglayer.dev/v3"
 	"go.loglayer.dev/v3/transport"

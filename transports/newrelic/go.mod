@@ -1,4 +1,4 @@
-module go.loglayer.dev/transports/newrelic
+module go.loglayer.dev/transports/newrelic/v2
 
 go 1.25.0
 

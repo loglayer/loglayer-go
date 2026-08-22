@@ -27,7 +27,7 @@ import (
 	"time"
 
 	httptr "go.loglayer.dev/transports/http/v3"
-	"go.loglayer.dev/transports/newrelic"
+	"go.loglayer.dev/transports/newrelic/v2"
 	"go.loglayer.dev/v3/transport/transporttest"
 	"go.loglayer.dev/v3/utils/idgen"
 )

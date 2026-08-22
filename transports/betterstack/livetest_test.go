@@ -27,7 +27,7 @@ import (
 	"testing"
 	"time"
 
-	betterstack "go.loglayer.dev/transports/betterstack"
+	betterstack "go.loglayer.dev/transports/betterstack/v2"
 	httptr "go.loglayer.dev/transports/http/v3"
 	"go.loglayer.dev/v3/transport/transporttest"
 	"go.loglayer.dev/v3/utils/idgen"

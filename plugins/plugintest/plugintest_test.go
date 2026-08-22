@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"go.loglayer.dev/plugins/plugintest/v2"
+	"go.loglayer.dev/plugins/plugintest/v3"
 	"go.loglayer.dev/v3"
 )
 
