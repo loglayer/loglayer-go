@@ -57,7 +57,7 @@ In source files:
  )
 ```
 
-Then run `go mod tidy`. Sub-modules that re-export core types are on their own `/v3` paths too: every transport that takes `loglayer.TransportParams`, plus the plugins and integrations that re-export core types (`plugins/oteltrace`, `plugins/datadogtrace`, `integrations/loghttp`, `integrations/sloghandler`). Check the [Transports overview](/transports/) and [Plugins overview](/plugins/) for each module's path; the rest keep their existing paths and just require the v3 core.
+Then run `go mod tidy`. Every sub-module that ships its own module takes its **next major path bump** in this release: transports and plugins that re-export core types move `/v2 → /v3` (e.g. `transports/structured`), and the wrappers built on the `http` transport move to `/v2` (e.g. `transports/betterstack`, `transports/newrelic`) or `/v3` (`transports/datadog`). Check the [Transports overview](/transports/) and [Plugins overview](/plugins/) for each module's exact path; imports and `go get` lines change accordingly.
 
 ### Step 2: decide on metadata placement
 

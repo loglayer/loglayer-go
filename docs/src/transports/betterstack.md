@@ -10,7 +10,7 @@ description: Ship logs to Better Stack's HTTP intake API.
 Sends log entries to [Better Stack](https://betterstack.com) via their HTTP Logs Endpoint. Built on the [HTTP transport](/transports/http) with a Better Stack-specific encoder and bearer token authentication.
 
 ```sh
-go get go.loglayer.dev/transports/betterstack
+go get go.loglayer.dev/transports/betterstack/v2
 ```
 
 ## Getting a Source Token
@@ -32,7 +32,7 @@ The source token is a secret. Load it from an environment variable or secret man
 import (
     "os"
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/transports/betterstack"
+    "go.loglayer.dev/transports/betterstack/v2"
 )
 
 tr := betterstack.New(betterstack.Config{
