@@ -123,7 +123,7 @@ import (
 
     "go.loglayer.dev/v3"
     "go.loglayer.dev/v3/transport"
-    "go.loglayer.dev/transports/datadog/v2"
+    "go.loglayer.dev/transports/datadog/v3"
     "go.loglayer.dev/transports/pretty/v3"
     "go.loglayer.dev/transports/structured/v3"
 )

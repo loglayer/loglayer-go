@@ -5,7 +5,7 @@ Send structured logs to [Better Stack](https://betterstack.com) from your Go app
 ## Installation
 
 ```bash
-go get go.loglayer.dev/transports/betterstack
+go get go.loglayer.dev/transports/betterstack/v2
 ```
 
 ## Quick start
@@ -16,8 +16,8 @@ package main
 import (
     "log"
 
-    "go.loglayer.dev/v2"
-    bs "go.loglayer.dev/transports/betterstack"
+    "go.loglayer.dev/v3"
+    bs "go.loglayer.dev/transports/betterstack/v2"
 )
 
 func main() {

@@ -118,7 +118,7 @@ TypeScript's `@loglayer/transport-pino`, `@loglayer/plugin-redaction`, etc. are 
 |----------------------------------|-----------------------------------------------|
 | `loglayer`                       | `go.loglayer.dev/v3` (core + stdlib renderers)   |
 | `@loglayer/transport-zerolog`    | `go.loglayer.dev/transports/zerolog/v3`          |
-| `@loglayer/transport-datadog`    | `go.loglayer.dev/transports/datadog/v2`          |
+| `@loglayer/transport-datadog`    | `go.loglayer.dev/transports/datadog/v3`          |
 | `@loglayer/integration-elysia`   | `go.loglayer.dev/integrations/loghttp/v3` (etc.) |
 
 Sub-modules that re-export core types ship on their own `/v3` paths; check the [Transports overview](/transports/) and the [loghttp](/integrations/loghttp) / [sloghandler](/integrations/sloghandler) pages for each module's path.
@@ -151,7 +151,7 @@ The full set: `NewFieldsHook`, `NewMetadataHook`, `NewDataHook`, `NewMessageHook
 `plugins/redact` mirrors `@loglayer/plugin-redaction`. It supports key matching, regex value patterns, and json-tag-aware struct walking, all type-preserving:
 
 ```go
-import "go.loglayer.dev/plugins/redact/v2"
+import "go.loglayer.dev/plugins/redact/v3"
 
 log.AddPlugin(redact.New(redact.Config{
     Keys:     []string{"password", "apiKey"},

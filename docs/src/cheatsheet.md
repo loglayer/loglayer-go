@@ -64,10 +64,10 @@ Metadata nests under `"metadata"` by default; `Config.FlattenMetadata: true` res
 
 Each method takes `...any`, joined with a space.
 
-For `fmt.Sprintf`-style format strings, register the optional [`fmtlog`](https://pkg.go.dev/go.loglayer.dev/plugins/fmtlog/v2) plugin:
+For `fmt.Sprintf`-style format strings, register the optional [`fmtlog`](https://pkg.go.dev/go.loglayer.dev/plugins/fmtlog/v3) plugin:
 
 ```go
-import "go.loglayer.dev/plugins/fmtlog/v2"
+import "go.loglayer.dev/plugins/fmtlog/v3"
 
 log.AddPlugin(fmtlog.New())
 
@@ -277,7 +277,7 @@ The merged group set is also surfaced to transports via `TransportParams.Groups`
 ## Plugins
 
 ```go
-import "go.loglayer.dev/plugins/redact/v2"
+import "go.loglayer.dev/plugins/redact/v3"
 
 // Inline single-hook plugin via an adapter constructor
 log.AddPlugin(loglayer.NewDataHook("tag", func(p loglayer.BeforeDataOutParams) loglayer.Data {

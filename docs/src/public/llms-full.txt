@@ -23,8 +23,8 @@ go get go.loglayer.dev/transports/blank/v3
 
 # Cloud (managed log services)
 go get go.loglayer.dev/transports/axiom/v3
-go get go.loglayer.dev/transports/betterstack
-go get go.loglayer.dev/transports/datadog/v2
+go get go.loglayer.dev/transports/betterstack/v2
+go get go.loglayer.dev/transports/datadog/v3
 go get go.loglayer.dev/transports/gcplogging/v3
 go get go.loglayer.dev/transports/sentry/v3
 
@@ -42,9 +42,9 @@ go get go.loglayer.dev/transports/zap/v3
 go get go.loglayer.dev/transports/zerolog/v3
 
 # Plugins
-go get go.loglayer.dev/plugins/redact/v2
-go get go.loglayer.dev/plugins/sampling/v2
-go get go.loglayer.dev/plugins/fmtlog/v2
+go get go.loglayer.dev/plugins/redact/v3
+go get go.loglayer.dev/plugins/sampling/v3
+go get go.loglayer.dev/plugins/fmtlog/v3
 go get go.loglayer.dev/plugins/datadogtrace/v3
 go get go.loglayer.dev/plugins/oteltrace/v3
 
@@ -739,7 +739,7 @@ Managed log services. Async + batched; site-aware where applicable.
 Datadog Logs HTTP intake. Site-aware URL, `DD-API-KEY` header, level→status mapping. Built on the HTTP transport.
 
 ```go
-import "go.loglayer.dev/transports/datadog/v2"
+import "go.loglayer.dev/transports/datadog/v3"
 
 tr := datadog.New(datadog.Config{
     APIKey:           os.Getenv("DD_API_KEY"),  // required
@@ -994,7 +994,7 @@ log.PluginCount()
 ### Redact Plugin
 
 ```go
-import "go.loglayer.dev/plugins/redact/v2"
+import "go.loglayer.dev/plugins/redact/v3"
 
 log.AddPlugin(redact.New(redact.Config{
     Keys:     []string{"password", "apiKey", "ssn"},
@@ -1008,7 +1008,7 @@ Walks structs, maps, slices, and pointers via reflection at any depth; preserves
 ### Sampling Plugin
 
 ```go
-import "go.loglayer.dev/plugins/sampling/v2"
+import "go.loglayer.dev/plugins/sampling/v3"
 
 // Independent Bernoulli draw per emission
 log.AddPlugin(sampling.FixedRate(0.01))  // 1% kept
@@ -1030,7 +1030,7 @@ log.AddPlugin(sampling.Burst(100, time.Second))
 Opt the logger into `fmt.Sprintf` semantics for multi-arg messages.
 
 ```go
-import "go.loglayer.dev/plugins/fmtlog/v2"
+import "go.loglayer.dev/plugins/fmtlog/v3"
 
 log.AddPlugin(fmtlog.New())
 log.Info("user %d logged in from %s", 42, "1.2.3.4")
@@ -1147,7 +1147,7 @@ lines := lib.Lines()  // []lltest.LogLine
 ### Plugin testing helpers
 
 ```go
-import "go.loglayer.dev/plugins/plugintest/v2"
+import "go.loglayer.dev/plugins/plugintest/v3"
 
 // Wires plugin into a logger backed by lltest, returns the lib for assertions
 log, lib := plugintest.Install(t, redact.New(redact.Config{Keys: []string{"pw"}}))

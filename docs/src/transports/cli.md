@@ -264,7 +264,7 @@ The contrast with the [Console Transport](/transports/console): console's `Messa
 Without a plugin, multi-argument log calls are space-joined: `log.Info("count:", n)` renders as `"count: 1234"`. CLI output usually wants format-string semantics:
 
 ```go
-import "go.loglayer.dev/plugins/fmtlog/v2"
+import "go.loglayer.dev/plugins/fmtlog/v3"
 
 log := loglayer.New(loglayer.Config{
     Transport: cli.New(cli.Config{}),
@@ -275,11 +275,11 @@ log.Info("Applied %d release(s) at %s:", count, sha)
 log.Error("connecting to %s: %v", host, err)
 ```
 
-The plugin registers a single MessageHook that rewrites `[]any{format, args...}` to `[]any{fmt.Sprintf(format, args...)}`. Zero hot-path cost when a call has a single message; one Sprintf when there are extras. See [fmtlog](https://pkg.go.dev/go.loglayer.dev/plugins/fmtlog/v2) for the full API.
+The plugin registers a single MessageHook that rewrites `[]any{format, args...}` to `[]any{fmt.Sprintf(format, args...)}`. Zero hot-path cost when a call has a single message; one Sprintf when there are extras. See [fmtlog](https://pkg.go.dev/go.loglayer.dev/plugins/fmtlog/v3) for the full API.
 
 ### `redact` for token scrubbing
 
-If your CLI ever logs values that might include `GITHUB_TOKEN`, `GITLAB_TOKEN`, or other secrets via `WithMetadata`, pair with the [redact](https://pkg.go.dev/go.loglayer.dev/plugins/redact/v2) plugin. ANSI / CRLF sanitization is already on the table-cell and logfmt-value paths in this transport; the redact plugin closes the value-content side (token patterns, key allow / deny lists).
+If your CLI ever logs values that might include `GITHUB_TOKEN`, `GITLAB_TOKEN`, or other secrets via `WithMetadata`, pair with the [redact](https://pkg.go.dev/go.loglayer.dev/plugins/redact/v3) plugin. ANSI / CRLF sanitization is already on the table-cell and logfmt-value paths in this transport; the redact plugin closes the value-content side (token patterns, key allow / deny lists).
 
 ## Switching to JSON for `--json`
 

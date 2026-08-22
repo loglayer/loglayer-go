@@ -29,7 +29,7 @@ import (
 
     "go.loglayer.dev/v3"
     "go.loglayer.dev/integrations/sloghandler/v3"
-    "go.loglayer.dev/plugins/redact/v2"
+    "go.loglayer.dev/plugins/redact/v3"
     "go.loglayer.dev/transports/structured/v3"
 )
 

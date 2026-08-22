@@ -13,7 +13,7 @@ Most transports and plugins ship as their own modules. Install only what you imp
 ```sh
 go get go.loglayer.dev/transports/structured/v3
 go get go.loglayer.dev/transports/zerolog/v3
-go get go.loglayer.dev/plugins/redact/v2
+go get go.loglayer.dev/plugins/redact/v3
 ```
 
 ## Quick Start

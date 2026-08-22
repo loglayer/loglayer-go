@@ -14,7 +14,7 @@ description: "Drop a fraction of log emissions to keep volume and cost under con
 - **`Burst(n, window)`**: keep the first N emissions per rolling window, drop the rest. Best for hard caps like "no more than 100 logs/second."
 
 ```sh
-go get go.loglayer.dev/plugins/sampling/v2
+go get go.loglayer.dev/plugins/sampling/v3
 ```
 
 Pure Go, no dependencies (uses `math/rand/v2` from the stdlib).
@@ -24,7 +24,7 @@ Pure Go, no dependencies (uses `math/rand/v2` from the stdlib).
 ```go
 import (
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/plugins/sampling/v2"
+    "go.loglayer.dev/plugins/sampling/v3"
     "go.loglayer.dev/transports/structured/v3"
 )
 

@@ -10,17 +10,17 @@ description: "Opt-in fmt.Sprintf semantics for multi-arg log calls."
 `fmtlog` is a one-line plugin that opts a logger into `fmt.Sprintf`-style format strings. After registration, every call where the first message is a string and there are extra arguments is rewritten via `fmt.Sprintf(messages[0], messages[1:]...)` before downstream `MessageHook`s run.
 
 ```sh
-go get go.loglayer.dev/plugins/fmtlog/v2
+go get go.loglayer.dev/plugins/fmtlog/v3
 ```
 
-`fmtlog` is its own Go module under `go.loglayer.dev/plugins/fmtlog/v2`, with no third-party dependencies beyond the main `go.loglayer.dev/v3` module it implements `Plugin` against.
+`fmtlog` is its own Go module under `go.loglayer.dev/plugins/fmtlog/v3`, with no third-party dependencies beyond the main `go.loglayer.dev/v3` module it implements `Plugin` against.
 
 ## Basic Usage
 
 ```go
 import (
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/plugins/fmtlog/v2"
+    "go.loglayer.dev/plugins/fmtlog/v3"
     "go.loglayer.dev/transports/structured/v3"
 )
 
