@@ -2,4 +2,45 @@ go 1.25.0
 
 use (
 	.
+
+	./transports/axiom
+	./transports/blank
+  ./transports/betterstack
+	./transports/central
+	./transports/charmlog
+	./transports/cli
+	./transports/console
+	./transports/datadog
+	./transports/gcplogging
+	./transports/http
+	./transports/lumberjack
+	./transports/logrus
+	./transports/newrelic
+	./transports/otellog
+	./transports/phuslu
+	./transports/pretty
+	./transports/sentry
+	./transports/slog
+	./transports/structured
+	./transports/testing
+	./transports/zap
+	./transports/zerolog
+
+	./plugins/datadogtrace
+	./plugins/datadogtrace/livetest
+	./plugins/fmtlog
+	./plugins/oteltrace
+	./plugins/plugintest
+	./plugins/redact
+	./plugins/sampling
+
+	./integrations/loghttp
+	./integrations/sloghandler
+
+	./examples/custom-plugin
+	./examples/datadog-shipping
+	./examples/http-server
+	./examples/multi-transport
+	./examples/otel-end-to-end
+	./examples/pretty-modes
 )
