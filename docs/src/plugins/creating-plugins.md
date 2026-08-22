@@ -5,7 +5,7 @@ description: How to write a LogLayer plugin and which hook to reach for.
 
 # Creating Plugins
 
-A plugin is anything that satisfies the [`loglayer.Plugin`](https://pkg.go.dev/go.loglayer.dev/v2#Plugin) interface, plus zero or more hook interfaces for the lifecycle points you want to participate in.
+A plugin is anything that satisfies the [`loglayer.Plugin`](https://pkg.go.dev/go.loglayer.dev/v3#Plugin) interface, plus zero or more hook interfaces for the lifecycle points you want to participate in.
 
 ```go
 type Plugin interface {
@@ -484,7 +484,7 @@ Every hook call is wrapped in a deferred recover. If your hook panics, the dispa
 | `LevelHook` | Level unchanged (`ok=false`) |
 | `SendGate` | Entry sent to the transport (fails open) |
 
-LogLayer writes a one-line description of the recovered panic to `os.Stderr` so the failure isn't silent. To observe the panic in your own code, implement [`ErrorReporter`](https://pkg.go.dev/go.loglayer.dev/v2#ErrorReporter):
+LogLayer writes a one-line description of the recovered panic to `os.Stderr` so the failure isn't silent. To observe the panic in your own code, implement [`ErrorReporter`](https://pkg.go.dev/go.loglayer.dev/v3#ErrorReporter):
 
 ```go
 type ErrorReporter interface {
