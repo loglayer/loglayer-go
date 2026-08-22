@@ -15,10 +15,10 @@ Define groups when creating the logger:
 
 ```go
 import (
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/structured/v2"
     "go.loglayer.dev/transports/datadog/v2"
-    "go.loglayer.dev/v2/transport"
+    "go.loglayer.dev/v3/transport"
 )
 
 log := loglayer.New(loglayer.Config{

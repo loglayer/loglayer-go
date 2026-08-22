@@ -1,5 +1,5 @@
 ---
-title: Migrating to v2
+title: Migrating to v3
 head:
   - - meta
     - http-equiv: refresh

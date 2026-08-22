@@ -31,7 +31,7 @@ The dataset is set on the transport via `Config.DatasetName`, not an env var.
 ```go
 import (
     axiomgo "github.com/axiomhq/axiom-go/axiom"
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/axiom/v2"
 )
 
@@ -55,7 +55,7 @@ log := loglayer.New(loglayer.Config{
 ```go
 import (
     axiomgo "github.com/axiomhq/axiom-go/axiom"
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/axiom/v2"
 )
 
@@ -104,7 +104,7 @@ Each log entry is ingested as a JSON object:
 - `msg`: the joined message text (configurable via `MessageField`)
 - Persistent fields from `WithFields()`, merged at root
 - The serialized error from `WithError()`
-- Map metadata flattened at root, or any other metadata nested under `metadata`
+- Metadata nested under the core's `MetadataFieldName` key (default `"metadata"`; map metadata flattens at root only when the core runs with `FlattenMetadata: true`, the v2 shape)
 
 ```go
 log.WithFields(loglayer.Fields{"requestId": "abc"}).
@@ -120,13 +120,17 @@ results in:
   "msg": "served",
   "requestId": "abc",
   "err": { "message": "timeout" },
-  "durationMs": 42
+  "metadata": { "durationMs": 42 }
 }
 ```
 
+## Fatal Behavior
+
+The transport never calls `os.Exit` or `panic` itself. The Axiom SDK is called synchronously per entry (`Client.Ingest`), so the fatal entry reaches Axiom before the log call returns. Whether the process terminates afterward is the LogLayer core's decision via `Config.DisableFatalExit` (default: exit). See [Fatal Exits the Process](/logging-api/basic-logging#fatal-exits-the-process).
+
 ## Metadata Handling
 
-Map metadata (`loglayer.Metadata`) merges at the root of the JSON object. Non-map metadata (structs, scalars) nests under the `metadata` key by default.
+Metadata follows the [core placement rules](/configuration#metadatafieldname): when `Config.MetadataFieldName` is empty, the core resolves it to `"metadata"` and the whole metadata value (map or non-map) nests under that key; with `Config.FlattenMetadata: true` (the v2 opt-out), map metadata merges at the root and non-map metadata nests under `metadata`.
 
 Set [`Config.MetadataFieldName`](/configuration#metadatafieldname) on the core to nest all metadata under a fixed key.
 

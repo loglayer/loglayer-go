@@ -102,15 +102,26 @@ type Config struct {
 	FieldsKey string
 
 	// MetadataFieldName nests the per-call metadata value under this key in
-	// the assembled output. If empty, transports use their default placement
-	// policy (renderer transports flatten map metadata at root; wrapper
-	// transports flatten map metadata to attributes and nest non-map metadata
-	// under a transport-specific default key, typically "metadata").
+	// the assembled output. When empty, the entry's metadata nests under the
+	// default key "metadata".
+	//
+	// Set FlattenMetadata: true to keep the v2 behavior (empty means
+	// per-transport policy).
 	//
 	// When non-empty, the entry's metadata (whether a map, struct, scalar,
 	// or slice) is nested under this single key uniformly, and transports
 	// honor that placement.
 	MetadataFieldName string
+
+	// FlattenMetadata restores the v2 placement shape: when
+	// MetadataFieldName is empty (default), metadata flattens per the
+	// transport's historical policy (renderers merge map metadata at
+	// root; wrappers flatten maps and nest non-map values under
+	// "metadata") instead of nesting under the default "metadata" key.
+	//
+	// Ignored when MetadataFieldName is explicitly set: an explicit
+	// key always wins.
+	FlattenMetadata bool
 
 	// MuteFields disables inclusion of persistent fields in log output.
 	MuteFields bool

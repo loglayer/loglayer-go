@@ -22,7 +22,7 @@ import (
 
     "github.com/sirupsen/logrus"
 
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     lllogrus "go.loglayer.dev/transports/logrus/v2"
 )
 

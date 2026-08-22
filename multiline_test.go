@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	loglayer "go.loglayer.dev/v2"
+	loglayer "go.loglayer.dev/v3"
 )
 
 func TestMultiline_LinesReturnsAuthoredSlice(t *testing.T) {

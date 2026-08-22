@@ -44,7 +44,7 @@ Numeric ordering matters for `SetLevel`. See [Adjusting Log Levels](/logging-api
 
 ## Fatal Exits the Process
 
-`log.Fatal(...)` dispatches the entry to every transport, then calls `os.Exit(1)`. This matches the Go convention used by `log.Fatal` in the standard library, zerolog, zap, logrus, and others: a fatal log marks the process as unrecoverable.
+`log.Fatal(...)` dispatches the entry to every transport, then calls `os.Exit(1)`. This matches the Go convention used by `log.Fatal` in the standard library, zerolog, zap, logrus, and others: a fatal log marks the process as unrecoverable. Because the exit runs **after** dispatch, every transport still sees the fatal entry; see each transport's Fatal Behavior section for wrapper-specific caveats. When a `Fatal` entry is dispatched, any transport that implements `io.Closer` is closed along the way (capped by `Config.TransportCloseTimeout`), so async transports (HTTP, Datadog) flush pending entries before the exit.
 
 If you don't want the exit (tests, library code, integration scenarios where the host should decide), set `DisableFatalExit: true` on the config:
 
@@ -59,8 +59,10 @@ log.Fatal("logged but no exit") // entry written, process continues
 
 `loglayer.NewMock()` enables this automatically. See [Mocking](/logging-api/mocking).
 
-::: warning Fatal skips deferred cleanup
-`os.Exit` does not run `defer`s. In service code with deferred cleanup (auto-updater re-exec, graceful shutdown) or from worker goroutines, a `Fatal` call kills the process without cleanup. Set `DisableFatalExit: true` at the root and use `Error` in workers (or call `Fatal` only from a coordinator that drains first).
+::: warning Fatal is not for long-running services
+`os.Exit` does not run `defer`s: deferred cleanup (auto-updater re-exec, graceful shutdown, connection drains) is skipped, and the exit code is always `1`. Config changes or log writes in flight are just lost. For long-running services, prefer `log.Error(...)` at the failure point plus an `os.Exit(1)` at a single coordinator that has drained first. Set `DisableFatalExit: true` at the root if call sites can't be trusted to use `Error`.
+
+The default Fatal path does flush `io.Closer` transports before exiting (capped by `Config.TransportCloseTimeout`). If you set `DisableFatalExit: true` and call `os.Exit` yourself, that flush no longer runs: close `io.Closer` transports (HTTP, Datadog) explicitly before your own exit to guarantee delivery.
 :::
 
 ## Panic Panics the Goroutine
@@ -116,6 +118,8 @@ log.WithMetadata(...).WithError(err).Error("...")
 
 For data that should appear on **every** log from a logger, use `WithFields`. See [Fields](/logging-api/fields).
 
+All examples on this page construct the logger with `loglayer.New`, which panics when the config is invalid (no transport). When the config comes from a runtime source (env vars, a config file, a secrets manager), use `loglayer.Build` instead; it returns `(*LogLayer, error)` with the same validation. See [New vs Build](/configuration#new-vs-build).
+
 ## stdlib `log` and `io.Writer` Bridges
 
 Third-party libraries often accept a `*log.Logger` or an `io.Writer` and emit one line per call. Two adapter methods on `*LogLayer` turn each line into a loglayer emission so you can plug those libraries straight into your pipeline:
@@ -129,7 +133,7 @@ Drop the result into anything that takes the corresponding type:
 import (
     "net/http"
 
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
 )
 
 srv := &http.Server{

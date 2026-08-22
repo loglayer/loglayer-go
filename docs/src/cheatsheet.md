@@ -7,9 +7,13 @@ description: One-page quick reference of the LogLayer for Go API.
 
 ## At a Glance
 
+::: warning Interim state: transports are still on v2
+This example pairs the v3 core with the structured transport's `v2` path. The transports move to `/v3` in the follow-up release; until then this exact import combo does not compile. Install the v3 core alone first, or wait for the transport v3 bumps.
+:::
+
 ```go
 import (
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/structured/v2"
 )
 
@@ -60,6 +64,8 @@ log.Fatal("...") // calls os.Exit(1) by default; set Config.DisableFatalExit to 
 log.Panic("...") // calls panic(joined-message) after dispatch; recoverable
 ```
 
+Metadata nests under `"metadata"` by default; `Config.FlattenMetadata: true` restores the v2 root-flattening shape. See [MetadataFieldName](/configuration#metadatafieldname) and [FlattenMetadata](/configuration#flattenmetadata).
+
 Each method takes `...any`, joined with a space.
 
 For `fmt.Sprintf`-style format strings, register the optional [`fmtlog`](https://pkg.go.dev/go.loglayer.dev/plugins/fmtlog/v2) plugin:
@@ -77,6 +83,8 @@ log.WithMetadata(loglayer.Metadata{"reqId": reqID}).
 Without the plugin, multi-arg messages are space-joined.
 
 ## Metadata
+
+Metadata nests under the `"metadata"` key by default (`Config.MetadataFieldName`); set `Config.FlattenMetadata: true` for the v2 root-flattening shape. See [MetadataFieldName](/configuration#metadatafieldname) and [FlattenMetadata](/configuration#flattenmetadata).
 
 ```go
 // Struct (preferred when the shape is fixed; cheaper, type-checked)
@@ -336,7 +344,7 @@ log.Info("served")
 // {"level":"info","time":"...","msg":"served","source":{"function":"main.handler","file":"/app/main.go","line":42}}
 ```
 
-Off by default. Costs ~600 ns / +5 allocs per emission when on (see [Benchmarks](/benchmarks#caller-info-configsource)). The slog Handler forwards `slog.Record.PC` automatically (no capture cost on the slog path).
+Off by default. Costs ~600 ns / +5 allocs per emission when on (see [Benchmarks](/benchmarks#caller-info-config-source)). The slog Handler forwards `slog.Record.PC` automatically (no capture cost on the slog path).
 
 ## slog Interop
 

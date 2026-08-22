@@ -23,7 +23,8 @@ type Config struct {
     ErrorFieldName        string          // key for serialized error (default: "err")
     CopyMsgOnOnlyError    bool            // copy err.Error() into the message in ErrorOnly
     FieldsKey             string          // nest fields under this key (default: merged at root)
-    MetadataFieldName     string          // nest metadata under this key (default: each transport's policy)
+    MetadataFieldName     string          // nest metadata under this key (default: "metadata")
+    FlattenMetadata       bool            // v2 shape opt-out: flatten map metadata at root when MetadataFieldName is unset
     MuteFields            bool            // disable fields in output
     MuteMetadata          bool            // disable metadata in output
     DisableFatalExit      bool            // skip os.Exit(1) after a Fatal log
@@ -48,7 +49,7 @@ type RoutingConfig struct {
 
 ## New vs Build
 
-`New` panics on misconfiguration (no transport, both `Transport` and `Transports` set). `Build` returns an `error` instead, with the same validation. `New` fits program-start setup where a bad config is a programmer error; `Build` fits config loaded at runtime (env vars, config files) where you want to handle failure explicitly:
+For config loaded at runtime, use `Build`: `Build` returns an `error` instead of panicking, with the same validation as `New` (no transport, both `Transport` and `Transports` set). Keep `New` for programmatic setup where a bad config is a programmer error and panicking at construction time fails loudly:
 
 ```go
 log, err := loglayer.Build(loglayer.Config{
@@ -60,6 +61,8 @@ if err != nil {
 ```
 
 Both report `loglayer.ErrNoTransport` when no transport is configured (via `errors.Is` on the `Build` error).
+
+Libraries that need a logger should accept one from their caller instead of calling `New` or `Build` themselves; the consumer knows their own config source.
 
 ## Transports
 
@@ -214,47 +217,33 @@ See [Fields](/logging-api/fields).
 
 ## MetadataFieldName
 
-By default, transports use their own placement policy for metadata: renderer transports (`structured`, `console`) flatten map metadata at the root and JSON-roundtrip non-map values; wrapper transports (`zap`, `zerolog`, `charmlog`, `phuslu`, `logrus`, `slog`, `otellog`, `sentry`) flatten map metadata as individual attributes and nest non-map values under a hardcoded `"metadata"` key.
-
-Set `MetadataFieldName` to nest **both** map and non-map metadata under a single configurable key uniformly:
+By default (v3), the entry's metadata nests under the `"metadata"` key uniformly, for both map and non-map values, across every transport. Set this to nest under a different key:
 
 ```go
 loglayer.New(loglayer.Config{
     Transport:         structured.New(structured.Config{}),
-    MetadataFieldName: "metadata",
+    MetadataFieldName: "payload",
 })
 
 log.WithMetadata(loglayer.Metadata{"userId": 1234}).Info("served")
-// {"msg":"served","metadata":{"userId":1234}}
-
-log.WithMetadata(struct{ ID int }{ID: 7}).Info("user")
-// {"msg":"user","metadata":{"ID":7}}
+// {"msg":"served","payload":{"userId":1234}}
 ```
 
-This produces the symmetric three-knob shape alongside `FieldsKey` and `ErrorFieldName`:
+## FlattenMetadata
+
+Set `FlattenMetadata: true` to restore the v2 shape: map metadata merges at the root, and non-map metadata follows each transport's historical placement. Ignored when `MetadataFieldName` is explicitly set.
 
 ```go
 loglayer.New(loglayer.Config{
-    FieldsKey:         "context",
-    MetadataFieldName: "metadata",
-    ErrorFieldName:    "error",
+    Transport:      structured.New(structured.Config{}),
+    FlattenMetadata: true,
 })
 
-log = log.WithFields(loglayer.Fields{"service": "api"})
-log.WithMetadata(loglayer.Metadata{"userId": "1234"}).
-    WithError(errors.New("boom")).
-    Error("user action failed")
-// {
-//   "msg":     "user action failed",
-//   "context": {"service": "api"},
-//   "error":   {"message": "boom"},
-//   "metadata":{"userId": "1234"}
-// }
+log.WithMetadata(loglayer.Metadata{"userId": 1234}).Info("served")
+// {"msg":"served","userId":1234}
 ```
 
-When empty (default), each transport keeps its existing default placement. The setting is published to every transport (and dispatch-time plugin hooks) via `loglayer.Schema`; transports honor it uniformly.
-
-See [Metadata](/logging-api/metadata).
+The resolved key ("metadata", your override, or unset with `FlattenMetadata`) is published to every transport (and dispatch-time plugin hooks) via `loglayer.Schema`; transports honor it uniformly. See [Metadata](/logging-api/metadata).
 
 ## DisableFatalExit
 
@@ -270,8 +259,8 @@ log.Fatal("logged, but process keeps running")
 
 `loglayer.NewMock()` enables this automatically. See [Mocking](/logging-api/mocking) and [Fatal Exits the Process](/logging-api/basic-logging#fatal-exits-the-process).
 
-::: warning Fatal in a long-running worker skips cleanup
-In service code with deferred cleanup (auto-updater re-exec, graceful shutdown) or from worker goroutines, a bare `log.Fatal(...)` kills the process immediately without running `defer`s. Set `DisableFatalExit: true` at the root and use `Error` in workers (or call `log.Fatal` only from a coordinator that drains first).
+::: warning A future contributor calling log.Fatal in a worker kills the process
+In service code with deferred cleanup, or from worker goroutines, a bare `log.Fatal(...)` kills the process immediately without running `defer`s. Set `DisableFatalExit: true` on the root config for long-running services and use `Error` in workers (or call `log.Fatal` only from a coordinator that drains first). See [Adjusting Log Levels](/logging-api/adjusting-log-levels) for the runtime level toggles you can wire up instead.
 :::
 
 ## MuteFields / MuteMetadata

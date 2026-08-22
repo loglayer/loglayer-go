@@ -39,7 +39,7 @@ import (
 
     "github.com/getsentry/sentry-go"
 
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     sentrytransport "go.loglayer.dev/transports/sentry/v2"
 )
 

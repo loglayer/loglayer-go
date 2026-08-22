@@ -27,7 +27,7 @@ import (
 
     ddtracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/plugins/datadogtrace/v2"
     "go.loglayer.dev/transports/structured/v2"
 )
@@ -176,7 +176,7 @@ The plugin is a no-op for log calls without `WithContext`, so untraced logs pay 
 
 The plugin ships with a live integration test against the real dd-trace-go v2 tracer (using its in-process `mocktracer`). It validates that the documented v2 extractor pattern produces IDs in the decimal-string format Datadog ingestion expects, including for nested spans.
 
-The livetest lives in **its own Go module** at `plugins/datadogtrace/livetest/` so that dd-trace-go's heavy transitive closure (datadog-agent internals, OTel collector pieces, sketches-go, msgp, ...) stays out of the main `go.loglayer.dev/v2` module. Plugin users get the lean main module; livetest contributors get the full SDK they need.
+The livetest lives in **its own Go module** at `plugins/datadogtrace/livetest/` so that dd-trace-go's heavy transitive closure (datadog-agent internals, OTel collector pieces, sketches-go, msgp, ...) stays out of the main `go.loglayer.dev/v3` module. Plugin users get the lean main module; livetest contributors get the full SDK they need.
 
 Run it from the repo root:
 

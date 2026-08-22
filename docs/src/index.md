@@ -39,21 +39,24 @@ features:
 
 ## Quick Example
 
+::: warning Interim state: transports are still on v2
+This example pairs the v3 core with the structured transport's `v2` path. The transports move to `/v3` in the follow-up release; until then this exact import combo does not compile. Install the v3 core alone first, or wait for the transport v3 bumps.
+:::
+
 ```go
 package main
 
 import (
     "errors"
 
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/structured/v2"
 )
 
 func main() {
     log := loglayer.New(loglayer.Config{
-        Transport:         structured.New(structured.Config{}),
-        FieldsKey:         "context",
-        MetadataFieldName: "metadata",
+        Transport: structured.New(structured.Config{}),
+        FieldsKey: "context",
     })
 
     // WithFields returns a NEW logger; assign it.

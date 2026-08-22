@@ -14,7 +14,7 @@ For construction-time setup (wiring transports via `Config.Transport` / `Config.
 `AddTransport(transports...)` appends. If a transport with the same `ID` already exists it is **replaced**, not duplicated:
 
 ```go
-import "go.loglayer.dev/v2/transport"
+import "go.loglayer.dev/v3/transport"
 
 log.AddTransport(structured.New(structured.Config{
     BaseConfig: transport.BaseConfig{ID: "ship"},

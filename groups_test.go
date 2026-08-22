@@ -6,9 +6,9 @@ import (
 	"slices"
 	"testing"
 
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/internal/lltest"
-	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/internal/lltest"
+	"go.loglayer.dev/v3/transport"
 )
 
 // twoTransports builds two named TestLoggingLibrary-backed transports for
@@ -660,8 +660,31 @@ func TestSchema_DefaultErrorFieldName(t *testing.T) {
 	if line.Schema.FieldsKey != "" {
 		t.Errorf("FieldsKey default: got %q, want empty", line.Schema.FieldsKey)
 	}
+	// MetadataFieldName defaults to "metadata" since v3 (uniform metadata
+	// nesting), unless FlattenMetadata: true restores the v2 shape.
+	if line.Schema.MetadataFieldName != "metadata" {
+		t.Errorf("MetadataFieldName default: got %q, want %q", line.Schema.MetadataFieldName, "metadata")
+	}
+}
+
+// FlattenMetadata: true restores the v2 placement shape, so an
+// otherwise-default logger reports an empty MetadataFieldName in its
+// schema. This is the opt-out sibling of TestSchema_DefaultErrorFieldName.
+func TestSchema_DefaultWithFlattenMetadata(t *testing.T) {
+	tr, libs := twoTransports("a")
+	log := loglayer.New(loglayer.Config{
+		DisableFatalExit: true,
+		Transports:       tr,
+		FlattenMetadata:  true,
+	})
+	log.Info("hi")
+
+	line := libs[0].PopLine()
+	if line == nil {
+		t.Fatal("expected line")
+	}
 	if line.Schema.MetadataFieldName != "" {
-		t.Errorf("MetadataFieldName default: got %q, want empty", line.Schema.MetadataFieldName)
+		t.Errorf("MetadataFieldName with FlattenMetadata: got %q, want empty", line.Schema.MetadataFieldName)
 	}
 }
 

@@ -10,7 +10,7 @@ description: "Author multi-line message content that survives the cli/pretty/con
 ## Quickstart
 
 ```go
-import "go.loglayer.dev/v2"
+import "go.loglayer.dev/v3"
 
 log.Info(loglayer.Multiline(
     "Configuration:",

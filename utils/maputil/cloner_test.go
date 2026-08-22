@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"go.loglayer.dev/v2/utils/maputil"
+	"go.loglayer.dev/v3/utils/maputil"
 )
 
 func keyIn(set ...string) func(string) bool {

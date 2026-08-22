@@ -66,7 +66,7 @@ import (
 
     "cloud.google.com/go/logging"
 
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/gcplogging/v2"
 )
 

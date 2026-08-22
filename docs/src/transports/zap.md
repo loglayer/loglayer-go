@@ -20,7 +20,7 @@ go get go.uber.org/zap
 import (
     "go.uber.org/zap"
 
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     llzap "go.loglayer.dev/transports/zap/v2"
 )
 

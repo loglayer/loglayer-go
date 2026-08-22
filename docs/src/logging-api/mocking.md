@@ -18,7 +18,7 @@ LogLayer ships a primitive for each.
 Use this when logs aren't part of what you're testing. It's a drop-in `*loglayer.LogLayer` backed by a discard transport. Every call is accepted but produces no output.
 
 ```go
-import "go.loglayer.dev/v2"
+import "go.loglayer.dev/v3"
 
 func TestSomething(t *testing.T) {
     log := loglayer.NewMock()
@@ -61,7 +61,7 @@ Use this when the test's purpose is to verify *what* was logged. The `transports
 
 ```go
 import (
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     lltest "go.loglayer.dev/transports/testing/v2"
 )
 

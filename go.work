@@ -5,7 +5,7 @@ use (
 
 	./transports/axiom
 	./transports/blank
-  ./transports/betterstack
+	./transports/betterstack
 	./transports/central
 	./transports/charmlog
 	./transports/cli

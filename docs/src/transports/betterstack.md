@@ -9,6 +9,10 @@ description: Ship logs to Better Stack's HTTP intake API.
 
 Sends log entries to [Better Stack](https://betterstack.com) via their HTTP Logs Endpoint. Built on the [HTTP transport](/transports/http) with a Better Stack-specific encoder and bearer token authentication.
 
+::: info Interim state: this transport is still on v2
+This transport keeps its `v2` path and its pre-v3 metadata placement for this release; the placement described below is what the current `v2` transport produces. The v3 core resolves an empty `MetadataFieldName` to `"metadata"`, so pairing this transport with the v3 core passes a non-empty schema key and changes the placement. The transport's own v3 bump ships in a follow-up release.
+:::
+
 ```sh
 go get go.loglayer.dev/transports/betterstack
 ```
@@ -31,7 +35,7 @@ The source token is a secret. Load it from an environment variable or secret man
 ```go
 import (
     "os"
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/betterstack"
 )
 

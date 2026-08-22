@@ -21,7 +21,7 @@ import (
     zlog "github.com/rs/zerolog"
     "os"
 
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     llzero "go.loglayer.dev/transports/zerolog/v2"
 )
 

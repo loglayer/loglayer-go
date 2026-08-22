@@ -60,6 +60,40 @@ log.Info("local-only")  // console only
 log.Warn("everywhere")  // both
 ```
 
+## Transport IDs
+
+Every transport has an `ID()` method; set it at construction via `transport.BaseConfig{ID: ...}`. When empty, a random ID is assigned, so `RemoveTransport` / `GetLoggerInstance` by ID silently under-delivers: `RemoveTransport` returns `false`, `GetLoggerInstance` returns `nil`, and the transport stays in the dispatch list. Confirm the assigned ID with the constructed transport's `ID()` before relying on it. Keep the constructed transport handle: `*LogLayer` offers no ID-lookup method, so once the transport is handed to the config, its ID is unrecoverable from the logger.
+
+The example below sets `ID: "ship"` at construction, then removes that transport at runtime with the same string:
+
+```go
+import (
+    "os"
+
+    "go.loglayer.dev/v3"
+    "go.loglayer.dev/v3/transport"
+    "go.loglayer.dev/transports/structured/v2"
+)
+
+logFile, err := os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+if err != nil {
+    panic(err)
+}
+
+log := loglayer.New(loglayer.Config{
+    Transports: []loglayer.Transport{
+        structured.New(structured.Config{
+            BaseConfig: transport.BaseConfig{ID: "ship"},
+            Writer:     logFile,
+        }),
+    },
+})
+
+removed := log.RemoveTransport("ship") // true: the ID matches construction
+```
+
+For a transport constructed without `BaseConfig.ID`, reading `ID()` off the constructed value (before wiring it into the logger) is the way to confirm the auto-generated ID. Transports keep their IDs when passed to `AddTransport` / `SetTransports` by value or pointer.
+
 ## Adding and Removing at Runtime
 
 ```go
@@ -87,8 +121,8 @@ A realistic production setup. Pretty is colorized terminal output for the develo
 import (
     "os"
 
-    "go.loglayer.dev/v2"
-    "go.loglayer.dev/v2/transport"
+    "go.loglayer.dev/v3"
+    "go.loglayer.dev/v3/transport"
     "go.loglayer.dev/transports/datadog/v2"
     "go.loglayer.dev/transports/pretty/v2"
     "go.loglayer.dev/transports/structured/v2"

@@ -17,7 +17,7 @@ go get go.loglayer.dev/transports/lumberjack/v2
 
 ```go
 import (
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/lumberjack/v2"
 )
 
@@ -179,8 +179,8 @@ If you only have the `*loglayer.LogLayer` (e.g. inside a handler that received t
 import (
     lj "gopkg.in/natefinch/lumberjack.v2"
 
-    "go.loglayer.dev/v2"
-    "go.loglayer.dev/v2/transport"
+    "go.loglayer.dev/v3"
+    "go.loglayer.dev/v3/transport"
     "go.loglayer.dev/transports/lumberjack/v2"
 )
 
@@ -206,7 +206,7 @@ Render colorized output to the terminal during interactive runs (via the [Pretty
 
 ```go
 import (
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/lumberjack/v2"
     "go.loglayer.dev/transports/pretty/v2"
 )
@@ -234,8 +234,8 @@ A common ops pattern: ship everything to `info.log` and ship errors-only to a sm
 
 ```go
 import (
-    "go.loglayer.dev/v2"
-    "go.loglayer.dev/v2/transport"
+    "go.loglayer.dev/v3"
+    "go.loglayer.dev/v3/transport"
     "go.loglayer.dev/transports/lumberjack/v2"
 )
 

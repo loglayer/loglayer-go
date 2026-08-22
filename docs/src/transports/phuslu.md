@@ -22,7 +22,7 @@ import (
 
     plog "github.com/phuslu/log"
 
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     llphuslu "go.loglayer.dev/transports/phuslu/v2"
 )
 

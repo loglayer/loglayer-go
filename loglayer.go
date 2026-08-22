@@ -29,15 +29,17 @@ type Transport interface {
 // [TransportParams.Data] precisely (e.g. find the error map at
 // Schema.ErrorFieldName) and decide their own metadata placement.
 //
-// All four fields are populated from the matching keys on [Config]:
-// FieldsKey, MetadataFieldName, ErrorFieldName, Source.FieldName.
+// All five fields are populated from the matching keys on [Config]:
+// FieldsKey, MetadataFieldName, ErrorFieldName, SourceFieldName.
 type Schema struct {
 	// FieldsKey is non-empty when the persistent fields are nested under
 	// this key inside Data. When empty, fields are merged at root.
 	FieldsKey string
-	// MetadataFieldName is non-empty when the entry's metadata should
-	// nest under this key uniformly (both map and non-map values).
-	// When empty, each transport applies its default placement policy.
+	// MetadataFieldName is the key under which the entry's metadata nests
+	// uniformly (both map and non-map values). Defaults to "metadata" in
+	// [Config]; empty only when [Config.FlattenMetadata] opts into the v2
+	// placement policy, in which case each transport applies its own
+	// placement.
 	MetadataFieldName string
 	// ErrorFieldName is the key under which the serialized error map
 	// lives in Data. Always populated; defaults to "err".
@@ -193,6 +195,10 @@ func build(config Config) (*LogLayer, error) {
 
 	if config.Source.FieldName == "" {
 		l.config.Source.FieldName = "source"
+	}
+
+	if config.MetadataFieldName == "" && !config.FlattenMetadata {
+		l.config.MetadataFieldName = "metadata"
 	}
 
 	if config.Level != 0 {

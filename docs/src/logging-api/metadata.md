@@ -7,7 +7,7 @@ description: "Per-log structured data: maps, structs, or any value."
 
 Metadata attaches structured data to a single log entry. Unlike [fields](/logging-api/fields), it does not persist. Once the entry is emitted, the metadata is discarded.
 
-`WithMetadata` accepts **any** value. The core logger does no conversion; the transport decides how to serialize. Two shapes dominate: map metadata flattens to root keys; struct metadata is JSON-roundtripped so its fields also merge at the root. When `MetadataFieldName` is set on the core config, the whole metadata value nests under that key instead (see [MetadataFieldName](/configuration#metadatafieldname)).
+`WithMetadata` accepts **any** value. The core logger does no conversion; the transport decides how to serialize. In v3, **all** metadata, map or struct, nests under `"metadata"` by default: an empty `Config.MetadataFieldName` resolves to `"metadata"`. v2 placed map metadata at the root and gave non-map values mixed treatment (nested under a hardcoded key in wrapper transports, roundtripped at the root in renderers). Set `Config.FlattenMetadata: true` to restore that v2 shape. See [MetadataFieldName](/configuration#metadatafieldname) and [FlattenMetadata](/configuration#flattenmetadata).
 
 ## Struct vs Map: pick the right shape
 
@@ -32,7 +32,7 @@ log.WithMetadata(RequestInfo{
 ```
 
 ```json
-{"msg":"request handled","method":"POST","path":"/users","duration_ms":45}
+{"msg":"request handled","metadata":{"method":"POST","path":"/users","duration_ms":45}}
 ```
 
 This is the cheaper path on hot code: see [Benchmarks](/benchmarks) for the numbers (struct metadata is ~3 fewer allocations per emission than the map literal below).
@@ -54,6 +54,7 @@ The `loglayer.Metadata` named type lets the compiler distinguish it from `Fields
 ```go
 log.WithMetadata(loglayer.Metadata{"userId": 42}).Info("user")
 log.WithMetadata(map[string]any{"userId": 42}).Info("user")
+// both render as {"msg":"user","metadata":{"userId":42}}
 ```
 
 Prefer `loglayer.Metadata` throughout your code so the compiler can flag mix-ups with `Fields`.
@@ -70,7 +71,7 @@ Use whichever you prefer; both compile to the same `map[string]any`.
 LogLayer doesn't clone the map you pass to `WithMetadata`. Mutating it after the call (e.g. reusing the same map for the next emission with a tweak) can bleed into the previous log when a transport retains the value. Build a fresh map per call, or treat the value as read-only once handed off. Structs sidestep this entirely.
 :::
 
-[`MetadataFieldName`](/configuration#metadatafieldname) (set on `loglayer.Config`) nests **both** map and non-map metadata under a single configurable key uniformly across every transport. When unset, each transport keeps its existing default placement policy: renderers flatten map metadata at the root, wrappers flatten map metadata as individual attributes and nest non-map values under a hardcoded `"metadata"` key. See each transport's page for its rendering rules, or [Creating Transports → Handling `any` Metadata](/transports/creating-transports#handling-any-metadata) for the placement policies.
+[`MetadataFieldName`](/configuration#metadatafieldname) (set on `loglayer.Config`) nests **both** map and non-map metadata under a single configurable key uniformly across every transport. When unset, the core resolves it to `"metadata"`; set `Config.FlattenMetadata: true` to restore the per-transport v2 placement policies (renderers flatten map metadata at the root, wrappers flatten map metadata as individual attributes and nest non-map values under a hardcoded `"metadata"` key). See each transport's page for its rendering rules, or [Creating Transports → Handling `any` Metadata](/transports/creating-transports#handling-any-metadata) for the placement policies.
 
 ## Building the Value First
 
@@ -134,13 +135,15 @@ The default level is `Info`. Passing `nil` is a no-op.
 `MetadataOnly` is the KV-only idiom: entries with data but no message. The [Structured Transport](/transports/structured) emits them as JSON objects, and for the terminal renderers the [CLI Transport](/transports/cli) renders them as `key=value` pairs only when `Config.ShowFields` is set.
 
 ```go
-// structured: {"level":"info","time":"...","msg":"","status":"healthy","memory":"512MB"}
-// console (always) / cli (with ShowFields): memory=512MB status=healthy
+// structured: {"level":"info","time":"...","msg":"","metadata":{"status":"healthy","memory":"512MB"}}
+// console (always) / cli (with ShowFields): metadata=... (nested as a value under the metadata key)
 log.MetadataOnly(loglayer.Metadata{
     "status": "healthy",
     "memory": "512MB",
 })
 ```
+
+`MetadataOnly` emits an entry with no message: the assembled output carries the level and the metadata value, with no message text. The structured transport renders the empty message as `"msg":""` today; omitting `msg` for empty messages ships with the structured transport's v3 release.
 
 The same shape is available with persistent fields: `log.WithFields(...).Info("")` produces an entry with fields but no message. Prefer `MetadataOnly` for per-event data, `WithFields(...).Info("")` when the keys belong to the logger's persistent bag.
 

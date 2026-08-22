@@ -1,1 +1,1 @@
-The placement key for non-map metadata is controlled by the core via [`MetadataFieldName`](/configuration#metadatafieldname). When unset, this transport defaults to nesting non-map metadata under `"metadata"`.
+The core nests the entry's metadata under [`MetadataFieldName`](/configuration#metadatafieldname) (default `"metadata"`; set `Config.FlattenMetadata: true` to restore per-transport v2 placement). This transport honors that key.

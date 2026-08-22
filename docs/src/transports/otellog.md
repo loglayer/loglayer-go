@@ -27,7 +27,7 @@ If your app has already registered an OTel `LoggerProvider` globally (the common
 
 ```go
 import (
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/otellog/v2"
 )
 
