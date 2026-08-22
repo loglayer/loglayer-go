@@ -203,6 +203,9 @@ func testMapMetadataMerged(t *testing.T, c ContractCase) {
 	// FieldsKey is set, so the wrapper may merge the map at root (no
 	// dedup needed; the reserved key never collides with field keys).
 	// Accept either placement; both are legitimate under the default.
+	// The default shape itself (nesting under "metadata" with zero-value
+	// FactoryOpts) is pinned by TestRunContract_FlattenOptOutIsDistinct
+	// in contract_test.go.
 	nested, haveNested := md.(map[string]any)
 	if haveNested && (nested["requestId"] != "xyz" || nested["n"] != float64(42)) {
 		t.Errorf("nested metadata: got %v", nested)

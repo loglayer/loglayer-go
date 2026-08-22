@@ -100,7 +100,7 @@ func TestRunContract_FakeTransport(t *testing.T) {
 // test only emits Info.
 func TestRunContract_FlattenOptOutIsDistinct(t *testing.T) {
 	buf := &bytes.Buffer{}
-	tr := &fakeTransport{BaseTransport: transport.NewBaseTransport(transport.BaseConfig{Level: transporttest.FactoryOpts{}.Level}), buf: buf}
+	tr := &fakeTransport{BaseTransport: transport.NewBaseTransport(transport.BaseConfig{}), buf: buf}
 	log := transporttest.NewLogger(tr, transporttest.FactoryOpts{}) // zero value: FlattenMetadata false
 	log.WithMetadata(loglayer.Metadata{"requestId": "xyz"}).Info("req")
 
