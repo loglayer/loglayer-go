@@ -16,6 +16,10 @@ go get go.loglayer.dev/v3
 go get go.loglayer.dev/transports/structured/v2
 ```
 
+::: warning Interim state: transports are still on v2
+This release moves the core to `go.loglayer.dev/v3`; the transports keep their `v2` paths until the follow-up release that bumps them to `v3`. Until then, the examples below that pair the v3 core with a `v2` transport path do not compile together. Install the v3 core alone first, or wait for the transport v3 bumps before copying the full examples.
+:::
+
 Transports and plugins keep their own versioned paths; the structured transport moves to `/v3` in a follow-up release.
 
 ## Basic Usage with the Structured Transport

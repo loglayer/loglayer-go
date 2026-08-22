@@ -16,6 +16,10 @@ LogLayer for Go has shipped two major versions. Each upgrade is a short checklis
 
 This section covers the core (`go.loglayer.dev/v3`); the import-path notes also apply to the core's sub-packages (`/v3/transport`, `/v3/utils/...`).
 
+::: warning Transports are still on v2 in this release
+The transports keep their `v2` paths until the follow-up release that bumps them to `v3`. Until then, code that pairs the v3 core with a `v2` transport path does not compile together. Migrate the core first, then the transports when their v3 bumps land.
+:::
+
 ### Do I have to migrate?
 
 Not immediately. v2.x continues to work; the v2 module path (`go.loglayer.dev/v2`) keeps resolving to its last v2 tag and the v2 metadata placement stays intact there. Future feature work and bug fixes ship at v3 (`go.loglayer.dev/v3`), so the migration is the path forward but it's not on a deadline.

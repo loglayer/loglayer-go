@@ -21,6 +21,10 @@
 //	    WithMetadata(loglayer.Metadata{"durationMs": 42}).
 //	    Info("served")
 //
+// Note: transports are still at their v2 paths in this release; the combo
+// above compiles once the transport v3 bumps land in the follow-up release.
+// Install go.loglayer.dev/v3 alone first, or wait for those bumps.
+//
 // # Three data shapes
 //
 // LogLayer separates persistent from per-call data on purpose. Pick the
