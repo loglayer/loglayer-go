@@ -2,7 +2,7 @@
 // output rather than diagnostic logging.
 //
 // What makes it different from the other terminal-shaped transports
-// ([go.loglayer.dev/transports/console/v2], [go.loglayer.dev/transports/pretty/v2]):
+// ([go.loglayer.dev/transports/console/v3], [go.loglayer.dev/transports/pretty/v3]):
 //
 //   - No timestamp, no log-id, no level label embedded in info/debug
 //     output. The message string is printed as-is.
@@ -23,10 +23,10 @@
 // What this transport is NOT:
 //
 //   - A diagnostic logger. If you want timestamps and structured
-//     fields, use [go.loglayer.dev/transports/console/v2] or
-//     [go.loglayer.dev/transports/pretty/v2].
+//     fields, use [go.loglayer.dev/transports/console/v3] or
+//     [go.loglayer.dev/transports/pretty/v3].
 //   - A JSON formatter. Pair this transport with a swap to
-//     [go.loglayer.dev/transports/structured/v2] when the CLI's
+//     [go.loglayer.dev/transports/structured/v3] when the CLI's
 //     `--json` flag is set.
 //
 // Recommended plugin pairings:

@@ -20,7 +20,7 @@
 //	    ddtracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 //	    "go.loglayer.dev/v3"
 //	    "go.loglayer.dev/plugins/datadogtrace/v2"
-//	    "go.loglayer.dev/transports/structured/v2"
+//	    "go.loglayer.dev/transports/structured/v3"
 //	)
 //
 //	ddtracer.Start(ddtracer.WithService("checkout-api"))

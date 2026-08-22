@@ -6,7 +6,7 @@ import (
 	stdlibslog "log/slog"
 	"testing"
 
-	llslog "go.loglayer.dev/transports/slog/v2"
+	llslog "go.loglayer.dev/transports/slog/v3"
 	"go.loglayer.dev/v3"
 	"go.loglayer.dev/v3/transport"
 	"go.loglayer.dev/v3/transport/transporttest"

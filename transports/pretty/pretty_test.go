@@ -9,7 +9,7 @@ import (
 
 	"github.com/fatih/color"
 
-	"go.loglayer.dev/transports/pretty/v2"
+	"go.loglayer.dev/transports/pretty/v3"
 	"go.loglayer.dev/v3"
 	"go.loglayer.dev/v3/transport"
 )

@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"go.loglayer.dev/transports/lumberjack/v2"
+	"go.loglayer.dev/transports/lumberjack/v3"
 	"go.loglayer.dev/v3"
 	"go.loglayer.dev/v3/transport"
 	"go.loglayer.dev/v3/transport/transporttest"

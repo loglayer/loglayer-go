@@ -3,7 +3,7 @@ package zap_test
 import (
 	"io"
 
-	"go.loglayer.dev/transports/zap/v2"
+	"go.loglayer.dev/transports/zap/v3"
 	"go.loglayer.dev/v3"
 )
 

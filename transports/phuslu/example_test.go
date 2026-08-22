@@ -3,7 +3,7 @@ package phuslu_test
 import (
 	"io"
 
-	"go.loglayer.dev/transports/phuslu/v2"
+	"go.loglayer.dev/transports/phuslu/v3"
 	"go.loglayer.dev/v3"
 )
 

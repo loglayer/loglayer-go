@@ -3,7 +3,7 @@ package gcplogging_test
 import (
 	"cloud.google.com/go/logging"
 
-	"go.loglayer.dev/transports/gcplogging/v2"
+	"go.loglayer.dev/transports/gcplogging/v3"
 	"go.loglayer.dev/v3"
 )
 

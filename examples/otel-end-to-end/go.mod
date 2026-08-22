@@ -5,14 +5,14 @@ go 1.25.0
 replace (
 	go.loglayer.dev/plugins/oteltrace/v2 => ../../plugins/oteltrace
 	go.loglayer.dev/plugins/plugintest/v2 => ../../plugins/plugintest
-	go.loglayer.dev/transports/otellog/v2 => ../../transports/otellog
-	go.loglayer.dev/transports/testing/v2 => ../../transports/testing
+	go.loglayer.dev/transports/otellog/v3 => ../../transports/otellog
+	go.loglayer.dev/transports/testing/v3 => ../../transports/testing
 	go.loglayer.dev/v3 => ../..
 )
 
 require (
 	go.loglayer.dev/plugins/oteltrace/v2 v2.0.0-00010101000000-000000000000
-	go.loglayer.dev/transports/otellog/v2 v2.0.0-00010101000000-000000000000
+	go.loglayer.dev/transports/otellog/v3 v3.0.0-00010101000000-000000000000
 	go.loglayer.dev/v3 v3.0.0
 	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/exporters/stdout/stdoutlog v0.19.0

@@ -6,7 +6,7 @@ import (
 
 	clog "github.com/charmbracelet/log"
 
-	llcharm "go.loglayer.dev/transports/charmlog/v2"
+	llcharm "go.loglayer.dev/transports/charmlog/v3"
 	"go.loglayer.dev/v3"
 	"go.loglayer.dev/v3/transport"
 	"go.loglayer.dev/v3/transport/transporttest"

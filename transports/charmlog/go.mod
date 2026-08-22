@@ -1,4 +1,4 @@
-module go.loglayer.dev/transports/charmlog/v2
+module go.loglayer.dev/transports/charmlog/v3
 
 go 1.25.0
 

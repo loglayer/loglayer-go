@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"go.loglayer.dev/plugins/sampling/v2"
-	lltesting "go.loglayer.dev/transports/testing/v2"
+	lltesting "go.loglayer.dev/transports/testing/v3"
 	"go.loglayer.dev/v3"
 )
 

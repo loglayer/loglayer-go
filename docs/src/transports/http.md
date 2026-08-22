@@ -14,7 +14,7 @@ This transport keeps its `v2` path and its pre-v3 metadata placement for this re
 :::
 
 ```sh
-go get go.loglayer.dev/transports/http/v2
+go get go.loglayer.dev/transports/http/v3
 ```
 
 The directory is `transports/http`; the package name is `httptransport` to avoid colliding with `net/http`.
@@ -26,7 +26,7 @@ import (
     "os"
 
     "go.loglayer.dev/v3"
-    httptr "go.loglayer.dev/transports/http/v2"
+    httptr "go.loglayer.dev/transports/http/v3"
 )
 
 tr := httptr.New(httptr.Config{

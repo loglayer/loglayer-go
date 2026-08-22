@@ -12,7 +12,7 @@ The `pretty` transport renders log entries with ANSI color, theme support, and t
 **This is the recommended transport for local development and any human-readable terminal output.** For production logging, switch to [structured](/transports/structured), [zerolog](/transports/zerolog), or [zap](/transports/zap).
 
 ```sh
-go get go.loglayer.dev/transports/pretty/v2
+go get go.loglayer.dev/transports/pretty/v3
 ```
 
 This transport pulls in `github.com/fatih/color` for ANSI handling.
@@ -22,7 +22,7 @@ This transport pulls in `github.com/fatih/color` for ANSI handling.
 ```go
 import (
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/transports/pretty/v2"
+    "go.loglayer.dev/transports/pretty/v3"
 )
 
 log := loglayer.New(loglayer.Config{
@@ -114,7 +114,7 @@ A `*pretty.Theme` is just a struct of `Style` functions (`func(string) string`).
 import (
     "github.com/fatih/color"
 
-    "go.loglayer.dev/transports/pretty/v2"
+    "go.loglayer.dev/transports/pretty/v3"
 )
 
 // Style is func(string) string; fatih/color's SprintFunc returns

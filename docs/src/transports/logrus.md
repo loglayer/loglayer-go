@@ -10,7 +10,7 @@ description: Wrap a github.com/sirupsen/logrus logger with LogLayer.
 Wraps an existing `*logrus.Logger`. Map metadata flattens via `Entry.WithFields`; struct metadata lands under a configurable key.
 
 ```sh
-go get go.loglayer.dev/transports/logrus/v2
+go get go.loglayer.dev/transports/logrus/v3
 go get github.com/sirupsen/logrus
 ```
 
@@ -23,7 +23,7 @@ import (
     "github.com/sirupsen/logrus"
 
     "go.loglayer.dev/v3"
-    lllogrus "go.loglayer.dev/transports/logrus/v2"
+    lllogrus "go.loglayer.dev/transports/logrus/v3"
 )
 
 l := logrus.New()

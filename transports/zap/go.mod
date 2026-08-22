@@ -1,4 +1,4 @@
-module go.loglayer.dev/transports/zap/v2
+module go.loglayer.dev/transports/zap/v3
 
 go 1.25.0
 

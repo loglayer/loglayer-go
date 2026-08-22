@@ -4,15 +4,15 @@ go 1.25.0
 
 replace (
 	go.loglayer.dev/transports/datadog/v2 => ../../transports/datadog
-	go.loglayer.dev/transports/http/v2 => ../../transports/http
-	go.loglayer.dev/transports/pretty/v2 => ../../transports/pretty
+	go.loglayer.dev/transports/http/v3 => ../../transports/http
+	go.loglayer.dev/transports/pretty/v3 => ../../transports/pretty
 	go.loglayer.dev/v3 => ../..
 )
 
 require (
 	go.loglayer.dev/transports/datadog/v2 v2.0.0-00010101000000-000000000000
-	go.loglayer.dev/transports/http/v2 v2.0.1
-	go.loglayer.dev/transports/pretty/v2 v2.0.0-00010101000000-000000000000
+	go.loglayer.dev/transports/http/v3 v3.0.0-00010101000000-000000000000
+	go.loglayer.dev/transports/pretty/v3 v3.0.0-00010101000000-000000000000
 	go.loglayer.dev/v3 v3.0.0
 )
 

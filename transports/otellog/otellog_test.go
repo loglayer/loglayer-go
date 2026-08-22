@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"go.loglayer.dev/transports/otellog/v2"
+	"go.loglayer.dev/transports/otellog/v3"
 	"go.loglayer.dev/v3"
 	"go.loglayer.dev/v3/transport"
 	otelapi "go.opentelemetry.io/otel/log"

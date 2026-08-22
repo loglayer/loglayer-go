@@ -6,7 +6,7 @@ import (
 
 	logrusbase "github.com/sirupsen/logrus"
 
-	lllogrus "go.loglayer.dev/transports/logrus/v2"
+	lllogrus "go.loglayer.dev/transports/logrus/v3"
 	"go.loglayer.dev/v3"
 	"go.loglayer.dev/v3/transport"
 	"go.loglayer.dev/v3/transport/transporttest"

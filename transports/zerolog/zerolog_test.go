@@ -6,7 +6,7 @@ import (
 
 	zlog "github.com/rs/zerolog"
 
-	llzero "go.loglayer.dev/transports/zerolog/v2"
+	llzero "go.loglayer.dev/transports/zerolog/v3"
 	"go.loglayer.dev/v3"
 	"go.loglayer.dev/v3/transport"
 	"go.loglayer.dev/v3/transport/transporttest"

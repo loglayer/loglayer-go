@@ -3,7 +3,7 @@ package console_test
 import (
 	"os"
 
-	"go.loglayer.dev/transports/console/v2"
+	"go.loglayer.dev/transports/console/v3"
 	"go.loglayer.dev/v3"
 )
 

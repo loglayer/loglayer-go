@@ -10,13 +10,13 @@
 //
 // The package name is otellog (not otel) to avoid a name collision with
 // go.opentelemetry.io/otel. Import path is
-// go.loglayer.dev/transports/otellog/v2.
+// go.loglayer.dev/transports/otellog/v3.
 //
 // Wiring with the global LoggerProvider (most common):
 //
 //	import (
 //	    "go.loglayer.dev/v3"
-//	    "go.loglayer.dev/transports/otellog/v2"
+//	    "go.loglayer.dev/transports/otellog/v3"
 //	)
 //
 //	tr := otellog.New(otellog.Config{Name: "checkout-api"})

@@ -12,7 +12,7 @@ import (
 	"github.com/fatih/color"
 	"golang.org/x/sys/unix"
 
-	clitr "go.loglayer.dev/transports/cli/v2"
+	clitr "go.loglayer.dev/transports/cli/v3"
 	"go.loglayer.dev/v3"
 )
 

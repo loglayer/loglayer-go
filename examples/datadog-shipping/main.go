@@ -18,8 +18,8 @@ import (
 	"time"
 
 	"go.loglayer.dev/transports/datadog/v2"
-	httptr "go.loglayer.dev/transports/http/v2"
-	"go.loglayer.dev/transports/pretty/v2"
+	httptr "go.loglayer.dev/transports/http/v3"
+	"go.loglayer.dev/transports/pretty/v3"
 	"go.loglayer.dev/v3"
 	"go.loglayer.dev/v3/transport"
 )

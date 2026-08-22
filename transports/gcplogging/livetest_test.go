@@ -28,7 +28,7 @@ import (
 
 	"cloud.google.com/go/logging"
 
-	"go.loglayer.dev/transports/gcplogging/v2"
+	"go.loglayer.dev/transports/gcplogging/v3"
 	"go.loglayer.dev/v3/transport/transporttest"
 	"go.loglayer.dev/v3/utils/idgen"
 )

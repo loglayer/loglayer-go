@@ -9,14 +9,14 @@ description: Emit LogLayer entries to an OpenTelemetry log.Logger.
 
 Emits each entry as an OpenTelemetry [`log.Record`](https://pkg.go.dev/go.opentelemetry.io/otel/log#Record) on a `log.Logger`. Use this when your service is wired against the OpenTelemetry SDK and you want LogLayer entries to flow through the same pipeline (OTLP exporter, Collector, observability backend) as your traces and metrics.
 
-The package name is `otellog` to avoid colliding with `go.opentelemetry.io/otel`. Import path: `go.loglayer.dev/transports/otellog/v2`.
+The package name is `otellog` to avoid colliding with `go.opentelemetry.io/otel`. Import path: `go.loglayer.dev/transports/otellog/v3`.
 
 ```sh
-go get go.loglayer.dev/transports/otellog/v2
+go get go.loglayer.dev/transports/otellog/v3
 ```
 
 ::: info Separate module
-`transports/otellog` ships as its own Go module (`go.loglayer.dev/transports/otellog/v2`) so the OpenTelemetry SDK's transitive Go-version requirement doesn't bind the main `go.loglayer.dev/v2` module. Users who don't import the OTel transport never see its dependency graph.
+`transports/otellog` ships as its own Go module (`go.loglayer.dev/transports/otellog/v3`) so the OpenTelemetry SDK's transitive Go-version requirement doesn't bind the main `go.loglayer.dev/v2` module. Users who don't import the OTel transport never see its dependency graph.
 
 Requires **Go 1.25+** because that's the floor of the upstream `go.opentelemetry.io/otel/sdk/log` packages this transport binds against.
 :::
@@ -28,7 +28,7 @@ If your app has already registered an OTel `LoggerProvider` globally (the common
 ```go
 import (
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/transports/otellog/v2"
+    "go.loglayer.dev/transports/otellog/v3"
 )
 
 tr := otellog.New(otellog.Config{Name: "checkout-api"})
@@ -54,7 +54,7 @@ import (
     "go.opentelemetry.io/otel/sdk/resource"
     semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 
-    "go.loglayer.dev/transports/otellog/v2"
+    "go.loglayer.dev/transports/otellog/v3"
 )
 
 res := resource.NewSchemaless(

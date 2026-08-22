@@ -12,11 +12,11 @@ The `transports/testing` package is the transport you want in test code: it capt
 For a usage walkthrough see the [Mocking](/logging-api/mocking) page in the logging API section. This page covers the package surface.
 
 ```sh
-go get go.loglayer.dev/transports/testing/v2
+go get go.loglayer.dev/transports/testing/v3
 ```
 
 ```go
-import lltest "go.loglayer.dev/transports/testing/v2"
+import lltest "go.loglayer.dev/transports/testing/v3"
 ```
 
 (The package name is `testing`, which collides with the standard `testing` package, most users alias the import as `lltest`.)

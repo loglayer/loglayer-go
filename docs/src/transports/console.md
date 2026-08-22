@@ -16,7 +16,7 @@ The console transport is intentionally minimal. For day-to-day local development
 For production logging, use the [structured](/transports/structured) transport or one of the [logger wrappers](/transports/zerolog).
 
 ```sh
-go get go.loglayer.dev/transports/console/v2
+go get go.loglayer.dev/transports/console/v3
 ```
 
 ## Basic Usage
@@ -24,7 +24,7 @@ go get go.loglayer.dev/transports/console/v2
 ```go
 import (
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/transports/console/v2"
+    "go.loglayer.dev/transports/console/v3"
 )
 
 log := loglayer.New(loglayer.Config{

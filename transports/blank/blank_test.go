@@ -4,7 +4,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"go.loglayer.dev/transports/blank/v2"
+	"go.loglayer.dev/transports/blank/v3"
 	"go.loglayer.dev/v3"
 	"go.loglayer.dev/v3/transport"
 )

@@ -9,10 +9,10 @@ description: "Forward LogLayer entries to Axiom via github.com/axiomhq/axiom-go.
 
 Ships structured logs to [Axiom](https://axiom.co) using the official [axiom-go SDK](https://github.com/axiomhq/axiom-go). The transport constructs a JSON object from each entry and sends it via `Client.Ingest()` as NDJSON.
 
-Import path: `go.loglayer.dev/transports/axiom/v2`. Package name: `axiom`.
+Import path: `go.loglayer.dev/transports/axiom/v3`. Package name: `axiom`.
 
 ```sh
-go get go.loglayer.dev/transports/axiom/v2
+go get go.loglayer.dev/transports/axiom/v3
 ```
 
 ## Authenticating
@@ -32,7 +32,7 @@ The dataset is set on the transport via `Config.DatasetName`, not an env var.
 import (
     axiomgo "github.com/axiomhq/axiom-go/axiom"
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/transports/axiom/v2"
+    "go.loglayer.dev/transports/axiom/v3"
 )
 
 // The client picks up AXIOM_TOKEN (and AXIOM_ORG_ID for personal tokens)
@@ -56,7 +56,7 @@ log := loglayer.New(loglayer.Config{
 import (
     axiomgo "github.com/axiomhq/axiom-go/axiom"
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/transports/axiom/v2"
+    "go.loglayer.dev/transports/axiom/v3"
 )
 
 client, err := axiomgo.NewClient(

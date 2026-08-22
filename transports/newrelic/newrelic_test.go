@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	httptr "go.loglayer.dev/transports/http/v2"
+	httptr "go.loglayer.dev/transports/http/v3"
 	"go.loglayer.dev/transports/newrelic"
 	"go.loglayer.dev/v3"
 	"go.loglayer.dev/v3/transport"

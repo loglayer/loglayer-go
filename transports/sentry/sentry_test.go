@@ -9,7 +9,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/getsentry/sentry-go/attribute"
 
-	sentrytransport "go.loglayer.dev/transports/sentry/v2"
+	sentrytransport "go.loglayer.dev/transports/sentry/v3"
 	"go.loglayer.dev/v3"
 	"go.loglayer.dev/v3/transport"
 )

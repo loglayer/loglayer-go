@@ -16,7 +16,7 @@ import (
 
 	"go.loglayer.dev/plugins/oteltrace/v2"
 	"go.loglayer.dev/plugins/plugintest/v2"
-	lltest "go.loglayer.dev/transports/testing/v2"
+	lltest "go.loglayer.dev/transports/testing/v3"
 	"go.loglayer.dev/v3"
 	"go.opentelemetry.io/otel/baggage"
 	otrace "go.opentelemetry.io/otel/trace"

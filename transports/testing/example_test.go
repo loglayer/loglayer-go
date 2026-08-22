@@ -3,7 +3,7 @@ package testing_test
 import (
 	"fmt"
 
-	lltesting "go.loglayer.dev/transports/testing/v2"
+	lltesting "go.loglayer.dev/transports/testing/v3"
 	"go.loglayer.dev/v3"
 )
 

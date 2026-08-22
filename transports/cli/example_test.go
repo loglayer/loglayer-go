@@ -5,7 +5,7 @@ import (
 
 	"github.com/fatih/color"
 
-	clitr "go.loglayer.dev/transports/cli/v2"
+	clitr "go.loglayer.dev/transports/cli/v3"
 	"go.loglayer.dev/v3"
 )
 

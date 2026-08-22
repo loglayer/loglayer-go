@@ -19,7 +19,7 @@ import (
 
 	"github.com/goccy/go-json"
 
-	httptr "go.loglayer.dev/transports/http/v2"
+	httptr "go.loglayer.dev/transports/http/v3"
 	"go.loglayer.dev/v3"
 	"go.loglayer.dev/v3/transport"
 )

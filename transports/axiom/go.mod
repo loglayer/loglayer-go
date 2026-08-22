@@ -1,4 +1,4 @@
-module go.loglayer.dev/transports/axiom/v2
+module go.loglayer.dev/transports/axiom/v3
 
 go 1.25.0
 

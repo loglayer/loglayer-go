@@ -1,4 +1,4 @@
-module go.loglayer.dev/transports/gcplogging/v2
+module go.loglayer.dev/transports/gcplogging/v3
 
 go 1.25.0
 

@@ -1,7 +1,7 @@
 package httptransport_test
 
 import (
-	httptransport "go.loglayer.dev/transports/http/v2"
+	httptransport "go.loglayer.dev/transports/http/v3"
 	"go.loglayer.dev/v3"
 )
 

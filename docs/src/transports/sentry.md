@@ -9,10 +9,10 @@ description: Forward LogLayer entries to a sentry.Logger.
 
 Forwards each entry to a caller-supplied [`sentry.Logger`](https://pkg.go.dev/github.com/getsentry/sentry-go#Logger), Sentry's structured-logs API. Use this when you've already wired Sentry into your service for error reporting and want LogLayer entries to flow through the same pipeline.
 
-The package directory is `transports/sentry`; the package name is `sentrytransport` to avoid colliding with the imported `sentry` identifier. Import path: `go.loglayer.dev/transports/sentry/v2`.
+The package directory is `transports/sentry`; the package name is `sentrytransport` to avoid colliding with the imported `sentry` identifier. Import path: `go.loglayer.dev/transports/sentry/v3`.
 
 ```sh
-go get go.loglayer.dev/transports/sentry/v2
+go get go.loglayer.dev/transports/sentry/v3
 go get github.com/getsentry/sentry-go
 ```
 
@@ -40,7 +40,7 @@ import (
     "github.com/getsentry/sentry-go"
 
     "go.loglayer.dev/v3"
-    sentrytransport "go.loglayer.dev/transports/sentry/v2"
+    sentrytransport "go.loglayer.dev/transports/sentry/v3"
 )
 
 // Initialize Sentry as you normally would.
@@ -95,7 +95,7 @@ Each map entry becomes a typed Sentry attribute via the matching `LogEntry` sett
 Non-map metadata (structs, scalars, slices) is JSON-encoded and stored under a single configurable attribute key. The default key is `"metadata"`:
 
 ```go
-import sentrytransport "go.loglayer.dev/transports/sentry/v2"
+import sentrytransport "go.loglayer.dev/transports/sentry/v3"
 
 tr := sentrytransport.New(sentrytransport.Config{
     Logger: sentry.NewLogger(ctx),
