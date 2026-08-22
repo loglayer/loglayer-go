@@ -62,7 +62,7 @@ log.Warn("everywhere")  // both
 
 ## Transport IDs
 
-Every transport has an `ID()` method; set it at construction via `transport.BaseConfig{ID: ...}`. When empty, a random ID is assigned, so `RemoveTransport` / `GetLoggerInstance` by ID silently under-delivers: `RemoveTransport` returns `false`, `GetLoggerInstance` returns `nil`, and the transport stays in the dispatch list. Confirm the assigned ID with the constructed transport's `ID()` before relying on it.
+Every transport has an `ID()` method; set it at construction via `transport.BaseConfig{ID: ...}`. When empty, a random ID is assigned, so `RemoveTransport` / `GetLoggerInstance` by ID silently under-delivers: `RemoveTransport` returns `false`, `GetLoggerInstance` returns `nil`, and the transport stays in the dispatch list. Confirm the assigned ID with the constructed transport's `ID()` before relying on it. Keep the constructed transport handle: `*LogLayer` offers no ID-lookup method, so once the transport is handed to the config, its ID is unrecoverable from the logger.
 
 The example below sets `ID: "ship"` at construction, then removes that transport at runtime with the same string:
 

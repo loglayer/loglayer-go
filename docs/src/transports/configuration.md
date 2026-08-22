@@ -51,7 +51,7 @@ console.New(console.Config{
 
 ## Transport IDs
 
-Every transport has an `ID()` method; set the ID at construction via `transport.BaseConfig{ID: ...}`. Every transport's `New` returns a `*Transport` wrapping its `BaseTransport`, so when the ID is empty the constructed value carries the auto-generated ID (`auto-transport-<hex>`) and you can read it back from `ID()` before wiring the transport into the logger. If you later call `RemoveTransport(id)` or `GetLoggerInstance(id)` with the wrong string, the call silently under-delivers: `RemoveTransport` returns `false`, `GetLoggerInstance` returns `nil`, and the transport stays in the dispatch list. Confirm the assigned ID with `tr.ID()` before relying on it.
+Every transport has an `ID()` method; set the ID at construction via `transport.BaseConfig{ID: ...}`. Every transport's `New` returns a `*Transport` wrapping its `BaseTransport`, so when the ID is empty the constructed value carries the auto-generated ID (`auto-transport-<hex>`) and you can read it back from `ID()` before wiring the transport into the logger. If you later call `RemoveTransport(id)` or `GetLoggerInstance(id)` with the wrong string, the call silently under-delivers: `RemoveTransport` returns `false`, `GetLoggerInstance` returns `nil`, and the transport stays in the dispatch list. Confirm the assigned ID with `tr.ID()` before relying on it. Keep the constructed transport handle: `*LogLayer` offers no ID-lookup method, so once the transport is handed to the config, its ID is unrecoverable from the logger.
 
 The base config lives in the shared `transport` package. Import it alongside the transport:
 

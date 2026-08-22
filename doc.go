@@ -2,7 +2,8 @@
 // fluent builder API. The core defines the LogLayer type, the Transport
 // and Plugin interfaces, and the dispatch pipeline. Concrete transports
 // (zap, zerolog, slog, charmlog, OTel, etc.) ship as separately-versioned
-// sub-modules under go.loglayer.dev/transports/<name>.
+// sub-modules under go.loglayer.dev/transports/<name>, with a /vN suffix
+// for sub-modules on their own major version (e.g. transports/structured/v2).
 //
 // Full docs: https://go.loglayer.dev
 //
@@ -10,7 +11,7 @@
 //
 //	import (
 //	    "go.loglayer.dev/v3"
-//	    "go.loglayer.dev/transports/structured"
+//	    "go.loglayer.dev/transports/structured/v2"
 //	)
 //
 //	log := loglayer.New(loglayer.Config{
