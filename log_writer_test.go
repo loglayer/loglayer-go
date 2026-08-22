@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 )
 
 func TestWriter_BasicEmission(t *testing.T) {

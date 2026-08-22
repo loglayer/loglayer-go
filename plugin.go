@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"go.loglayer.dev/v2/utils/idgen"
+	"go.loglayer.dev/v3/utils/idgen"
 )
 
 // Plugin is the base contract every plugin satisfies. A plugin participates

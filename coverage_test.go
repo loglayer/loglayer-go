@@ -9,7 +9,7 @@ import (
 	"errors"
 	"testing"
 
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 )
 
 func TestBuild_NoTransport(t *testing.T) {

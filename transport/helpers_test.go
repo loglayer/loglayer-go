@@ -6,9 +6,9 @@ import (
 	"reflect"
 	"testing"
 
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
-	"go.loglayer.dev/v2/utils/sanitize"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
+	"go.loglayer.dev/v3/utils/sanitize"
 )
 
 // Unicode control characters used in tests to verify sanitization.

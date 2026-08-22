@@ -15,8 +15,8 @@ package loglayer_test
 import (
 	"testing"
 
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport/benchtest"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport/benchtest"
 )
 
 type noopTransport struct{}

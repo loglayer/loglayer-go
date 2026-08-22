@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport/transporttest"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport/transporttest"
 )
 
 func TestWithError(t *testing.T) {

@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"os"
 
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
 )
 
 // fakeBackend is a stand-in for a real attribute-aware logger. It accepts

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 )
 
 // FactoryOpts lets the contract drive a wrapper's Config knobs without

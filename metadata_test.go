@@ -3,7 +3,7 @@ package loglayer_test
 import (
 	"testing"
 
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/v3"
 )
 
 func TestWithMetadataMap(t *testing.T) {
