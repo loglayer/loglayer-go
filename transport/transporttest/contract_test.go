@@ -58,10 +58,14 @@ func (t *fakeTransport) SendToLogger(params loglayer.TransportParams) {
 	t.buf.WriteByte('\n')
 }
 
+// fakeFactory mirrors how real wrapper factories translate FactoryOpts.Level
+// onto their transport: the fake's BaseConfig must carry it, or
+// ShouldProcess defaults to accepting every level and the contract's
+// LevelFiltering case (FactoryOpts{Level: LogLevelError}) fails.
 func fakeFactory() transporttest.Factory {
 	return func(opts transporttest.FactoryOpts) (*loglayer.LogLayer, *bytes.Buffer) {
 		buf := &bytes.Buffer{}
-		tr := &fakeTransport{BaseTransport: transport.NewBaseTransport(transport.BaseConfig{}), buf: buf}
+		tr := &fakeTransport{BaseTransport: transport.NewBaseTransport(transport.BaseConfig{Level: opts.Level}), buf: buf}
 		return transporttest.NewLogger(tr, opts), buf
 	}
 }
@@ -91,9 +95,12 @@ func TestRunContract_FakeTransport(t *testing.T) {
 // default (zero-value) FactoryOpts, must nest map metadata under
 // "metadata" rather than merge it at the root. The opt-out case itself
 // asserts the root-merge side, so this pair pins the whole default flip.
+// Level needs no explicit opt here: BaseConfig.Level zero maps to
+// LogLevelTrace in NewBaseTransport, which accepts every level, and this
+// test only emits Info.
 func TestRunContract_FlattenOptOutIsDistinct(t *testing.T) {
 	buf := &bytes.Buffer{}
-	tr := &fakeTransport{BaseTransport: transport.NewBaseTransport(transport.BaseConfig{}), buf: buf}
+	tr := &fakeTransport{BaseTransport: transport.NewBaseTransport(transport.BaseConfig{Level: transporttest.FactoryOpts{}.Level}), buf: buf}
 	log := transporttest.NewLogger(tr, transporttest.FactoryOpts{}) // zero value: FlattenMetadata false
 	log.WithMetadata(loglayer.Metadata{"requestId": "xyz"}).Info("req")
 
