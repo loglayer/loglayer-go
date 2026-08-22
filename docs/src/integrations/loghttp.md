@@ -21,7 +21,7 @@ go get go.loglayer.dev/integrations/loghttp/v2
 import (
     "net/http"
 
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/integrations/loghttp/v2"
     "go.loglayer.dev/transports/structured/v2"
 )

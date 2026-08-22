@@ -19,7 +19,7 @@ Dependency-free. Pure Go (only `regexp` from stdlib; the walker uses reflection 
 
 ```go
 import (
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/plugins/redact/v2"
     "go.loglayer.dev/transports/structured/v2"
 )

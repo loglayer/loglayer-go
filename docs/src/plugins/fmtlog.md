@@ -13,13 +13,13 @@ description: "Opt-in fmt.Sprintf semantics for multi-arg log calls."
 go get go.loglayer.dev/plugins/fmtlog/v2
 ```
 
-`fmtlog` is its own Go module under `go.loglayer.dev/plugins/fmtlog/v2`, with no third-party dependencies beyond the main `go.loglayer.dev/v2` module it implements `Plugin` against.
+`fmtlog` is its own Go module under `go.loglayer.dev/plugins/fmtlog/v2`, with no third-party dependencies beyond the main `go.loglayer.dev/v3` module it implements `Plugin` against.
 
 ## Basic Usage
 
 ```go
 import (
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/plugins/fmtlog/v2"
     "go.loglayer.dev/transports/structured/v2"
 )

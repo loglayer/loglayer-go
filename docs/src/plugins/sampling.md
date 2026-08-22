@@ -23,7 +23,7 @@ Pure Go, no dependencies (uses `math/rand/v2` from the stdlib).
 
 ```go
 import (
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/plugins/sampling/v2"
     "go.loglayer.dev/transports/structured/v2"
 )

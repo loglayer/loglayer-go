@@ -27,7 +27,7 @@ This is the **slog → loglayer** direction. If you want the opposite (use logla
 import (
     "log/slog"
 
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/integrations/sloghandler/v2"
     "go.loglayer.dev/plugins/redact/v2"
     "go.loglayer.dev/transports/structured/v2"

@@ -13,7 +13,7 @@ description: Helpers for testing custom LogLayer plugin implementations.
 import (
     "testing"
 
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/plugins/plugintest/v2"
 )
 
@@ -47,7 +47,7 @@ plugintest.AssertNoMutation[any](t,
 
 ## Verifying panic recovery
 
-LogLayer recovers hook panics and forwards them to a plugin's `OnError` (when the plugin implements [`loglayer.ErrorReporter`](https://pkg.go.dev/go.loglayer.dev/v2#ErrorReporter)). Use `plugintest.AssertPanicRecovered` to drive a panicking hook and assert that a `*loglayer.RecoveredPanicError` was forwarded.
+LogLayer recovers hook panics and forwards them to a plugin's `OnError` (when the plugin implements [`loglayer.ErrorReporter`](https://pkg.go.dev/go.loglayer.dev/v3#ErrorReporter)). Use `plugintest.AssertPanicRecovered` to drive a panicking hook and assert that a `*loglayer.RecoveredPanicError` was forwarded.
 
 The helper takes a builder closure that receives a `captureFn`: thread it through to your plugin's `OnError` so the recovery path delivers the panic to the helper's capture.
 
