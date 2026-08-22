@@ -1,12 +1,8 @@
 ---
-"plugins/datadogtrace": patch
 "plugins/fmtlog": patch
-"plugins/oteltrace": patch
 "plugins/plugintest": patch
 "plugins/redact": patch
 "plugins/sampling": patch
-"integrations/loghttp": patch
-"integrations/sloghandler": patch
 "transports/betterstack": patch
 "transports/datadog": patch
 "transports/newrelic": patch

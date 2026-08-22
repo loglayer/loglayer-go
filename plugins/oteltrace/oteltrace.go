@@ -19,7 +19,7 @@
 //
 //	import (
 //	    "go.loglayer.dev/v3"
-//	    "go.loglayer.dev/plugins/oteltrace/v2"
+//	    "go.loglayer.dev/plugins/oteltrace/v3"
 //	    "go.loglayer.dev/transports/structured/v3"
 //	)
 //

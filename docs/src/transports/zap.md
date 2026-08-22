@@ -7,7 +7,7 @@ description: Wrap a go.uber.org/zap logger with LogLayer.
 
 <ModuleBadges path="transports/zap" />
 
-Wraps a `*zap.Logger`. Map metadata becomes individual zap fields; struct metadata lands under a configurable key. Fatal-level entries are written via a custom `CheckWriteHook` so the process is **not** terminated, regardless of zap's defaults.
+Wraps a `*zap.Logger`. Metadata nests under a configurable key (`"metadata"` by default); with `Config.FlattenMetadata: true`, map metadata becomes individual zap fields. Fatal-level entries are written via a custom `CheckWriteHook` so the process is **not** terminated, regardless of zap's defaults.
 
 ```sh
 go get go.loglayer.dev/transports/zap/v3

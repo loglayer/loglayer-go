@@ -1,7 +1,7 @@
 package oteltrace_test
 
 import (
-	"go.loglayer.dev/plugins/oteltrace/v2"
+	"go.loglayer.dev/plugins/oteltrace/v3"
 	lltesting "go.loglayer.dev/transports/testing/v3"
 	"go.loglayer.dev/v3"
 )

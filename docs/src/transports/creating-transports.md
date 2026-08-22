@@ -312,7 +312,7 @@ For testing a custom transport, see [Testing Transports](/transports/testing-tra
 
 ### Live Tests
 
-Transports that ship to third-party services (HTTP endpoints, cloud APIs) include build-tagged live tests (`//go:build livetest`) that hit the real API. These are **never documented** in the transport's VitePress docs — they're internal developer documentation only.
+Transports that ship to third-party services (HTTP endpoints, cloud APIs) include build-tagged live tests (`//go:build livetest`) that hit the real API. These are **never documented** in the transport's VitePress docs; they're internal developer documentation only.
 
 Run them locally with the required credentials:
 

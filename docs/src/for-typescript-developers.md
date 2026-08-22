@@ -119,7 +119,7 @@ TypeScript's `@loglayer/transport-pino`, `@loglayer/plugin-redaction`, etc. are 
 | `loglayer`                       | `go.loglayer.dev/v3` (core + stdlib renderers)   |
 | `@loglayer/transport-zerolog`    | `go.loglayer.dev/transports/zerolog/v3`          |
 | `@loglayer/transport-datadog`    | `go.loglayer.dev/transports/datadog/v2`          |
-| `@loglayer/integration-elysia`   | `go.loglayer.dev/integrations/loghttp/v2` (etc.) |
+| `@loglayer/integration-elysia`   | `go.loglayer.dev/integrations/loghttp/v3` (etc.) |
 
 Sub-modules that re-export core types ship on their own `/v3` paths; check the [Transports overview](/transports/) and the [loghttp](/integrations/loghttp) / [sloghandler](/integrations/sloghandler) pages for each module's path.
 

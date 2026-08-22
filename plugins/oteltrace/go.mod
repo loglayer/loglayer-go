@@ -1,4 +1,4 @@
-module go.loglayer.dev/plugins/oteltrace/v2
+module go.loglayer.dev/plugins/oteltrace/v3
 
 go 1.25.0
 
@@ -21,7 +21,7 @@ require (
 	go.loglayer.dev/v2 v2.0.1 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel/metric v1.43.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 )
 
 replace go.loglayer.dev/transports/testing/v3 => ../../transports/testing

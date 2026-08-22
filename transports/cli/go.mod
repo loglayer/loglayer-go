@@ -6,7 +6,7 @@ require (
 	github.com/fatih/color v1.19.0
 	github.com/mattn/go-isatty v0.0.20
 	go.loglayer.dev/v3 v3.0.0
-	golang.org/x/sys v0.42.0
+	golang.org/x/sys v0.43.0
 )
 
 require (

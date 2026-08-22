@@ -1,4 +1,4 @@
-module go.loglayer.dev/plugins/datadogtrace/v2
+module go.loglayer.dev/plugins/datadogtrace/v3
 
 go 1.25.0
 

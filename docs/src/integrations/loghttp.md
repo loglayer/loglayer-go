@@ -12,7 +12,7 @@ description: One-line HTTP middleware that derives a per-request logger and stuf
 Mirrors the role that `hlog.NewHandler` plays for zerolog. Works with any `net/http`-compatible router: stdlib, chi, gorilla/mux, gin, echo, etc.
 
 ```sh
-go get go.loglayer.dev/integrations/loghttp/v2
+go get go.loglayer.dev/integrations/loghttp/v3
 ```
 
 ## Basic Usage
@@ -22,7 +22,7 @@ import (
     "net/http"
 
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/integrations/loghttp/v2"
+    "go.loglayer.dev/integrations/loghttp/v3"
     "go.loglayer.dev/transports/structured/v3"
 )
 
@@ -137,7 +137,7 @@ loghttp.Middleware(log, loghttp.Config{StartLog: true})
 
 ### `ShouldStartLog`
 
-Per-request callback that decides whether to emit the "request started" line. Use it for sampling or conditional logging — log 1% of requests, only emit when a debug header is set, etc. Returning true emits the start line; false skips it. The "request completed" line still emits regardless. When set, `StartLog` is ignored.
+Per-request callback that decides whether to emit the "request started" line. Use it for sampling or conditional logging: log 1% of requests, only emit when a debug header is set, etc. Returning true emits the start line; false skips it. The "request completed" line still emits regardless. When set, `StartLog` is ignored.
 
 ```go
 loghttp.Middleware(log, loghttp.Config{

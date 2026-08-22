@@ -223,7 +223,7 @@ func emit(cfg structured.Config, fn func(*loglayer.LogLayer)) string {
 func TestStructuredSanitizesInjectionInMessage(t *testing.T) {
 	cfg := structured.Config{DateFn: func() string { return "2026-04-26T12:00:00Z" }}
 	if got := emit(cfg, func(log *loglayer.LogLayer) {
-		log.Info("line1\r\nline2\x1b[31mreduser‮evil")
+		log.Info("line1\r\nline2\x1b[31mreduser\u202eevil")
 	}); got != `{"level":"info","time":"2026-04-26T12:00:00Z","msg":"line1line2[31mreduserevil"}` {
 		t.Errorf("got %q", got)
 	}
@@ -231,7 +231,9 @@ func TestStructuredSanitizesInjectionInMessage(t *testing.T) {
 
 // Same guard on keys and string values when metadata flattens: each metadata
 // entry becomes a top-level key/value, so both are sanitized. Non-string
-// entries pass through untouched.
+// entries pass through untouched. The output shape is pinned here (metadata at
+// root under the original key, sanitized) so the sanitize-vs-flatten interplay
+// can't regress silently.
 func TestStructuredSanitizesInjectionInFlattenedMetadata(t *testing.T) {
 	buf := &bytes.Buffer{}
 	t1 := structured.New(structured.Config{Writer: buf})
@@ -251,6 +253,24 @@ func TestStructuredSanitizesInjectionInFlattenedMetadata(t *testing.T) {
 	if obj["count"] != float64(7) {
 		t.Errorf("count: got %v", obj["count"])
 	}
+
+	// Pin the full flattened line: metadata at root, key and value sanitized.
+	fieldWriter := &bytes.Buffer{}
+	t2 := structured.New(structured.Config{
+		Writer: fieldWriter,
+		DateFn: func() string { return "2026-04-26T12:00:00Z" },
+	})
+	log2 := loglayer.New(loglayer.Config{
+		Transport:        t2,
+		FlattenMetadata:  true,
+		DisableFatalExit: true,
+	})
+	log2.WithMetadata(map[string]any{
+		"note\u202e": "line1\r\nline2\x1b[31mred",
+	}).Info("hi")
+	if got := strings.TrimSpace(fieldWriter.String()); got != `{"level":"info","time":"2026-04-26T12:00:00Z","msg":"hi","note":"line1line2[31mred"}` {
+		t.Errorf("flatten full line: got %q", got)
+	}
 }
 
 // String-typed top-level values (WithFields entries) sanitize the same way,
@@ -258,7 +278,7 @@ func TestStructuredSanitizesInjectionInFlattenedMetadata(t *testing.T) {
 func TestStructuredSanitizesInjectionInTopLevelStringValues(t *testing.T) {
 	log, buf := newLogger(structured.Config{})
 	log = log.WithFields(loglayer.Fields{
-		"user\r\n":   "user‮evil",
+		"user\r\n":   "user\u202eevil",
 		"cleanInt":   42,
 		"cleanBool":  true,
 		"cleanFloat": 1.5,

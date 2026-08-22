@@ -1,4 +1,4 @@
-module go.loglayer.dev/integrations/loghttp/v2
+module go.loglayer.dev/integrations/loghttp/v3
 
 go 1.25.0
 

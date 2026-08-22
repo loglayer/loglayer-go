@@ -3,7 +3,7 @@ package datadogtrace_test
 import (
 	"context"
 
-	"go.loglayer.dev/plugins/datadogtrace/v2"
+	"go.loglayer.dev/plugins/datadogtrace/v3"
 	lltesting "go.loglayer.dev/transports/testing/v3"
 	"go.loglayer.dev/v3"
 )

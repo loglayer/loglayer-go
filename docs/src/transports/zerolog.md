@@ -7,7 +7,7 @@ description: Wrap a github.com/rs/zerolog logger with LogLayer.
 
 <ModuleBadges path="transports/zerolog" />
 
-Wraps an existing `*zerolog.Logger`. Map metadata merges as fields; struct metadata lands under a configurable key. Fatal-level entries are written via `WithLevel` so the process is **not** terminated, regardless of zerolog's defaults.
+Wraps an existing `*zerolog.Logger`. Metadata nests under a configurable key (`"metadata"` by default); with `Config.FlattenMetadata: true`, map metadata merges as fields. Fatal-level entries are written via `WithLevel` so the process is **not** terminated, regardless of zerolog's defaults.
 
 ```sh
 go get go.loglayer.dev/transports/zerolog/v3

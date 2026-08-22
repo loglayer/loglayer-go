@@ -345,7 +345,7 @@ Off by default. Costs ~600 ns / +5 allocs per emission when on (see [Benchmarks]
 ## slog Interop
 
 ```go
-import "go.loglayer.dev/integrations/sloghandler/v2"
+import "go.loglayer.dev/integrations/sloghandler/v3"
 
 // Make every slog.Info(...) flow through your loglayer pipeline (plugins,
 // fan-out, groups, level state). slog.With / WithAttrs become persistent

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"go.loglayer.dev/integrations/loghttp/v2"
+	"go.loglayer.dev/integrations/loghttp/v3"
 	lltest "go.loglayer.dev/transports/testing/v3"
 	"go.loglayer.dev/v3"
 	"go.loglayer.dev/v3/transport"

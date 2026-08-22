@@ -10,7 +10,6 @@ replace (
 )
 
 require (
-	go.loglayer.dev/integrations/loghttp/v2 v2.0.0-00010101000000-000000000000
 	go.loglayer.dev/transports/structured/v3 v3.0.0-00010101000000-000000000000
 	go.loglayer.dev/v3 v3.0.0
 )

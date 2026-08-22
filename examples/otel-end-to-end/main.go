@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"os"
 
-	"go.loglayer.dev/plugins/oteltrace/v2"
+	"go.loglayer.dev/plugins/oteltrace/v3"
 	"go.loglayer.dev/transports/otellog/v3"
 	"go.loglayer.dev/v3"
 	"go.opentelemetry.io/otel"

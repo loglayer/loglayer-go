@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"go.loglayer.dev/integrations/sloghandler/v2"
+	"go.loglayer.dev/integrations/sloghandler/v3"
 	lltest "go.loglayer.dev/transports/testing/v3"
 	"go.loglayer.dev/v3"
 )

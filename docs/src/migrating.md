@@ -57,7 +57,7 @@ In source files:
  )
 ```
 
-Then run `go mod tidy`. Sub-modules that re-export `TransportParams` are on their own `/v3` paths too (check the [Transports overview](/transports/) for each module's path); the rest keep their existing paths and just require the v3 core.
+Then run `go mod tidy`. Sub-modules that re-export core types are on their own `/v3` paths too: every transport that takes `loglayer.TransportParams`, plus the plugins and integrations that re-export core types (`plugins/oteltrace`, `plugins/datadogtrace`, `integrations/loghttp`, `integrations/sloghandler`). Check the [Transports overview](/transports/) and [Plugins overview](/plugins/) for each module's path; the rest keep their existing paths and just require the v3 core.
 
 ### Step 2: decide on metadata placement
 

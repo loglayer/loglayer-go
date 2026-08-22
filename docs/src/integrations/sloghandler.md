@@ -10,7 +10,7 @@ description: "slog.Handler that routes every slog.Info(...) call through your lo
 `integrations/sloghandler` is a `log/slog.Handler` backed by a loglayer logger. Once installed, every `slog.Info(...)` call (yours or your dependencies') flows through loglayer's plugin pipeline, multi-transport fan-out, group routing, and level filtering.
 
 ```sh
-go get go.loglayer.dev/integrations/sloghandler/v2
+go get go.loglayer.dev/integrations/sloghandler/v3
 ```
 
 This is the **slog → loglayer** direction. If you want the opposite (use loglayer's API and emit through a `*slog.Logger` you've already configured), see the [slog Transport](/transports/slog).
@@ -28,7 +28,7 @@ import (
     "log/slog"
 
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/integrations/sloghandler/v2"
+    "go.loglayer.dev/integrations/sloghandler/v3"
     "go.loglayer.dev/plugins/redact/v2"
     "go.loglayer.dev/transports/structured/v3"
 )

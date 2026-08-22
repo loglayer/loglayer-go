@@ -22,7 +22,7 @@ To get the source token:
 1. Sign in to Better Stack at [https://betterstack.com](https://betterstack.com).
 2. Navigate to **Logs** → **Sources**.
 3. Either copy an existing source's token or create a new log source and copy its token.
-4. Store the token securely—treat it like a password.
+4. Store the token securely. Treat it like a password.
 
 The source token is a secret. Load it from an environment variable or secret manager rather than hard-coding it in source.
 
