@@ -11,7 +11,7 @@ description: Latest features and improvements in LogLayer for Go.
 
 `v3.0.0`:
 
-**Metadata now nests by default.** The core is now `go.loglayer.dev/v3` (with `/v3/transport` and `/v3/utils/*` sub-packages), and `Config.MetadataFieldName` resolves to `"metadata"` when empty, so map and struct metadata render uniformly under that key across every transport. Restore the v2 root-flattening shape with `Config.FlattenMetadata: true`. See [Migrating to v3](/migrating-to-v3).
+**Metadata now nests by default.** The core is now `go.loglayer.dev/v3` (with `/v3/transport` and `/v3/utils/*` sub-packages), and `Config.MetadataFieldName` resolves to `"metadata"` when empty, so map and struct metadata render uniformly under that key across every transport. Restore the v2 root-flattening shape with `Config.FlattenMetadata: true`. See [Migrating to v3](/migrating#migrating-to-v3).
 
 `transports/structured` stays on `go.loglayer.dev/transports/structured/v2` for this release; its own v3 bump ships in a follow-up.
 
@@ -91,7 +91,7 @@ Republished every module with a clean `go.mod`. The v2.0.0 cascade shipped sub-m
 
 `v2.0.0`:
 
-**Breaking: import paths bump to `/v2`.** The loglayer core no longer mutates `Messages[0]` to fold the `WithPrefix` value into the message text. The prefix flows through `TransportParams.Prefix` and each transport decides how to render it. Built-in transports preserve v1 user-visible output via the new `transport.JoinPrefixAndMessages` helper; the cli transport opts into smart rendering (dim-grey user prefix separate from level color). See [Migrating to v2](/migrating-to-v2) for the upgrade checklist.
+**Breaking: import paths bump to `/v2`.** The loglayer core no longer mutates `Messages[0]` to fold the `WithPrefix` value into the message text. The prefix flows through `TransportParams.Prefix` and each transport decides how to render it. Built-in transports preserve v1 user-visible output via the new `transport.JoinPrefixAndMessages` helper; the cli transport opts into smart rendering (dim-grey user prefix separate from level color). See [Migrating to v2](/migrating#migrating-to-v2) for the upgrade checklist.
 
 `loglayer`:
 
