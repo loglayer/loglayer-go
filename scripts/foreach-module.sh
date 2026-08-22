@@ -232,7 +232,7 @@ case "$op" in
       done
     else
       printf '%s\n' "${TEST_MODULES[@]}" |
-        xargs -n1 -P "$PARALLEL" -I{} "$0" __test_one {}
+        xargs -P "$PARALLEL" -I '{}' "$0" __test_one {}
     fi
     ;;
   build)
