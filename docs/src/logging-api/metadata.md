@@ -136,7 +136,7 @@ The default level is `Info`. Passing `nil` is a no-op.
 
 ```go
 // structured: {"level":"info","time":"...","msg":"","metadata":{"status":"healthy","memory":"512MB"}}
-// console (always) / cli (with ShowFields): metadata={...} (nested under the metadata key)
+// console (always) / cli (with ShowFields): metadata=... (nested as a value under the metadata key)
 log.MetadataOnly(loglayer.Metadata{
     "status": "healthy",
     "memory": "512MB",
