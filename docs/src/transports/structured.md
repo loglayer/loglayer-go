@@ -22,9 +22,8 @@ import (
 )
 
 log := loglayer.New(loglayer.Config{
-    Transport:         structured.New(structured.Config{}),
-    FieldsKey:         "context",
-    MetadataFieldName: "metadata",
+    Transport: structured.New(structured.Config{}),
+    FieldsKey: "context",
 })
 
 log.Info("hello")
@@ -85,7 +84,7 @@ The `Writer` field accepts any `io.Writer`. See [Writers](/transports/writers) f
 
 ## Struct Metadata
 
-When you pass a struct to `WithMetadata`, the transport JSON-marshals + unmarshals it into a `map[string]any` and merges the fields at the root:
+Metadata (map or struct) nests under [`MetadataFieldName`](/configuration#metadatafieldname), which the v3 core defaults to `"metadata"`:
 
 ```go
 type User struct {
@@ -94,17 +93,13 @@ type User struct {
 }
 
 log.WithMetadata(User{ID: 7, Email: "alice@example.com"}).Info("user")
-// {"level":"info","time":"...","msg":"user","id":7,"email":"alice@example.com"}
+// {"level":"info","time":"...","msg":"user","metadata":{"id":7,"email":"alice@example.com"}}
+
+log.WithMetadata(loglayer.Metadata{"total": 3}).Info("cart")
+// {"level":"info","time":"...","msg":"cart","metadata":{"total":3}}
 ```
 
-The roundtrip happens once, in the transport. The core LogLayer does not touch the value, see [Metadata](/logging-api/metadata).
-
-If you want struct payloads under a single key instead of merged at the root, wrap them in a map yourself:
-
-```go
-log.WithMetadata(loglayer.Metadata{"user": User{ID: 7, Email: "..."}}).Info("user")
-// {"level":"info","time":"...","msg":"user","user":{"id":7,"email":"..."}}
-```
+A struct is JSON-marshaled + unmarshaled into a `map[string]any` before encoding, so `json:` tags apply. The core LogLayer does not touch the value, see [Metadata](/logging-api/metadata). With `Config.FlattenMetadata: true`, the v2 shape returns: struct fields and map entries merge at the root instead of nesting.
 
 ## Errors
 

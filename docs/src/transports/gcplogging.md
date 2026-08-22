@@ -194,11 +194,13 @@ results in a `LogEntry.jsonPayload` of:
 {
   "message": "served",
   "requestId": "abc",
-  "durationMs": 42
+  "metadata": {
+    "durationMs": 42
+  }
 }
 ```
 
-Map metadata merges at the payload root. Non-map metadata (structs, scalars) nest under the `metadata` key. Set [`Config.MetadataFieldName` on the core](/configuration#metadatafieldname) to nest map metadata under a fixed key uniformly.
+Metadata nests under [`MetadataFieldName` on the core](/configuration#metadatafieldname) (default `"metadata"`), for maps and non-maps alike. Set `Config.FlattenMetadata: true` to restore the v2 shape, where map metadata merges at the payload root and non-map values nest under `metadata`.
 
 ## Level Mapping
 

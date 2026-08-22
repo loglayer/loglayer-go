@@ -62,7 +62,7 @@ Use this when the test's purpose is to verify *what* was logged. The `transports
 ```go
 import (
     "go.loglayer.dev/v3"
-    lltest "go.loglayer.dev/transports/testing/v2"
+    lltest "go.loglayer.dev/transports/testing/v3"
 )
 
 func TestRequestLogging(t *testing.T) {

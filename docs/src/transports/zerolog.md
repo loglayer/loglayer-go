@@ -52,34 +52,19 @@ type Config struct {
 
 <!--@include: ./_partials/metadata-field-name.md-->
 
-### Map metadata → fields at root
+### Metadata nests under the metadata key
 
 ```go
 log.WithMetadata(loglayer.Metadata{"requestId": "abc", "n": 42}).Info("served")
-// {"level":"info","n":42,"requestId":"abc","time":"...","message":"served"}
-```
-
-### Struct metadata nests under the metadata key
-
-```go
-type User struct {
-    ID   int    `json:"id"`
-    Name string `json:"name"`
-}
+// {"level":"info","metadata":{"requestId":"abc","n":42},"time":"...","message":"served"}
 
 log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
 // {"level":"info","metadata":{"id":7,"name":"Alice"},"time":"...","message":"user"}
 ```
 
-Zerolog's `Interface` field handler reflects directly into the struct, so the value is encoded once at write time without an extra JSON roundtrip.
+Zerolog's `Interface` field handler reflects directly into the map or struct, so the value is encoded once at write time without an extra JSON roundtrip.
 
-Use a different key per call by wrapping in a map:
-
-```go
-log.WithMetadata(loglayer.Metadata{"user": User{ID: 7, Name: "Alice"}}).Info("user")
-```
-
-Or globally via the core's `MetadataFieldName` (which also nests map metadata under the same key):
+Change the nesting key on the core's config:
 
 ```go
 loglayer.New(loglayer.Config{

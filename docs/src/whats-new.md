@@ -13,8 +13,6 @@ description: Latest features and improvements in LogLayer for Go.
 
 **Metadata now nests by default.** The core is now `go.loglayer.dev/v3` (with `/v3/transport` and `/v3/utils/*` sub-packages), and `Config.MetadataFieldName` resolves to `"metadata"` when empty, so map and struct metadata render uniformly under that key across every transport. Restore the v2 root-flattening shape with `Config.FlattenMetadata: true`. See [Migrating to v3](/migrating#migrating-to-v3).
 
-`transports/structured` stays on `go.loglayer.dev/transports/structured/v2` for this release; its own v3 bump ships in a follow-up.
-
 ## Aug 19, 2026
 
 `loglayer`:

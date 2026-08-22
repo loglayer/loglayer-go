@@ -208,7 +208,7 @@ Render colorized output to the terminal during interactive runs (via the [Pretty
 import (
     "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/lumberjack/v3"
-    "go.loglayer.dev/transports/pretty/v2"
+    "go.loglayer.dev/transports/pretty/v3"
 )
 
 log := loglayer.New(loglayer.Config{

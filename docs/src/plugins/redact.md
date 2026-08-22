@@ -21,12 +21,11 @@ Dependency-free. Pure Go (only `regexp` from stdlib; the walker uses reflection 
 import (
     "go.loglayer.dev/v3"
     "go.loglayer.dev/plugins/redact/v2"
-    "go.loglayer.dev/transports/structured/v2"
+    "go.loglayer.dev/transports/structured/v3"
 )
 
 log := loglayer.New(loglayer.Config{
-    Transport:         structured.New(structured.Config{}),
-    MetadataFieldName: "metadata",
+    Transport: structured.New(structured.Config{}),
 })
 
 log.AddPlugin(redact.New(redact.Config{

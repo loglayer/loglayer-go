@@ -130,7 +130,7 @@ Worked example: [`examples/custom-transport-attribute`](https://github.com/logla
 
 #### Why two policies, not one
 
-The built-in transports settle on whichever of the two matches their backend, so callers see consistent behavior: map metadata always flattens to root keys; struct metadata always renders idiomatically per transport. That contract is what the [Metadata page](/logging-api/metadata) advertises to users, and the helpers above are how it's enforced.
+The built-in transports settle on whichever of the two matches their backend, so callers see consistent behavior. With the v3 core's default config, the schema key is `"metadata"`, so the whole metadata value nests under it on every transport. The flatten branch only runs when the config opts into it (`FlattenMetadata: true`), which restores the v2 shapes: map metadata flattens to root keys, struct metadata renders idiomatically per transport. That contract is what the [Metadata page](/logging-api/metadata) advertises to users, and the helpers above are how it's enforced.
 
 ### Don't reinvent
 

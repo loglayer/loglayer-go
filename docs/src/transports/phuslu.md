@@ -7,7 +7,7 @@ description: Wrap a github.com/phuslu/log logger with LogLayer.
 
 <ModuleBadges path="transports/phuslu" />
 
-Wraps an existing `*phuslu/log.Logger`. Map metadata flattens to fields via `Entry.Any(k, v)`; struct metadata lands under a configurable key.
+Wraps an existing `*phuslu/log.Logger`. Metadata nests under a single configurable key.
 
 ```sh
 go get go.loglayer.dev/transports/phuslu/v3
@@ -66,32 +66,17 @@ For non-fatal levels, the wrapper dispatches via `Logger.WithLevel(level).Msg(..
 
 <!--@include: ./_partials/metadata-field-name.md-->
 
-### Map metadata → individual fields
+### Metadata nests under the metadata key
 
 ```go
 log.WithMetadata(loglayer.Metadata{"requestId": "xyz", "n": 42}).Info("served")
-// {"time":"...","level":"info","requestId":"xyz","n":42,"message":"served"}
-```
-
-Each map entry becomes an `Entry.Any(k, v)` call.
-
-### Struct metadata nests under the metadata key
-
-```go
-type User struct {
-    ID   int    `json:"id"`
-    Name string `json:"name"`
-}
+// {"time":"...","level":"info","message":"served","metadata":{"requestId":"xyz","n":42}}
 
 log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
 // {"time":"...","level":"info","metadata":{"id":7,"name":"Alice"},"message":"user"}
 ```
 
-To use a different key per call, wrap in a map:
-
-```go
-log.WithMetadata(loglayer.Metadata{"user": User{ID: 7, Name: "Alice"}}).Info("user")
-```
+The nested value is written with `Entry.Any(k, v)`. With `Config.FlattenMetadata: true`, each map entry instead becomes its own `Entry.Any(k, v)` call at the root.
 
 Or globally via the core's `MetadataFieldName` (which also nests map metadata under the same key):
 

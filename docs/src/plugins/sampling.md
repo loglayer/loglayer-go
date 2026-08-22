@@ -25,7 +25,7 @@ Pure Go, no dependencies (uses `math/rand/v2` from the stdlib).
 import (
     "go.loglayer.dev/v3"
     "go.loglayer.dev/plugins/sampling/v2"
-    "go.loglayer.dev/transports/structured/v2"
+    "go.loglayer.dev/transports/structured/v3"
 )
 
 log := loglayer.New(loglayer.Config{

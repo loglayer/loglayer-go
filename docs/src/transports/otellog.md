@@ -16,7 +16,7 @@ go get go.loglayer.dev/transports/otellog/v3
 ```
 
 ::: info Separate module
-`transports/otellog` ships as its own Go module (`go.loglayer.dev/transports/otellog/v3`) so the OpenTelemetry SDK's transitive Go-version requirement doesn't bind the main `go.loglayer.dev/v2` module. Users who don't import the OTel transport never see its dependency graph.
+`transports/otellog` ships as its own Go module (`go.loglayer.dev/transports/otellog/v3`) so the OpenTelemetry SDK's transitive Go-version requirement doesn't bind the main `go.loglayer.dev/v3` module. Users who don't import the OTel transport never see its dependency graph.
 
 Requires **Go 1.25+** because that's the floor of the upstream `go.opentelemetry.io/otel/sdk/log` packages this transport binds against.
 :::
@@ -164,30 +164,19 @@ The original LogLayer level name (`"info"`, `"error"`, etc.) is also set as `Sev
 
 <!--@include: ./_partials/metadata-field-name.md-->
 
-### Map metadata flattens to attributes
+### Metadata nests under the metadata attribute
 
 ```go
 log.WithMetadata(loglayer.Metadata{"requestId": "abc", "n": 42}).Info("served")
-// log.Record attributes: requestId="abc", n=42
-```
-
-Each map entry becomes a typed `log.KeyValue`: strings → `StringValue`, ints → `Int64Value`, bools → `BoolValue`, and so on. Nested maps and slices recurse into `MapValue` / `SliceValue`.
-
-### Struct metadata nests under the metadata key
-
-```go
-type User struct {
-    ID   int    `json:"id"`
-    Name string `json:"name"`
-}
+// log.Record attribute: metadata=Map{requestId="abc", n=42}
 
 log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
 // log.Record attribute: metadata=Map{id=7, name="Alice"}
 ```
 
-The struct is JSON-roundtripped (so `json:` tags apply) then converted to a nested `MapValue` under the metadata attribute (default `"metadata"`).
+The whole metadata value (map or struct) becomes one typed `log.KeyValue` under the metadata attribute (default `"metadata"`). Maps convert directly; structs are JSON-roundtripped (so `json:` tags apply) then converted to a nested `MapValue`.
 
-Override the key globally via the core's `MetadataFieldName` (which also nests map metadata under the same key):
+Change the attribute key via the core's `MetadataFieldName`:
 
 ```go
 loglayer.New(loglayer.Config{
@@ -196,8 +185,10 @@ loglayer.New(loglayer.Config{
 })
 
 log.WithMetadata(User{ID: 9}).Info("hi")
-// log.Record attribute: user=Map{id=9, name=""}
+// log.Record attribute: user=Map{id=9}
 ```
+
+With `Config.FlattenMetadata: true`, each map entry instead becomes its own attribute: strings → `StringValue`, ints → `Int64Value`, bools → `BoolValue`, and so on. Nested maps and slices recurse into `MapValue` / `SliceValue`.
 
 ## context.Context Pass-through
 

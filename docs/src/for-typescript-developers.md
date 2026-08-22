@@ -117,11 +117,11 @@ TypeScript's `@loglayer/transport-pino`, `@loglayer/plugin-redaction`, etc. are 
 | TypeScript                       | Go                                            |
 |----------------------------------|-----------------------------------------------|
 | `loglayer`                       | `go.loglayer.dev/v3` (core + stdlib renderers)   |
-| `@loglayer/transport-zerolog`    | `go.loglayer.dev/transports/zerolog/v2`          |
+| `@loglayer/transport-zerolog`    | `go.loglayer.dev/transports/zerolog/v3`          |
 | `@loglayer/transport-datadog`    | `go.loglayer.dev/transports/datadog/v2`          |
 | `@loglayer/integration-elysia`   | `go.loglayer.dev/integrations/loghttp/v2` (etc.) |
 
-Transports and integrations keep their current paths until each ships its own v3 bump; check the [Transports overview](/transports/) and the [loghttp](/integrations/loghttp) / [sloghandler](/integrations/sloghandler) pages for each module's current path.
+Sub-modules that re-export core types ship on their own `/v3` paths; check the [Transports overview](/transports/) and the [loghttp](/integrations/loghttp) / [sloghandler](/integrations/sloghandler) pages for each module's path.
 
 `go get` each module you actually need; the dependency graph stays focused on whatever you imported.
 
@@ -200,7 +200,7 @@ If any of these are blockers for your use case, open an issue at [github.com/log
 
 import (
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/transports/structured/v2"
+    "go.loglayer.dev/transports/structured/v3"
 )
 
 log := loglayer.New(loglayer.Config{

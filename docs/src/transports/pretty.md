@@ -26,8 +26,7 @@ import (
 )
 
 log := loglayer.New(loglayer.Config{
-    Transport:         pretty.New(pretty.Config{}),
-    MetadataFieldName: "metadata",
+    Transport: pretty.New(pretty.Config{}),
 })
 
 log.WithMetadata(loglayer.Metadata{"user": "alice", "n": 42}).Info("served")
@@ -214,17 +213,12 @@ Doesn't affect expanded mode; it always shows the full tree.
 
 ## Metadata Handling
 
-::: info Interim state: this transport is still on v2
-This transport keeps its `v2` path and its pre-v3 metadata placement for this release; the shape below is what the current `v2` transport produces. The v3 core resolves an empty `MetadataFieldName` to `"metadata"`, so pairing this transport with the v3 core passes a non-empty schema key and changes the placement. The transport's own v3 bump ships in a follow-up release.
-:::
+Every metadata value (map, struct, scalar) nests under [`MetadataFieldName`](/configuration#metadatafieldname), which the v3 core defaults to `"metadata"`. Set a different key on `loglayer.Config`, or set `FlattenMetadata: true` to restore the v2 shape: map and struct metadata roundtrip to root fields, and non-roundtrippable values fall back to `_metadata`.
 
-When [`MetadataFieldName`](/configuration#metadatafieldname) is empty (the default), the breakdown by metadata shape is:
-
-- **Maps** merge at the root, alongside fields and error fields.
-- **Structs** are JSON-roundtripped into a map (so `json:"foo"` tags determine the rendered key) and merged at the root.
-- **Scalars / unknown types** fall back to `_metadata` as the key.
-
-When `MetadataFieldName` is set on `loglayer.Config`, every metadata value (map, struct, scalar) nests under the configured key instead.
+```go
+log.WithMetadata(loglayer.Metadata{"user": "alice", "n": 42}).Info("served")
+// 12:34:56.789 ▶ INFO served metadata={n=42 user=alice}
+```
 
 ```go
 type User struct {
@@ -233,7 +227,7 @@ type User struct {
 }
 
 log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
-// 12:34:56.789 ▶ INFO user id=7 name=Alice
+// 12:34:56.789 ▶ INFO user metadata={id=7 name=Alice}
 ```
 
 ## Fatal Behavior

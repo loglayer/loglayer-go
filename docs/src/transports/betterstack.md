@@ -9,10 +9,6 @@ description: Ship logs to Better Stack's HTTP intake API.
 
 Sends log entries to [Better Stack](https://betterstack.com) via their HTTP Logs Endpoint. Built on the [HTTP transport](/transports/http) with a Better Stack-specific encoder and bearer token authentication.
 
-::: info Interim state: this transport is still on v2
-This transport keeps its `v2` path and its pre-v3 metadata placement for this release; the placement described below is what the current `v2` transport produces. The v3 core resolves an empty `MetadataFieldName` to `"metadata"`, so pairing this transport with the v3 core passes a non-empty schema key and changes the placement. The transport's own v3 bump ships in a follow-up release.
-:::
-
 ```sh
 go get go.loglayer.dev/transports/betterstack
 ```
@@ -147,7 +143,9 @@ Each log entry becomes one object in a JSON array:
     "level": "info",
     "message": "served request",
     "requestId": "abc",
-    "durationMs": 42
+    "metadata": {
+      "durationMs": 42
+    }
   }
 ]
 ```
@@ -156,9 +154,9 @@ Each log entry becomes one object in a JSON array:
 - **Level**: String representation of the log level (trace, debug, info, warn, error, fatal, panic).
 - **Message**: The log message string.
 - **Fields**: Persistent fields from `WithFields()` and `Child()` are merged at the root level.
-- **Metadata**: Map metadata merges at the root; non-map metadata is serialized as JSON under a `metadata` key (configurable via `loglayer.Config.MetadataFieldName`).
+- **Metadata**: Nests under `MetadataFieldName` (default `"metadata"`, configurable via `loglayer.Config.MetadataFieldName`).
 
-Persistent fields (`WithFields`) and metadata (`WithMetadata`) follow the [core placement rules](/configuration#fieldskey): when `FieldsKey` is empty, fields merge at the root of each log object; when `MetadataFieldName` is empty, map metadata merges at the root and non-map metadata nests under `metadata`. Set either knob on `loglayer.Config` to nest under a configured key instead.
+Persistent fields (`WithFields`) and metadata (`WithMetadata`) follow the [core placement rules](/configuration#fieldskey): when `FieldsKey` is empty, fields merge at the root of each log object; metadata nests under `MetadataFieldName` (default `"metadata"`). Set either knob on `loglayer.Config` to nest under a configured key instead.
 
 ## Level Mapping
 

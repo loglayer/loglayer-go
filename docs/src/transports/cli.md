@@ -289,7 +289,7 @@ For machine-readable output, swap `cli` for [structured](/transports/structured)
 import (
     "go.loglayer.dev/v3"
     cli "go.loglayer.dev/transports/cli/v3"
-    "go.loglayer.dev/transports/structured/v2"
+    "go.loglayer.dev/transports/structured/v3"
 )
 
 var t loglayer.Transport

@@ -16,10 +16,6 @@ LogLayer for Go has shipped two major versions. Each upgrade is a short checklis
 
 This section covers the core (`go.loglayer.dev/v3`); the import-path notes also apply to the core's sub-packages (`/v3/transport`, `/v3/utils/...`).
 
-::: warning Transports are still on v2 in this release
-The transports keep their `v2` paths until the follow-up release that bumps them to `v3`. Until then, code that pairs the v3 core with a `v2` transport path does not compile together. Migrate the core first, then the transports when their v3 bumps land.
-:::
-
 ### Do I have to migrate?
 
 Not immediately. v2.x continues to work; the v2 module path (`go.loglayer.dev/v2`) keeps resolving to its last v2 tag and the v2 metadata placement stays intact there. Future feature work and bug fixes ship at v3 (`go.loglayer.dev/v3`), so the migration is the path forward but it's not on a deadline.
@@ -30,7 +26,6 @@ You can migrate one module at a time: a project that uses several `loglayer-go` 
 
 - **Import paths bump to `/v3`** for the core and its sub-packages: `go.loglayer.dev/v2` → `go.loglayer.dev/v3`, `go.loglayer.dev/v2/transport` → `go.loglayer.dev/v3/transport`, and so on. The package import names (`loglayer`, `transport`) do not change.
 - **Metadata nests under `"metadata"` by default.** When `Config.MetadataFieldName` is empty, the core resolves it to `"metadata"`, so both map and struct metadata render under that single key uniformly across every transport. This closes the asymmetric v2 gap where renderers flattened map metadata at the root while wrappers nested non-map values under a hardcoded key. It applies to every transport, including third-party ones, because the resolved key ships on `TransportParams.Schema`.
-- **`transports/structured` stays on v2 for this release.** The structured transport moves to `/v3` in a follow-up release, along with sanitized output and empty-message handling. The default nesting flip above applies to it today through the schema key.
 
 ### The one-line opt-out
 
@@ -62,7 +57,7 @@ In source files:
  )
 ```
 
-Then run `go mod tidy`. Transport and plugin sub-modules keep their current paths until each ships its own v3 bump; check each page in the [Transports overview](/transports/) and [Plugins overview](/plugins/) for the current path.
+Then run `go mod tidy`. Sub-modules that re-export `TransportParams` are on their own `/v3` paths too (check the [Transports overview](/transports/) for each module's path); the rest keep their existing paths and just require the v3 core.
 
 ### Step 2: decide on metadata placement
 

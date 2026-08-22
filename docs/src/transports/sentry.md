@@ -81,18 +81,7 @@ The transport routes `LogLevelFatal` and `LogLevelPanic` through `sentry.Logger.
 
 <!--@include: ./_partials/metadata-field-name.md-->
 
-### Map metadata flattens to attributes
-
-```go
-log.WithMetadata(loglayer.Metadata{"requestId": "abc", "n": 42}).Info("served")
-// Sentry attributes: requestId="abc", n=42
-```
-
-Each map entry becomes a typed Sentry attribute via the matching `LogEntry` setter (`String`, `Int`, `Int64`, `Float64`, `Bool`, plus the slice variants). Values that don't match a typed setter (nested maps, structs, mixed-type slices) are JSON-encoded into a single `String` attribute, so the structure is preserved in Sentry's UI.
-
-### Struct metadata nests under the metadata key
-
-Non-map metadata (structs, scalars, slices) is JSON-encoded and stored under a single configurable attribute key. The default key is `"metadata"`:
+### Metadata nests under the metadata attribute
 
 ```go
 import sentrytransport "go.loglayer.dev/transports/sentry/v3"
@@ -100,6 +89,9 @@ import sentrytransport "go.loglayer.dev/transports/sentry/v3"
 tr := sentrytransport.New(sentrytransport.Config{
     Logger: sentry.NewLogger(ctx),
 })
+
+log.WithMetadata(loglayer.Metadata{"requestId": "abc", "n": 42}).Info("served")
+// Sentry attribute: metadata=`{"n":42,"requestId":"abc"}`
 
 type User struct {
     ID   int    `json:"id"`
@@ -110,7 +102,7 @@ log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
 // Sentry attribute: metadata=`{"id":7,"name":"Alice"}`
 ```
 
-Override the key globally via the core's `MetadataFieldName` (which also nests map metadata under the same key):
+The whole metadata value nests under one attribute (default `"metadata"`). Change the key via the core's `MetadataFieldName`:
 
 ```go
 loglayer.New(loglayer.Config{
@@ -122,7 +114,7 @@ log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
 // Sentry attribute: payload=`{"id":7,"name":"Alice"}`
 ```
 
-The Sentry `LogEntry` API only accepts a fixed set of typed attribute shapes (no `Map` / `Any` / `Object` setter), so non-scalar values land as a JSON-encoded string. `json:` tags on struct fields apply normally.
+The Sentry `LogEntry` API only accepts a fixed set of typed attribute shapes (no `Map` / `Any` / `Object` setter), so the value lands as a JSON-encoded string. `json:` tags on struct fields apply normally. With `Config.FlattenMetadata: true`, each map entry instead becomes a typed Sentry attribute via the matching `LogEntry` setter (`String`, `Int`, `Int64`, `Float64`, `Bool`, plus the slice variants). Values that don't match a typed setter (nested maps, structs, mixed-type slices) are JSON-encoded into a single `String` attribute, so the structure is preserved in Sentry's UI.
 
 ## Fields
 

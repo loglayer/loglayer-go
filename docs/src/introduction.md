@@ -23,8 +23,7 @@ If your service is small and you only need "log to stdout in JSON," the stdlib i
 
 ```go
 log := loglayer.New(loglayer.Config{
-    Transport:         structured.New(structured.Config{}),
-    MetadataFieldName: "metadata",
+    Transport: structured.New(structured.Config{}),
 })
 
 log.
@@ -84,9 +83,8 @@ This separation provides several benefits:
 
 ```go
 log := loglayer.New(loglayer.Config{
-    Transport:         structured.New(structured.Config{}),
-    FieldsKey:         "context",
-    MetadataFieldName: "metadata",
+    Transport: structured.New(structured.Config{}),
+    FieldsKey: "context",
 })
 
 log.
@@ -176,7 +174,7 @@ Send logs directly to any HTTP endpoint without a third-party logging library, w
 Built-in mocks make testing painless:
 
 ```go
-import lltest "go.loglayer.dev/transports/testing/v2"
+import lltest "go.loglayer.dev/transports/testing/v3"
 
 // Silent mock for tests that don't care about output
 log := loglayer.NewMock()

@@ -24,13 +24,6 @@ jobs:
     if: github.event_name == 'pull_request' || !startsWith(github.event.head_commit.message, 'chore(release):')
     name: Test (Go ${{ matrix.go }})
     runs-on: ubuntu-latest
-    # Core-only mode: while the core is on its unpublished v3 path, the
-    # still-v2 sub-modules cannot build against it (their replace points
-    # at the repo root). Restrict the foreach ops to the root module;
-    # the sweep PR that moves sub-modules to v3 removes this and the
-    # per-module steps below.
-    env:
-      CORE_ONLY: '1'
     strategy:
       fail-fast: false
       matrix:
@@ -65,40 +58,30 @@ jobs:
 
       # OTel transport and plugin live in their own modules so the OTel
       # SDK's Go floor doesn't bind the main module. Test each separately.
-      # Skipped in core-only mode (CORE_ONLY=1): these modules still
-      # require the v2 core and cannot build while the root is the
-      # unpublished v3. The sweep PR removes the skip.
       - name: Test (transports/otellog)
-        if: env.CORE_ONLY != '1'
         working-directory: transports/otellog
         run: go test -race -count=1 ./...
 
       - name: Livetest (transports/otellog, real OTel SDK)
-        if: env.CORE_ONLY != '1'
         working-directory: transports/otellog
         run: go test -tags=livetest -race -count=1 ./...
 
       - name: Test (plugins/oteltrace)
-        if: env.CORE_ONLY != '1'
         working-directory: plugins/oteltrace
         run: go test -race -count=1 ./...
 
       - name: Livetest (plugins/oteltrace, real OTel TracerProvider)
-        if: env.CORE_ONLY != '1'
         working-directory: plugins/oteltrace
         run: go test -tags=livetest -race -count=1 ./...
 
       - name: Livetest (Datadog dd-trace-go integration)
-        if: env.CORE_ONLY != '1'
         working-directory: plugins/datadogtrace/livetest
         run: go test -race -count=1 ./...
 
       # Multi-module examples: syntax check only (running them produces
       # stdout output we don't need in CI). -o /dev/null avoids writing
-      # the example binary into the workspace. Skipped in core-only mode
-      # for the same v2-core reason as the OTel modules above.
+      # the example binary into the workspace.
       - name: Build (examples/otel-end-to-end)
-        if: env.CORE_ONLY != '1'
         working-directory: examples/otel-end-to-end
         run: go build -o /dev/null ./...
 
@@ -110,9 +93,6 @@ jobs:
       # Pin instead of @latest so a new staticcheck release with new
       # checks doesn't surprise CI. Bump deliberately.
       STATICCHECK_VERSION: '2026.1'
-      # Core-only mode: see the test job's comment. The v2 sub-modules
-      # can't be analyzed while the root is the unpublished v3 core.
-      CORE_ONLY: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -152,9 +132,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GOVULNCHECK_VERSION: 'v1.7.0'
-      # Core-only mode: same v2-sub-module gate as the test job. The
-      # sweep PR removes this.
-      CORE_ONLY: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5

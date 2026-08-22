@@ -23,13 +23,12 @@ import (
 
     "go.loglayer.dev/v3"
     "go.loglayer.dev/integrations/loghttp/v2"
-    "go.loglayer.dev/transports/structured/v2"
+    "go.loglayer.dev/transports/structured/v3"
 )
 
 var log = loglayer.New(loglayer.Config{
-    Transport:         structured.New(structured.Config{}),
-    FieldsKey:         "context",
-    MetadataFieldName: "metadata",
+    Transport: structured.New(structured.Config{}),
+    FieldsKey: "context",
 })
 
 func main() {

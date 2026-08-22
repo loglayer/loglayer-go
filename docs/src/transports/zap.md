@@ -51,36 +51,19 @@ type Config struct {
 
 <!--@include: ./_partials/metadata-field-name.md-->
 
-### Map metadata → individual fields
+### Metadata nests under the metadata key
 
 ```go
 log.WithMetadata(loglayer.Metadata{"requestId": "abc", "n": 42}).Info("served")
-// {"level":"info","ts":...,"caller":"...","msg":"served","requestId":"abc","n":42}
-```
-
-Each map entry becomes a `zap.Any(k, v)` call, so zap renders it however its encoder is configured.
-
-### Struct metadata nests under the metadata key
-
-```go
-type User struct {
-    ID   int    `json:"id"`
-    Name string `json:"name"`
-}
+// {"level":"info","ts":...,"caller":"...","msg":"served","metadata":{"requestId":"abc","n":42}}
 
 log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
 // {"level":"info","ts":...,"caller":"...","msg":"user","metadata":{"id":7,"name":"Alice"}}
 ```
 
-zap reflects into the struct via `zap.Any`, which is faster than a JSON roundtrip.
+zap reflects into the map or struct via `zap.Any`, which is faster than a JSON roundtrip.
 
-To use a different key per call, wrap in a map:
-
-```go
-log.WithMetadata(loglayer.Metadata{"user": User{ID: 7, Name: "Alice"}}).Info("user")
-```
-
-Or globally via the core's `MetadataFieldName` (which also nests map metadata under the same key):
+Change the nesting key on the core's config:
 
 ```go
 loglayer.New(loglayer.Config{

@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="https://github.com/loglayer/loglayer-go/releases"><img src="https://img.shields.io/github/v/tag/loglayer/loglayer-go?filter=v*&sort=date&label=version&style=flat-square&color=blue" alt="Latest version"></a>
-  <a href="https://pkg.go.dev/go.loglayer.dev/v2"><img src="https://pkg.go.dev/badge/go.loglayer.dev/v2.svg" alt="Go Reference"></a>
+  <a href="https://pkg.go.dev/go.loglayer.dev/v3"><img src="https://pkg.go.dev/badge/go.loglayer.dev/v3.svg" alt="Go Reference"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
 </p>
 
@@ -25,16 +25,15 @@ For full documentation, read the [docs](https://go.loglayer.dev).
 import (
     "errors"
 
-    "go.loglayer.dev/v2"
-    "go.loglayer.dev/transports/structured/v2"
+    "go.loglayer.dev/v3"
+    "go.loglayer.dev/transports/structured/v3"
 )
 
 log := loglayer.New(loglayer.Config{
     Transport: structured.New(structured.Config{}),
-    // Put fields under "context" and metadata under "metadata"
-    // (defaults are flattened to the root).
-    FieldsKey:         "context",
-    MetadataFieldName: "metadata",
+    // Put fields under "context", and keep metadata under "metadata"
+    // (its default in v3).
+    FieldsKey: "context",
 })
 
 // Persistent fields that appear on every subsequent log
@@ -84,7 +83,7 @@ log.WithPrefix("[my-app]").
 ## Install
 
 ```sh
-go get go.loglayer.dev/v2
+go get go.loglayer.dev/v3
 ```
 
 ## Documentation
@@ -97,7 +96,7 @@ Coming from [loglayer for TypeScript](https://loglayer.dev)? See [For TypeScript
 
 ## Contributing
 
-This is a multi-module repo: the framework core lives at the root (`go.loglayer.dev/v2`); every transport, plugin, and integration ships as its own independently-versioned Go module under `transports/`, `plugins/`, and `integrations/`.
+This is a multi-module repo: the framework core lives at the root (`go.loglayer.dev/v3`); every transport, plugin, and integration ships as its own independently-versioned Go module under `transports/`, `plugins/`, and `integrations/`.
 
 - **Dev-loop on-ramp** (prerequisites, hooks, make targets, commits, tests, docs, releases via [monorel](https://monorel.disaresta.com)): [CONTRIBUTING.md](CONTRIBUTING.md).
 - **Architectural context** (multi-module split, thread-safety contract, performance log, release flow internals): [AGENTS.md](AGENTS.md).

@@ -14,32 +14,32 @@ LogLayer is multi-module: most transports, plugins, and integrations ship as the
 
 ```sh
 # Renderer transports
-go get go.loglayer.dev/transports/structured/v2
-go get go.loglayer.dev/transports/console/v2
-go get go.loglayer.dev/transports/pretty/v2
-go get go.loglayer.dev/transports/cli/v2
-go get go.loglayer.dev/transports/testing/v2
-go get go.loglayer.dev/transports/blank/v2
+go get go.loglayer.dev/transports/structured/v3
+go get go.loglayer.dev/transports/console/v3
+go get go.loglayer.dev/transports/pretty/v3
+go get go.loglayer.dev/transports/cli/v3
+go get go.loglayer.dev/transports/testing/v3
+go get go.loglayer.dev/transports/blank/v3
 
 # Cloud (managed log services)
-go get go.loglayer.dev/transports/axiom/v2
+go get go.loglayer.dev/transports/axiom/v3
 go get go.loglayer.dev/transports/betterstack
 go get go.loglayer.dev/transports/datadog/v2
-go get go.loglayer.dev/transports/gcplogging/v2
-go get go.loglayer.dev/transports/sentry/v2
+go get go.loglayer.dev/transports/gcplogging/v3
+go get go.loglayer.dev/transports/sentry/v3
 
 # Other transports
-go get go.loglayer.dev/transports/http/v2
-go get go.loglayer.dev/transports/lumberjack/v2
-go get go.loglayer.dev/transports/otellog/v2
+go get go.loglayer.dev/transports/http/v3
+go get go.loglayer.dev/transports/lumberjack/v3
+go get go.loglayer.dev/transports/otellog/v3
 
 # Wrappers around third-party loggers
-go get go.loglayer.dev/transports/charmlog/v2
-go get go.loglayer.dev/transports/logrus/v2
-go get go.loglayer.dev/transports/phuslu/v2
-go get go.loglayer.dev/transports/slog/v2
-go get go.loglayer.dev/transports/zap/v2
-go get go.loglayer.dev/transports/zerolog/v2
+go get go.loglayer.dev/transports/charmlog/v3
+go get go.loglayer.dev/transports/logrus/v3
+go get go.loglayer.dev/transports/phuslu/v3
+go get go.loglayer.dev/transports/slog/v3
+go get go.loglayer.dev/transports/zap/v3
+go get go.loglayer.dev/transports/zerolog/v3
 
 # Plugins
 go get go.loglayer.dev/plugins/redact/v2
@@ -64,7 +64,7 @@ import (
     "errors"
 
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/transports/structured/v2"
+    "go.loglayer.dev/transports/structured/v3"
 )
 
 func main() {
@@ -636,7 +636,7 @@ structured.New(structured.Config{
 Plain text, logfmt-style key/value pairs after the message. Writes to stdout (info/debug) or stderr (warn+) by default.
 
 ```go
-import "go.loglayer.dev/transports/console/v2"
+import "go.loglayer.dev/transports/console/v3"
 
 console.New(console.Config{
     Writer: os.Stdout,             // single writer for all levels
@@ -652,7 +652,7 @@ console.New(console.Config{
 One JSON object per entry. Recommended for production.
 
 ```go
-import "go.loglayer.dev/transports/structured/v2"
+import "go.loglayer.dev/transports/structured/v3"
 
 structured.New(structured.Config{
     Writer: os.Stdout,
@@ -667,7 +667,7 @@ structured.New(structured.Config{
 Colorized terminal output. Theme-aware (Moonlight, Sunlight, Neon, Nature, Pastel) with three view modes (inline, message-only, expanded).
 
 ```go
-import "go.loglayer.dev/transports/pretty/v2"
+import "go.loglayer.dev/transports/pretty/v3"
 
 pretty.New(pretty.Config{
     Writer:   os.Stdout,
@@ -682,7 +682,7 @@ pretty.New(pretty.Config{
 Tuned for command-line application output rather than diagnostic logging. Short cargo/eslint-style level prefixes (`warning:`, `error:`, `fatal:`), stdout for info/debug/trace and stderr for warn/error/fatal/panic, per-stream TTY-detected ANSI color (info/debug/trace follow stdout, warn/error/fatal/panic follow stderr, pinned at construction), no timestamps. Renders the `WithPrefix` value in dim grey, separate from the level color. Fields/metadata dropped by default; opt in via `Config.ShowFields`. `Config.MessageFn func(loglayer.TransportParams) string` takes over the entire output line: its return value replaces the message plus the logfmt/table body (the level prefix, its color, and the user `WithPrefix` value still apply); an empty return falls back to normal rendering.
 
 ```go
-import "go.loglayer.dev/transports/cli/v2"
+import "go.loglayer.dev/transports/cli/v3"
 
 cli.New(cli.Config{
     // Writer:           os.Stdout,            // override (defaults: stdout for info/debug, stderr for warn+)
@@ -700,7 +700,7 @@ For slice-of-map metadata (`[]loglayer.Metadata`, `[]map[string]any`, `[]MyStruc
 In-memory capture for assertion tests. Public package is `transports/testing`; `lltest` is the conventional import alias.
 
 ```go
-import lltest "go.loglayer.dev/transports/testing/v2"
+import lltest "go.loglayer.dev/transports/testing/v3"
 
 lib := &lltest.TestLoggingLibrary{}
 log := loglayer.New(loglayer.Config{
@@ -718,7 +718,7 @@ popped := lib.PopLine()
 Delegates dispatch to a user-supplied function. For prototyping, metrics counters, message queues.
 
 ```go
-import "go.loglayer.dev/transports/blank/v2"
+import "go.loglayer.dev/transports/blank/v3"
 
 blank.New(blank.Config{
     BaseConfig: transport.BaseConfig{ID: "metrics"},
@@ -762,7 +762,7 @@ Generic shippers and on-disk sinks.
 Generic batched HTTP POST to any endpoint. Pluggable Encoder.
 
 ```go
-import httptr "go.loglayer.dev/transports/http/v2"
+import httptr "go.loglayer.dev/transports/http/v3"
 
 tr := httptr.New(httptr.Config{
     URL:           "https://logs.example.com/ingest",
@@ -784,7 +784,7 @@ defer tr.Close()  // flush pending entries; bounded by ShutdownTimeout
 One JSON object per log entry written to a rotating file. Render path matches `transports/structured`. Rotation delegated to `lumberjack.v2`. The package name `lumberjack` shadows the upstream `gopkg.in/natefinch/lumberjack.v2`; alias one of them when both are imported. The shorter `transports/file` import path is reserved for a future roll-our-own implementation.
 
 ```go
-import "go.loglayer.dev/transports/lumberjack/v2"
+import "go.loglayer.dev/transports/lumberjack/v3"
 
 tr := lumberjack.New(lumberjack.Config{
     Filename:   "/var/log/myapp/app.log",  // required
@@ -812,7 +812,7 @@ Wrap an existing third-party logger so loglayer's API sits on top of your establ
 ```go
 import (
     zlog "github.com/rs/zerolog"
-    llzero "go.loglayer.dev/transports/zerolog/v2"
+    llzero "go.loglayer.dev/transports/zerolog/v3"
 )
 
 z := zlog.New(os.Stderr).With().Timestamp().Logger()
@@ -826,7 +826,7 @@ log := loglayer.New(loglayer.Config{
 ```go
 import (
     "go.uber.org/zap"
-    llzap "go.loglayer.dev/transports/zap/v2"
+    llzap "go.loglayer.dev/transports/zap/v3"
 )
 
 z, _ := zap.NewProduction()
@@ -842,7 +842,7 @@ Fatal-level entries are written through a custom hook that prevents zap's defaul
 ```go
 import (
     "log/slog"
-    llslog "go.loglayer.dev/transports/slog/v2"
+    llslog "go.loglayer.dev/transports/slog/v3"
 )
 
 handler := slog.NewJSONHandler(os.Stderr, nil)
@@ -863,7 +863,7 @@ Same wrapping pattern; see [transports overview](https://go.loglayer.dev/transpo
 Emits each entry as an OTel `log.Record` on a `go.opentelemetry.io/otel/log.Logger`.
 
 ```go
-import "go.loglayer.dev/transports/otellog/v2"
+import "go.loglayer.dev/transports/otellog/v3"
 
 tr := otellog.New(otellog.Config{
     Name:           "checkout-api",            // instrumentation scope name
@@ -884,7 +884,7 @@ import (
 
     "cloud.google.com/go/logging"
 
-    "go.loglayer.dev/transports/gcplogging/v2"
+    "go.loglayer.dev/transports/gcplogging/v3"
 )
 
 ctx := context.Background()
@@ -910,7 +910,7 @@ Forwards each entry to a caller-supplied `sentry.Logger` (Sentry's structured-lo
 import (
     "github.com/getsentry/sentry-go"
 
-    sentrytransport "go.loglayer.dev/transports/sentry/v2"
+    sentrytransport "go.loglayer.dev/transports/sentry/v3"
 )
 
 sentry.Init(sentry.ClientOptions{Dsn: "...", EnableLogs: true})
@@ -1132,7 +1132,7 @@ log.Info("invisible")
 ### Capture entries with the testing transport
 
 ```go
-import lltest "go.loglayer.dev/transports/testing/v2"
+import lltest "go.loglayer.dev/transports/testing/v3"
 
 lib := &lltest.TestLoggingLibrary{}
 log := loglayer.New(loglayer.Config{Transport: lltest.New(lltest.Config{Library: lib})})
