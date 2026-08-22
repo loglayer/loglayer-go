@@ -15,6 +15,12 @@ from `.changeset/*.md` files. New entries land above the first `## `
 heading; older entries (released under release-please before the
 migration) stay verbatim below.
 
+## [3.0.0] - 2026-08-22
+
+### Major Changes
+
+- **Metadata now nests by default.** `Config.MetadataFieldName` resolves to `"metadata"` when empty, so map and struct metadata render uniformly under that key across every transport. Restore the v2 root-flattening shape with `Config.FlattenMetadata: true`. The core module path moves from `go.loglayer.dev/v2` to `go.loglayer.dev/v3`. See [Migrating to v3](/migrating#migrating-to-v3).
+
 ## [2.2.0] - 2026-08-21
 
 ### Minor Changes
