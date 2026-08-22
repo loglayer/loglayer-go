@@ -45,12 +45,12 @@ go get go.loglayer.dev/transports/zerolog/v3
 go get go.loglayer.dev/plugins/redact/v2
 go get go.loglayer.dev/plugins/sampling/v2
 go get go.loglayer.dev/plugins/fmtlog/v2
-go get go.loglayer.dev/plugins/datadogtrace/v2
-go get go.loglayer.dev/plugins/oteltrace/v2
+go get go.loglayer.dev/plugins/datadogtrace/v3
+go get go.loglayer.dev/plugins/oteltrace/v3
 
 # Integrations
-go get go.loglayer.dev/integrations/loghttp/v2
-go get go.loglayer.dev/integrations/sloghandler/v2
+go get go.loglayer.dev/integrations/loghttp/v3
+go get go.loglayer.dev/integrations/sloghandler/v3
 ```
 
 The full module list is in [`monorel.toml`](https://github.com/loglayer/loglayer-go/blob/main/monorel.toml).
@@ -1044,7 +1044,7 @@ Tracer-agnostic: supply a small `Extract` function for your tracer (dd-trace-go 
 ```go
 import (
     ddtracer "github.com/DataDog/dd-trace-go/v2/ddtrace/tracer"
-    "go.loglayer.dev/plugins/datadogtrace/v2"
+    "go.loglayer.dev/plugins/datadogtrace/v3"
 )
 
 log.AddPlugin(datadogtrace.New(datadogtrace.Config{
@@ -1071,7 +1071,7 @@ log.WithContext(r.Context()).Info("served")
 Inject `trace_id`, `span_id`, optional `trace_flags`, W3C `trace_state`, and W3C baggage members.
 
 ```go
-import "go.loglayer.dev/plugins/oteltrace/v2"
+import "go.loglayer.dev/plugins/oteltrace/v3"
 
 log.AddPlugin(oteltrace.New(oteltrace.Config{
     TraceIDKey:       "trace_id",       // default
@@ -1089,7 +1089,7 @@ Baggage rides independently of the span: contexts with baggage but no span still
 ### loghttp (HTTP middleware)
 
 ```go
-import "go.loglayer.dev/integrations/loghttp/v2"
+import "go.loglayer.dev/integrations/loghttp/v3"
 
 mux := http.NewServeMux()
 handler := loghttp.Middleware(log, loghttp.Config{})(mux)
@@ -1109,7 +1109,7 @@ Auto-emits a "request completed" log on response with status, bytes written, dur
 ```go
 import (
     "log/slog"
-    "go.loglayer.dev/integrations/sloghandler/v2"
+    "go.loglayer.dev/integrations/sloghandler/v3"
 )
 
 slog.SetDefault(slog.New(sloghandler.New(log)))

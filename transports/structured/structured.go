@@ -146,7 +146,10 @@ func (s *Transport) SendToLogger(params loglayer.TransportParams) {
 	buf.Reset()
 	defer putBuffer(buf)
 
-	msg := sanitize.Message(transport.JoinMessages(messages))
+	// AssembleMessage sanitizes per element and preserves authored line
+	// boundaries inside *loglayer.MultilineMessage values, so multiline
+	// messages survive while ANSI/control bytes are still stripped.
+	msg := transport.AssembleMessage(messages, sanitize.Message)
 
 	buf.Write(s.levelOpen)
 	s.writeLevel(buf, params.LogLevel)

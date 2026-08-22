@@ -53,7 +53,7 @@ What's preserved:
 
 ## What does NOT get sanitized
 
-`structured` and every wrapper transport (`zerolog`, `zap`, `slog`, `logrus`, `charmlog`, `phuslu`, `sentry`, `otellog`, `gcplogging`, `http`, `datadog`, `testing`) **do not** call `sanitize.Message`. They rely on the JSON encoder downstream to escape control bytes:
+Wrapper transports that hand off to an underlying logger (`zerolog`, `zap`, `slog`, `logrus`, `charmlog`, `phuslu`, `sentry`, `otellog`, `gcplogging`, `http`, `datadog`, `testing`) **do not** call `sanitize.Message`. They rely on the JSON encoder downstream to escape control bytes:
 
 ```
 "\n" → "\\n"
@@ -62,6 +62,8 @@ What's preserved:
 ```
 
 This is safe for the JSON-shaped sinks because the wire output is meant for log pipelines, log aggregators, and tools like `jq` that interpret JSON-encoded escapes as text. None of them re-emit the raw bytes to a TTY.
+
+The `structured` transport does call `sanitize.Message` on its own output path: the message, top-level metadata/Data keys, and string-typed top-level values are sanitized before the JSON encoder writes them. The encoder still escapes the remaining control bytes (e.g. `\n` in a nested map value) as JSON `\uXXXX` sequences.
 
 ::: warning Don't `cat` JSON wrapper-transport output to a TTY without escaping
 The `` in JSON is text, but if you pipe wrapper-transport output through a tool that *does* interpret JSON escapes back to bytes (e.g., a homemade pretty-printer that calls `json.Unmarshal` and prints raw strings), you reintroduce the smuggling vector. Use `jq -r .msg` carefully on untrusted log content; prefer `jq` without `-r` (which keeps the JSON escaping) for safety.

@@ -330,9 +330,10 @@ func TestInlineDepthLimit(t *testing.T) {
 		"deep":    map[string]any{"nested": "x"},
 	}).Info("depth")
 	got := buf.String()
-	// At depth 1, the nested map should collapse to {...}
-	if !strings.Contains(got, "metadata={...}") {
-		t.Errorf("expected deep={...} truncation, got: %q", got)
+	// At depth 1 the nested metadata bag's own keys render inline, and only
+	// deeper nesting truncates (matching the v2 root-merge UX under nesting).
+	if !strings.Contains(got, "metadata={deep={...} shallow=ok}") {
+		t.Errorf("expected deep={...} truncation with shallow inline, got: %q", got)
 	}
 }
 

@@ -27,7 +27,13 @@ func combineData(params loglayer.TransportParams) map[string]any {
 	maps.Copy(out, params.Data)
 	if params.Metadata != nil {
 		if key := params.Schema.MetadataFieldName; key != "" {
-			out[key] = metadataValueForKey(params.Metadata)
+			// The nested value is a map (or struct roundtripped to one);
+			// renderInline gives it depth-1 like any root value, which at
+			// low MaxInlineDepth collapses the whole bag to {...}. Wrap it
+			// in a depthMarker so formatValueInline can grant it one extra
+			// level: the bag's own scalar keys render, and only deeper
+			// nesting truncates (matching the v2 root-merge behavior).
+			out[key] = depthMarker{metadataValueForKey(params.Metadata)}
 		} else {
 			maps.Copy(out, metadataAsRootFields(params.Metadata))
 		}
@@ -36,6 +42,13 @@ func combineData(params loglayer.TransportParams) map[string]any {
 		return nil
 	}
 	return out
+}
+
+// depthMarker wraps a value that should render with one extra level of
+// inline depth budget (used for the nested metadata value so its top-level
+// keys survive low MaxInlineDepth settings).
+type depthMarker struct {
+	value any
 }
 
 // metadataValueForKey returns a value suitable for nesting under a single
@@ -93,6 +106,9 @@ func (t *Transport) renderInline(data map[string]any, depth int) string {
 func (t *Transport) formatValueInline(v any, depth int) string {
 	if v == nil {
 		return "null"
+	}
+	if m, ok := v.(depthMarker); ok {
+		return t.formatValueInline(m.value, depth+1)
 	}
 	switch val := v.(type) {
 	case string:
@@ -158,6 +174,9 @@ func (t *Transport) writeMap(w io.Writer, m map[string]any, indent int) {
 	}
 	for _, k := range keys {
 		v := m[k]
+		if mk, ok := v.(depthMarker); ok {
+			v = mk.value
+		}
 		switch val := v.(type) {
 		case map[string]any:
 			if len(val) == 0 {
@@ -191,6 +210,9 @@ func (t *Transport) writeAlignedScalar(w io.Writer, prefix, key string, maxKey i
 // sameLineValue reports whether v renders on the same line as its key
 // (scalars and empty containers do; non-empty maps and slices recurse).
 func sameLineValue(v any) bool {
+	if mk, ok := v.(depthMarker); ok {
+		v = mk.value
+	}
 	switch val := v.(type) {
 	case map[string]any:
 		return len(val) == 0

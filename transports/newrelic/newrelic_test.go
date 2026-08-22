@@ -400,12 +400,17 @@ func TestNewRelic_FieldAndMetadataInBody(t *testing.T) {
 	if attrs["requestId"] != "req-42" {
 		t.Errorf("requestId: got %v", attrs["requestId"])
 	}
-	// JSON unmarshals numbers as float64.
-	if attrs["durationMs"] != float64(123) {
-		t.Errorf("durationMs: got %v", attrs["durationMs"])
+	// Under the v3 default, metadata nests under the "metadata" key.
+	md, ok := attrs["metadata"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected metadata map, got: %v", attrs["metadata"])
 	}
-	if attrs["endpoint"] != "/api/v1" {
-		t.Errorf("endpoint: got %v", attrs["endpoint"])
+	// JSON unmarshals numbers as float64.
+	if md["durationMs"] != float64(123) {
+		t.Errorf("durationMs: got %v", md["durationMs"])
+	}
+	if md["endpoint"] != "/api/v1" {
+		t.Errorf("endpoint: got %v", md["endpoint"])
 	}
 }
 

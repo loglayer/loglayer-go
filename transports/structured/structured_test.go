@@ -323,6 +323,18 @@ func TestStructuredOmitsMsgWhenEmpty(t *testing.T) {
 	}
 }
 
+// Authored Multiline messages keep their line boundaries in structured while
+// ANSI/control bytes inside each line are still stripped (the same contract
+// cli/pretty/console honor via transport.AssembleMessage).
+func TestStructuredPreservesMultilineBoundaries(t *testing.T) {
+	log, buf := newLogger(structured.Config{})
+	log.Info(loglayer.Multiline("line1\x1b[31m", "line2"))
+	obj := transporttest.ParseJSONLine(t, buf)
+	if obj["msg"] != "line1[31m\nline2" {
+		t.Errorf("msg: got %q, want authored newline preserved", obj["msg"])
+	}
+}
+
 // SourceFieldName overrides the rendered key.
 func TestStructuredSourceFieldNameOverride(t *testing.T) {
 	buf := &bytes.Buffer{}
