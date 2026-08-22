@@ -340,7 +340,7 @@ log.Info("served")
 // {"level":"info","time":"...","msg":"served","source":{"function":"main.handler","file":"/app/main.go","line":42}}
 ```
 
-Off by default. Costs ~600 ns / +5 allocs per emission when on (see [Benchmarks](/benchmarks#caller-info-configsource)). The slog Handler forwards `slog.Record.PC` automatically (no capture cost on the slog path).
+Off by default. Costs ~600 ns / +5 allocs per emission when on (see [Benchmarks](/benchmarks#caller-info-config-source)). The slog Handler forwards `slog.Record.PC` automatically (no capture cost on the slog path).
 
 ## slog Interop
 

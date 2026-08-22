@@ -65,7 +65,7 @@ log.WithMetadata(loglayer.Metadata{"userId": "123", "action": "login"}).Info("us
 // loglayer.M is a shorter alias for loglayer.Metadata
 log.WithMetadata(loglayer.M{"durationMs": 42}).Info("served")
 
-// Struct metadata: its fields merge at the root (JSON-roundtripped)
+// Struct metadata: JSON-roundtripped and nested under the "metadata" key
 type Event struct {
     OrderID string `json:"orderId"`
     Path    string `json:"path"`
