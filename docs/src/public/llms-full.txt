@@ -1,13 +1,13 @@
 # LogLayer for Go: Comprehensive LLM Reference
 
-> Transport-agnostic structured logging for Go. A fluent API on top of zerolog, zap, logrus, phuslu/log, charmbracelet/log, log/slog, OpenTelemetry, or any custom transport. Module path: `go.loglayer.dev/v2`. GitHub: `github.com/loglayer/loglayer-go`.
+> Transport-agnostic structured logging for Go. A fluent API on top of zerolog, zap, logrus, phuslu/log, charmbracelet/log, log/slog, OpenTelemetry, or any custom transport. Module path: `go.loglayer.dev/v3`. GitHub: `github.com/loglayer/loglayer-go`.
 
 This is the comprehensive reference. For the concise index see [llms.txt](https://go.loglayer.dev/llms.txt).
 
 ## Installation
 
 ```sh
-go get go.loglayer.dev/v2
+go get go.loglayer.dev/v3
 ```
 
 LogLayer is multi-module: most transports, plugins, and integrations ship as their own Go modules. Install only what you import.
@@ -121,18 +121,20 @@ log.Info("user", 123, "logged in")
 ## Metadata (per-message structured data)
 
 ```go
-// Map metadata flattens to root keys
+// Map metadata nests under the "metadata" key (MetadataFieldName default)
 log.WithMetadata(loglayer.Metadata{"userId": "123", "action": "login"}).Info("user logged in")
 
 // loglayer.M is a shorter alias
 log.WithMetadata(loglayer.M{"durationMs": 42}).Info("served")
 
-// Struct metadata: its fields merge at the root (JSON-roundtripped)
+// Struct metadata: JSON-roundtripped and nested under the "metadata" key
 type Event struct {
     OrderID string `json:"orderId"`
     Path    string `json:"path"`
 }
 log.WithMetadata(Event{OrderID: "o-1", Path: "/checkout"}).Info("event")
+
+// v2 shape opt-out: Config.FlattenMetadata: true restores root-level merge
 ```
 
 ### Metadata-Only Logging
@@ -149,7 +151,7 @@ log.MetadataOnly(loglayer.M{"queueDepth": 17}, loglayer.MetadataOnlyOpts{
 
 ### Nested Metadata Field
 
-`loglayer.Config.MetadataFieldName` (a single core knob) nests both map and non-map metadata under one configurable key uniformly across every transport. When unset, each transport keeps its default policy: renderers flatten map metadata at root, wrappers flatten map metadata as individual attributes and nest non-map values under a hardcoded `"metadata"` key.
+`loglayer.Config.MetadataFieldName` (a single core knob) nests both map and non-map metadata under one configurable key uniformly across every transport. In v3 the default is `"metadata"`: when `MetadataFieldName` is empty, the core resolves it to `"metadata"` for every transport and publishes the resolved key on `loglayer.Schema`. Set `Config.FlattenMetadata: true` to restore the v2 shape: map metadata merges at the root, and non-map metadata follows each transport's historical placement. `FlattenMetadata` is ignored when `MetadataFieldName` is explicitly set.
 
 ```go
 loglayer.New(loglayer.Config{
@@ -351,9 +353,11 @@ log := loglayer.New(loglayer.Config{
     CopyMsgOnOnlyError: false,
 
     // Field/metadata layout
-    FieldsKey:    "",     // empty = merge at root
-    MuteFields:   false,
-    MuteMetadata: false,
+    FieldsKey:         "",     // empty = merge at root
+    MetadataFieldName: "",     // default "metadata": nest metadata under this key
+    FlattenMetadata:   false,  // v2 shape opt-out: flatten map metadata at root when MetadataFieldName is unset
+    MuteFields:        false,
+    MuteMetadata:      false,
 
     // Fatal behavior
     DisableFatalExit:      false,                // false = Fatal calls os.Exit(1)
@@ -1164,7 +1168,7 @@ require.Equal(t, "[REDACTED]", md["pw"])
 
 ## Multi-Module Versioning
 
-`go.loglayer.dev/v2` is the main module; every transport, plugin, and integration ships as its own Go module. Tags use the prefix form (`transports/<name>/v<X.Y.Z>`, `plugins/<name>/v<X.Y.Z>`). A breaking change in any one sub-module bumps only that sub-module's major version, so `go.loglayer.dev/v2`'s import path stays stable.
+`go.loglayer.dev/v3` is the main module; every transport, plugin, and integration ships as its own Go module. Tags use the prefix form (`transports/<name>/v<X.Y.Z>`, `plugins/<name>/v<X.Y.Z>`). A breaking change in any one sub-module bumps only that sub-module's major version, so `go.loglayer.dev/v3`'s import path stays stable.
 
 Full module list: [`monorel.toml`](https://github.com/loglayer/loglayer-go/blob/main/monorel.toml).
 

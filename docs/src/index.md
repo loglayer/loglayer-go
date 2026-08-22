@@ -45,15 +45,14 @@ package main
 import (
     "errors"
 
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/structured/v2"
 )
 
 func main() {
     log := loglayer.New(loglayer.Config{
-        Transport:         structured.New(structured.Config{}),
-        FieldsKey:         "context",
-        MetadataFieldName: "metadata",
+        Transport: structured.New(structured.Config{}),
+        FieldsKey: "context",
     })
 
     // WithFields returns a NEW logger; assign it.
