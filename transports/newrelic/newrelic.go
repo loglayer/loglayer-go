@@ -195,7 +195,13 @@ const (
 func mergeAttributes(e httptr.Entry) map[string]any {
 	attrs := make(map[string]any)
 	transport.MergeIntoMap(attrs, e.Data, e.Metadata, e.Schema.MetadataFieldName)
-	for k, v := range attrs {
+	// Iterate a key snapshot so the truncation break stays deterministic:
+	// attrs is mutated (reserved keys deleted, values rewritten) mid-loop.
+	keys := make([]string, 0, len(attrs))
+	for k := range attrs {
+		keys = append(keys, k)
+	}
+	for _, k := range keys {
 		if reserved(k) {
 			delete(attrs, k)
 			continue
@@ -203,7 +209,7 @@ func mergeAttributes(e httptr.Entry) map[string]any {
 		if len(attrs)+1 > maxAttributes {
 			break
 		}
-		setAttr(attrs, k, v)
+		setAttr(attrs, k, attrs[k])
 	}
 	return attrs
 }

@@ -240,6 +240,12 @@ func AssembleMessage(messages []any, sanitize func(string) string) string {
 	if len(messages) == 0 {
 		return ""
 	}
+	// Fast path for the dominant single-string shape: no slice, no join.
+	if len(messages) == 1 {
+		if s, ok := messages[0].(string); ok {
+			return sanitize(s)
+		}
+	}
 	parts := make([]string, len(messages))
 	for i, m := range messages {
 		parts[i] = assembleElement(m, sanitize)

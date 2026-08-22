@@ -164,18 +164,19 @@ func (s *Transport) SendToLogger(params loglayer.TransportParams) {
 	// When metadata nests under the schema key, a Data key that collides
 	// with that key is dropped so the JSON object can't contain duplicate
 	// keys; the nested metadata value wins (matching transport.MergeIntoMap).
+	// The comparison is on the sanitized key (what writeKeyValue emits), so
+	// a hostile raw key that sanitizes into the nest key can't slip through.
 	skipKey := ""
 	if params.Metadata != nil {
-		if key := params.Schema.MetadataFieldName; key != "" {
-			skipKey = sanitize.Message(key)
-		}
+		skipKey = params.Schema.MetadataFieldName
 	}
 	for k, v := range params.Data {
-		if k == skipKey {
+		sk := sanitize.Message(k)
+		if sk == skipKey {
 			continue
 		}
 		buf.WriteByte(',')
-		if err := writeKeyValue(buf, sanitize.Message(k), v); err != nil {
+		if err := writeKeyValue(buf, sk, v); err != nil {
 			s.writeMarshalError(err)
 			return
 		}
