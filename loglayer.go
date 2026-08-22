@@ -29,8 +29,8 @@ type Transport interface {
 // [TransportParams.Data] precisely (e.g. find the error map at
 // Schema.ErrorFieldName) and decide their own metadata placement.
 //
-// All three keys are populated from the matching keys on [Config]:
-// FieldsKey, MetadataFieldName, ErrorFieldName, Source.FieldName.
+// All five fields are populated from the matching keys on [Config]:
+// FieldsKey, MetadataFieldName, ErrorFieldName, SourceFieldName.
 type Schema struct {
 	// FieldsKey is non-empty when the persistent fields are nested under
 	// this key inside Data. When empty, fields are merged at root.
