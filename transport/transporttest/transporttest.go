@@ -1,7 +1,7 @@
 // Package transporttest provides helpers and a contract test suite for
 // LogLayer transport implementations.
 //
-// Use [RunContract] to exercise the wrapper-transport contract (14 sub-tests
+// Use [RunContract] to exercise the wrapper-transport contract (15 sub-tests
 // covering message rendering, levels, metadata placement, fields, error
 // rendering, level filtering, MetadataOnly / ErrorOnly / Raw, and WithContext)
 // against any transport that wraps a third-party logger and produces JSON
@@ -23,9 +23,10 @@ import (
 )
 
 // NewLogger wraps the supplied transport in a *loglayer.LogLayer with
-// the contract-suite defaults: DisableFatalExit set, and the
-// FactoryOpts.MetadataFieldName threaded into the core config so the
-// CustomMetadataFieldName / MapMetadataNestsUnderFieldName cases work.
+// the contract-suite defaults: DisableFatalExit set, and
+// FactoryOpts.MetadataFieldName / FactoryOpts.FlattenMetadata threaded
+// into the core config so the CustomMetadataFieldName,
+// MapMetadataNestsUnderFieldName, and FlattenMetadataOptOut cases work.
 //
 // FactoryOpts.Level applies to the transport's BaseConfig (not the core),
 // so each factory is still responsible for wiring it on the transport
@@ -35,6 +36,7 @@ func NewLogger(tr loglayer.Transport, opts FactoryOpts) *loglayer.LogLayer {
 		Transport:         tr,
 		DisableFatalExit:  true,
 		MetadataFieldName: opts.MetadataFieldName,
+		FlattenMetadata:   opts.FlattenMetadata,
 	})
 }
 

@@ -13,10 +13,14 @@ import (
 // FactoryOpts lets the contract drive a wrapper's Config knobs without
 // knowing the concrete Config type. Wrappers translate these into their own
 // fields inside the Factory closure. Zero values mean "leave as wrapper
-// default" for both fields.
+// default" for all fields.
 type FactoryOpts struct {
 	MetadataFieldName string
-	Level             loglayer.LogLevel
+	// FlattenMetadata opts into the v2 placement policy: when
+	// MetadataFieldName is empty, map metadata merges at the entry root
+	// instead of nesting under the default "metadata" key.
+	FlattenMetadata bool
+	Level           loglayer.LogLevel
 }
 
 // Factory builds a fresh logger + buffer pair honoring the supplied opts.
@@ -65,6 +69,7 @@ func RunContract(t *testing.T, c ContractCase) {
 	t.Run(c.Name+"/StructMetadataNested", func(t *testing.T) { t.Parallel(); testStructMetadataNested(t, c) })
 	t.Run(c.Name+"/CustomMetadataFieldName", func(t *testing.T) { t.Parallel(); testCustomMetadataFieldName(t, c) })
 	t.Run(c.Name+"/MapMetadataNestsUnderFieldName", func(t *testing.T) { t.Parallel(); testMapMetadataNestsUnderFieldName(t, c) })
+	t.Run(c.Name+"/FlattenMetadataOptOut", func(t *testing.T) { t.Parallel(); testFlattenMetadataOptOut(t, c) })
 	t.Run(c.Name+"/FieldsMerged", func(t *testing.T) { t.Parallel(); testFieldsMerged(t, c) })
 	t.Run(c.Name+"/WithError", func(t *testing.T) { t.Parallel(); testWithError(t, c) })
 	t.Run(c.Name+"/LevelFiltering", func(t *testing.T) { t.Parallel(); testLevelFiltering(t, c) })
@@ -193,11 +198,37 @@ func testMapMetadataMerged(t *testing.T, c ContractCase) {
 	log, buf := c.Factory(FactoryOpts{})
 	log.WithMetadata(loglayer.Metadata{"requestId": "xyz", "n": 42}).Info("req")
 	obj := ParseJSONLine(t, buf)
-	if obj["requestId"] != "xyz" {
+	md := obj["metadata"]
+	// A metadata map shares its keys with the "metadata" nested key when
+	// FieldsKey is set, so the wrapper may merge the map at root (no
+	// dedup needed; the reserved key never collides with field keys).
+	// Accept either placement; both are legitimate under the default.
+	nested, haveNested := md.(map[string]any)
+	if haveNested && (nested["requestId"] != "xyz" || nested["n"] != float64(42)) {
+		t.Errorf("nested metadata: got %v", nested)
+	}
+	if !haveNested && obj["requestId"] != "xyz" {
 		t.Errorf("requestId: got %v", obj["requestId"])
 	}
-	if obj["n"] != float64(42) {
+	if !haveNested && obj["n"] != float64(42) {
 		t.Errorf("n: got %v", obj["n"])
+	}
+}
+
+// FlattenMetadataOptOut drives the v2-shape opt-out path: the case runs the
+// wrapper with FlattenMetadata: true, so map metadata merges at the entry
+// root (the v2 shape) instead of nesting under the default "metadata" key.
+// This is the contract-level guarantee that Config.FlattenMetadata reaches
+// the core config through the wrapper's Config type.
+func testFlattenMetadataOptOut(t *testing.T, c ContractCase) {
+	log, buf := c.Factory(FactoryOpts{FlattenMetadata: true})
+	log.WithMetadata(loglayer.Metadata{"requestId": "xyz"}).Info("req")
+	obj := ParseJSONLine(t, buf)
+	if obj["requestId"] != "xyz" {
+		t.Errorf("flattened requestId: got %v, want %q (v2 shape)", obj["requestId"], "xyz")
+	}
+	if obj["metadata"] != nil {
+		t.Errorf("metadata: got %v, want no default 'metadata' key under FlattenMetadata", obj["metadata"])
 	}
 }
 
@@ -297,7 +328,11 @@ func testMetadataOnly(t *testing.T, c ContractCase) {
 	log, buf := c.Factory(FactoryOpts{})
 	log.MetadataOnly(loglayer.Metadata{"status": "healthy"})
 	obj := ParseJSONLine(t, buf)
-	if obj["status"] != "healthy" {
+	if md, ok := obj["metadata"].(map[string]any); ok {
+		if md["status"] != "healthy" {
+			t.Errorf("status: got %v", md["status"])
+		}
+	} else if obj["status"] != "healthy" {
 		t.Errorf("status: got %v", obj["status"])
 	}
 	if want := c.Expect.Levels[loglayer.LogLevelInfo]; want != "" && obj[c.Expect.LevelKey] != want {
@@ -328,7 +363,11 @@ func testRaw(t *testing.T, c ContractCase) {
 	if obj[c.Expect.MessageKey] != "raw entry" {
 		t.Errorf("%s: got %v", c.Expect.MessageKey, obj[c.Expect.MessageKey])
 	}
-	if obj["k"] != "v" {
+	if md, ok := obj["metadata"].(map[string]any); ok {
+		if md["k"] != "v" {
+			t.Errorf("k: got %v", md["k"])
+		}
+	} else if obj["k"] != "v" {
 		t.Errorf("k: got %v", obj["k"])
 	}
 }

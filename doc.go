@@ -2,7 +2,7 @@
 // fluent builder API. The core defines the LogLayer type, the Transport
 // and Plugin interfaces, and the dispatch pipeline. Concrete transports
 // (zap, zerolog, slog, charmlog, OTel, etc.) ship as separately-versioned
-// sub-modules under go.loglayer.dev/transports/<name>/v2.
+// sub-modules under go.loglayer.dev/transports/<name>.
 //
 // Full docs: https://go.loglayer.dev
 //
@@ -10,7 +10,7 @@
 //
 //	import (
 //	    "go.loglayer.dev/v3"
-//	    "go.loglayer.dev/transports/structured/v2"
+//	    "go.loglayer.dev/transports/structured"
 //	)
 //
 //	log := loglayer.New(loglayer.Config{
@@ -29,8 +29,9 @@
 //     WithFields and it appears on every subsequent log entry. Use for
 //     request IDs, user IDs, and anything request-scoped.
 //   - Metadata (any): single log call only. Use for per-event payloads
-//     such as durations, counters, or structs. Maps merge at the entry
-//     root; other values nest under Config.MetadataFieldName.
+//     such as durations, counters, or structs. Metadata nests under the
+//     Config.MetadataFieldName key uniformly ("metadata" by default) unless
+//     Config.FlattenMetadata restores the legacy per-transport placement.
 //   - Context (context.Context): single log call only. Transports that
 //     understand context (OTel, slog) read trace IDs and deadlines from
 //     it; others ignore it.
