@@ -127,8 +127,9 @@ func (s *Transport) GetLoggerInstance() any { return nil }
 // sanitize.Message before encoding, so untrusted input can't forge log lines
 // (CR / LF), smuggle ANSI escape sequences (ESC), or spoof text direction
 // (bidi overrides). Sanitization is top-level only: string values nested
-// inside structs, slices, or maps remain the JSON encoder's domain, which
-// escapes control characters but passes other printable-but-formatting runes
+// inside structs, slices, or maps, and values with a custom json.Marshaler,
+// remain the JSON encoder's domain, which escapes control characters but
+// passes other printable-but-formatting runes
 // (e.g. bidi overrides) through untouched.
 func (s *Transport) SendToLogger(params loglayer.TransportParams) {
 	if !s.ShouldProcess(params.LogLevel) {
@@ -160,7 +161,19 @@ func (s *Transport) SendToLogger(params loglayer.TransportParams) {
 		writeJSONString(buf, msg)
 	}
 
+	// When metadata nests under the schema key, a Data key that collides
+	// with that key is dropped so the JSON object can't contain duplicate
+	// keys; the nested metadata value wins (matching transport.MergeIntoMap).
+	skipKey := ""
+	if params.Metadata != nil {
+		if key := params.Schema.MetadataFieldName; key != "" {
+			skipKey = sanitize.Message(key)
+		}
+	}
 	for k, v := range params.Data {
+		if k == skipKey {
+			continue
+		}
 		buf.WriteByte(',')
 		if err := writeKeyValue(buf, sanitize.Message(k), v); err != nil {
 			s.writeMarshalError(err)

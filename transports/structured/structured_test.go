@@ -358,3 +358,20 @@ func TestStructuredSourceFieldNameOverride(t *testing.T) {
 		t.Errorf("expected source under 'caller': %v", obj)
 	}
 }
+
+// A Data/field key that collides with the metadata nest key is dropped so
+// the JSON object can't contain duplicate "metadata" keys; the nested
+// metadata value wins (matches transport.MergeIntoMap).
+func TestStructuredMetadataKeyCollisionDropped(t *testing.T) {
+	log, buf := newLogger(structured.Config{})
+	log = log.WithFields(loglayer.Fields{"metadata": "user-value"})
+	log.WithMetadata(loglayer.Metadata{"inner": 1}).Info("hi")
+	line := strings.TrimSpace(buf.String())
+	if strings.Count(line, `"metadata"`) != 1 {
+		t.Errorf("expected exactly one metadata key, got: %q", line)
+	}
+	obj := transporttest.ParseJSONLine(t, buf)
+	if _, ok := obj["metadata"].(map[string]any); !ok {
+		t.Errorf("metadata should be the nested value, got: %v", obj["metadata"])
+	}
+}
