@@ -5,16 +5,18 @@ description: Install LogLayer, pick a transport, and write your first structured
 
 # Getting Started
 
-LogLayer for Go targets **Go 1.25+** for the main module: `go.loglayer.dev/v2`. Most transports are sub-packages of that module, so you only pull in dependencies for the transports you actually use. Individual transports and plugins call out any stricter requirement on their per-page docs.
+LogLayer for Go targets **Go 1.25+** for the main module: `go.loglayer.dev/v3`. Most transports are sub-packages of that module, so you only pull in dependencies for the transports you actually use. Individual transports and plugins call out any stricter requirement on their per-page docs.
 
 ## Installation
 
-LogLayer ships as a multi-module repo: the core lives at `go.loglayer.dev/v2`, and every transport and plugin is its own independently-versioned sub-module. You install the core plus only the transports you actually use.
+LogLayer ships as a multi-module repo: the core lives at `go.loglayer.dev/v3`, and every transport and plugin is its own independently-versioned sub-module. You install the core plus only the transports you actually use.
 
 ```sh
-go get go.loglayer.dev/v2
+go get go.loglayer.dev/v3
 go get go.loglayer.dev/transports/structured/v2
 ```
+
+Transports and plugins keep their own versioned paths; the structured transport moves to `/v3` in a follow-up release.
 
 ## Basic Usage with the Structured Transport
 
@@ -25,17 +27,21 @@ package main
 
 import (
     "errors"
+    "fmt"
 
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     "go.loglayer.dev/transports/structured/v2"
 )
 
 func main() {
-    log := loglayer.New(loglayer.Config{
-        Transport:         structured.New(structured.Config{}),
-        FieldsKey:         "context",
-        MetadataFieldName: "metadata",
+    log, err := loglayer.Build(loglayer.Config{
+        Transport: structured.New(structured.Config{}),
+        FieldsKey: "context",
     })
+    if err != nil {
+        fmt.Printf("configure logger: %v\n", err)
+        return
+    }
 
     // Basic logging
     log.Info("Hello world!")
@@ -56,18 +62,9 @@ func main() {
 }
 ```
 
-The example above sets `FieldsKey` and `MetadataFieldName` to nest fields and metadata under their own keys. See [Configuration](/configuration) for every knob on `loglayer.Config`: error serialization, field/metadata placement, prefix, source capture, group routing, fatal-exit control, and more.
+The example above uses `loglayer.Build` because it showcases runtime config: when the config comes from a runtime source (env vars, config file), `Build` handles errors explicitly instead of panicking. For programmatic setup, `loglayer.New` panics on misconfiguration (no transport configured) and fits where a bad config is a programmer error. See [New vs Build](/configuration#new-vs-build).
 
-When the config comes from a runtime source (env vars, config file), use `loglayer.Build` to handle errors explicitly instead of `New`, which panics. See [New vs Build](/configuration#new-vs-build):
-
-```go
-log, err := loglayer.Build(loglayer.Config{
-    Transport: structured.New(structured.Config{}),
-})
-if err != nil {
-    return fmt.Errorf("configure logger: %w", err)
-}
-```
+The example sets `FieldsKey` to nest fields under their own key; metadata nests under `"metadata"` by default. See [Configuration](/configuration) for every knob on `loglayer.Config`: error serialization, field/metadata placement, prefix, source capture, group routing, fatal-exit control, and more.
 
 ::: tip Pretty terminal output
 For local development, the [Pretty Transport](/transports/pretty) gives you colorized, theme-aware output with three view modes. Much easier to scan than raw JSON or the basic [Console Transport](/transports/console).
@@ -103,7 +100,7 @@ import (
 
     zlog "github.com/rs/zerolog"
 
-    "go.loglayer.dev/v2"
+    "go.loglayer.dev/v3"
     llzero "go.loglayer.dev/transports/zerolog/v2"
 )
 
