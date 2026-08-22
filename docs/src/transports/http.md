@@ -9,6 +9,10 @@ description: Generic batched HTTP POST transport with a pluggable encoder.
 
 The `http` transport ships log entries to an HTTP endpoint as JSON in async batches. Use it directly to talk to any log-ingestion API, or as the foundation for a service-specific wrapper (the [Datadog transport](/transports/datadog) is built on it).
 
+::: info Interim state: this transport is still on v2
+This transport keeps its `v2` path and its pre-v3 metadata placement for this release; the placement described below is what the current `v2` transport produces. The v3 core resolves an empty `MetadataFieldName` to `"metadata"`, so pairing this transport with the v3 core passes a non-empty schema key and changes the placement. The transport's own v3 bump ships in a follow-up release.
+:::
+
 ```sh
 go get go.loglayer.dev/transports/http/v2
 ```

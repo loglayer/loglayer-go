@@ -9,6 +9,10 @@ description: Ship logs to the Datadog Logs HTTP intake API.
 
 Sends log entries to Datadog's [Logs HTTP intake API](https://docs.datadoghq.com/api/latest/logs/#send-logs). Built on the [HTTP transport](/transports/http) with a Datadog-specific encoder, site-aware URL, and `DD-API-KEY` header.
 
+::: info Interim state: this transport is still on v2
+This transport keeps its `v2` path and its pre-v3 metadata placement for this release; the placement described below is what the current `v2` transport produces. The v3 core resolves an empty `MetadataFieldName` to `"metadata"`, so pairing this transport with the v3 core passes a non-empty schema key and changes the placement. The transport's own v3 bump ships in a follow-up release.
+:::
+
 ```sh
 go get go.loglayer.dev/transports/datadog/v2
 ```
