@@ -14,6 +14,7 @@ import (
 
 	"go.loglayer.dev/v3"
 	"go.loglayer.dev/v3/transport"
+	"go.loglayer.dev/v3/utils/sanitize"
 )
 
 // Config holds configuration options for Transport.
@@ -121,6 +122,14 @@ func (s *Transport) GetLoggerInstance() any { return nil }
 // entries in iteration order. Per-value marshaling uses goccy/go-json so
 // structs, slices, and json.Marshaler types render exactly as encoding/json
 // would.
+//
+// The message and top-level keys and string values are run through
+// sanitize.Message before encoding, so untrusted input can't forge log lines
+// (CR / LF), smuggle ANSI escape sequences (ESC), or spoof text direction
+// (bidi overrides). Sanitization is top-level only: string values nested
+// inside structs, slices, or maps remain the JSON encoder's domain, which
+// escapes control characters but passes other printable-but-formatting runes
+// (e.g. bidi overrides) through untouched.
 func (s *Transport) SendToLogger(params loglayer.TransportParams) {
 	if !s.ShouldProcess(params.LogLevel) {
 		return
@@ -137,16 +146,20 @@ func (s *Transport) SendToLogger(params loglayer.TransportParams) {
 	buf.Reset()
 	defer putBuffer(buf)
 
+	msg := sanitize.Message(transport.JoinMessages(messages))
+
 	buf.Write(s.levelOpen)
 	s.writeLevel(buf, params.LogLevel)
 	buf.Write(s.dateOpen)
 	s.writeDate(buf)
-	buf.Write(s.msgOpen)
-	writeJSONString(buf, transport.JoinMessages(messages))
+	if msg != "" {
+		buf.Write(s.msgOpen)
+		writeJSONString(buf, msg)
+	}
 
 	for k, v := range params.Data {
 		buf.WriteByte(',')
-		if err := writeKeyValue(buf, k, v); err != nil {
+		if err := writeKeyValue(buf, sanitize.Message(k), v); err != nil {
 			s.writeMarshalError(err)
 			return
 		}
@@ -155,14 +168,14 @@ func (s *Transport) SendToLogger(params loglayer.TransportParams) {
 		if key := params.Schema.MetadataFieldName; key != "" {
 			// Whole metadata value nests under the configured key.
 			buf.WriteByte(',')
-			if err := writeKeyValue(buf, key, params.Metadata); err != nil {
+			if err := writeKeyValue(buf, sanitize.Message(key), params.Metadata); err != nil {
 				s.writeMarshalError(err)
 				return
 			}
 		} else {
 			for k, v := range transport.MetadataAsMap(params.Metadata) {
 				buf.WriteByte(',')
-				if err := writeKeyValue(buf, k, v); err != nil {
+				if err := writeKeyValue(buf, sanitize.Message(k), v); err != nil {
 					s.writeMarshalError(err)
 					return
 				}
@@ -217,6 +230,13 @@ func writeJSONString(buf *bytes.Buffer, s string) {
 func writeKeyValue(buf *bytes.Buffer, key string, value any) error {
 	writeJSONString(buf, key)
 	buf.WriteByte(':')
+	if s, ok := value.(string); ok {
+		// User-controlled strings (fields, metadata, error messages) get the
+		// same ANSI/bidi/control-char sanitization as the message; non-string
+		// values are the JSON encoder's domain.
+		writeJSONString(buf, sanitize.Message(s))
+		return nil
+	}
 	b, err := json.Marshal(value)
 	if err != nil {
 		return err

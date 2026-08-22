@@ -207,6 +207,102 @@ func TestStructuredSourceFieldRendered(t *testing.T) {
 	}
 }
 
+// emit runs a log call through a fresh logger and returns the raw output line.
+// No access to the Write hook, but the assembly and encoding paths are
+// exercised exactly as in production.
+func emit(cfg structured.Config, fn func(*loglayer.LogLayer)) string {
+	log, buf := newLogger(cfg)
+	fn(log)
+	return strings.TrimSpace(buf.String())
+}
+
+// ANSI escapes, CR/LF, and bidi overrides (Trojan Source, CVE-2021-42574) in
+// the message are stripped so a log line can't smuggle terminal control
+// sequences or hide content. DateFn pins the timestamp so the whole line is
+// compared byte-for-byte.
+func TestStructuredSanitizesInjectionInMessage(t *testing.T) {
+	cfg := structured.Config{DateFn: func() string { return "2026-04-26T12:00:00Z" }}
+	if got := emit(cfg, func(log *loglayer.LogLayer) {
+		log.Info("line1\r\nline2\x1b[31mreduser‮evil")
+	}); got != `{"level":"info","time":"2026-04-26T12:00:00Z","msg":"line1line2[31mreduserevil"}` {
+		t.Errorf("got %q", got)
+	}
+}
+
+// Same guard on keys and string values when metadata flattens: each metadata
+// entry becomes a top-level key/value, so both are sanitized. Non-string
+// entries pass through untouched.
+func TestStructuredSanitizesInjectionInFlattenedMetadata(t *testing.T) {
+	buf := &bytes.Buffer{}
+	t1 := structured.New(structured.Config{Writer: buf})
+	log := loglayer.New(loglayer.Config{
+		Transport:        t1,
+		FlattenMetadata:  true,
+		DisableFatalExit: true,
+	})
+	log.WithMetadata(map[string]any{
+		"note\r\n\x1b[": "line1\r\nline2\x1b[31mred",
+		"count":         7,
+	}).Info("hi")
+	obj := transporttest.ParseJSONLine(t, buf)
+	if obj["note["] != "line1line2[31mred" {
+		t.Errorf("note[: got %v", obj["note["])
+	}
+	if obj["count"] != float64(7) {
+		t.Errorf("count: got %v", obj["count"])
+	}
+}
+
+// String-typed top-level values (WithFields entries) sanitize the same way,
+// including the keys; non-string values pass through untouched.
+func TestStructuredSanitizesInjectionInTopLevelStringValues(t *testing.T) {
+	log, buf := newLogger(structured.Config{})
+	log = log.WithFields(loglayer.Fields{
+		"user\r\n":   "user‮evil",
+		"cleanInt":   42,
+		"cleanBool":  true,
+		"cleanFloat": 1.5,
+	})
+	log.Info("ok")
+	obj := transporttest.ParseJSONLine(t, buf)
+	if obj["user"] != "userevil" {
+		t.Errorf("user: got %v", obj["user"])
+	}
+	if obj["cleanInt"] != float64(42) {
+		t.Errorf("cleanInt: got %v", obj["cleanInt"])
+	}
+	if obj["cleanBool"] != true {
+		t.Errorf("cleanBool: got %v", obj["cleanBool"])
+	}
+	if obj["cleanFloat"] != 1.5 {
+		t.Errorf("cleanFloat: got %v", obj["cleanFloat"])
+	}
+}
+
+// An empty joined message omits the msg key entirely, so
+// WithFields(...)+Info("") renders level, time, and the fields only. A
+// message that sanitizes to nothing (e.g. bare escape bytes) is omitted the
+// same way.
+func TestStructuredOmitsMsgWhenEmpty(t *testing.T) {
+	log, buf := newLogger(structured.Config{})
+	log = log.WithFields(loglayer.Fields{"service": "api"})
+	log.Info("")
+	obj := transporttest.ParseJSONLine(t, buf)
+	if _, ok := obj["msg"]; ok {
+		t.Errorf("msg should be omitted for empty message, got: %v", obj)
+	}
+	if obj["service"] != "api" {
+		t.Errorf("service: got %v", obj["service"])
+	}
+
+	buf.Reset()
+	log.Info("\x1b\x1b")
+	obj = transporttest.ParseJSONLine(t, buf)
+	if _, ok := obj["msg"]; ok {
+		t.Errorf("msg should be omitted when sanitized message is empty, got: %v", obj)
+	}
+}
+
 // SourceFieldName overrides the rendered key.
 func TestStructuredSourceFieldNameOverride(t *testing.T) {
 	buf := &bytes.Buffer{}
