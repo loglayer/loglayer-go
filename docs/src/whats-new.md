@@ -7,12 +7,6 @@ description: Latest features and improvements in LogLayer for Go.
 
 - See the [main `CHANGELOG.md`](https://github.com/loglayer/loglayer-go/blob/main/CHANGELOG.md) for the auto-generated per-release log.
 
-## Aug 21, 2026
-
-`v3.0.0`:
-
-**Metadata now nests by default.** The core is now `go.loglayer.dev/v3` (with `/v3/transport` and `/v3/utils/*` sub-packages), and `Config.MetadataFieldName` resolves to `"metadata"` when empty, so map and struct metadata render uniformly under that key across every transport. Restore the v2 root-flattening shape with `Config.FlattenMetadata: true`. See [Migrating to v3](/migrating#migrating-to-v3).
-
 ## Aug 22, 2026
 
 `v3 sub-module sweep`:
@@ -23,6 +17,12 @@ description: Latest features and improvements in LogLayer for Go.
 
 - **Top-level sanitization**: the message and top-level keys and string values are run through `utils/sanitize.Message`, stripping ANSI escape sequences, CR/LF, and bidi overrides so a log line can't smuggle terminal control sequences. Authored [`Multiline`](/logging-api/multiline) messages keep their line boundaries.
 - **Empty messages omit `msg`**: `WithFields(...).Info("")` renders no `msg` key instead of `"msg":""`.
+
+## Aug 21, 2026
+
+`v3.0.0`:
+
+**Metadata now nests by default.** The core is now `go.loglayer.dev/v3` (with `/v3/transport` and `/v3/utils/*` sub-packages), and `Config.MetadataFieldName` resolves to `"metadata"` when empty, so map and struct metadata render uniformly under that key across every transport. Restore the v2 root-flattening shape with `Config.FlattenMetadata: true`. See [Migrating to v3](/migrating#migrating-to-v3).
 
 ## Aug 19, 2026
 
