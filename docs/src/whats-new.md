@@ -13,7 +13,16 @@ description: Latest features and improvements in LogLayer for Go.
 
 **Metadata now nests by default.** The core is now `go.loglayer.dev/v3` (with `/v3/transport` and `/v3/utils/*` sub-packages), and `Config.MetadataFieldName` resolves to `"metadata"` when empty, so map and struct metadata render uniformly under that key across every transport. Restore the v2 root-flattening shape with `Config.FlattenMetadata: true`. See [Migrating to v3](/migrating#migrating-to-v3).
 
-`transports/structured` stays on `go.loglayer.dev/transports/structured/v2` for this release; its own v3 bump ships in a follow-up.
+## Aug 22, 2026
+
+`v3 sub-module sweep`:
+
+**Every released transport, plugin, and integration takes its next major module-path bump.** All of them re-export v3 core types (or sibling `http/v3` types) in their public API, so moving onto `go.loglayer.dev/v3` is breaking: 24 modules move `/v2 → /v3` (transports, `plugins/oteltrace`, `plugins/datadogtrace`, `plugins/fmtlog`, `plugins/plugintest`, `plugins/redact`, `plugins/sampling`, `transports/datadog`, `integrations/loghttp`, `integrations/sloghandler`) and 2 move unversioned → `/v2` (`transports/betterstack`, `transports/newrelic`). Update imports and `go get` lines. See [Migrating to v3](/migrating#migrating-to-v3).
+
+`transports/structured`:
+
+- **Top-level sanitization**: the message and top-level keys and string values are run through `utils/sanitize.Message`, stripping ANSI escape sequences, CR/LF, and bidi overrides so a log line can't smuggle terminal control sequences. Authored [`Multiline`](/logging-api/multiline) messages keep their line boundaries.
+- **Empty messages omit `msg`**: `WithFields(...).Info("")` renders no `msg` key instead of `"msg":""`.
 
 ## Aug 19, 2026
 

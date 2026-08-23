@@ -17,11 +17,11 @@ import (
 	"os"
 	"time"
 
-	"go.loglayer.dev/transports/datadog/v2"
-	httptr "go.loglayer.dev/transports/http/v2"
-	"go.loglayer.dev/transports/pretty/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/transports/datadog/v3"
+	httptr "go.loglayer.dev/transports/http/v3"
+	"go.loglayer.dev/transports/pretty/v3"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
 )
 
 func main() {

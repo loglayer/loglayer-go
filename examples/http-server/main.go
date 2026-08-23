@@ -13,9 +13,9 @@ package main
 import (
 	"net/http"
 
-	"go.loglayer.dev/integrations/loghttp/v2"
-	"go.loglayer.dev/transports/structured/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/integrations/loghttp/v3"
+	"go.loglayer.dev/transports/structured/v3"
+	"go.loglayer.dev/v3"
 )
 
 var serverLog = loglayer.New(loglayer.Config{

@@ -1,8 +1,8 @@
 package otellog_test
 
 import (
-	"go.loglayer.dev/transports/otellog/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/transports/otellog/v3"
+	"go.loglayer.dev/v3"
 )
 
 // New emits log entries to an OpenTelemetry log.Logger. Name is the

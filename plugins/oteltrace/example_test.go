@@ -1,9 +1,9 @@
 package oteltrace_test
 
 import (
-	"go.loglayer.dev/plugins/oteltrace/v2"
-	lltesting "go.loglayer.dev/transports/testing/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/plugins/oteltrace/v3"
+	lltesting "go.loglayer.dev/transports/testing/v3"
+	"go.loglayer.dev/v3"
 )
 
 // New returns a plugin that injects the active OTel span's trace_id

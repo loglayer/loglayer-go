@@ -7,10 +7,10 @@ description: Wrap a github.com/charmbracelet/log logger with LogLayer.
 
 <ModuleBadges path="transports/charmlog" />
 
-Wraps an existing `*charmbracelet/log.Logger`. Map metadata flattens to alternating key/value pairs; struct metadata lands under a configurable key.
+Wraps an existing `*charmbracelet/log.Logger`. Metadata nests under a single configurable key.
 
 ```sh
-go get go.loglayer.dev/transports/charmlog/v2
+go get go.loglayer.dev/transports/charmlog/v3
 go get github.com/charmbracelet/log
 ```
 
@@ -25,7 +25,7 @@ import (
     clog "github.com/charmbracelet/log"
 
     "go.loglayer.dev/v3"
-    llcharm "go.loglayer.dev/transports/charmlog/v2"
+    llcharm "go.loglayer.dev/transports/charmlog/v3"
 )
 
 cl := clog.NewWithOptions(os.Stderr, clog.Options{
@@ -62,26 +62,17 @@ charmbracelet's `Logger.Fatal()` calls `os.Exit(1)`, but `Logger.Log(FatalLevel,
 
 <!--@include: ./_partials/metadata-field-name.md-->
 
-### Map metadata → individual key/value pairs
+### Metadata nests under the metadata key
 
 ```go
 log.WithMetadata(loglayer.Metadata{"requestId": "xyz", "n": 42}).Info("served")
-// INFO served requestId=xyz n=42
-```
-
-Each map entry becomes a `(key, value)` pair in the variadic `keyvals` argument to `Log`.
-
-### Struct metadata nests under the metadata key
-
-```go
-type User struct {
-    ID   int    `json:"id"`
-    Name string `json:"name"`
-}
+// INFO served metadata="{\"requestId\":\"xyz\",\"n\":42}"
 
 log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
 // INFO user metadata="{ID:7 Name:Alice}"
 ```
+
+With `Config.FlattenMetadata: true`, map metadata instead becomes `(key, value)` pairs in the variadic `keyvals` argument to `Log`.
 
 charmbracelet renders the struct via its default formatter. Exact output shape depends on whether you've configured `JSONFormatter`, `TextFormatter`, or the default colored output.
 

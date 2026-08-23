@@ -10,7 +10,7 @@ description: "Replace values for sensitive keys, value patterns, or struct field
 `plugins/redact` replaces sensitive values in metadata and persistent fields before any transport sees them. Useful for keeping secrets, PII, and credentials out of log output without rewriting every call site.
 
 ```sh
-go get go.loglayer.dev/plugins/redact/v2
+go get go.loglayer.dev/plugins/redact/v3
 ```
 
 Dependency-free. Pure Go (only `regexp` from stdlib; the walker uses reflection from the standard library).
@@ -20,13 +20,12 @@ Dependency-free. Pure Go (only `regexp` from stdlib; the walker uses reflection 
 ```go
 import (
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/plugins/redact/v2"
-    "go.loglayer.dev/transports/structured/v2"
+    "go.loglayer.dev/plugins/redact/v3"
+    "go.loglayer.dev/transports/structured/v3"
 )
 
 log := loglayer.New(loglayer.Config{
-    Transport:         structured.New(structured.Config{}),
-    MetadataFieldName: "metadata",
+    Transport: structured.New(structured.Config{}),
 })
 
 log.AddPlugin(redact.New(redact.Config{

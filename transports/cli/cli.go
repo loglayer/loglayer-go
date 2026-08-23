@@ -2,7 +2,7 @@
 // output rather than diagnostic logging.
 //
 // What makes it different from the other terminal-shaped transports
-// ([go.loglayer.dev/transports/console/v2], [go.loglayer.dev/transports/pretty/v2]):
+// ([go.loglayer.dev/transports/console/v3], [go.loglayer.dev/transports/pretty/v3]):
 //
 //   - No timestamp, no log-id, no level label embedded in info/debug
 //     output. The message string is printed as-is.
@@ -23,18 +23,18 @@
 // What this transport is NOT:
 //
 //   - A diagnostic logger. If you want timestamps and structured
-//     fields, use [go.loglayer.dev/transports/console/v2] or
-//     [go.loglayer.dev/transports/pretty/v2].
+//     fields, use [go.loglayer.dev/transports/console/v3] or
+//     [go.loglayer.dev/transports/pretty/v3].
 //   - A JSON formatter. Pair this transport with a swap to
-//     [go.loglayer.dev/transports/structured/v2] when the CLI's
+//     [go.loglayer.dev/transports/structured/v3] when the CLI's
 //     `--json` flag is set.
 //
 // Recommended plugin pairings:
 //
-//   - [go.loglayer.dev/plugins/fmtlog/v2] for fmt.Sprintf-style format
+//   - [go.loglayer.dev/plugins/fmtlog/v3] for fmt.Sprintf-style format
 //     strings (`log.Info("Applied %d release(s) at %s:", n, sha)`).
 //     CLI output almost always wants format-string semantics.
-//   - [go.loglayer.dev/plugins/redact/v2] when log values may include
+//   - [go.loglayer.dev/plugins/redact/v3] when log values may include
 //     tokens or other secrets that shouldn't reach stdout / stderr.
 //
 // See https://go.loglayer.dev for usage guides and the full API
@@ -54,9 +54,9 @@ import (
 	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
 
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
-	"go.loglayer.dev/v2/utils/sanitize"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
+	"go.loglayer.dev/v3/utils/sanitize"
 )
 
 // ColorMode controls ANSI color output.

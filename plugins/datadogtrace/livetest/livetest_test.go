@@ -18,10 +18,10 @@ import (
 	"strconv"
 	"testing"
 
-	"go.loglayer.dev/plugins/datadogtrace/v2"
-	lltest "go.loglayer.dev/transports/testing/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/plugins/datadogtrace/v3"
+	lltest "go.loglayer.dev/transports/testing/v3"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
 
 	ddmocktracer "github.com/DataDog/dd-trace-go/v2/ddtrace/mocktracer"
 	ddtracer "github.com/DataDog/dd-trace-go/v2/ddtrace/tracer"

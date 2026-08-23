@@ -25,9 +25,9 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"go.loglayer.dev/transports/pretty/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/transports/pretty/v3"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
 )
 
 // hostInfoPlugin tags every entry with the host name and PID, and

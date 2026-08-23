@@ -18,10 +18,10 @@ import (
 	"reflect"
 	"testing"
 
-	lltest "go.loglayer.dev/transports/testing/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
-	"go.loglayer.dev/v2/utils/maputil"
+	lltest "go.loglayer.dev/transports/testing/v3"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
+	"go.loglayer.dev/v3/utils/maputil"
 )
 
 // Install builds a fresh *loglayer.LogLayer with p installed and the

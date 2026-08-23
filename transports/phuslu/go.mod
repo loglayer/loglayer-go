@@ -1,10 +1,10 @@
-module go.loglayer.dev/transports/phuslu/v2
+module go.loglayer.dev/transports/phuslu/v3
 
 go 1.25.0
 
 require (
 	github.com/phuslu/log v1.0.124
-	go.loglayer.dev/v2 v2.0.1
+	go.loglayer.dev/v3 v3.0.0
 )
 
 require github.com/goccy/go-json v0.10.6 // indirect

@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
-	"go.loglayer.dev/v2/utils/sanitize"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
+	"go.loglayer.dev/v3/utils/sanitize"
 )
 
 // ViewMode controls how each log entry is rendered.

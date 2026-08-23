@@ -5,8 +5,8 @@ import (
 
 	"github.com/fatih/color"
 
-	clitr "go.loglayer.dev/transports/cli/v2"
-	"go.loglayer.dev/v2"
+	clitr "go.loglayer.dev/transports/cli/v3"
+	"go.loglayer.dev/v3"
 )
 
 // The package-level Example shows the canonical wiring: a CLI app's
@@ -63,7 +63,7 @@ func ExampleConfig_ShowFields() {
 	log.WithFields(loglayer.Fields{"requestID": "abc-123"}).
 		WithMetadata(loglayer.Metadata{"latencyMs": 42}).
 		Info("handled")
-	// Output: handled latencyMs=42 requestID=abc-123
+	// Output: handled metadata=map[latencyMs:42] requestID=abc-123
 }
 
 // Example_table demonstrates the table rendering mode: when

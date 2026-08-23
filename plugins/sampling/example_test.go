@@ -3,9 +3,9 @@ package sampling_test
 import (
 	"fmt"
 
-	"go.loglayer.dev/plugins/sampling/v2"
-	lltesting "go.loglayer.dev/transports/testing/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/plugins/sampling/v3"
+	lltesting "go.loglayer.dev/transports/testing/v3"
+	"go.loglayer.dev/v3"
 )
 
 // FixedRate keeps the given fraction of emissions. rate >= 1 keeps

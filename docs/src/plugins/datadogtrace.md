@@ -10,7 +10,7 @@ description: "Inject Datadog APM trace and span IDs into log entries for log/tra
 `plugins/datadogtrace` adds Datadog's [log/trace correlation](https://docs.datadoghq.com/tracing/other_telemetry/connect_logs_and_traces/) fields to every log entry that carries an active span via `WithContext`. Once your logs ship to Datadog, the UI will link each log line to the trace it originated in.
 
 ```sh
-go get go.loglayer.dev/plugins/datadogtrace/v2
+go get go.loglayer.dev/plugins/datadogtrace/v3
 ```
 
 The plugin is **tracer-agnostic**: you wire up a small extractor function that pulls the trace and span IDs from a `context.Context`. This avoids forcing a specific dd-trace-go version (or any tracer dependency at all) on LogLayer's main module; your service already imports the tracer it uses.
@@ -28,8 +28,8 @@ import (
     ddtracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/plugins/datadogtrace/v2"
-    "go.loglayer.dev/transports/structured/v2"
+    "go.loglayer.dev/plugins/datadogtrace/v3"
+    "go.loglayer.dev/transports/structured/v3"
 )
 
 func main() {

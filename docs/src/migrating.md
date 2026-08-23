@@ -16,10 +16,6 @@ LogLayer for Go has shipped two major versions. Each upgrade is a short checklis
 
 This section covers the core (`go.loglayer.dev/v3`); the import-path notes also apply to the core's sub-packages (`/v3/transport`, `/v3/utils/...`).
 
-::: warning Transports are still on v2 in this release
-The transports keep their `v2` paths until the follow-up release that bumps them to `v3`. Until then, code that pairs the v3 core with a `v2` transport path does not compile together. Migrate the core first, then the transports when their v3 bumps land.
-:::
-
 ### Do I have to migrate?
 
 Not immediately. v2.x continues to work; the v2 module path (`go.loglayer.dev/v2`) keeps resolving to its last v2 tag and the v2 metadata placement stays intact there. Future feature work and bug fixes ship at v3 (`go.loglayer.dev/v3`), so the migration is the path forward but it's not on a deadline.
@@ -30,7 +26,6 @@ You can migrate one module at a time: a project that uses several `loglayer-go` 
 
 - **Import paths bump to `/v3`** for the core and its sub-packages: `go.loglayer.dev/v2` → `go.loglayer.dev/v3`, `go.loglayer.dev/v2/transport` → `go.loglayer.dev/v3/transport`, and so on. The package import names (`loglayer`, `transport`) do not change.
 - **Metadata nests under `"metadata"` by default.** When `Config.MetadataFieldName` is empty, the core resolves it to `"metadata"`, so both map and struct metadata render under that single key uniformly across every transport. This closes the asymmetric v2 gap where renderers flattened map metadata at the root while wrappers nested non-map values under a hardcoded key. It applies to every transport, including third-party ones, because the resolved key ships on `TransportParams.Schema`.
-- **`transports/structured` stays on v2 for this release.** The structured transport moves to `/v3` in a follow-up release, along with sanitized output and empty-message handling. The default nesting flip above applies to it today through the schema key.
 
 ### The one-line opt-out
 
@@ -62,7 +57,7 @@ In source files:
  )
 ```
 
-Then run `go mod tidy`. Transport and plugin sub-modules keep their current paths until each ships its own v3 bump; check each page in the [Transports overview](/transports/) and [Plugins overview](/plugins/) for the current path.
+Then run `go mod tidy`. Every sub-module that ships its own module takes its **next major path bump** in this release: transports and plugins that re-export core types move `/v2 → /v3` (e.g. `transports/structured`), and the wrappers built on the `http` transport move to `/v2` (e.g. `transports/betterstack`, `transports/newrelic`) or `/v3` (`transports/datadog`). Check the [Transports overview](/transports/) and [Plugins overview](/plugins/) for each module's exact path; imports and `go get` lines change accordingly.
 
 ### Step 2: decide on metadata placement
 
@@ -84,6 +79,13 @@ Any consumer of the emitted JSON that parsed map metadata at the root now finds 
 - Wrapper transports and downstream dashboards that read metadata attributes positionally (the JSON key they appear under changes, not the values).
 
 All of these are addressed by `FlattenMetadata: true` (v2 shape) or by updating the consumer to read the `"metadata"` key.
+
+The `structured` transport also gained v3 behavior changes on top of the path bump:
+
+- **Top-level sanitization**: the message and top-level keys and string values are run through `sanitize.Message`, so ANSI escapes, CR/LF, and bidi overrides in user-controlled strings are stripped from the output. Multiline messages keep their authored line boundaries.
+- **Empty messages omit `msg`**: `WithFields(...).Info("")` emits no `msg` key instead of `"msg":""` (v2 rendered the empty string).
+
+Consumers that assert on the structured transport's exact JSON shape (tests, dashboards keyed on a `msg` field that is now absent for empty messages) should update those assertions.
 
 ## Migrating to v2
 

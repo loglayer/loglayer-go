@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"go.loglayer.dev/integrations/loghttp/v2"
-	lltest "go.loglayer.dev/transports/testing/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
-	"go.loglayer.dev/v2/transport/transporttest"
+	"go.loglayer.dev/integrations/loghttp/v3"
+	lltest "go.loglayer.dev/transports/testing/v3"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
+	"go.loglayer.dev/v3/transport/transporttest"
 )
 
 func setupLogger(t *testing.T) (*loglayer.LogLayer, *lltest.TestLoggingLibrary) {

@@ -11,9 +11,9 @@ go get go.loglayer.dev/v3
 Most transports and plugins ship as their own modules. Install only what you import:
 
 ```sh
-go get go.loglayer.dev/transports/structured/v2
-go get go.loglayer.dev/transports/zerolog/v2
-go get go.loglayer.dev/plugins/redact/v2
+go get go.loglayer.dev/transports/structured/v3
+go get go.loglayer.dev/transports/zerolog/v3
+go get go.loglayer.dev/plugins/redact/v3
 ```
 
 ## Quick Start
@@ -23,7 +23,7 @@ package main
 
 import (
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/transports/structured/v2"
+    "go.loglayer.dev/transports/structured/v3"
 )
 
 func main() {
@@ -347,7 +347,7 @@ The slog handler (`integrations/sloghandler`) forwards `slog.Record.PC` automati
 log := loglayer.NewMock()
 
 // Capture entries for assertion
-import lltest "go.loglayer.dev/transports/testing/v2"
+import lltest "go.loglayer.dev/transports/testing/v3"
 
 lib := &lltest.TestLoggingLibrary{}
 log := loglayer.New(loglayer.Config{

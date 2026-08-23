@@ -9,9 +9,9 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/getsentry/sentry-go/attribute"
 
-	sentrytransport "go.loglayer.dev/transports/sentry/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	sentrytransport "go.loglayer.dev/transports/sentry/v3"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
 )
 
 // fakeLogger satisfies sentry.Logger and records every entry built
@@ -197,7 +197,7 @@ func TestSentry_ErrorAttachesUnderErrKey(t *testing.T) {
 	}
 }
 
-func TestSentry_MapMetadataFlattens(t *testing.T) {
+func TestSentry_MapMetadataNestsUnderKey(t *testing.T) {
 	fake := newFakeLogger()
 	log := newLogger(t, fake)
 	log.WithMetadata(loglayer.Metadata{"durationMs": 42, "op": "load"}).Info("did")
@@ -205,12 +205,12 @@ func TestSentry_MapMetadataFlattens(t *testing.T) {
 	if len(fake.entries) != 1 {
 		t.Fatalf("expected 1 entry, got %d", len(fake.entries))
 	}
-	attrs := fake.entries[0].attrs
-	if attrs["durationMs"] != 42 {
-		t.Errorf("durationMs: got %v", attrs["durationMs"])
+	got, ok := fake.entries[0].attrs["metadata"].(string)
+	if !ok {
+		t.Fatalf("metadata: got %T, want string", fake.entries[0].attrs["metadata"])
 	}
-	if attrs["op"] != "load" {
-		t.Errorf("op: got %v", attrs["op"])
+	if got != `{"durationMs":42,"op":"load"}` {
+		t.Errorf("metadata: got %q, want %q", got, `{"durationMs":42,"op":"load"}`)
 	}
 }
 

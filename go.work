@@ -3,9 +3,27 @@ go 1.25.0
 use (
 	.
 
+	./examples/custom-plugin
+	./examples/datadog-shipping
+	./examples/http-server
+	./examples/multi-transport
+	./examples/otel-end-to-end
+	./examples/pretty-modes
+
+	./integrations/loghttp
+	./integrations/sloghandler
+
+	./plugins/datadogtrace
+	./plugins/datadogtrace/livetest
+	./plugins/fmtlog
+	./plugins/oteltrace
+	./plugins/plugintest
+	./plugins/redact
+	./plugins/sampling
+
 	./transports/axiom
-	./transports/blank
 	./transports/betterstack
+	./transports/blank
 	./transports/central
 	./transports/charmlog
 	./transports/cli
@@ -13,8 +31,8 @@ use (
 	./transports/datadog
 	./transports/gcplogging
 	./transports/http
-	./transports/lumberjack
 	./transports/logrus
+	./transports/lumberjack
 	./transports/newrelic
 	./transports/otellog
 	./transports/phuslu
@@ -25,22 +43,4 @@ use (
 	./transports/testing
 	./transports/zap
 	./transports/zerolog
-
-	./plugins/datadogtrace
-	./plugins/datadogtrace/livetest
-	./plugins/fmtlog
-	./plugins/oteltrace
-	./plugins/plugintest
-	./plugins/redact
-	./plugins/sampling
-
-	./integrations/loghttp
-	./integrations/sloghandler
-
-	./examples/custom-plugin
-	./examples/datadog-shipping
-	./examples/http-server
-	./examples/multi-transport
-	./examples/otel-end-to-end
-	./examples/pretty-modes
 )

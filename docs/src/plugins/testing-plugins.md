@@ -14,7 +14,7 @@ import (
     "testing"
 
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/plugins/plugintest/v2"
+    "go.loglayer.dev/plugins/plugintest/v3"
 )
 
 func TestMyPlugin_AddsField(t *testing.T) {

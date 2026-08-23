@@ -10,10 +10,10 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"go.loglayer.dev/transports/lumberjack/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
-	"go.loglayer.dev/v2/transport/transporttest"
+	"go.loglayer.dev/transports/lumberjack/v3"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
+	"go.loglayer.dev/v3/transport/transporttest"
 )
 
 // readFileBuffer reads path into a *bytes.Buffer so we can reuse the
@@ -94,8 +94,9 @@ func TestFile_FieldsAndMetadataMergeAtRoot(t *testing.T) {
 	if obj["requestId"] != "abc" {
 		t.Errorf("requestId: got %v", obj["requestId"])
 	}
-	if obj["durationMs"] != float64(42) {
-		t.Errorf("durationMs: got %v", obj["durationMs"])
+	// The metadata map nests under "metadata" per the v3 core default.
+	if obj["metadata"].(map[string]any)["durationMs"] != float64(42) {
+		t.Errorf("metadata.durationMs: got %v", obj["metadata"])
 	}
 }
 

@@ -7,14 +7,10 @@ description: One-page quick reference of the LogLayer for Go API.
 
 ## At a Glance
 
-::: warning Interim state: transports are still on v2
-This example pairs the v3 core with the structured transport's `v2` path. The transports move to `/v3` in the follow-up release; until then this exact import combo does not compile. Install the v3 core alone first, or wait for the transport v3 bumps.
-:::
-
 ```go
 import (
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/transports/structured/v2"
+    "go.loglayer.dev/transports/structured/v3"
 )
 
 log := loglayer.New(loglayer.Config{Transport: structured.New(structured.Config{})})
@@ -68,10 +64,10 @@ Metadata nests under `"metadata"` by default; `Config.FlattenMetadata: true` res
 
 Each method takes `...any`, joined with a space.
 
-For `fmt.Sprintf`-style format strings, register the optional [`fmtlog`](https://pkg.go.dev/go.loglayer.dev/plugins/fmtlog/v2) plugin:
+For `fmt.Sprintf`-style format strings, register the optional [`fmtlog`](https://pkg.go.dev/go.loglayer.dev/plugins/fmtlog/v3) plugin:
 
 ```go
-import "go.loglayer.dev/plugins/fmtlog/v2"
+import "go.loglayer.dev/plugins/fmtlog/v3"
 
 log.AddPlugin(fmtlog.New())
 
@@ -281,7 +277,7 @@ The merged group set is also surfaced to transports via `TransportParams.Groups`
 ## Plugins
 
 ```go
-import "go.loglayer.dev/plugins/redact/v2"
+import "go.loglayer.dev/plugins/redact/v3"
 
 // Inline single-hook plugin via an adapter constructor
 log.AddPlugin(loglayer.NewDataHook("tag", func(p loglayer.BeforeDataOutParams) loglayer.Data {
@@ -349,7 +345,7 @@ Off by default. Costs ~600 ns / +5 allocs per emission when on (see [Benchmarks]
 ## slog Interop
 
 ```go
-import "go.loglayer.dev/integrations/sloghandler/v2"
+import "go.loglayer.dev/integrations/sloghandler/v3"
 
 // Make every slog.Info(...) flow through your loglayer pipeline (plugins,
 // fan-out, groups, level state). slog.With / WithAttrs become persistent

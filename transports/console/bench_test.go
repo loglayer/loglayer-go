@@ -7,10 +7,10 @@ package console_test
 import (
 	"testing"
 
-	"go.loglayer.dev/transports/console/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
-	"go.loglayer.dev/v2/transport/benchtest"
+	"go.loglayer.dev/transports/console/v3"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
+	"go.loglayer.dev/v3/transport/benchtest"
 )
 
 func BenchmarkRender_Console_SimpleMessage(b *testing.B) {

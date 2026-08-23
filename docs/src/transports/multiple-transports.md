@@ -72,7 +72,7 @@ import (
 
     "go.loglayer.dev/v3"
     "go.loglayer.dev/v3/transport"
-    "go.loglayer.dev/transports/structured/v2"
+    "go.loglayer.dev/transports/structured/v3"
 )
 
 logFile, err := os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
@@ -123,9 +123,9 @@ import (
 
     "go.loglayer.dev/v3"
     "go.loglayer.dev/v3/transport"
-    "go.loglayer.dev/transports/datadog/v2"
-    "go.loglayer.dev/transports/pretty/v2"
-    "go.loglayer.dev/transports/structured/v2"
+    "go.loglayer.dev/transports/datadog/v3"
+    "go.loglayer.dev/transports/pretty/v3"
+    "go.loglayer.dev/transports/structured/v3"
 )
 
 logFile, err := os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"go.loglayer.dev/transports/otellog/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/transports/otellog/v3"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
 	otelapi "go.opentelemetry.io/otel/log"
 	"go.opentelemetry.io/otel/log/logtest"
 )
@@ -112,15 +112,20 @@ func TestLevels(t *testing.T) {
 	}
 }
 
-func TestMapMetadataFlattens(t *testing.T) {
+func TestMapMetadataNestsUnderKey(t *testing.T) {
 	log, rec := newLogger(t, otellog.Config{})
 	log.WithMetadata(loglayer.Metadata{"requestId": "abc", "n": 42}).Info("req")
 	a := attrs(lastRecord(t, rec))
-	if a["requestId"].AsString() != "abc" {
-		t.Errorf("requestId: got %v", a["requestId"])
+	meta := a["metadata"]
+	if meta.Kind() != otelapi.KindMap {
+		t.Fatalf("metadata should be Map, got %v", meta.Kind())
 	}
-	if a["n"].AsInt64() != 42 {
-		t.Errorf("n: got %v", a["n"])
+	got := kvMap(meta.AsMap())
+	if got["requestId"].AsString() != "abc" {
+		t.Errorf("requestId: got %v", got["requestId"])
+	}
+	if got["n"].AsInt64() != 42 {
+		t.Errorf("n: got %v", got["n"])
 	}
 }
 
@@ -320,8 +325,13 @@ func TestNestedSliceAndMapAttributes(t *testing.T) {
 		"inner": map[string]any{"k": 1, "ok": true},
 	}).Info("nested")
 	a := attrs(lastRecord(t, rec))
+	meta := a["metadata"]
+	if meta.Kind() != otelapi.KindMap {
+		t.Fatalf("metadata should be Map, got %v", meta.Kind())
+	}
+	got := kvMap(meta.AsMap())
 
-	tags := a["tags"]
+	tags := got["tags"]
 	if tags.Kind() != otelapi.KindSlice {
 		t.Fatalf("tags: kind %v, want KindSlice", tags.Kind())
 	}
@@ -329,12 +339,12 @@ func TestNestedSliceAndMapAttributes(t *testing.T) {
 	if len(tagSlice) != 3 || tagSlice[0].AsString() != "a" || tagSlice[2].AsString() != "c" {
 		t.Errorf("tags: got %v", tagSlice)
 	}
-	inner := a["inner"]
+	inner := got["inner"]
 	if inner.Kind() != otelapi.KindMap {
 		t.Fatalf("inner: kind %v, want KindMap", inner.Kind())
 	}
-	got := kvMap(inner.AsMap())
-	if got["k"].AsInt64() != 1 || got["ok"].AsBool() != true {
-		t.Errorf("inner: got %v", got)
+	innerKV := kvMap(inner.AsMap())
+	if innerKV["k"].AsInt64() != 1 || innerKV["ok"].AsBool() != true {
+		t.Errorf("inner: got %v", innerKV)
 	}
 }

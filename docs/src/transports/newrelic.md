@@ -10,7 +10,7 @@ description: Ship logs to the New Relic Log Ingest API.
 Sends log entries to the [New Relic Log Ingest API](https://docs.newrelic.com/docs/logs/log-api/introduction-log-api/). Built on the [HTTP transport](/transports/http) with a New Relic-specific encoder (timestamp, level, log, attributes), site-aware URL, and `Api-Key` header. Includes attribute validation enforced at encode time (max 255 attributes, 255-char names, 4,094-char values). Log format matches the [TypeScript transport](https://loglayer.dev/transports/new-relic).
 
 ```sh
-go get go.loglayer.dev/transports/newrelic
+go get go.loglayer.dev/transports/newrelic/v2
 ```
 
 ## Getting a License Key and Site
@@ -43,7 +43,7 @@ import (
     "os"
 
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/transports/newrelic"
+    "go.loglayer.dev/transports/newrelic/v2"
 )
 
 tr := newrelic.New(newrelic.Config{

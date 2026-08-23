@@ -28,8 +28,8 @@ package redact
 import (
 	"regexp"
 
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/utils/maputil"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/utils/maputil"
 )
 
 // Config holds redactor configuration.

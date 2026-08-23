@@ -3,8 +3,8 @@ package logrus_test
 import (
 	"io"
 
-	"go.loglayer.dev/transports/logrus/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/transports/logrus/v3"
+	"go.loglayer.dev/v3"
 )
 
 // New wraps a *logrus.Logger. When Logger is nil a default logger is

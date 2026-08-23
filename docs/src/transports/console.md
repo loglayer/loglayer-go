@@ -16,7 +16,7 @@ The console transport is intentionally minimal. For day-to-day local development
 For production logging, use the [structured](/transports/structured) transport or one of the [logger wrappers](/transports/zerolog).
 
 ```sh
-go get go.loglayer.dev/transports/console/v2
+go get go.loglayer.dev/transports/console/v3
 ```
 
 ## Basic Usage
@@ -24,12 +24,11 @@ go get go.loglayer.dev/transports/console/v2
 ```go
 import (
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/transports/console/v2"
+    "go.loglayer.dev/transports/console/v3"
 )
 
 log := loglayer.New(loglayer.Config{
-    Transport:         console.New(console.Config{}),
-    MetadataFieldName: "metadata",
+    Transport: console.New(console.Config{}),
 })
 
 log.Info("hello world")
@@ -79,13 +78,13 @@ type Config struct {
 
 ### Logfmt Rendering
 
-Fields and metadata render as `key=value` pairs after the message, in sorted-by-key order:
+Fields and metadata render as `key=value` pairs after the message, in sorted-by-key order. Metadata nests under its key (`"metadata"` by default):
 
 ```go
 log.WithFields(loglayer.Fields{"requestId": "abc"}).
     WithMetadata(loglayer.Metadata{"status": 200, "bytes": 1024}).
     Info("request served")
-// "request served bytes=1024 requestId=abc status=200"
+// "request served requestId=abc metadata="{\"bytes\":1024,\"status\":200}""
 ```
 
 Values render based on type:
@@ -164,7 +163,7 @@ When `MessageFn` is set, the logfmt tail still appends after its return value (u
 
 ## Metadata Handling
 
-Map metadata is merged into the same data bag as fields and errors. Struct metadata is JSON-roundtripped into root fields before logfmt rendering. See [Metadata](/logging-api/metadata) for the design.
+Metadata nests under [`MetadataFieldName`](/configuration#metadatafieldname) (default `"metadata"`), then renders as a JSON string in logfmt. See [Metadata](/logging-api/metadata) for the design.
 
 ## Threat Model: Plaintext (Not for Pipelines)
 

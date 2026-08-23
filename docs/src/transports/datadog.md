@@ -9,12 +9,8 @@ description: Ship logs to the Datadog Logs HTTP intake API.
 
 Sends log entries to Datadog's [Logs HTTP intake API](https://docs.datadoghq.com/api/latest/logs/#send-logs). Built on the [HTTP transport](/transports/http) with a Datadog-specific encoder, site-aware URL, and `DD-API-KEY` header.
 
-::: info Interim state: this transport is still on v2
-This transport keeps its `v2` path and its pre-v3 metadata placement for this release; the placement described below is what the current `v2` transport produces. The v3 core resolves an empty `MetadataFieldName` to `"metadata"`, so pairing this transport with the v3 core passes a non-empty schema key and changes the placement. The transport's own v3 bump ships in a follow-up release.
-:::
-
 ```sh
-go get go.loglayer.dev/transports/datadog/v2
+go get go.loglayer.dev/transports/datadog/v3
 ```
 
 ## Getting an API Key and Site
@@ -48,7 +44,7 @@ import (
     "os"
 
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/transports/datadog/v2"
+    "go.loglayer.dev/transports/datadog/v3"
 )
 
 hostname, _ := os.Hostname()
@@ -179,12 +175,14 @@ Each log entry becomes one object in a JSON array:
     "message":   "served request",
     "date":      "2026-04-26T12:00:00.123Z",
     "requestId": "abc",
-    "durationMs": 42
+    "metadata": {
+      "durationMs": 42
+    }
   }
 ]
 ```
 
-Persistent fields (`WithFields`) and metadata (`WithMetadata`) follow the [core placement rules](/configuration#fieldskey): when `FieldsKey` is empty, fields merge at the root of each Datadog log object; when `MetadataFieldName` is empty, map metadata merges at the root and non-map metadata nests under `metadata`. Set either knob on `loglayer.Config` to nest under a configured key instead.
+Persistent fields (`WithFields`) and metadata (`WithMetadata`) follow the [core placement rules](/configuration#fieldskey): when `FieldsKey` is empty, fields merge at the root of each Datadog log object; metadata nests under `MetadataFieldName` (default `"metadata"`). Set either knob on `loglayer.Config` to nest under a configured key instead.
 
 ## Level → Status Mapping
 

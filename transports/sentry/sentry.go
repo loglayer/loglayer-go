@@ -21,8 +21,8 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/goccy/go-json"
 
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
 )
 
 // Config holds configuration options for the Sentry transport.

@@ -12,8 +12,9 @@ import (
 
 	"github.com/goccy/go-json"
 
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
+	"go.loglayer.dev/v3/utils/sanitize"
 )
 
 // Config holds configuration options for Transport.
@@ -121,6 +122,15 @@ func (s *Transport) GetLoggerInstance() any { return nil }
 // entries in iteration order. Per-value marshaling uses goccy/go-json so
 // structs, slices, and json.Marshaler types render exactly as encoding/json
 // would.
+//
+// The message and top-level keys and string values are run through
+// sanitize.Message before encoding, so untrusted input can't forge log lines
+// (CR / LF), smuggle ANSI escape sequences (ESC), or spoof text direction
+// (bidi overrides). Sanitization is top-level only: string values nested
+// inside structs, slices, or maps, and values with a custom json.Marshaler,
+// remain the JSON encoder's domain, which escapes control characters but
+// passes other printable-but-formatting runes
+// (e.g. bidi overrides) through untouched.
 func (s *Transport) SendToLogger(params loglayer.TransportParams) {
 	if !s.ShouldProcess(params.LogLevel) {
 		return
@@ -137,16 +147,36 @@ func (s *Transport) SendToLogger(params loglayer.TransportParams) {
 	buf.Reset()
 	defer putBuffer(buf)
 
+	// AssembleMessage sanitizes per element and preserves authored line
+	// boundaries inside *loglayer.MultilineMessage values, so multiline
+	// messages survive while ANSI/control bytes are still stripped.
+	msg := transport.AssembleMessage(messages, sanitize.Message)
+
 	buf.Write(s.levelOpen)
 	s.writeLevel(buf, params.LogLevel)
 	buf.Write(s.dateOpen)
 	s.writeDate(buf)
-	buf.Write(s.msgOpen)
-	writeJSONString(buf, transport.JoinMessages(messages))
+	if msg != "" {
+		buf.Write(s.msgOpen)
+		writeJSONString(buf, msg)
+	}
 
+	// When metadata nests under the schema key, a Data key that collides
+	// with that key is dropped so the JSON object can't contain duplicate
+	// keys; the nested metadata value wins (matching transport.MergeIntoMap).
+	// The comparison is on the sanitized key (what writeKeyValue emits), so
+	// a hostile raw key that sanitizes into the nest key can't slip through.
+	skipKey := ""
+	if params.Metadata != nil {
+		skipKey = params.Schema.MetadataFieldName
+	}
 	for k, v := range params.Data {
+		sk := sanitize.Message(k)
+		if sk == skipKey {
+			continue
+		}
 		buf.WriteByte(',')
-		if err := writeKeyValue(buf, k, v); err != nil {
+		if err := writeKeyValue(buf, sk, v); err != nil {
 			s.writeMarshalError(err)
 			return
 		}
@@ -155,14 +185,14 @@ func (s *Transport) SendToLogger(params loglayer.TransportParams) {
 		if key := params.Schema.MetadataFieldName; key != "" {
 			// Whole metadata value nests under the configured key.
 			buf.WriteByte(',')
-			if err := writeKeyValue(buf, key, params.Metadata); err != nil {
+			if err := writeKeyValue(buf, sanitize.Message(key), params.Metadata); err != nil {
 				s.writeMarshalError(err)
 				return
 			}
 		} else {
 			for k, v := range transport.MetadataAsMap(params.Metadata) {
 				buf.WriteByte(',')
-				if err := writeKeyValue(buf, k, v); err != nil {
+				if err := writeKeyValue(buf, sanitize.Message(k), v); err != nil {
 					s.writeMarshalError(err)
 					return
 				}
@@ -217,6 +247,13 @@ func writeJSONString(buf *bytes.Buffer, s string) {
 func writeKeyValue(buf *bytes.Buffer, key string, value any) error {
 	writeJSONString(buf, key)
 	buf.WriteByte(':')
+	if s, ok := value.(string); ok {
+		// User-controlled strings (fields, metadata, error messages) get the
+		// same ANSI/bidi/control-char sanitization as the message; non-string
+		// values are the JSON encoder's domain.
+		writeJSONString(buf, sanitize.Message(s))
+		return nil
+	}
 	b, err := json.Marshal(value)
 	if err != nil {
 		return err

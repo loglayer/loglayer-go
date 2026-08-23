@@ -7,10 +7,10 @@ description: Wrap a github.com/sirupsen/logrus logger with LogLayer.
 
 <ModuleBadges path="transports/logrus" />
 
-Wraps an existing `*logrus.Logger`. Map metadata flattens via `Entry.WithFields`; struct metadata lands under a configurable key.
+Wraps an existing `*logrus.Logger`. Metadata nests under a single configurable key.
 
 ```sh
-go get go.loglayer.dev/transports/logrus/v2
+go get go.loglayer.dev/transports/logrus/v3
 go get github.com/sirupsen/logrus
 ```
 
@@ -23,7 +23,7 @@ import (
     "github.com/sirupsen/logrus"
 
     "go.loglayer.dev/v3"
-    lllogrus "go.loglayer.dev/transports/logrus/v2"
+    lllogrus "go.loglayer.dev/transports/logrus/v3"
 )
 
 l := logrus.New()
@@ -66,34 +66,19 @@ The core then decides whether `os.Exit(1)` is called after dispatch. See [Fatal 
 
 <!--@include: ./_partials/metadata-field-name.md-->
 
-### Map metadata → individual fields
+### Metadata nests under the metadata key
 
 ```go
 log.WithMetadata(loglayer.Metadata{"requestId": "xyz", "n": 42}).Info("served")
-// {"level":"info","msg":"served","n":42,"requestId":"xyz","time":"..."}
-```
-
-Each map entry becomes a key in `logrus.Fields` passed to `WithFields`.
-
-### Struct metadata nests under the metadata key
-
-```go
-type User struct {
-    ID   int    `json:"id"`
-    Name string `json:"name"`
-}
+// {"level":"info","msg":"served","metadata":{"requestId":"xyz","n":42},"time":"..."}
 
 log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
 // {"level":"info","metadata":{"id":7,"name":"Alice"},"msg":"user",...}
 ```
 
-To use a different key per call, wrap in a map:
+With `Config.FlattenMetadata: true`, map metadata instead becomes keys in a `logrus.Fields` bag passed to `WithFields`.
 
-```go
-log.WithMetadata(loglayer.Metadata{"user": User{ID: 7, Name: "Alice"}}).Info("user")
-```
-
-Or globally via the core's `MetadataFieldName` (which also nests map metadata under the same key):
+Change the nesting key on the core's config:
 
 ```go
 loglayer.New(loglayer.Config{

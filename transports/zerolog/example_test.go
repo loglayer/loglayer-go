@@ -3,8 +3,8 @@ package zerolog_test
 import (
 	"io"
 
-	"go.loglayer.dev/transports/zerolog/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/transports/zerolog/v3"
+	"go.loglayer.dev/v3"
 )
 
 // New wraps a *zerolog.Logger. When Logger is nil a default logger is

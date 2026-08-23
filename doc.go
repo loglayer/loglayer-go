@@ -3,7 +3,7 @@
 // and Plugin interfaces, and the dispatch pipeline. Concrete transports
 // (zap, zerolog, slog, charmlog, OTel, etc.) ship as separately-versioned
 // sub-modules under go.loglayer.dev/transports/<name>, with a /vN suffix
-// for sub-modules on their own major version (e.g. transports/structured/v2).
+// for sub-modules on their own major version (e.g. transports/structured/v3).
 //
 // Full docs: https://go.loglayer.dev
 //
@@ -11,7 +11,7 @@
 //
 //	import (
 //	    "go.loglayer.dev/v3"
-//	    "go.loglayer.dev/transports/structured/v2"
+//	    "go.loglayer.dev/transports/structured/v3"
 //	)
 //
 //	log := loglayer.New(loglayer.Config{
@@ -20,10 +20,6 @@
 //	log.WithFields(loglayer.Fields{"requestId": "abc"}).
 //	    WithMetadata(loglayer.Metadata{"durationMs": 42}).
 //	    Info("served")
-//
-// Note: transports are still at their v2 paths in this release; the combo
-// above compiles once the transport v3 bumps land in the follow-up release.
-// Install go.loglayer.dev/v3 alone first, or wait for those bumps.
 //
 // # Three data shapes
 //

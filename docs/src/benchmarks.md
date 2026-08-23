@@ -73,10 +73,10 @@ With LogLayer, swapping the underlying transport is a one-line change in `New()`
 ```go
 import (
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/integrations/sloghandler/v2"
-    "go.loglayer.dev/transports/structured/v2"
-    llzero "go.loglayer.dev/transports/zerolog/v2"
-    llzap "go.loglayer.dev/transports/zap/v2"
+    "go.loglayer.dev/integrations/sloghandler/v3"
+    "go.loglayer.dev/transports/structured/v3"
+    llzero "go.loglayer.dev/transports/zerolog/v3"
+    llzap "go.loglayer.dev/transports/zap/v3"
 )
 
 // Wrap zerolog (142 ns)

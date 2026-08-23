@@ -17,7 +17,7 @@ The `cli` transport renders log entries as plain user-facing CLI output. The clo
 - **Table rendering for slice metadata.** Pass `[]loglayer.Metadata`, `[]SomeStruct`, or any other slice of map-shaped or struct-shaped values to `WithMetadata` / `MetadataOnly` and the transport renders a tabwriter-aligned table after the message. Same call site emits a proper JSON array when paired with the [structured](/transports/structured) transport. See [Table Rendering for Slice-of-Map Metadata](#table-rendering-for-slice-of-map-metadata) below.
 
 ```sh
-go get go.loglayer.dev/transports/cli/v2
+go get go.loglayer.dev/transports/cli/v3
 ```
 
 ## Basic Usage
@@ -25,7 +25,7 @@ go get go.loglayer.dev/transports/cli/v2
 ```go
 import (
     "go.loglayer.dev/v3"
-    cli "go.loglayer.dev/transports/cli/v2"
+    cli "go.loglayer.dev/transports/cli/v3"
 )
 
 log := loglayer.New(loglayer.Config{
@@ -170,7 +170,7 @@ The standard CLI shape is to wire `-v` flags to loglayer's level state and `-vv`
 ```go
 import (
     "go.loglayer.dev/v3"
-    cli "go.loglayer.dev/transports/cli/v2"
+    cli "go.loglayer.dev/transports/cli/v3"
 )
 
 func newLogger(verbosity int) *loglayer.LogLayer {
@@ -230,7 +230,7 @@ import (
 
     "go.loglayer.dev/v3"
     "go.loglayer.dev/v3/transport"
-    cli "go.loglayer.dev/transports/cli/v2"
+    cli "go.loglayer.dev/transports/cli/v3"
 )
 
 log := loglayer.New(loglayer.Config{
@@ -264,7 +264,7 @@ The contrast with the [Console Transport](/transports/console): console's `Messa
 Without a plugin, multi-argument log calls are space-joined: `log.Info("count:", n)` renders as `"count: 1234"`. CLI output usually wants format-string semantics:
 
 ```go
-import "go.loglayer.dev/plugins/fmtlog/v2"
+import "go.loglayer.dev/plugins/fmtlog/v3"
 
 log := loglayer.New(loglayer.Config{
     Transport: cli.New(cli.Config{}),
@@ -275,11 +275,11 @@ log.Info("Applied %d release(s) at %s:", count, sha)
 log.Error("connecting to %s: %v", host, err)
 ```
 
-The plugin registers a single MessageHook that rewrites `[]any{format, args...}` to `[]any{fmt.Sprintf(format, args...)}`. Zero hot-path cost when a call has a single message; one Sprintf when there are extras. See [fmtlog](https://pkg.go.dev/go.loglayer.dev/plugins/fmtlog/v2) for the full API.
+The plugin registers a single MessageHook that rewrites `[]any{format, args...}` to `[]any{fmt.Sprintf(format, args...)}`. Zero hot-path cost when a call has a single message; one Sprintf when there are extras. See [fmtlog](https://pkg.go.dev/go.loglayer.dev/plugins/fmtlog/v3) for the full API.
 
 ### `redact` for token scrubbing
 
-If your CLI ever logs values that might include `GITHUB_TOKEN`, `GITLAB_TOKEN`, or other secrets via `WithMetadata`, pair with the [redact](https://pkg.go.dev/go.loglayer.dev/plugins/redact/v2) plugin. ANSI / CRLF sanitization is already on the table-cell and logfmt-value paths in this transport; the redact plugin closes the value-content side (token patterns, key allow / deny lists).
+If your CLI ever logs values that might include `GITHUB_TOKEN`, `GITLAB_TOKEN`, or other secrets via `WithMetadata`, pair with the [redact](https://pkg.go.dev/go.loglayer.dev/plugins/redact/v3) plugin. ANSI / CRLF sanitization is already on the table-cell and logfmt-value paths in this transport; the redact plugin closes the value-content side (token patterns, key allow / deny lists).
 
 ## Switching to JSON for `--json`
 
@@ -288,8 +288,8 @@ For machine-readable output, swap `cli` for [structured](/transports/structured)
 ```go
 import (
     "go.loglayer.dev/v3"
-    cli "go.loglayer.dev/transports/cli/v2"
-    "go.loglayer.dev/transports/structured/v2"
+    cli "go.loglayer.dev/transports/cli/v3"
+    "go.loglayer.dev/transports/structured/v3"
 )
 
 var t loglayer.Transport

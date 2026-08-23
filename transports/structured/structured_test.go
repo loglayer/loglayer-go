@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"go.loglayer.dev/transports/structured/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
-	"go.loglayer.dev/v2/transport/transporttest"
+	"go.loglayer.dev/transports/structured/v3"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
+	"go.loglayer.dev/v3/transport/transporttest"
 )
 
 func newLogger(cfg structured.Config) (*loglayer.LogLayer, *bytes.Buffer) {
@@ -79,8 +79,8 @@ func TestStructuredWithMetadataMap(t *testing.T) {
 	log, buf := newLogger(structured.Config{})
 	log.WithMetadata(map[string]any{"requestId": "xyz"}).Info("req")
 	obj := transporttest.ParseJSONLine(t, buf)
-	if obj["requestId"] != "xyz" {
-		t.Errorf("requestId: got %v", obj["requestId"])
+	if obj["metadata"].(map[string]any)["requestId"] != "xyz" {
+		t.Errorf("metadata.requestId: got %v", obj["metadata"])
 	}
 }
 
@@ -92,11 +92,12 @@ func TestStructuredWithMetadataStruct(t *testing.T) {
 	log, buf := newLogger(structured.Config{})
 	log.WithMetadata(user{ID: 7, Name: "Alice"}).Info("hi")
 	obj := transporttest.ParseJSONLine(t, buf)
-	if obj["id"] != float64(7) {
-		t.Errorf("id: got %v", obj["id"])
+	md := obj["metadata"].(map[string]any)
+	if md["id"] != float64(7) {
+		t.Errorf("metadata.id: got %v", md["id"])
 	}
-	if obj["name"] != "Alice" {
-		t.Errorf("name: got %v", obj["name"])
+	if md["name"] != "Alice" {
+		t.Errorf("metadata.name: got %v", md["name"])
 	}
 }
 
@@ -206,6 +207,134 @@ func TestStructuredSourceFieldRendered(t *testing.T) {
 	}
 }
 
+// emit runs a log call through a fresh logger and returns the raw output line.
+// No access to the Write hook, but the assembly and encoding paths are
+// exercised exactly as in production.
+func emit(cfg structured.Config, fn func(*loglayer.LogLayer)) string {
+	log, buf := newLogger(cfg)
+	fn(log)
+	return strings.TrimSpace(buf.String())
+}
+
+// ANSI escapes, CR/LF, and bidi overrides (Trojan Source, CVE-2021-42574) in
+// the message are stripped so a log line can't smuggle terminal control
+// sequences or hide content. DateFn pins the timestamp so the whole line is
+// compared byte-for-byte.
+func TestStructuredSanitizesInjectionInMessage(t *testing.T) {
+	cfg := structured.Config{DateFn: func() string { return "2026-04-26T12:00:00Z" }}
+	if got := emit(cfg, func(log *loglayer.LogLayer) {
+		log.Info("line1\r\nline2\x1b[31mreduser\u202eevil")
+	}); got != `{"level":"info","time":"2026-04-26T12:00:00Z","msg":"line1line2[31mreduserevil"}` {
+		t.Errorf("got %q", got)
+	}
+}
+
+// Same guard on keys and string values when metadata flattens: each metadata
+// entry becomes a top-level key/value, so both are sanitized. Non-string
+// entries pass through untouched. The output shape is pinned here (metadata at
+// root under the original key, sanitized) so the sanitize-vs-flatten interplay
+// can't regress silently.
+func TestStructuredSanitizesInjectionInFlattenedMetadata(t *testing.T) {
+	buf := &bytes.Buffer{}
+	t1 := structured.New(structured.Config{Writer: buf})
+	log := loglayer.New(loglayer.Config{
+		Transport:        t1,
+		FlattenMetadata:  true,
+		DisableFatalExit: true,
+	})
+	log.WithMetadata(map[string]any{
+		"note\r\n\x1b[": "line1\r\nline2\x1b[31mred",
+		"count":         7,
+	}).Info("hi")
+	obj := transporttest.ParseJSONLine(t, buf)
+	if obj["note["] != "line1line2[31mred" {
+		t.Errorf("note[: got %v", obj["note["])
+	}
+	if obj["count"] != float64(7) {
+		t.Errorf("count: got %v", obj["count"])
+	}
+
+	// Pin the full flattened line: metadata at root, key and value sanitized.
+	fieldWriter := &bytes.Buffer{}
+	t2 := structured.New(structured.Config{
+		Writer: fieldWriter,
+		DateFn: func() string { return "2026-04-26T12:00:00Z" },
+	})
+	log2 := loglayer.New(loglayer.Config{
+		Transport:        t2,
+		FlattenMetadata:  true,
+		DisableFatalExit: true,
+	})
+	log2.WithMetadata(map[string]any{
+		"note\u202e": "line1\r\nline2\x1b[31mred",
+	}).Info("hi")
+	if got := strings.TrimSpace(fieldWriter.String()); got != `{"level":"info","time":"2026-04-26T12:00:00Z","msg":"hi","note":"line1line2[31mred"}` {
+		t.Errorf("flatten full line: got %q", got)
+	}
+}
+
+// String-typed top-level values (WithFields entries) sanitize the same way,
+// including the keys; non-string values pass through untouched.
+func TestStructuredSanitizesInjectionInTopLevelStringValues(t *testing.T) {
+	log, buf := newLogger(structured.Config{})
+	log = log.WithFields(loglayer.Fields{
+		"user\r\n":   "user\u202eevil",
+		"cleanInt":   42,
+		"cleanBool":  true,
+		"cleanFloat": 1.5,
+	})
+	log.Info("ok")
+	obj := transporttest.ParseJSONLine(t, buf)
+	if obj["user"] != "userevil" {
+		t.Errorf("user: got %v", obj["user"])
+	}
+	if obj["cleanInt"] != float64(42) {
+		t.Errorf("cleanInt: got %v", obj["cleanInt"])
+	}
+	if obj["cleanBool"] != true {
+		t.Errorf("cleanBool: got %v", obj["cleanBool"])
+	}
+	if obj["cleanFloat"] != 1.5 {
+		t.Errorf("cleanFloat: got %v", obj["cleanFloat"])
+	}
+}
+
+// An empty joined message omits the msg key entirely, so
+// WithFields(...)+Info("") renders level, time, and the fields only. A
+// message that sanitizes to nothing (e.g. bare escape bytes) is omitted the
+// same way.
+func TestStructuredOmitsMsgWhenEmpty(t *testing.T) {
+	log, buf := newLogger(structured.Config{})
+	log = log.WithFields(loglayer.Fields{"service": "api"})
+	log.Info("")
+	obj := transporttest.ParseJSONLine(t, buf)
+	if _, ok := obj["msg"]; ok {
+		t.Errorf("msg should be omitted for empty message, got: %v", obj)
+	}
+	if obj["service"] != "api" {
+		t.Errorf("service: got %v", obj["service"])
+	}
+
+	buf.Reset()
+	log.Info("\x1b\x1b")
+	obj = transporttest.ParseJSONLine(t, buf)
+	if _, ok := obj["msg"]; ok {
+		t.Errorf("msg should be omitted when sanitized message is empty, got: %v", obj)
+	}
+}
+
+// Authored Multiline messages keep their line boundaries in structured while
+// ANSI/control bytes inside each line are still stripped (the same contract
+// cli/pretty/console honor via transport.AssembleMessage).
+func TestStructuredPreservesMultilineBoundaries(t *testing.T) {
+	log, buf := newLogger(structured.Config{})
+	log.Info(loglayer.Multiline("line1\x1b[31m", "line2"))
+	obj := transporttest.ParseJSONLine(t, buf)
+	if obj["msg"] != "line1[31m\nline2" {
+		t.Errorf("msg: got %q, want authored newline preserved", obj["msg"])
+	}
+}
+
 // SourceFieldName overrides the rendered key.
 func TestStructuredSourceFieldNameOverride(t *testing.T) {
 	buf := &bytes.Buffer{}
@@ -227,5 +356,22 @@ func TestStructuredSourceFieldNameOverride(t *testing.T) {
 	}
 	if _, ok := obj["caller"]; !ok {
 		t.Errorf("expected source under 'caller': %v", obj)
+	}
+}
+
+// A Data/field key that collides with the metadata nest key is dropped so
+// the JSON object can't contain duplicate "metadata" keys; the nested
+// metadata value wins (matches transport.MergeIntoMap).
+func TestStructuredMetadataKeyCollisionDropped(t *testing.T) {
+	log, buf := newLogger(structured.Config{})
+	log = log.WithFields(loglayer.Fields{"metadata": "user-value"})
+	log.WithMetadata(loglayer.Metadata{"inner": 1}).Info("hi")
+	line := strings.TrimSpace(buf.String())
+	if strings.Count(line, `"metadata"`) != 1 {
+		t.Errorf("expected exactly one metadata key, got: %q", line)
+	}
+	obj := transporttest.ParseJSONLine(t, buf)
+	if _, ok := obj["metadata"].(map[string]any); !ok {
+		t.Errorf("metadata should be the nested value, got: %v", obj["metadata"])
 	}
 }

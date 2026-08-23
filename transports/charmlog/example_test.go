@@ -3,8 +3,8 @@ package charmlog_test
 import (
 	"io"
 
-	"go.loglayer.dev/transports/charmlog/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/transports/charmlog/v3"
+	"go.loglayer.dev/v3"
 )
 
 // New wraps a *charmbracelet/log.Logger. When Logger is nil a default

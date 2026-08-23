@@ -7,10 +7,10 @@ description: Wrap a *slog.Logger with LogLayer.
 
 <ModuleBadges path="transports/slog" />
 
-Wraps a stdlib `*log/slog.Logger`. Map metadata flattens to `slog.Attr`s; struct metadata lands under a configurable key. Per-call `context.Context` attached via `WithContext` is passed through to `slog.Logger.LogAttrs` so handlers downstream (OpenTelemetry, structured shippers) can extract trace context.
+Wraps a stdlib `*log/slog.Logger`. Metadata nests under a single key via one `slog.Attr`. Per-call `context.Context` attached via `WithContext` is passed through to `slog.Logger.LogAttrs` so handlers downstream (OpenTelemetry, structured shippers) can extract trace context.
 
 ```sh
-go get go.loglayer.dev/transports/slog/v2
+go get go.loglayer.dev/transports/slog/v3
 ```
 
 ## Basic Usage
@@ -21,7 +21,7 @@ import (
     "os"
 
     "go.loglayer.dev/v3"
-    llslog "go.loglayer.dev/transports/slog/v2"
+    llslog "go.loglayer.dev/transports/slog/v3"
 )
 
 handler := slog.NewJSONHandler(os.Stderr, nil)
@@ -56,28 +56,17 @@ slog has no fatal level. This transport maps `LogLevelFatal` to `slog.LevelError
 
 <!--@include: ./_partials/metadata-field-name.md-->
 
-### Map metadata → individual `slog.Attr`s
+### Metadata nests under the metadata key
 
 ```go
 log.WithMetadata(loglayer.Metadata{"requestId": "abc", "n": 42}).Info("served")
-// {"time":"...","level":"INFO","msg":"served","requestId":"abc","n":42}
-```
-
-Each map entry becomes a `slog.Any(k, v)` attribute, so slog renders it via the configured handler (JSON, text, or anything custom).
-
-### Struct metadata nests under the metadata key
-
-```go
-type User struct {
-    ID   int    `json:"id"`
-    Name string `json:"name"`
-}
+// {"time":"...","level":"INFO","msg":"served","metadata":{"requestId":"abc","n":42}}
 
 log.WithMetadata(User{ID: 7, Name: "Alice"}).Info("user")
 // {"time":"...","level":"INFO","msg":"user","metadata":{"id":7,"name":"Alice"}}
 ```
 
-The JSON handler honors `json:` tags; other handlers may render fields differently.
+The nested value becomes a single `slog.Any(key, value)` attribute, so slog renders it via the configured handler (JSON, text, or anything custom). The JSON handler honors `json:` tags; other handlers may render fields differently.
 
 ## context.Context Pass-through
 

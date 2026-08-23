@@ -13,8 +13,8 @@ import (
 	"io"
 	"log/slog"
 
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
 )
 
 // Config holds configuration options for the slog transport.

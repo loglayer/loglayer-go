@@ -19,9 +19,9 @@ import (
 
 	"github.com/goccy/go-json"
 
-	httptr "go.loglayer.dev/transports/http/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	httptr "go.loglayer.dev/transports/http/v3"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
 )
 
 // Site identifies the New Relic region. Affects only the intake URL.
@@ -186,30 +186,31 @@ const (
 // map, enforcing New Relic's API constraints: max 255 attributes, max 255-
 // char attribute names, and values truncated at 4094 chars. Reserved fields
 // (timestamp, level, log) are excluded to prevent collisions.
+//
+// Metadata placement follows the core's Schema.MetadataFieldName: under the
+// v3 default ("metadata") the whole metadata value nests under that key;
+// with FlattenMetadata: true it merges at the root like the sibling network
+// encoders. (Mirrors transport.MergeIntoMap, then applies the reserved-key
+// filter and per-attribute constraints.)
 func mergeAttributes(e httptr.Entry) map[string]any {
 	attrs := make(map[string]any)
-	for k, v := range e.Data {
+	transport.MergeIntoMap(attrs, e.Data, e.Metadata, e.Schema.MetadataFieldName)
+	// Iterate a key snapshot so the truncation break stays deterministic:
+	// attrs is mutated (reserved keys deleted, values rewritten) mid-loop.
+	keys := make([]string, 0, len(attrs))
+	for k := range attrs {
+		keys = append(keys, k)
+	}
+	for _, k := range keys {
 		if reserved(k) {
+			delete(attrs, k)
 			continue
 		}
 		if len(attrs)+1 > maxAttributes {
 			break
 		}
-		setAttr(attrs, k, v)
+		setAttr(attrs, k, attrs[k])
 	}
-
-	if m, ok := transport.MetadataAsRootMap(e.Metadata); ok {
-		for k, v := range m {
-			if reserved(k) {
-				continue
-			}
-			if len(attrs)+1 > maxAttributes {
-				break
-			}
-			setAttr(attrs, k, v)
-		}
-	}
-
 	return attrs
 }
 

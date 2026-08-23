@@ -12,8 +12,8 @@ import (
 	"github.com/fatih/color"
 	"golang.org/x/sys/unix"
 
-	clitr "go.loglayer.dev/transports/cli/v2"
-	"go.loglayer.dev/v2"
+	clitr "go.loglayer.dev/transports/cli/v3"
+	"go.loglayer.dev/v3"
 )
 
 // openPTY opens a new pseudo-terminal pair and returns the slave end (a
@@ -178,7 +178,7 @@ func TestShowFieldsAppendsLogfmt(t *testing.T) {
 		Info("done")
 
 	got := strings.TrimRight(stdout.String(), "\n")
-	for _, want := range []string{"done", "requestID=abc-123", "user=alice"} {
+	for _, want := range []string{"done", "requestID=abc-123", "metadata=map[user:alice]"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("output %q missing %q", got, want)
 		}
@@ -191,7 +191,7 @@ func TestShowFieldsQuotesValuesWithSpaces(t *testing.T) {
 	log.WithMetadata(loglayer.Metadata{"path": "/var/log/my app"}).Info("ok")
 
 	got := strings.TrimRight(stdout.String(), "\n")
-	if !strings.Contains(got, `path="/var/log/my app"`) {
+	if !strings.Contains(got, `metadata="map[path:/var/log/my app]"`) {
 		t.Errorf("quoted value missing: %q", got)
 	}
 }

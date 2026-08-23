@@ -6,10 +6,10 @@ import (
 
 	clog "github.com/charmbracelet/log"
 
-	llcharm "go.loglayer.dev/transports/charmlog/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
-	"go.loglayer.dev/v2/transport/transporttest"
+	llcharm "go.loglayer.dev/transports/charmlog/v3"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
+	"go.loglayer.dev/v3/transport/transporttest"
 )
 
 func factory(opts transporttest.FactoryOpts) (*loglayer.LogLayer, *bytes.Buffer) {

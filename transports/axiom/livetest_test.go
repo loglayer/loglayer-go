@@ -18,8 +18,8 @@ import (
 	"testing"
 
 	"github.com/axiomhq/axiom-go/axiom"
-	"go.loglayer.dev/v2/transport"
-	"go.loglayer.dev/v2/transport/transporttest"
+	"go.loglayer.dev/v3/transport"
+	"go.loglayer.dev/v3/transport/transporttest"
 )
 
 func TestLive_Axiom_SendsLog(t *testing.T) {

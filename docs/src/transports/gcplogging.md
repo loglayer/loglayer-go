@@ -9,10 +9,10 @@ description: "Forward LogLayer entries to Google Cloud Logging via cloud.google.
 
 Forwards each entry to a caller-supplied [`*logging.Logger`](https://pkg.go.dev/cloud.google.com/go/logging#Logger) from the official Google Cloud client library. Use this on Google Cloud Run, GKE, App Engine, Cloud Functions, or any environment where you want logs to land in Google Cloud Logging (formerly Stackdriver).
 
-Import path: `go.loglayer.dev/transports/gcplogging/v2`. Package name: `gcplogging` (no collision with the SDK's `logging` package).
+Import path: `go.loglayer.dev/transports/gcplogging/v3`. Package name: `gcplogging` (no collision with the SDK's `logging` package).
 
 ```sh
-go get go.loglayer.dev/transports/gcplogging/v2
+go get go.loglayer.dev/transports/gcplogging/v3
 go get cloud.google.com/go/logging
 ```
 
@@ -67,7 +67,7 @@ import (
     "cloud.google.com/go/logging"
 
     "go.loglayer.dev/v3"
-    "go.loglayer.dev/transports/gcplogging/v2"
+    "go.loglayer.dev/transports/gcplogging/v3"
 )
 
 ctx := context.Background()
@@ -194,11 +194,13 @@ results in a `LogEntry.jsonPayload` of:
 {
   "message": "served",
   "requestId": "abc",
-  "durationMs": 42
+  "metadata": {
+    "durationMs": 42
+  }
 }
 ```
 
-Map metadata merges at the payload root. Non-map metadata (structs, scalars) nest under the `metadata` key. Set [`Config.MetadataFieldName` on the core](/configuration#metadatafieldname) to nest map metadata under a fixed key uniformly.
+Metadata nests under [`MetadataFieldName` on the core](/configuration#metadatafieldname) (default `"metadata"`), for maps and non-maps alike. Set `Config.FlattenMetadata: true` to restore the v2 shape, where map metadata merges at the payload root and non-map values nest under `metadata`.
 
 ## Level Mapping
 

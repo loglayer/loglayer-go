@@ -24,8 +24,8 @@ import (
 
 	"github.com/goccy/go-json"
 
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
 )
 
 const (

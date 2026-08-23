@@ -27,10 +27,10 @@ import (
 	"testing"
 	"time"
 
-	betterstack "go.loglayer.dev/transports/betterstack"
-	httptr "go.loglayer.dev/transports/http/v2"
-	"go.loglayer.dev/v2/transport/transporttest"
-	"go.loglayer.dev/v2/utils/idgen"
+	betterstack "go.loglayer.dev/transports/betterstack/v2"
+	httptr "go.loglayer.dev/transports/http/v3"
+	"go.loglayer.dev/v3/transport/transporttest"
+	"go.loglayer.dev/v3/utils/idgen"
 )
 
 func TestLive_BetterStack_SendsLog(t *testing.T) {

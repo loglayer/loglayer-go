@@ -13,10 +13,10 @@ import (
 	"testing"
 	"time"
 
-	"go.loglayer.dev/transports/datadog/v2"
-	httptr "go.loglayer.dev/transports/http/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/transports/datadog/v3"
+	httptr "go.loglayer.dev/transports/http/v3"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
 )
 
 type capture struct {
@@ -99,8 +99,10 @@ func TestDatadog_RealEncoderShape(t *testing.T) {
 			t.Errorf("entry[%q]: got %v, want %v", k, obj[k], v)
 		}
 	}
-	if obj["durationMs"] != float64(42) {
-		t.Errorf("durationMs: got %v", obj["durationMs"])
+	// The metadata map nests under "metadata" per the v3 core default.
+	md, ok := obj["metadata"].(map[string]any)
+	if !ok || md["durationMs"] != float64(42) {
+		t.Errorf("metadata.durationMs: got %v", obj["metadata"])
 	}
 	if _, hasDate := obj["date"]; !hasDate {
 		t.Errorf("expected date field, got %v", obj)

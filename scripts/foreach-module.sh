@@ -106,18 +106,6 @@ SHIPPED_MODULES=(
   integrations/sloghandler
 )
 
-# Core-only mode: restrict every op to the root module. Used during a
-# major-version transition of the root (e.g. core moves to v3 while
-# sub-modules are still on v2), when sub-modules cannot build against
-# the unpublished root. Set CORE_ONLY=1 in CI for such PRs; unset once
-# the sweep PR moves the sub-modules onto the new root version.
-# TEST_MODULES is defined in the test branch (not here), so that branch
-# applies the CORE_ONLY override itself.
-if [ "${CORE_ONLY:-}" = "1" ]; then
-  ALL_MODULES=(.)
-  SHIPPED_MODULES=(.)
-fi
-
 op="${1:-}"
 if [ -z "$op" ]; then
   cat >&2 <<USAGE_EOF
@@ -211,11 +199,6 @@ case "$op" in
       integrations/loghttp
       integrations/sloghandler
     )
-    # TEST_MODULES lives in this branch (not at the top with the other
-    # lists), so the CORE_ONLY override must be applied here as well.
-    if [ "${CORE_ONLY:-}" = "1" ]; then
-      TEST_MODULES=(.)
-    fi
     # Run modules concurrently. Each `go test ./...` already parallelizes
     # within a module; this layer parallelizes across modules so the
     # 27-module sequence stops being a 27x process-startup tax. Output
@@ -247,15 +230,7 @@ case "$op" in
       echo "Install: go install honnef.co/go/tools/cmd/staticcheck@latest" >&2
       exit 1
     fi
-    # plugins/datadogtrace/livetest is a separate test module that
-    # imports the v2-core-dependent plugin; skip it in core-only mode
-    # for the same reason the shipped modules are collapsed.
-    if [ "${CORE_ONLY:-}" = "1" ]; then
-      MODS=("${SHIPPED_MODULES[@]}")
-    else
-      MODS=("${SHIPPED_MODULES[@]}" plugins/datadogtrace/livetest)
-    fi
-    for mod in "${MODS[@]}"; do
+    for mod in "${SHIPPED_MODULES[@]}" plugins/datadogtrace/livetest; do
       echo "==> $mod (staticcheck)"
       (cd "$mod" && staticcheck ./...)
     done
@@ -266,12 +241,7 @@ case "$op" in
       echo "Install: go install golang.org/x/vuln/cmd/govulncheck@latest" >&2
       exit 1
     fi
-    if [ "${CORE_ONLY:-}" = "1" ]; then
-      MODS=("${SHIPPED_MODULES[@]}")
-    else
-      MODS=("${SHIPPED_MODULES[@]}" plugins/datadogtrace/livetest)
-    fi
-    for mod in "${MODS[@]}"; do
+    for mod in "${SHIPPED_MODULES[@]}" plugins/datadogtrace/livetest; do
       echo "==> $mod (vuln)"
       (cd "$mod" && govulncheck ./...)
     done

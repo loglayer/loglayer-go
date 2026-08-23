@@ -4,10 +4,10 @@ import (
 	"errors"
 	"testing"
 
-	"go.loglayer.dev/plugins/fmtlog/v2"
-	lltest "go.loglayer.dev/transports/testing/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
+	"go.loglayer.dev/plugins/fmtlog/v3"
+	lltest "go.loglayer.dev/transports/testing/v3"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
 )
 
 func newLogger(t *testing.T) (*loglayer.LogLayer, *lltest.TestLoggingLibrary) {

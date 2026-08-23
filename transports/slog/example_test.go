@@ -3,8 +3,8 @@ package slog_test
 import (
 	"io"
 
-	llslog "go.loglayer.dev/transports/slog/v2"
-	"go.loglayer.dev/v2"
+	llslog "go.loglayer.dev/transports/slog/v3"
+	"go.loglayer.dev/v3"
 )
 
 // New wraps a *slog.Logger. When Logger is nil a default logger is

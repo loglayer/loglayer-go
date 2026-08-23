@@ -3,8 +3,8 @@ package console_test
 import (
 	"os"
 
-	"go.loglayer.dev/transports/console/v2"
-	"go.loglayer.dev/v2"
+	"go.loglayer.dev/transports/console/v3"
+	"go.loglayer.dev/v3"
 )
 
 // New builds a logfmt-style console transport. DateFn returns a fixed
@@ -21,5 +21,5 @@ func ExampleNew() {
 		DisableFatalExit: true,
 	})
 	log.WithMetadata(loglayer.Metadata{"durationMs": 42}).Info("served")
-	// Output: served durationMs=42 level=info time=2026-04-26T12:00:00Z
+	// Output: served level=info metadata="{\"durationMs\":42}" time=2026-04-26T12:00:00Z
 }

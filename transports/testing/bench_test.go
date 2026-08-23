@@ -7,10 +7,10 @@ package testing_test
 import (
 	"testing"
 
-	lltest "go.loglayer.dev/transports/testing/v2"
-	"go.loglayer.dev/v2"
-	"go.loglayer.dev/v2/transport"
-	"go.loglayer.dev/v2/transport/benchtest"
+	lltest "go.loglayer.dev/transports/testing/v3"
+	"go.loglayer.dev/v3"
+	"go.loglayer.dev/v3/transport"
+	"go.loglayer.dev/v3/transport/benchtest"
 )
 
 func BenchmarkRender_Testing_SimpleMessage(b *testing.B) {
