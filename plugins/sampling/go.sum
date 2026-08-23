@@ -1,5 +1,9 @@
 github.com/goccy/go-json v0.10.6 h1:p8HrPJzOakx/mn/bQtjgNjdTcN+/S6FcG2CTtQOrHVU=
 github.com/goccy/go-json v0.10.6/go.mod h1:oq7eo15ShAhp70Anwd5lgX2pLfOS3QCiwU/PULtXL6M=
+go.loglayer.dev/plugins/plugintest/v3 v3.0.0 h1:ZjkLkW1uhPpe4dBwWsL7QhBeLTSs33+RJbOe1Dj/4f0=
+go.loglayer.dev/plugins/plugintest/v3 v3.0.0/go.mod h1:OEs6aXHUyWiDoQR7mO+ZBOpjnurkL7MxAvUDNDRa/g0=
+go.loglayer.dev/transports/testing/v3 v3.0.0 h1:2DgJ+qILgFGbMEZrNkRGpyrFygd18whO1rrJPIyOSf8=
+go.loglayer.dev/transports/testing/v3 v3.0.0/go.mod h1:PSdMP8vihd3MaIA07X4iD6SBRD+iu/U5o++Md/hFzgs=
 go.loglayer.dev/v3 v3.0.0 h1:TEkgoAO21SAE0vKzrNa53G3VG88TJCKs/fMo177uY8s=
 go.loglayer.dev/v3 v3.0.0/go.mod h1:ghbgQp7Y/Vo4/jPCLiokMZTy2DrA3X8dfqtgcWhy3pg=
 go.uber.org/goleak v1.3.0 h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto=
