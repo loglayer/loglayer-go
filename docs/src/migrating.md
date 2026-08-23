@@ -80,6 +80,13 @@ Any consumer of the emitted JSON that parsed map metadata at the root now finds 
 
 All of these are addressed by `FlattenMetadata: true` (v2 shape) or by updating the consumer to read the `"metadata"` key.
 
+The `structured` transport also gained v3 behavior changes on top of the path bump:
+
+- **Top-level sanitization**: the message and top-level keys and string values are run through `sanitize.Message`, so ANSI escapes, CR/LF, and bidi overrides in user-controlled strings are stripped from the output. Multiline messages keep their authored line boundaries.
+- **Empty messages omit `msg`**: `WithFields(...).Info("")` emits no `msg` key instead of `"msg":""` (v2 rendered the empty string).
+
+Consumers that assert on the structured transport's exact JSON shape (tests, dashboards keyed on a `msg` field that is now absent for empty messages) should update those assertions.
+
 ## Migrating to v2
 
 `loglayer-go` v2 ships two breaking changes: **every import path bumps to `/v2`**, and **the loglayer core no longer mutates `Messages[0]` to fold the `WithPrefix` value into the message text.** The prefix now flows through `TransportParams.Prefix` and each transport decides how to render it.
