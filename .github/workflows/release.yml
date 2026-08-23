@@ -52,7 +52,7 @@ jobs:
           cache: true
           cache-dependency-path: '**/go.sum'
 
-      - uses: disaresta-org/monorel/ci/github@v1.0.0
+      - uses: disaresta-org/monorel/ci/github@v1.0.2
 
   deploy-docs:
     # Only deploy docs on the release-PR merge commit, not on every
